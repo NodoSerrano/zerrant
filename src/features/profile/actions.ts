@@ -13,6 +13,10 @@ import {
 import { ensureWebSafeImage } from "./avatar-convert";
 import type { ProfileUpdate } from "./types";
 
+function text(value: FormDataEntryValue | null): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
 export async function saveOnboardingStep1(
   _prevState: { error: string } | null,
   formData: FormData,
@@ -27,13 +31,29 @@ export async function saveOnboardingStep1(
     return { error: "No autorizado" };
   }
 
+  const nombre = text(formData.get("nombre"));
+  const apellido = text(formData.get("apellido"));
+  const fechaNacimiento = text(formData.get("fecha_nacimiento"));
+
+  // Estos tres son los que el gate de onboarding mira para dejarte salir, así que
+  // el server los exige aunque el browser ya valide los `required`.
+  if (!nombre || !apellido || !fechaNacimiento) {
+    return { error: "Completá nombre, apellido y fecha de nacimiento" };
+  }
+
   const update: ProfileUpdate = {
-    nombre: (formData.get("nombre") as string) || null,
-    apellido: (formData.get("apellido") as string) || null,
-    apodo: (formData.get("apodo") as string) || null,
-    nombre_visible: formData.get("nombre_visible") as ProfileUpdate["nombre_visible"],
-    fecha_nacimiento: (formData.get("fecha_nacimiento") as string) || null,
+    nombre,
+    apellido,
+    apodo: text(formData.get("apodo")),
+    fecha_nacimiento: fechaNacimiento,
   };
+
+  // La columna es NOT NULL con default: sólo la pisamos si el form la manda
+  // (hoy se elige en editar perfil, no en el onboarding).
+  const nombreVisible = formData.get("nombre_visible");
+  if (nombreVisible !== null) {
+    update.nombre_visible = nombreVisible as ProfileUpdate["nombre_visible"];
+  }
 
   const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
 

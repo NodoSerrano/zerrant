@@ -15,9 +15,19 @@ export function Input({ label, error, className, ...props }: InputProps) {
   return (
     <div className={cn("flex flex-col gap-[7px]", className)}>
       {label && (
-        <label htmlFor={id} className="text-[13px] font-medium text-text-secondary">
-          {label}
-        </label>
+        // El asterisco va afuera del <label> para no ensuciar el nombre accesible
+        // del campo: quien usa lector de pantalla ya escucha "requerido" por el
+        // atributo del input.
+        <div className="flex items-center gap-1">
+          <label htmlFor={id} className="text-[13px] font-medium text-text-secondary">
+            {label}
+          </label>
+          {props.required && (
+            <span aria-hidden="true" className="text-[13px] font-medium text-coral">
+              *
+            </span>
+          )}
+        </div>
       )}
       <input
         id={id}

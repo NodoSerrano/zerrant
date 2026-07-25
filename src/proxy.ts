@@ -34,7 +34,7 @@ function updateSession(request: NextRequest) {
   return { response, supabase };
 }
 
-const PROTECTED_PREFIXES = ["/onboarding", "/profile"];
+const PROTECTED_PREFIXES = ["/onboarding", "/profile", "/nodo"];
 const AUTH_PREFIXES = ["/auth/login", "/auth/signup", "/auth/recovery", "/auth/reset-password"];
 
 export default async function proxy(request: NextRequest) {
@@ -57,6 +57,30 @@ export default async function proxy(request: NextRequest) {
     const loginUrl = new URL("/auth/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // El onboarding es de una sola vez: mientras falten los datos del paso 1 no se
+  // sale de /onboarding, y una vez completos no se vuelve a entrar (esos campos
+  // se editan en /profile/edit).
+  if (user && isProtected) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("nombre, apellido, fecha_nacimiento")
+      .eq("id", user.id)
+      .single();
+
+    const onboardingDone = Boolean(
+      profile?.nombre && profile?.apellido && profile?.fecha_nacimiento,
+    );
+    const isOnboarding = pathname.startsWith("/onboarding");
+
+    if (!onboardingDone && !isOnboarding) {
+      return NextResponse.redirect(new URL("/onboarding/step1", request.url));
+    }
+
+    if (onboardingDone && isOnboarding) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
   }
 
   return response;

@@ -73,6 +73,61 @@ describe("saveOnboardingStep1", () => {
     expect(mocks.profilesUpdateEq).toHaveBeenCalledWith("id", "test-user-id");
   });
 
+  it("omits nombre_visible when the form does not send it", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = new FormData();
+    fd.set("nombre", "Juan");
+    fd.set("apellido", "Pérez");
+    fd.set("fecha_nacimiento", "1990-01-15");
+
+    try {
+      await saveOnboardingStep1(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith({
+      nombre: "Juan",
+      apellido: "Pérez",
+      apodo: null,
+      fecha_nacimiento: "1990-01-15",
+    });
+  });
+
+  it.each(["nombre", "apellido", "fecha_nacimiento"])(
+    "rejects without touching the DB when %s is missing",
+    async (missing) => {
+      mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+
+      const fd = new FormData();
+      fd.set("nombre", "Juan");
+      fd.set("apellido", "Pérez");
+      fd.set("fecha_nacimiento", "1990-01-15");
+      fd.delete(missing);
+
+      const result = await saveOnboardingStep1(null, fd);
+
+      expect(result).toEqual({ error: "Completá nombre, apellido y fecha de nacimiento" });
+      expect(mocks.profilesUpdate).not.toHaveBeenCalled();
+    },
+  );
+
+  it("rejects when a required field is only whitespace", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+
+    const fd = new FormData();
+    fd.set("nombre", "   ");
+    fd.set("apellido", "Pérez");
+    fd.set("fecha_nacimiento", "1990-01-15");
+
+    const result = await saveOnboardingStep1(null, fd);
+
+    expect(result).toEqual({ error: "Completá nombre, apellido y fecha de nacimiento" });
+    expect(mocks.profilesUpdate).not.toHaveBeenCalled();
+  });
+
   it("returns error when supabase update fails", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
     mocks.profilesUpdateEq.mockResolvedValue({
@@ -82,6 +137,8 @@ describe("saveOnboardingStep1", () => {
 
     const fd = new FormData();
     fd.set("nombre", "Juan");
+    fd.set("apellido", "Pérez");
+    fd.set("fecha_nacimiento", "1990-01-15");
     fd.set("nombre_visible", "nombre_apellido");
 
     const result = await saveOnboardingStep1(null, fd);

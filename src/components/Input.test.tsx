@@ -49,6 +49,21 @@ describe("Input", () => {
     expect(field).toHaveClass("border-border");
   });
 
+  it("marks required fields with an asterisk next to the label", () => {
+    render(<Input label="Nombre" required />);
+    const input = screen.getByLabelText("Nombre");
+    expect(input).toBeRequired();
+    const asterisk = screen.getByText("*");
+    expect(asterisk).toHaveAttribute("aria-hidden", "true");
+    expect(asterisk).toHaveClass("text-coral");
+  });
+
+  it("does not show an asterisk when the field is optional", () => {
+    render(<Input label="Apodo (opcional)" />);
+    expect(screen.queryByText("*")).toBeNull();
+    expect(screen.getByLabelText("Apodo (opcional)")).not.toBeRequired();
+  });
+
   it("has label with text-text-secondary", () => {
     render(<Input label="Email" />);
     const label = screen.getByText("Email");
