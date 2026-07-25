@@ -1,0 +1,65 @@
+<h2>Check Email Screen (ZER-10) — Current vs Required</h2>
+<p class="subtitle">Comparacion entre lo que hay y lo que pide el AC</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">CURRENT — pagina actual</div>
+    <div class="mockup-body" style="display:flex;flex-direction:column;align-items:center;gap:24px;padding:32px 20px;text-align:center;min-height:400px;justify-content:center;">
+      <div style="width:64px;height:64px;border-radius:999px;background:rgba(10,130,104,0.1);display:flex;align-items:center;justify-content:center;">
+        <svg style="width:32px;height:32px;color:#0a8268" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+      </div>
+      <h3 style="font-weight:700">Revisa tu email</h3>
+      <p style="color:#5a5550;font-size:14px">Te enviamos un link. Revisa tu bandeja de entrada y segui las instrucciones.</p>
+      <a href="#" style="color:#0a8268;font-size:14px">Volver al inicio</a>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">AC REQUIREMENTS — lo que pide el ticket</div>
+    <div class="mockup-body" style="display:flex;flex-direction:column;align-items:center;gap:24px;padding:32px 20px;text-align:center;min-height:400px;justify-content:center;">
+      <div style="width:100px;height:100px;border-radius:999px;background:rgba(17,88,176,0.1);display:flex;align-items:center;justify-content:center;">
+        <svg style="width:42px;height:42px;color:#1158b0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+      </div>
+      <h3 style="font-size:22px;font-weight:700">Revisa tu email</h3>
+      <p style="color:#5a5550;font-size:14px">Te enviamos un enlace a tu@email.com. Abrilo para confirmar tu cuenta y entrar.</p>
+      <button class="mock-button" style="background:transparent;color:inherit;border:1px solid #e6dfd3;padding:12px 24px;border-radius:999px;font-weight:500;width:100%">Reenviar email</button>
+      <a href="#" style="color:#8a847c;font-size:14px">Volver al inicio de sesion</a>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Diferencias clave</h3>
+  <div class="options" data-multiselect>
+    <div class="option" data-choice="icon" onclick="toggleSelect(this)" style="border:1px solid var(--border);border-radius:12px;padding:12px 16px">
+      <div class="content">
+        <h4>1. Icono</h4>
+        <p>SVG inline → lucide-react MailCheck, brand-blue <span style="color:var(--coral)">#1158b0</span> en vez de brand-mint</p>
+      </div>
+    </div>
+    <div class="option" data-choice="circle" onclick="toggleSelect(this)" style="border:1px solid var(--border);border-radius:12px;padding:12px 16px">
+      <div class="content">
+        <h4>2. Circulo contenedor</h4>
+        <p>64×64 → 100×100, bg-brand-blue/10 en vez de bg-brand-mint/10</p>
+      </div>
+    </div>
+    <div class="option" data-choice="copy" onclick="toggleSelect(this)" style="border:1px solid var(--border);border-radius:12px;padding:12px 16px">
+      <div class="content">
+        <h4>3. Copy del subtitulo</h4>
+        <p>Cambia a: "Te enviamos un enlace a [email]. Abrilo para confirmar tu cuenta y entrar."</p>
+      </div>
+    </div>
+    <div class="option" data-choice="button" onclick="toggleSelect(this)" style="border:1px solid var(--border);border-radius:12px;padding:12px 16px">
+      <div class="content">
+        <h4>4. Boton "Reenviar email"</h4>
+        <p>NUEVO: SecondaryButton para reenviar (solo UI, sin funcionalidad de reenvio)</p>
+      </div>
+    </div>
+    <div class="option" data-choice="backlink" onclick="toggleSelect(this)" style="border:1px solid var(--border);border-radius:12px;padding:12px 16px">
+      <div class="content">
+        <h4>5. Link de regreso</h4>
+        <p>"Volver al inicio" → "Volver al inicio de sesion", text-muted en vez de brand-mint</p>
+      </div>
+    </div>
+  </div>
+</div>
