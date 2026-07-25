@@ -177,9 +177,10 @@ describe("sendPasswordReset", () => {
 });
 
 describe("resetPassword", () => {
-  const makeFormData = () => {
+  const makeFormData = (confirm = "newsecurepass") => {
     const fd = new FormData();
     fd.set("password", "newsecurepass");
+    fd.set("confirmPassword", confirm);
     return fd;
   };
 
@@ -195,6 +196,24 @@ describe("resetPassword", () => {
     expect(authMock.updateUser).toHaveBeenCalledWith({
       password: "newsecurepass",
     });
+  });
+
+  it("returns a mismatch error and does not call updateUser when passwords differ", async () => {
+    const result = await resetPassword(null, makeFormData("otherpass"));
+
+    expect(result).toEqual({ error: "Las contraseñas no coinciden" });
+    expect(authMock.updateUser).not.toHaveBeenCalled();
+  });
+
+  it("returns a length error and does not call updateUser when password is too short", async () => {
+    const fd = new FormData();
+    fd.set("password", "123");
+    fd.set("confirmPassword", "123");
+
+    const result = await resetPassword(null, fd);
+
+    expect(result).toEqual({ error: "La contraseña debe tener al menos 6 caracteres" });
+    expect(authMock.updateUser).not.toHaveBeenCalled();
   });
 
   it("returns error message when supabase returns an error", async () => {
