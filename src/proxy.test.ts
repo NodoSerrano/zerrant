@@ -166,7 +166,7 @@ describe("proxy", () => {
     authAs();
     onboardingPending();
 
-    const result = await proxy(makeRequest("/onboarding/step2"));
+    const result = await proxy(makeRequest("/onboarding/step1"));
 
     expect(result.status).toBe(200);
   });
@@ -193,12 +193,47 @@ describe("proxy", () => {
 
   it("treats a missing profile row as unfinished onboarding", async () => {
     authAs();
-    mockProfileSingle.mockResolvedValue({ data: null, error: { message: "no rows" } });
+    mockProfileSingle.mockResolvedValue({
+      data: null,
+      error: { code: "PGRST116", message: "no rows" },
+    });
 
     const result = await proxy(makeRequest("/profile"));
 
     expect(result.status).toBe(307);
     expect(result.headers.get("location")).toBe("https://example.com/onboarding/step1");
+  });
+
+  it("lets the request through when the profile query itself fails", async () => {
+    authAs();
+    // Un fallo de infra (timeout, permisos, 5xx) no puede encerrar a toda la app
+    // en el onboarding: es preferible dejar pasar que trabar a quien ya lo terminó.
+    mockProfileSingle.mockResolvedValue({
+      data: null,
+      error: { code: "57014", message: "canceling statement due to statement timeout" },
+    });
+
+    const result = await proxy(makeRequest("/nodo/tasks"));
+
+    expect(result.status).toBe(200);
+  });
+
+  it("sends the user back to step 1 when step 2 is opened without step 1 saved", async () => {
+    authAs();
+    onboardingPending();
+
+    const result = await proxy(makeRequest("/onboarding/step2"));
+
+    expect(result.status).toBe(307);
+    expect(result.headers.get("location")).toBe("https://example.com/onboarding/step1");
+  });
+
+  it("does not protect routes that merely share a prefix", async () => {
+    noAuth();
+
+    const result = await proxy(makeRequest("/nodocosas"));
+
+    expect(result.status).toBe(200);
   });
 
   it("sends a user who already finished onboarding out of /onboarding", async () => {

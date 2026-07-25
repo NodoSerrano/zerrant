@@ -13,8 +13,44 @@ import {
 import { ensureWebSafeImage } from "./avatar-convert";
 import type { ProfileUpdate } from "./types";
 
+/** Lo que se le muestra al usuario cuando Postgres falla: nunca el mensaje del motor. */
+const DB_ERROR = "No pudimos guardar tus datos. Probá de nuevo.";
+
+const NOMBRE_VISIBLE_VALUES = ["apodo", "nombre_apellido", "apellido_nombre"] as const;
+
 function text(value: FormDataEntryValue | null): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+/** `YYYY-MM-DD` real, no futura y no absurda. El input `type=date` puede degradar a texto libre. */
+function isValidBirthDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
+    return false;
+  }
+
+  return date.getTime() <= Date.now() && date.getUTCFullYear() >= 1900;
+}
+
+function nombreVisible(value: FormDataEntryValue | null): ProfileUpdate["nombre_visible"] | null {
+  return NOMBRE_VISIBLE_VALUES.includes(value as (typeof NOMBRE_VISIBLE_VALUES)[number])
+    ? (value as ProfileUpdate["nombre_visible"])
+    : null;
+}
+
+/** Los datos que el gate de onboarding exige antes de dejar salir. */
+async function step1Data(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+  const { data } = await supabase
+    .from("profiles")
+    .select("nombre, apellido, fecha_nacimiento")
+    .eq("id", userId)
+    .single();
+
+  return data;
 }
 
 export async function saveOnboardingStep1(
@@ -41,6 +77,10 @@ export async function saveOnboardingStep1(
     return { error: "Completá nombre, apellido y fecha de nacimiento" };
   }
 
+  if (!isValidBirthDate(fechaNacimiento)) {
+    return { error: "Ingresá una fecha de nacimiento válida" };
+  }
+
   const update: ProfileUpdate = {
     nombre,
     apellido,
@@ -48,17 +88,18 @@ export async function saveOnboardingStep1(
     fecha_nacimiento: fechaNacimiento,
   };
 
-  // La columna es NOT NULL con default: sólo la pisamos si el form la manda
-  // (hoy se elige en editar perfil, no en el onboarding).
-  const nombreVisible = formData.get("nombre_visible");
-  if (nombreVisible !== null) {
-    update.nombre_visible = nombreVisible as ProfileUpdate["nombre_visible"];
+  // La columna es NOT NULL con default: sólo la pisamos si el form manda un valor
+  // del enum (hoy se elige en editar perfil, no en el onboarding).
+  const visible = nombreVisible(formData.get("nombre_visible"));
+  if (visible) {
+    update.nombre_visible = visible;
   }
 
   const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
 
   if (error) {
-    return { error: error.message };
+    console.error("[saveOnboardingStep1] update falló", error);
+    return { error: DB_ERROR };
   }
 
   revalidatePath("/", "layout");
@@ -79,10 +120,17 @@ export async function saveOnboardingStep2(
     return { error: "No autorizado" };
   }
 
+  // El paso 2 no puede cerrar el onboarding sin los datos obligatorios del paso 1:
+  // entrar directo por URL dejaría un perfil "completo" con nombre y apellido en null.
+  const step1 = await step1Data(supabase, user.id);
+  if (!step1?.nombre || !step1?.apellido || !step1?.fecha_nacimiento) {
+    redirect("/onboarding/step1");
+  }
+
   const update: ProfileUpdate = {
-    bio: (formData.get("bio") as string) || null,
-    contacto_telegram: (formData.get("contacto_telegram") as string) || null,
-    sitio_url: (formData.get("sitio_url") as string) || null,
+    bio: text(formData.get("bio")),
+    contacto_telegram: text(formData.get("contacto_telegram")),
+    sitio_url: text(formData.get("sitio_url")),
     // Cierra el onboarding: es el único dato que prueba haber pasado por el paso 2,
     // porque sus campos son todos opcionales.
     onboarding_completado_en: new Date().toISOString(),
@@ -91,7 +139,8 @@ export async function saveOnboardingStep2(
   const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
 
   if (error) {
-    return { error: error.message };
+    console.error("[saveOnboardingStep2] update falló", error);
+    return { error: DB_ERROR };
   }
 
   revalidatePath("/", "layout");
@@ -151,7 +200,8 @@ export async function uploadAvatar(
     });
 
   if (uploadError) {
-    return { error: uploadError.message };
+    console.error("[uploadAvatar] la subida a Storage falló", uploadError);
+    return { error: "No pudimos guardar la imagen. Probá de nuevo." };
   }
 
   const {
@@ -172,7 +222,8 @@ export async function uploadAvatar(
   if (dbError) {
     // No dejamos el objeto huérfano si el perfil no llegó a apuntarlo.
     await supabase.storage.from(AVATAR_BUCKET).remove([path]);
-    return { error: dbError.message };
+    console.error("[uploadAvatar] no se pudo guardar avatar_url", dbError);
+    return { error: DB_ERROR };
   }
 
   const previousPath = avatarPathFromPublicUrl(previous?.avatar_url ?? null);
@@ -217,7 +268,8 @@ export async function updateProfile(_prevState: { error: string } | null, formDa
   const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
 
   if (error) {
-    return { error: error.message };
+    console.error("[updateProfile] update falló", error);
+    return { error: DB_ERROR };
   }
 
   revalidatePath("/", "layout");

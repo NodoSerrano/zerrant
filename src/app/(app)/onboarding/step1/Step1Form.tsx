@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -20,6 +20,7 @@ interface Step1FormProps {
 
 export function Step1Form({ defaults, avatarUrl }: Step1FormProps) {
   const [state, action, pending] = useActionState(saveOnboardingStep1, null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   return (
     <div className="flex flex-col gap-[22px]">
@@ -34,7 +35,11 @@ export function Step1Form({ defaults, avatarUrl }: Step1FormProps) {
 
       {/* Fuera del <form> de identidad: la foto se sube sola contra su propia
           action y no puede ir anidada en otro form. */}
-      <AvatarPicker action={uploadAvatar} initialUrl={avatarUrl} />
+      <AvatarPicker
+        action={uploadAvatar}
+        initialUrl={avatarUrl}
+        onUploadingChange={setUploadingPhoto}
+      />
 
       <form action={action} className="flex flex-col gap-4">
         <Input
@@ -71,8 +76,10 @@ export function Step1Form({ defaults, avatarUrl }: Step1FormProps) {
           </p>
         )}
 
-        <PrimaryButton type="submit" disabled={pending} className="mt-2">
-          {pending ? "Guardando..." : "Guardar y continuar"}
+        {/* Enviar con la subida en vuelo desmontaría el picker antes de saber si
+            la foto entró: el usuario creería que la tiene y no. */}
+        <PrimaryButton type="submit" disabled={pending || uploadingPhoto} className="mt-2">
+          {uploadingPhoto ? "Subiendo foto..." : pending ? "Guardando..." : "Guardar y continuar"}
         </PrimaryButton>
       </form>
     </div>

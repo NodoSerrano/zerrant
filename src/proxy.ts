@@ -37,6 +37,15 @@ function updateSession(request: NextRequest) {
 const PROTECTED_PREFIXES = ["/onboarding", "/profile", "/nodo"];
 const AUTH_PREFIXES = ["/auth/login", "/auth/signup", "/auth/recovery", "/auth/reset-password"];
 
+// PostgREST devuelve este código cuando `.single()` no encuentra la fila; el resto
+// de los códigos son fallos de verdad y se tratan distinto.
+const NO_ROWS = "PGRST116";
+
+/** Match por segmento: `/nodo` no puede capturar `/nodocosas`. */
+function underPrefix(pathname: string, prefix: string): boolean {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
 export default async function proxy(request: NextRequest) {
   const { response, supabase } = updateSession(request);
 
@@ -46,8 +55,8 @@ export default async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p)) || pathname === "/";
-  const isAuthPage = AUTH_PREFIXES.some((p) => pathname.startsWith(p));
+  const isProtected = PROTECTED_PREFIXES.some((p) => underPrefix(pathname, p)) || pathname === "/";
+  const isAuthPage = AUTH_PREFIXES.some((p) => underPrefix(pathname, p));
 
   if (user && isAuthPage) {
     return NextResponse.redirect(new URL("/", request.url));
@@ -63,20 +72,34 @@ export default async function proxy(request: NextRequest) {
   // paso 2, y una vez terminado no se vuelve a entrar (esos datos se editan en
   // /profile/edit).
   if (user && isProtected) {
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
       .from("profiles")
       .select("nombre, apellido, fecha_nacimiento, onboarding_completado_en")
       .eq("id", user.id)
       .single();
 
+    // Si la consulta falló (timeout, permisos, 5xx) no sabemos en qué estado está
+    // el onboarding. Encerrar a toda la app en /onboarding sería peor que dejar
+    // pasar: sólo bloqueamos cuando la respuesta es confiable.
+    if (error && error.code !== NO_ROWS) {
+      console.error("[proxy] no se pudo leer el perfil para el gate de onboarding", error);
+      return response;
+    }
+
     const onboardingDone = Boolean(profile?.onboarding_completado_en);
-    const isOnboarding = pathname.startsWith("/onboarding");
+    const step1Done = Boolean(profile?.nombre && profile?.apellido && profile?.fecha_nacimiento);
+    const isOnboarding = underPrefix(pathname, "/onboarding");
 
     if (!onboardingDone && !isOnboarding) {
-      // Si el paso 1 ya está guardado, se retoma donde quedó.
-      const step1Done = Boolean(profile?.nombre && profile?.apellido && profile?.fecha_nacimiento);
-      const resume = step1Done ? "/onboarding/step2" : "/onboarding/step1";
-      return NextResponse.redirect(new URL(resume, request.url));
+      // Se retoma donde quedó.
+      return NextResponse.redirect(
+        new URL(step1Done ? "/onboarding/step2" : "/onboarding/step1", request.url),
+      );
+    }
+
+    // El paso 2 no puede saltearse el paso 1: sus datos son los obligatorios.
+    if (!onboardingDone && !step1Done && !underPrefix(pathname, "/onboarding/step1")) {
+      return NextResponse.redirect(new URL("/onboarding/step1", request.url));
     }
 
     if (onboardingDone && isOnboarding) {

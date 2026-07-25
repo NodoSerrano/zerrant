@@ -24,9 +24,22 @@ describe("AvatarPicker", () => {
   it("shows the camera placeholder and 'Agregar foto' when there is no photo", () => {
     render(<AvatarPicker action={vi.fn()} />);
 
-    expect(screen.getByText("Agregar foto")).toBeInTheDocument();
+    const trigger = screen.getByRole("button", { name: "Agregar foto" });
+    expect(trigger).toBeInTheDocument();
     expect(screen.queryByRole("img")).toBeNull();
-    expect(document.querySelector("svg")).toBeTruthy();
+    // El ícono es decorativo: lo nombra el botón, no el svg.
+    const icon = trigger.querySelector("svg.lucide");
+    expect(icon).toBeTruthy();
+    expect(icon).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("keeps the file input out of the tab order and out of the a11y tree", () => {
+    render(<AvatarPicker action={vi.fn()} />);
+    const input = fileInput();
+
+    // El control accesible es el botón; el input duplicado sólo confundiría.
+    expect(input).toHaveAttribute("tabindex", "-1");
+    expect(input).toHaveAttribute("aria-hidden", "true");
   });
 
   it("shows the current photo and 'Cambiar foto' when initialUrl is set", () => {
@@ -76,6 +89,52 @@ describe("AvatarPicker", () => {
       "La imagen no puede superar los 5 MB",
     );
     expect(screen.queryByRole("img")).toBeNull();
+  });
+
+  it("keeps the photo already uploaded when a later upload fails", async () => {
+    const action = vi
+      .fn()
+      .mockResolvedValueOnce({ avatarUrl: "https://sb.test/avatars/u/new.jpg" })
+      .mockResolvedValueOnce({ error: "Formato no permitido. Usá JPG, PNG, WebP o HEIC" });
+    render(<AvatarPicker action={action} />);
+
+    choose(jpeg());
+    expect(await screen.findByRole("img", { name: "Foto de perfil" })).toBeInTheDocument();
+
+    choose(jpeg("otra.jpg"));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+
+    // La foto sigue guardada en el perfil: borrarla de la UI mentiría.
+    expect(screen.getByRole("img", { name: "Foto de perfil" })).toBeInTheDocument();
+    expect(screen.getByText("Cambiar foto")).toBeInTheDocument();
+  });
+
+  it("blocks the file input while an upload is in flight", async () => {
+    let resolve: (state: { avatarUrl: string }) => void = () => {};
+    const action = vi.fn().mockReturnValue(
+      new Promise((r) => {
+        resolve = r;
+      }),
+    );
+    render(<AvatarPicker action={action} />);
+
+    choose(jpeg());
+
+    await waitFor(() => expect(fileInput()).toBeDisabled());
+
+    resolve({ avatarUrl: "https://sb.test/avatars/u/new.jpg" });
+    await waitFor(() => expect(fileInput()).not.toBeDisabled());
+  });
+
+  it("reports the upload state to the parent", async () => {
+    const onUploadingChange = vi.fn();
+    const action = vi.fn().mockResolvedValue({ avatarUrl: "https://sb.test/avatars/u/new.jpg" });
+    render(<AvatarPicker action={action} onUploadingChange={onUploadingChange} />);
+
+    choose(jpeg());
+
+    await waitFor(() => expect(onUploadingChange).toHaveBeenCalledWith(true));
+    await waitFor(() => expect(onUploadingChange).toHaveBeenLastCalledWith(false));
   });
 
   it("shows 'Subiendo...' while the upload is in flight", async () => {

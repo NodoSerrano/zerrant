@@ -2,7 +2,14 @@
 
 import Image from "next/image";
 import { Camera } from "lucide-react";
-import { startTransition, useActionState, useRef, type ChangeEvent } from "react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import type { AvatarUploadState } from "@/features/profile/actions";
 import { cn } from "@/lib/utils";
 
@@ -16,14 +23,34 @@ interface AvatarPickerProps {
     formData: FormData,
   ) => Promise<AvatarUploadState> | AvatarUploadState;
   initialUrl?: string | null;
+  /** Para que el formulario que lo contiene no se envíe con la foto a medio subir. */
+  onUploadingChange?: (uploading: boolean) => void;
   className?: string;
 }
 
-export function AvatarPicker({ action, initialUrl, className }: AvatarPickerProps) {
+export function AvatarPicker({
+  action,
+  initialUrl,
+  onUploadingChange,
+  className,
+}: AvatarPickerProps) {
   const [state, dispatch, pending] = useActionState(action, null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const url = state?.avatarUrl ?? initialUrl ?? null;
+  // La foto vive acá y no en el state de la action: un error posterior reemplaza
+  // el state entero y borraría de la UI una foto que sí quedó guardada.
+  const [url, setUrl] = useState<string | null>(initialUrl ?? null);
+
+  useEffect(() => {
+    if (state?.avatarUrl) {
+      setUrl(state.avatarUrl);
+    }
+  }, [state?.avatarUrl]);
+
+  useEffect(() => {
+    onUploadingChange?.(pending);
+  }, [pending, onUploadingChange]);
+
   const label = pending ? "Subiendo..." : url ? "Cambiar foto" : "Agregar foto";
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
@@ -62,12 +89,17 @@ export function AvatarPicker({ action, initialUrl, className }: AvatarPickerProp
         <span className="font-display text-[13px] font-medium text-primary">{label}</span>
       </button>
 
+      {/* El control accesible es el botón de arriba: este input queda fuera del
+          foco y del árbol de accesibilidad para no duplicarlo. */}
       <input
         ref={inputRef}
         type="file"
         name="avatar"
         accept={ACCEPTED_MIME}
         onChange={handleChange}
+        disabled={pending}
+        tabIndex={-1}
+        aria-hidden="true"
         className="sr-only"
       />
 

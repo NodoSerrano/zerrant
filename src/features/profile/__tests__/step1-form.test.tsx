@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 const mockSaveOnboardingStep1 = vi.hoisted(() => vi.fn());
@@ -23,7 +23,29 @@ describe("Step1Form", () => {
   it("has no back control (onboarding cannot be skipped)", () => {
     render(<Step1Form />);
 
-    expect(document.querySelector("a")).toBeNull();
+    // Los únicos controles del paso 1 son la foto y el submit: cualquier chevron
+    // "atrás" (link o button) aparecería acá.
+    expect(screen.getAllByRole("button").map((el) => el.textContent)).toEqual([
+      "Agregar foto",
+      "Guardar y continuar",
+    ]);
+    expect(screen.queryAllByRole("link")).toHaveLength(0);
+  });
+
+  it("does not let the form be submitted while the photo is uploading", async () => {
+    mockUploadAvatar.mockReturnValue(new Promise(() => {}));
+    render(<Step1Form />);
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    Object.defineProperty(input, "files", {
+      value: [new File([new Uint8Array([0xff, 0xd8, 0xff])], "foto.jpg", { type: "image/jpeg" })],
+      configurable: true,
+    });
+    fireEvent.change(input);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Subiendo foto..." })).toBeDisabled(),
+    );
   });
 
   it("renders the identity fields with the Pencil labels and placeholders", () => {
