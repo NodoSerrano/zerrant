@@ -1,0 +1,48 @@
+name: Log merged PR to Hive RAG
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  log-to-rag:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Hive memory
+        env:
+          HIVE_WEBHOOK_TOKEN: ${{ secrets.HIVE_WEBHOOK_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_FILES: ${{ github.event.pull_request.changed_files }}
+          PR_ADDITIONS: ${{ github.event.pull_request.additions }}
+          PR_DELETIONS: ${{ github.event.pull_request.deletions }}
+        run: |
+          # All GitHub context goes through env vars (never inline expressions in run:)
+          for n in "$PR_NUMBER" "$PR_FILES" "$PR_ADDITIONS" "$PR_DELETIONS"; do
+            case "$n" in (''|*[!0-9]*) echo "::warning::Non-numeric PR field, skipping RAG log"; exit 0;; esac
+          done
+          if [ -z "$HIVE_WEBHOOK_TOKEN" ]; then
+            echo "::warning::HIVE_WEBHOOK_TOKEN missing"; exit 0
+          fi
+          curl -s -m 60 --retry 3 --retry-delay 5 -o /tmp/resp.json -w '%{http_code}' \
+            -X POST https://nogal-labs.com.ar/hive/api/webhooks/github-pr-merged \
+            -H "Content-Type: application/json" \
+            -H "X-Hive-Token: ${HIVE_WEBHOOK_TOKEN}" \
+            -d "$(jq -n \
+              --arg repo "$REPO" \
+              --arg title "$PR_TITLE" \
+              --arg body "$PR_BODY" \
+              --arg author "$PR_AUTHOR" \
+              --arg branch "$PR_BRANCH" \
+              --argjson number "$PR_NUMBER" \
+              --argjson files "$PR_FILES" \
+              --argjson additions "$PR_ADDITIONS" \
+              --argjson deletions "$PR_DELETIONS" \
+              '{repo: $repo, number: $number, title: $title, body: $body, author: $author, branch: $branch, files_changed: $files, additions: $additions, deletions: $deletions}')" | tee /tmp/code
+          cat /tmp/resp.json || true
+          [ "$(cat /tmp/code)" = "200" ] && echo "Logged to RAG" || echo "::warning::Hive RAG logging failed (HTTP $(cat /tmp/code)), continuing anyway"
