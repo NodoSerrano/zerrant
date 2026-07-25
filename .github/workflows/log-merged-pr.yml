@@ -1,0 +1,68 @@
+name: Log merged PR to RAG
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  log-to-rag:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build payload
+        id: payload
+        env:
+          REPO: ${{ github.repository }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_FILES: ${{ github.event.pull_request.changed_files }}
+          PR_ADDITIONS: ${{ github.event.pull_request.additions }}
+          PR_DELETIONS: ${{ github.event.pull_request.deletions }}
+        run: |
+          for n in "$PR_NUMBER" "$PR_FILES" "$PR_ADDITIONS" "$PR_DELETIONS"; do
+            case "$n" in (''|*[!0-9]*) echo "::warning::Non-numeric PR field, skipping"; exit 0;; esac
+          done
+          jq -n \
+            --arg repo "$REPO" \
+            --arg title "$PR_TITLE" \
+            --arg body "$PR_BODY" \
+            --arg author "$PR_AUTHOR" \
+            --arg branch "$PR_BRANCH" \
+            --argjson number "$PR_NUMBER" \
+            --argjson files "$PR_FILES" \
+            --argjson additions "$PR_ADDITIONS" \
+            --argjson deletions "$PR_DELETIONS" \
+            '{repo: $repo, number: $number, title: $title, body: $body, author: $author, branch: $branch, files_changed: $files, additions: $additions, deletions: $deletions}' \
+            > /tmp/pr.json
+          echo "ok=1" >> "$GITHUB_OUTPUT"
+
+      - name: Hive RAG
+        if: steps.payload.outputs.ok == '1'
+        env:
+          HIVE_WEBHOOK_TOKEN: ${{ secrets.HIVE_WEBHOOK_TOKEN }}
+        run: |
+          if [ -z "$HIVE_WEBHOOK_TOKEN" ]; then echo "::warning::HIVE_WEBHOOK_TOKEN missing"; exit 0; fi
+          code=$(curl -s -m 60 --retry 2 -o /tmp/h.json -w '%{http_code}' \
+            -X POST https://nogal-labs.com.ar/hive/api/webhooks/github-pr-merged \
+            -H "Content-Type: application/json" \
+            -H "X-Hive-Token: ${HIVE_WEBHOOK_TOKEN}" \
+            --data-binary @/tmp/pr.json)
+          cat /tmp/h.json || true
+          [ "$code" = "200" ] && echo "Hive OK" || echo "::warning::Hive RAG HTTP $code"
+
+      - name: Zerrant memory RAG
+        if: steps.payload.outputs.ok == '1'
+        env:
+          ZERRANT_WEBHOOK_TOKEN: ${{ secrets.ZERRANT_WEBHOOK_TOKEN }}
+        run: |
+          if [ -z "$ZERRANT_WEBHOOK_TOKEN" ]; then echo "::warning::ZERRANT_WEBHOOK_TOKEN missing"; exit 0; fi
+          code=$(curl -s -m 30 --retry 2 -o /tmp/z.json -w '%{http_code}' \
+            -X POST https://nogal-labs.com.ar/mcp/zerrant/webhooks/github-pr-merged \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${ZERRANT_WEBHOOK_TOKEN}" \
+            --data-binary @/tmp/pr.json)
+          cat /tmp/z.json || true
+          [ "$code" = "200" ] && echo "Zerrant memory OK" || echo "::warning::Zerrant memory HTTP $code"
