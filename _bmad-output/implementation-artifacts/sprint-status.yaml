@@ -1,5 +1,5 @@
 # generated: 2026-07-23T18:20:22-03:00
-# last_updated: 2026-07-24T22:30:00-03:00
+# last_updated: 2026-07-25T15:30:00-03:00
 # project: nodo
 # project_key: NOKEY
 # tracking_system: linear
@@ -43,7 +43,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: "2026-07-23T18:20:22-03:00"
-last_updated: "2026-07-24T22:30:00-03:00"
+last_updated: "2026-07-25T15:30:00-03:00"
 project: nodo
 project_key: NOKEY
 tracking_system: linear
@@ -84,8 +84,8 @@ development_status:
   epic-2-retrospective: optional
 
   epic-3: in-progress
-  3-1-avatar-storage-and-upload-pipeline: review
-  3-2-onboarding-step-1-ui-and-photo-1-5: backlog
+  3-1-avatar-storage-and-upload-pipeline: done
+  3-2-onboarding-step-1-ui-and-photo-1-5: review
   3-3-onboarding-step-2-ui-1-6: backlog
   3-4-tourist-profile-shell-2-7: ready-for-dev
   3-5-serrano-profile-shell-2-6: backlog

@@ -24,6 +24,7 @@ export type Database = {
           is_platform_admin: boolean;
           nombre: string | null;
           nombre_visible: Database["public"]["Enums"]["nombre_visible"];
+          onboarding_completado_en: string | null;
           sitio_url: string | null;
           tarifa_hora: number | null;
           tier: Database["public"]["Enums"]["tier"];
@@ -44,6 +45,7 @@ export type Database = {
           is_platform_admin?: boolean;
           nombre?: string | null;
           nombre_visible?: Database["public"]["Enums"]["nombre_visible"];
+          onboarding_completado_en?: string | null;
           sitio_url?: string | null;
           tarifa_hora?: number | null;
           tier?: Database["public"]["Enums"]["tier"];
@@ -64,6 +66,7 @@ export type Database = {
           is_platform_admin?: boolean;
           nombre?: string | null;
           nombre_visible?: Database["public"]["Enums"]["nombre_visible"];
+          onboarding_completado_en?: string | null;
           sitio_url?: string | null;
           tarifa_hora?: number | null;
           tier?: Database["public"]["Enums"]["tier"];

@@ -41,7 +41,7 @@ sources: []
 
 - **CAP-5**
   - **intent:** Onboarding steps (`1.5`, `1.6`) match Pencil structure, labels, and **real avatar photo upload** (storage wired, not a dead control).
-  - **success:** Step chrome (back, “Paso N de 2”), titles/subtitles, field set, and primary CTA labels match Pencil; user can upload a photo that persists to profile `avatar_url`; step data still persists via existing actions.
+  - **success:** Step chrome (“Paso N de 2”), titles/subtitles, field set, and primary CTA labels match Pencil; user can upload a photo that persists to profile `avatar_url`; step data still persists via existing actions. **No back control:** onboarding is mandatory and cannot be exited until step 2 is submitted (ZER-13; frame `bvpj5` updated accordingly). Required fields (nombre, apellido, fecha de nacimiento) are marked with an asterisk.
 
 - **CAP-6**
   - **intent:** Serrano profile (`2.6 · Perfil`) is a menu-shell identity screen, not a centered field grid.

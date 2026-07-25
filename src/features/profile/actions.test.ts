@@ -73,6 +73,61 @@ describe("saveOnboardingStep1", () => {
     expect(mocks.profilesUpdateEq).toHaveBeenCalledWith("id", "test-user-id");
   });
 
+  it("omits nombre_visible when the form does not send it", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = new FormData();
+    fd.set("nombre", "Juan");
+    fd.set("apellido", "Pérez");
+    fd.set("fecha_nacimiento", "1990-01-15");
+
+    try {
+      await saveOnboardingStep1(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith({
+      nombre: "Juan",
+      apellido: "Pérez",
+      apodo: null,
+      fecha_nacimiento: "1990-01-15",
+    });
+  });
+
+  it.each(["nombre", "apellido", "fecha_nacimiento"])(
+    "rejects without touching the DB when %s is missing",
+    async (missing) => {
+      mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+
+      const fd = new FormData();
+      fd.set("nombre", "Juan");
+      fd.set("apellido", "Pérez");
+      fd.set("fecha_nacimiento", "1990-01-15");
+      fd.delete(missing);
+
+      const result = await saveOnboardingStep1(null, fd);
+
+      expect(result).toEqual({ error: "Completá nombre, apellido y fecha de nacimiento" });
+      expect(mocks.profilesUpdate).not.toHaveBeenCalled();
+    },
+  );
+
+  it("rejects when a required field is only whitespace", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+
+    const fd = new FormData();
+    fd.set("nombre", "   ");
+    fd.set("apellido", "Pérez");
+    fd.set("fecha_nacimiento", "1990-01-15");
+
+    const result = await saveOnboardingStep1(null, fd);
+
+    expect(result).toEqual({ error: "Completá nombre, apellido y fecha de nacimiento" });
+    expect(mocks.profilesUpdate).not.toHaveBeenCalled();
+  });
+
   it("returns error when supabase update fails", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
     mocks.profilesUpdateEq.mockResolvedValue({
@@ -82,11 +137,13 @@ describe("saveOnboardingStep1", () => {
 
     const fd = new FormData();
     fd.set("nombre", "Juan");
+    fd.set("apellido", "Pérez");
+    fd.set("fecha_nacimiento", "1990-01-15");
     fd.set("nombre_visible", "nombre_apellido");
 
     const result = await saveOnboardingStep1(null, fd);
 
-    expect(result).toEqual({ error: "DB error" });
+    expect(result).toEqual({ error: "No pudimos guardar tus datos. Probá de nuevo." });
   });
 
   it("returns error when user is not authenticated", async () => {
@@ -96,11 +153,71 @@ describe("saveOnboardingStep1", () => {
 
     expect(result).toEqual({ error: "No autorizado" });
   });
+
+  it.each(["ayer", "1990-13-45", "90-01-15", "3000-01-01"])(
+    "rejects %s as fecha de nacimiento without touching the DB",
+    async (fecha) => {
+      mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+
+      const fd = new FormData();
+      fd.set("nombre", "Juan");
+      fd.set("apellido", "Pérez");
+      fd.set("fecha_nacimiento", fecha);
+
+      const result = await saveOnboardingStep1(null, fd);
+
+      expect(result).toEqual({ error: "Ingresá una fecha de nacimiento válida" });
+      expect(mocks.profilesUpdate).not.toHaveBeenCalled();
+    },
+  );
+
+  it("ignores a nombre_visible that is not one of the enum values", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = new FormData();
+    fd.set("nombre", "Juan");
+    fd.set("apellido", "Pérez");
+    fd.set("fecha_nacimiento", "1990-01-15");
+    fd.set("nombre_visible", "drop table profiles");
+
+    try {
+      await saveOnboardingStep1(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty("nombre_visible");
+  });
 });
 
 describe("saveOnboardingStep2", () => {
+  function step1Saved() {
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: { nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" },
+      error: null,
+    });
+  }
+
+  it("does not close the onboarding when step 1 was never saved", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: { nombre: null, apellido: null, fecha_nacimiento: null },
+      error: null,
+    });
+
+    try {
+      await saveOnboardingStep2(null, new FormData());
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate).not.toHaveBeenCalled();
+  });
+
   it("updates profile and redirects on success", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    step1Saved();
     mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
 
     const fd = new FormData();
@@ -118,12 +235,29 @@ describe("saveOnboardingStep2", () => {
       bio: "Hello I am Juan",
       contacto_telegram: "@juan",
       sitio_url: "https://example.com",
+      onboarding_completado_en: expect.any(String),
     });
     expect(mocks.profilesUpdateEq).toHaveBeenCalledWith("id", "test-user-id");
   });
 
+  it("closes the onboarding by stamping onboarding_completado_en", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    step1Saved();
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    try {
+      await saveOnboardingStep2(null, new FormData());
+    } catch {
+      // redirect throws
+    }
+
+    const update = mocks.profilesUpdate.mock.calls[0][0];
+    expect(Date.parse(update.onboarding_completado_en)).not.toBeNaN();
+  });
+
   it("returns error when supabase update fails", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    step1Saved();
     mocks.profilesUpdateEq.mockResolvedValue({
       data: null,
       error: { message: "DB error" },
@@ -131,7 +265,7 @@ describe("saveOnboardingStep2", () => {
 
     const result = await saveOnboardingStep2(null, new FormData());
 
-    expect(result).toEqual({ error: "DB error" });
+    expect(result).toEqual({ error: "No pudimos guardar tus datos. Probá de nuevo." });
   });
 
   it("returns error when user is not authenticated", async () => {
@@ -192,7 +326,7 @@ describe("updateProfile", () => {
 
     const result = await updateProfile(null, new FormData());
 
-    expect(result).toEqual({ error: "DB error" });
+    expect(result).toEqual({ error: "No pudimos guardar tus datos. Probá de nuevo." });
   });
 });
 
@@ -307,7 +441,7 @@ describe("uploadAvatar", () => {
 
     const result = await uploadAvatar(null, avatarForm(PNG_BYTES, "foto.png", "image/png"));
 
-    expect(result).toEqual({ error: "Storage lleno" });
+    expect(result).toEqual({ error: "No pudimos guardar la imagen. Probá de nuevo." });
     expect(mocks.profilesUpdate).not.toHaveBeenCalled();
   });
 
@@ -317,7 +451,7 @@ describe("uploadAvatar", () => {
 
     const result = await uploadAvatar(null, avatarForm(PNG_BYTES, "foto.png", "image/png"));
 
-    expect(result).toEqual({ error: "DB error" });
+    expect(result).toEqual({ error: "No pudimos guardar tus datos. Probá de nuevo." });
     expect(mocks.storageRemove).toHaveBeenCalledWith([
       expect.stringMatching(/^test-user-id\/[0-9a-f-]{36}\.png$/),
     ]);
