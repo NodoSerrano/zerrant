@@ -8,3 +8,4 @@ export { TabBar } from "./TabBar";
 export { TierBadge } from "./TierBadge";
 export { RoleChip } from "./RoleChip";
 export { DarkModeToggle } from "./DarkModeToggle";
+export { SignOutButton } from "./SignOutButton";

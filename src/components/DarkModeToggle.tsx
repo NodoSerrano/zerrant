@@ -10,12 +10,13 @@ export function DarkModeToggle() {
     <button
       type="button"
       onClick={toggle}
+      role="switch"
+      aria-checked={dark}
       aria-label={dark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
       className={cn(
-        "relative size-[46px] shrink-0 rounded-pill border p-[3px] transition-colors",
+        "relative h-[28px] w-[46px] shrink-0 rounded-pill border p-[3px] transition-colors",
         dark ? "bg-brand-blue border-brand-blue" : "bg-surface-inset border-border",
       )}
-      style={{ width: 46, height: 28 }}
     >
       <span
         className={cn(

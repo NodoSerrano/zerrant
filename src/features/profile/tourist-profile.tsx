@@ -1,8 +1,9 @@
-import { Mountain, UserRound, Moon, LogOut, ChevronRight } from "lucide-react";
+import { Mountain, Pencil, UserRound, Moon, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { TierBadge } from "@/components/TierBadge";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
+import { SignOutButton } from "@/components/SignOutButton";
 import { signOut } from "@/features/auth/actions";
 
 interface TouristProfileProps {
@@ -48,15 +49,18 @@ export function TouristProfile({ name, avatarUrl, email }: TouristProfileProps) 
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold text-text-primary">Mi perfil</h1>
+        <Link href="/profile/edit" aria-label="Editar perfil">
+          <Pencil className="size-5 text-text-secondary" />
+        </Link>
       </div>
 
       <div className="flex flex-col items-center gap-[14px] rounded-[24px] border border-border bg-surface p-4">
         <Avatar name={name} src={avatarUrl} size="lg" className="size-[60px]" />
         <div className="flex flex-col items-center gap-[5px]">
-          <h2 className="font-display text-lg font-bold text-text-primary">{name}</h2>
+          <h2 className="font-display text-lg font-bold text-text-primary truncate max-w-full">{name}</h2>
           <div className="flex items-center gap-2">
             <TierBadge tier="tourist" />
-            <span className="text-xs text-text-muted font-body">{email}</span>
+            <span className="text-xs text-text-muted font-body truncate max-w-[160px]">{email || "Sin correo"}</span>
           </div>
         </div>
       </div>
@@ -95,15 +99,7 @@ export function TouristProfile({ name, avatarUrl, email }: TouristProfileProps) 
         </div>
         <div className="h-px bg-border" />
         <form action={signOut}>
-          <button
-            type="submit"
-            className="flex w-full items-center gap-3 px-4 py-[15px]"
-          >
-            <span className="flex size-5 items-center justify-center shrink-0">
-              <LogOut className="size-5 text-coral" />
-            </span>
-            <span className="text-sm text-coral">Cerrar sesión</span>
-          </button>
+          <SignOutButton />
         </form>
       </div>
     </div>

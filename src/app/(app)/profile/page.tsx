@@ -30,11 +30,9 @@ export default async function ProfilePage() {
 
   if (isTourist) {
     return (
-      <TouristProfile name={name || "Usuario"} avatarUrl={profile.avatar_url} email={user.email!} />
+      <TouristProfile name={name || "Usuario"} avatarUrl={profile.avatar_url} email={user.email ?? ""} />
     );
   }
-
-  const isReadOnly = isTourist;
 
   return (
     <div className="flex flex-col gap-6">
