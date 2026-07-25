@@ -1,0 +1,39 @@
+name: Request Hive review
+
+# Solo PRs cuya base es main (opened / ready_for_review / reopened).
+# No corre en cada push (synchronize) para no quemar reviews en cada commit.
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened]
+    branches: [main]
+
+jobs:
+  request-review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create review task in Hive
+        env:
+          HIVE_WEBHOOK_TOKEN: ${{ secrets.HIVE_WEBHOOK_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # All GitHub context goes through env vars (never inline expressions in run:)
+          # to prevent command injection via branch names, titles, etc.
+          case "$PR_NUMBER" in (''|*[!0-9]*) echo "::warning::Non-numeric PR number, skipping"; exit 0;; esac
+          if [ -z "$HIVE_WEBHOOK_TOKEN" ]; then
+            echo "::warning::HIVE_WEBHOOK_TOKEN secret missing"; exit 0
+          fi
+          # Best-effort: a failed review request must never block a PR
+          curl -s -m 30 --retry 3 --retry-delay 5 -o /tmp/resp.json -w '%{http_code}' \
+            -X POST https://nogal-labs.com.ar/hive/api/webhooks/github-pr-opened \
+            -H "Content-Type: application/json" \
+            -H "X-Hive-Token: ${HIVE_WEBHOOK_TOKEN}" \
+            -d "$(jq -n \
+              --arg repo "$REPO" \
+              --arg title "$PR_TITLE" \
+              --argjson number "$PR_NUMBER" \
+              '{repo: $repo, number: $number, title: $title}')" | tee /tmp/code
+          cat /tmp/resp.json || true
+          [ "$(cat /tmp/code)" = "200" ] && echo "Review task created" || echo "::warning::Hive review request failed (HTTP $(cat /tmp/code)), continuing anyway"
