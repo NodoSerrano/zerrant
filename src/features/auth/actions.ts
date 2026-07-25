@@ -90,6 +90,11 @@ export async function resetPassword(_prevState: { error: string } | null, formDa
   const supabase = await createClient();
 
   const password = formData.get("password") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
+
+  if (password !== confirmPassword) {
+    return { error: "Las contraseñas no coinciden" };
+  }
 
   const { error } = await supabase.auth.updateUser({ password });
 
