@@ -4,6 +4,7 @@ import { TierBadge } from "@/components/TierBadge";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { SecondaryButton } from "@/components/SecondaryButton";
 import { displayName } from "@/features/profile/displayName";
+import { TouristProfile } from "@/features/profile/tourist-profile";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -26,6 +27,13 @@ export default async function ProfilePage() {
 
   const name = displayName(profile);
   const isTourist = profile.tier === "tourist";
+
+  if (isTourist) {
+    return (
+      <TouristProfile name={name || "Usuario"} avatarUrl={profile.avatar_url} email={user.email!} />
+    );
+  }
+
   const isReadOnly = isTourist;
 
   return (

@@ -7,3 +7,4 @@ export { StatusBar } from "./StatusBar";
 export { TabBar } from "./TabBar";
 export { TierBadge } from "./TierBadge";
 export { RoleChip } from "./RoleChip";
+export { DarkModeToggle } from "./DarkModeToggle";

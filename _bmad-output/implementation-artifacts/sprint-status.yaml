@@ -1,5 +1,5 @@
 # generated: 2026-07-23T18:20:22-03:00
-# last_updated: 2026-07-24T20:15:00-03:00
+# last_updated: 2026-07-24T21:55:00-03:00
 # project: nodo
 # project_key: NOKEY
 # tracking_system: linear
@@ -83,13 +83,13 @@ development_status:
   2-3-recovery-and-reset-password-1-3-1-4: backlog
   epic-2-retrospective: optional
 
-  epic-3: backlog
-  3-1-avatar-storage-and-upload-pipeline: backlog
-  3-2-onboarding-step-1-ui-and-photo-1-5: backlog
-  3-3-onboarding-step-2-ui-1-6: backlog
-  3-4-tourist-profile-shell-2-7: backlog
-  3-5-serrano-profile-shell-2-6: backlog
-  3-6-edit-profile-ui-and-avatar-change-3-2: backlog
+  epic-3: in-progress
+   3-1-avatar-storage-and-upload-pipeline: backlog
+   3-2-onboarding-step-1-ui-and-photo-1-5: backlog
+   3-3-onboarding-step-2-ui-1-6: backlog
+   3-4-tourist-profile-shell-2-7: review
+   3-5-serrano-profile-shell-2-6: backlog
+   3-6-edit-profile-ui-and-avatar-change-3-2: backlog
   epic-3-retrospective: optional
 
   epic-4: backlog
