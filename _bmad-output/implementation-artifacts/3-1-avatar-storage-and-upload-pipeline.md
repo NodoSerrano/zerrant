@@ -79,10 +79,35 @@ so that my avatar persists in production (not a fake control).
 - [x] **T5 — Migración + config local** (AC: 1)
   - [x] `20260725002350_avatars_storage.sql`, bloque `[storage.buckets.avatars]` en `config.toml`
 - [x] **T6 — `next.config.ts`: `images.remotePatterns`** (AC: 2)
-- [ ] **T7 — Verify**
-  - [x] `pnpm test` 196/196, `pnpm typecheck`, `pnpm lint`
-  - [ ] Migración + RLS contra Supabase local
+- [x] **T7 — Verify**
+  - [x] `pnpm test` 199/199, `pnpm typecheck`, `pnpm lint`
+  - [x] Migración aplicada en Supabase local: bucket y 4 políticas confirmadas en `pg_policies`
+  - [x] RLS probado con dos usuarios reales — ver "Verificación contra Supabase local"
+  - [x] Conversión HEIC probada con un archivo real (`avatar-heic.integration.test.ts`)
   - [ ] `supabase db push` a prod (decisión del owner)
+
+## Verificación contra Supabase local
+
+`supabase start` + `psql` confirman que la migración aplica limpia:
+
+```
+20260725002350 | avatars_storage        -- en schema_migrations
+avatars | public=t | 5242880 | {image/jpeg,image/png,image/webp}
+4 políticas: SELECT {public}, INSERT/UPDATE/DELETE {authenticated}
+```
+
+Prueba de RLS con dos usuarios reales creados vía admin API (lo que los mocks no pueden cubrir):
+
+| #   | Caso                        | Esperado | Resultado                                           |
+| --- | --------------------------- | -------- | --------------------------------------------------- |
+| 1   | A sube a `A/propio.png`     | 200      | ✅ 200                                              |
+| 2   | A sube a `B/robado.png`     | 4xx      | ✅ 403 `new row violates row-level security policy` |
+| 3   | A sube a la raíz del bucket | 4xx      | ✅ 403                                              |
+| 4   | Anónimo sube a `A/`         | 4xx      | ✅ 403                                              |
+| 5   | Lectura pública sin token   | 200      | ✅ 200, 67 bytes                                    |
+| 6   | Subir un PDF                | 4xx      | ✅ 415 `mime type application/pdf is not supported` |
+
+El caso 3 importa: sin carpeta, `(storage.foldername(name))[1]` no coincide con ningún `auth.uid()`, así que la política deniega — no hay forma de dejar objetos sueltos fuera del scope de un usuario.
 
 ## Dev Notes
 
@@ -127,8 +152,9 @@ Tres niveles, cada uno con su RED previo:
 1. **Helpers puros** (`avatar.test.ts`) — sin mocks, bytes reales construidos a mano.
 2. **Conversión** (`avatar-convert.test.ts`) — `heic-convert` mockeado; se verifica que el passthrough no lo invoque y que HEIC sí.
 3. **Action** (`actions.test.ts`) — Supabase mockeado siguiendo el patrón `vi.hoisted` ya existente en el repo; `ensureWebSafeImage` mockeada porque tiene su propio test.
+4. **Integración HEIC** (`avatar-heic.integration.test.ts`) — sin mocks: corre libheif de verdad sobre `__fixtures__/sample.heic` y verifica que la salida tenga firma JPEG. Es lo único que prueba que la foto de un iPhone termine siendo usable.
 
-Lo que los mocks **no** pueden probar (bucket real, políticas RLS) se verifica contra Supabase local — ver Verificación.
+Lo que ni siquiera eso puede probar (bucket real, políticas RLS) se verificó contra Supabase local — ver "Verificación contra Supabase local".
 
 ### Grey-box search targets (post-implementation)
 
@@ -179,9 +205,10 @@ claude-opus-5
 
 ### Completion Notes List
 
-- 196/196 tests (145 antes de la story: +51)
+- 199/199 tests (145 antes de la story: +54)
 - `pnpm typecheck` y `pnpm lint` limpios
-- Verificación de bucket/RLS contra Supabase local: pendiente de arranque de Docker
+- Migración, bucket y las 4 políticas verificados contra Supabase local; RLS probado con dos usuarios reales (6/6 casos)
+- Conversión HEIC probada sin mocks contra un archivo real
 - `supabase db push` NO ejecutado — el repo no está linkeado y la decisión es del owner
 
 ### Change Log
@@ -196,6 +223,8 @@ claude-opus-5
 - `src/features/profile/avatar.test.ts` (new)
 - `src/features/profile/avatar-convert.ts` (new)
 - `src/features/profile/avatar-convert.test.ts` (new)
+- `src/features/profile/avatar-heic.integration.test.ts` (new)
+- `src/features/profile/__fixtures__/sample.heic` (new)
 - `supabase/migrations/20260725002350_avatars_storage.sql` (new)
 - `src/features/profile/actions.ts` (modified)
 - `src/features/profile/actions.test.ts` (modified)
