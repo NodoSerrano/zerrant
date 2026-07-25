@@ -21,6 +21,7 @@ function makeProfile(overrides: Partial<Profile> = {}): Profile {
     tarifa_hora: null,
     visibilidad_tarifa: "privada",
     aprobado_en: null,
+    onboarding_completado_en: null,
     created_at: new Date().toISOString(),
     ...overrides,
   };

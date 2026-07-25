@@ -83,6 +83,9 @@ export async function saveOnboardingStep2(
     bio: (formData.get("bio") as string) || null,
     contacto_telegram: (formData.get("contacto_telegram") as string) || null,
     sitio_url: (formData.get("sitio_url") as string) || null,
+    // Cierra el onboarding: es el único dato que prueba haber pasado por el paso 2,
+    // porque sus campos son todos opcionales.
+    onboarding_completado_en: new Date().toISOString(),
   };
 
   const { error } = await supabase.from("profiles").update(update).eq("id", user.id);

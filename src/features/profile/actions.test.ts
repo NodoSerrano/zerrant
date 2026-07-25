@@ -175,8 +175,23 @@ describe("saveOnboardingStep2", () => {
       bio: "Hello I am Juan",
       contacto_telegram: "@juan",
       sitio_url: "https://example.com",
+      onboarding_completado_en: expect.any(String),
     });
     expect(mocks.profilesUpdateEq).toHaveBeenCalledWith("id", "test-user-id");
+  });
+
+  it("closes the onboarding by stamping onboarding_completado_en", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    try {
+      await saveOnboardingStep2(null, new FormData());
+    } catch {
+      // redirect throws
+    }
+
+    const update = mocks.profilesUpdate.mock.calls[0][0];
+    expect(Date.parse(update.onboarding_completado_en)).not.toBeNaN();
   });
 
   it("returns error when supabase update fails", async () => {

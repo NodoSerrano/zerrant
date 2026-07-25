@@ -43,14 +43,25 @@ beforeEach(() => {
 
 function onboardingDone() {
   mockProfileSingle.mockResolvedValue({
-    data: { nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" },
+    data: {
+      nombre: "Juan",
+      apellido: "Pérez",
+      fecha_nacimiento: "1990-01-15",
+      onboarding_completado_en: "2026-07-25T00:00:00Z",
+    },
     error: null,
   });
 }
 
 function onboardingPending(overrides: Record<string, string | null> = {}) {
   mockProfileSingle.mockResolvedValue({
-    data: { nombre: "Juan", apellido: null, fecha_nacimiento: null, ...overrides },
+    data: {
+      nombre: null,
+      apellido: null,
+      fecha_nacimiento: null,
+      onboarding_completado_en: null,
+      ...overrides,
+    },
     error: null,
   });
 }
@@ -154,6 +165,26 @@ describe("proxy", () => {
   it("does not bounce inside /onboarding while it is unfinished", async () => {
     authAs();
     onboardingPending();
+
+    const result = await proxy(makeRequest("/onboarding/step2"));
+
+    expect(result.status).toBe(200);
+  });
+
+  it("keeps the user in the onboarding until step 2 is submitted", async () => {
+    authAs();
+    // Paso 1 guardado, paso 2 todavía no: la marca sigue vacía.
+    onboardingPending({ nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" });
+
+    const result = await proxy(makeRequest("/nodo/tasks"));
+
+    expect(result.status).toBe(307);
+    expect(result.headers.get("location")).toBe("https://example.com/onboarding/step2");
+  });
+
+  it("resumes at step 2 when only step 1 was saved", async () => {
+    authAs();
+    onboardingPending({ nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" });
 
     const result = await proxy(makeRequest("/onboarding/step2"));
 

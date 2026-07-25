@@ -59,23 +59,24 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // El onboarding es de una sola vez: mientras falten los datos del paso 1 no se
-  // sale de /onboarding, y una vez completos no se vuelve a entrar (esos campos
-  // se editan en /profile/edit).
+  // El onboarding es de una sola vez: no se sale de /onboarding hasta terminar el
+  // paso 2, y una vez terminado no se vuelve a entrar (esos datos se editan en
+  // /profile/edit).
   if (user && isProtected) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("nombre, apellido, fecha_nacimiento")
+      .select("nombre, apellido, fecha_nacimiento, onboarding_completado_en")
       .eq("id", user.id)
       .single();
 
-    const onboardingDone = Boolean(
-      profile?.nombre && profile?.apellido && profile?.fecha_nacimiento,
-    );
+    const onboardingDone = Boolean(profile?.onboarding_completado_en);
     const isOnboarding = pathname.startsWith("/onboarding");
 
     if (!onboardingDone && !isOnboarding) {
-      return NextResponse.redirect(new URL("/onboarding/step1", request.url));
+      // Si el paso 1 ya está guardado, se retoma donde quedó.
+      const step1Done = Boolean(profile?.nombre && profile?.apellido && profile?.fecha_nacimiento);
+      const resume = step1Done ? "/onboarding/step2" : "/onboarding/step1";
+      return NextResponse.redirect(new URL(resume, request.url));
     }
 
     if (onboardingDone && isOnboarding) {

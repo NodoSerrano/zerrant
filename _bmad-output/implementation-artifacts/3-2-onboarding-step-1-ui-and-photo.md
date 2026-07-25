@@ -41,9 +41,10 @@ para que mi perfil arranque con identidad de verdad y no con un formulario gené
    **(FR17, FR21)**
 
 5. **Given** que el onboarding es obligatorio
-   **When** el usuario autenticado navega a cualquier ruta protegida sin haber completado el paso 1
-   **Then** el proxy lo manda a `/onboarding/step1`
-   **And** cuando ya lo completó (`nombre && apellido && fecha_nacimiento`), entrar a `/onboarding` lo saca a `/` — esos datos se editan en `/profile/edit`
+   **When** el usuario autenticado navega a cualquier ruta protegida sin haber terminado el onboarding
+   **Then** el proxy lo manda al paso donde quedó (`/onboarding/step2` si el paso 1 ya está guardado, si no `/onboarding/step1`)
+   **And** el onboarding se cierra al enviar el paso 2, que estampa `profiles.onboarding_completado_en`
+   **And** con el onboarding cerrado, entrar a `/onboarding` saca a `/` — esos datos se editan en `/profile/edit`
    **(FR17)**
 
 6. **Given** TDD obligatorio
@@ -72,7 +73,8 @@ para que mi perfil arranque con identidad de verdad y no con un formulario gené
 - [x] **T4 — Red→Green: gate en `proxy.ts`** (AC: 5)
   - [x] 6 tests nuevos; `/nodo` faltaba en `PROTECTED_PREFIXES` y se agregó
 - [x] **T5 — Fix de grants (bloqueante, ver abajo)**
-- [x] **T6 — Verify**: 229/229 tests, typecheck, lint, y verificación end-to-end contra Supabase local
+- [x] **T6 — Red→Green: `onboarding_completado_en`** (AC: 5) — el paso 2 quedaba inalcanzable, ver abajo
+- [x] **T7 — Verify**: 232/232 tests, typecheck, lint, y verificación end-to-end contra Supabase local
 
 ## El bug de grants que apareció verificando
 
@@ -103,6 +105,17 @@ Script ad-hoc (usuario real vía `signUp`, cookies de `@supabase/ssr`, fetch con
 | A medias: prefill de nombre/apellido + preview  | ✅                                    |
 
 Lo único que no cubre: el POST del server action `uploadAvatar` desde el browser (protocolo de server actions). Esa rama está cubierta por los tests unitarios de `AvatarPicker` + `actions.test.ts`, y la tubería de Storage se verificó en ZER-12.
+
+## Fix post-prueba: el paso 2 quedaba inalcanzable
+
+Probando en el browser: al guardar el paso 1, la app mandaba directo a `/` y el paso 2 nunca aparecía. La causa es el criterio inferido: apenas se guardaban nombre/apellido/fecha, el gate daba el onboarding por cerrado y el redirect de reentrada pisaba el `redirect("/onboarding/step2")` de la action.
+
+El paso 2 tiene todos sus campos opcionales, así que no hay dato del que inferir haberlo pasado. Fix: `profiles.onboarding_completado_en` (migración `20260725140000_onboarding_completado.sql`, con backfill de los perfiles que ya tenían el paso 1 hecho), estampado por `saveOnboardingStep2`. El gate ahora:
+
+- sin marca y fuera de `/onboarding` → redirige al paso donde quedó (step2 si el paso 1 está guardado, si no step1)
+- con marca y dentro de `/onboarding` → `/`
+
+Flujo completo verificado end-to-end (usuario real, 7/7): nuevo → step1; con el paso 1 guardado → step2 visible y la app todavía bloqueada (retomando en step2); con el paso 2 enviado → la app se abre y `/onboarding` rebota a `/`.
 
 ## Dev Notes
 
@@ -163,16 +176,17 @@ claude-opus-5
 
 ### Completion Notes List
 
-- 229/229 tests (199 antes de la story: +30)
+- 232/232 tests (199 antes de la story: +33)
 - `pnpm typecheck` y `pnpm lint` limpios
 - Migración de grants aplicada en local (`supabase migration up --local`) y verificada con un usuario real
 - Pendiente del owner: `supabase db push` a prod (incluye la migración de ZER-12 y ésta) y una pasada visual en el browser a 390px contra el frame `bvpj5`
 
 ### Change Log
 
-| Fecha      | Cambio                                                         |
-| ---------- | -------------------------------------------------------------- |
-| 2026-07-25 | Story implementada en `juanpe44/zer-13-onboarding-step1-photo` |
+| Fecha      | Cambio                                                           |
+| ---------- | ---------------------------------------------------------------- |
+| 2026-07-25 | Story implementada en `juanpe44/zer-13-onboarding-step1-photo`   |
+| 2026-07-25 | Fix: el paso 2 quedaba inalcanzable → `onboarding_completado_en` |
 
 ### File List
 
