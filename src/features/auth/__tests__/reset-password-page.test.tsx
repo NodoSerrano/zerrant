@@ -34,10 +34,11 @@ describe("ResetPasswordPage", () => {
     expect(screen.getByRole("button", { name: "Guardar contraseña" })).toBeInTheDocument();
   });
 
-  it("renders a back-to-login link", () => {
+  it("renders the top back-nav chevron linking to login (no footer link, per Pencil)", () => {
     render(<ResetPasswordPage />);
-    const back = screen.getByText("Volver al inicio de sesión");
-    expect(back.closest("a")).toHaveAttribute("href", "/auth/login");
+    const back = screen.getByRole("link", { name: "Volver" });
+    expect(back).toHaveAttribute("href", "/auth/login");
+    expect(screen.queryByText("Volver al inicio de sesión")).not.toBeInTheDocument();
   });
 
   it("shows error message after failed submission", async () => {

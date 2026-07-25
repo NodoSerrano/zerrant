@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { ChevronLeft, LockKeyhole, ArrowLeft } from "lucide-react";
+import { ChevronLeft, LockKeyhole } from "lucide-react";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { resetPassword } from "@/features/auth/actions";
@@ -62,16 +62,6 @@ export default function ResetPasswordPage() {
           {pending ? "Guardando..." : "Guardar contraseña"}
         </PrimaryButton>
       </form>
-
-      <div className="flex items-center justify-center">
-        <Link
-          href="/auth/login"
-          className="flex items-center gap-1.5 text-[13px] font-semibold text-brand-green hover:underline"
-        >
-          <ArrowLeft size={15} />
-          Volver al inicio de sesión
-        </Link>
-      </div>
     </div>
   );
 }

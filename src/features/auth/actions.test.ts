@@ -205,6 +205,17 @@ describe("resetPassword", () => {
     expect(authMock.updateUser).not.toHaveBeenCalled();
   });
 
+  it("returns a length error and does not call updateUser when password is too short", async () => {
+    const fd = new FormData();
+    fd.set("password", "123");
+    fd.set("confirmPassword", "123");
+
+    const result = await resetPassword(null, fd);
+
+    expect(result).toEqual({ error: "La contraseña debe tener al menos 6 caracteres" });
+    expect(authMock.updateUser).not.toHaveBeenCalled();
+  });
+
   it("returns error message when supabase returns an error", async () => {
     authMock.updateUser.mockResolvedValue({
       error: { message: "Password too weak" },
