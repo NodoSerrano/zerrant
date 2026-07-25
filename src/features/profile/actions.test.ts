@@ -4,6 +4,11 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   profilesUpdate: vi.fn(),
   profilesUpdateEq: vi.fn(),
+  profilesSelectSingle: vi.fn(),
+  storageUpload: vi.fn(),
+  storageGetPublicUrl: vi.fn(),
+  storageRemove: vi.fn(),
+  ensureWebSafeImage: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -13,11 +18,28 @@ vi.mock("@/lib/supabase/server", () => ({
       update: mocks.profilesUpdate.mockImplementation(() => ({
         eq: mocks.profilesUpdateEq,
       })),
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({ single: mocks.profilesSelectSingle })),
+      })),
     })),
+    storage: {
+      from: vi.fn(() => ({
+        upload: mocks.storageUpload,
+        getPublicUrl: mocks.storageGetPublicUrl,
+        remove: mocks.storageRemove,
+      })),
+    },
   }),
 }));
 
-import { saveOnboardingStep1, saveOnboardingStep2, updateProfile } from "./actions";
+// La conversión real tiene su propio test en avatar-convert.test.ts; acá sólo
+// verificamos que la action la use.
+vi.mock("./avatar-convert", () => ({ ensureWebSafeImage: mocks.ensureWebSafeImage }));
+
+// revalidatePath necesita el store de Next, que no existe fuera de un request.
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+
+import { saveOnboardingStep1, saveOnboardingStep2, updateProfile, uploadAvatar } from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -171,5 +193,160 @@ describe("updateProfile", () => {
     const result = await updateProfile(null, new FormData());
 
     expect(result).toEqual({ error: "DB error" });
+  });
+});
+
+const PNG_BYTES = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
+const HEIC_BYTES = new Uint8Array([
+  0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63,
+]);
+const PUBLIC_URL = "https://proj.supabase.co/storage/v1/object/public/avatars/test-user-id/new.png";
+
+function avatarForm(bytes: Uint8Array, name: string, type: string): FormData {
+  const fd = new FormData();
+  fd.set("avatar", new File([bytes as BlobPart], name, { type }));
+  return fd;
+}
+
+function happyPath() {
+  mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+  mocks.ensureWebSafeImage.mockImplementation(async (bytes: Uint8Array, mime: string) => ({
+    bytes,
+    mime,
+  }));
+  mocks.storageUpload.mockResolvedValue({ data: { path: "x" }, error: null });
+  mocks.storageGetPublicUrl.mockReturnValue({ data: { publicUrl: PUBLIC_URL } });
+  mocks.profilesSelectSingle.mockResolvedValue({ data: { avatar_url: null }, error: null });
+  mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+  mocks.storageRemove.mockResolvedValue({ data: null, error: null });
+}
+
+describe("uploadAvatar", () => {
+  it("returns error when user is not authenticated", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+
+    const result = await uploadAvatar(null, avatarForm(PNG_BYTES, "foto.png", "image/png"));
+
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.storageUpload).not.toHaveBeenCalled();
+  });
+
+  it("returns error when no file was provided", async () => {
+    happyPath();
+
+    const result = await uploadAvatar(null, new FormData());
+
+    expect(result).toEqual({ error: "Seleccioná una imagen" });
+    expect(mocks.storageUpload).not.toHaveBeenCalled();
+  });
+
+  it("rejects a disallowed mime type without touching storage", async () => {
+    happyPath();
+
+    const result = await uploadAvatar(null, avatarForm(PNG_BYTES, "doc.pdf", "application/pdf"));
+
+    expect(result).toEqual({ error: "Formato no permitido. Usá JPG, PNG, WebP o HEIC" });
+    expect(mocks.storageUpload).not.toHaveBeenCalled();
+  });
+
+  it("rejects a file whose bytes are not really an image", async () => {
+    happyPath();
+    const notAnImage = new Uint8Array([0x4d, 0x5a, 0x90, 0x00, 0x03, 0, 0, 0, 4, 0, 0, 0]);
+
+    const result = await uploadAvatar(null, avatarForm(notAnImage, "virus.png", "image/png"));
+
+    expect(result).toEqual({ error: "El archivo no es una imagen válida" });
+    expect(mocks.storageUpload).not.toHaveBeenCalled();
+  });
+
+  it("uploads the image and persists avatar_url", async () => {
+    happyPath();
+
+    const result = await uploadAvatar(null, avatarForm(PNG_BYTES, "foto.png", "image/png"));
+
+    expect(mocks.storageUpload).toHaveBeenCalledWith(
+      expect.stringMatching(/^test-user-id\/[0-9a-f-]{36}\.png$/),
+      expect.any(Uint8Array),
+      expect.objectContaining({ contentType: "image/png", upsert: false }),
+    );
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith({ avatar_url: PUBLIC_URL });
+    expect(mocks.profilesUpdateEq).toHaveBeenCalledWith("id", "test-user-id");
+    expect(result).toEqual({ avatarUrl: PUBLIC_URL });
+  });
+
+  it("converts HEIC to JPEG before uploading", async () => {
+    happyPath();
+    mocks.ensureWebSafeImage.mockResolvedValue({
+      bytes: new Uint8Array([1, 2, 3]),
+      mime: "image/jpeg",
+    });
+
+    await uploadAvatar(null, avatarForm(HEIC_BYTES, "foto.heic", "image/heic"));
+
+    expect(mocks.ensureWebSafeImage).toHaveBeenCalledWith(expect.any(Uint8Array), "image/heic");
+    expect(mocks.storageUpload).toHaveBeenCalledWith(
+      expect.stringMatching(/\.jpg$/),
+      expect.any(Uint8Array),
+      expect.objectContaining({ contentType: "image/jpeg" }),
+    );
+  });
+
+  it("returns the conversion error when HEIC cannot be decoded", async () => {
+    happyPath();
+    mocks.ensureWebSafeImage.mockRejectedValue(new Error("No pudimos procesar la imagen HEIC"));
+
+    const result = await uploadAvatar(null, avatarForm(HEIC_BYTES, "foto.heic", "image/heic"));
+
+    expect(result).toEqual({ error: "No pudimos procesar la imagen HEIC" });
+    expect(mocks.storageUpload).not.toHaveBeenCalled();
+  });
+
+  it("returns error and skips the db write when the upload fails", async () => {
+    happyPath();
+    mocks.storageUpload.mockResolvedValue({ data: null, error: { message: "Storage lleno" } });
+
+    const result = await uploadAvatar(null, avatarForm(PNG_BYTES, "foto.png", "image/png"));
+
+    expect(result).toEqual({ error: "Storage lleno" });
+    expect(mocks.profilesUpdate).not.toHaveBeenCalled();
+  });
+
+  it("removes the orphan object when the profile update fails", async () => {
+    happyPath();
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: { message: "DB error" } });
+
+    const result = await uploadAvatar(null, avatarForm(PNG_BYTES, "foto.png", "image/png"));
+
+    expect(result).toEqual({ error: "DB error" });
+    expect(mocks.storageRemove).toHaveBeenCalledWith([
+      expect.stringMatching(/^test-user-id\/[0-9a-f-]{36}\.png$/),
+    ]);
+  });
+
+  it("deletes the previous avatar object after a successful replacement", async () => {
+    happyPath();
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: {
+        avatar_url:
+          "https://proj.supabase.co/storage/v1/object/public/avatars/test-user-id/old.png",
+      },
+      error: null,
+    });
+
+    await uploadAvatar(null, avatarForm(PNG_BYTES, "foto.png", "image/png"));
+
+    expect(mocks.storageRemove).toHaveBeenCalledWith(["test-user-id/old.png"]);
+  });
+
+  it("does not try to delete an avatar hosted outside our bucket", async () => {
+    happyPath();
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: { avatar_url: "https://gravatar.com/avatar/abc.png" },
+      error: null,
+    });
+
+    await uploadAvatar(null, avatarForm(PNG_BYTES, "foto.png", "image/png"));
+
+    expect(mocks.storageRemove).not.toHaveBeenCalled();
   });
 });
