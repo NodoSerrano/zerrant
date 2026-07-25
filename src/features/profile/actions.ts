@@ -3,6 +3,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import {
+  AVATAR_BUCKET,
+  avatarObjectPath,
+  avatarPathFromPublicUrl,
+  sniffImageType,
+  validateAvatarFile,
+} from "./avatar";
+import { ensureWebSafeImage } from "./avatar-convert";
 import type { ProfileUpdate } from "./types";
 
 export async function saveOnboardingStep1(
@@ -65,6 +73,93 @@ export async function saveOnboardingStep2(
 
   revalidatePath("/", "layout");
   redirect("/profile");
+}
+
+export type AvatarUploadState = { error?: string; avatarUrl?: string };
+
+/**
+ * A diferencia del resto de las actions de este archivo, ésta no redirige:
+ * devuelve la URL para que onboarding y editar-perfil puedan mostrar el preview.
+ */
+export async function uploadAvatar(
+  _prevState: AvatarUploadState | null,
+  formData: FormData,
+): Promise<AvatarUploadState> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "No autorizado" };
+  }
+
+  const file = formData.get("avatar");
+
+  const validationError = validateAvatarFile(file);
+  if (validationError) {
+    return { error: validationError };
+  }
+
+  const original = new Uint8Array(await (file as File).arrayBuffer());
+
+  // El mime que declara el browser no es confiable: mandamos los bytes.
+  const sniffed = sniffImageType(original);
+  if (!sniffed) {
+    return { error: "El archivo no es una imagen válida" };
+  }
+
+  let image: { bytes: Uint8Array; mime: string };
+  try {
+    image = await ensureWebSafeImage(original, sniffed);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No pudimos procesar la imagen" };
+  }
+
+  const path = avatarObjectPath(user.id, image.mime);
+
+  const { error: uploadError } = await supabase.storage
+    .from(AVATAR_BUCKET)
+    .upload(path, image.bytes, {
+      contentType: image.mime,
+      upsert: false,
+      cacheControl: "31536000",
+    });
+
+  if (uploadError) {
+    return { error: uploadError.message };
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path);
+
+  const { data: previous } = await supabase
+    .from("profiles")
+    .select("avatar_url")
+    .eq("id", user.id)
+    .single();
+
+  const { error: dbError } = await supabase
+    .from("profiles")
+    .update({ avatar_url: publicUrl })
+    .eq("id", user.id);
+
+  if (dbError) {
+    // No dejamos el objeto huérfano si el perfil no llegó a apuntarlo.
+    await supabase.storage.from(AVATAR_BUCKET).remove([path]);
+    return { error: dbError.message };
+  }
+
+  const previousPath = avatarPathFromPublicUrl(previous?.avatar_url ?? null);
+  if (previousPath && previousPath !== path) {
+    await supabase.storage.from(AVATAR_BUCKET).remove([previousPath]);
+  }
+
+  revalidatePath("/", "layout");
+
+  return { avatarUrl: publicUrl };
 }
 
 export async function updateProfile(_prevState: { error: string } | null, formData: FormData) {
