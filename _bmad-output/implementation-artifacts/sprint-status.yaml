@@ -1,5 +1,5 @@
 # generated: 2026-07-23T18:20:22-03:00
-# last_updated: 2026-07-25T15:30:00-03:00
+# last_updated: 2026-07-27T00:00:00-03:00
 # project: nodo
 # project_key: NOKEY
 # tracking_system: linear
@@ -97,5 +97,5 @@ development_status:
   4-2-empty-tasks-state-7-2: done
   4-3-nodo-tasks-hub-2-3: backlog
   4-4-task-detail-4-1: backlog
-  4-5-create-task-4-2: backlog
+  4-5-create-task-4-2: ready-for-dev
   epic-4-retrospective: optional
