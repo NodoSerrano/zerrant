@@ -1,22 +1,23 @@
+import { ChevronLeft, Flame, Tag, User } from "lucide-react";
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { displayName } from "@/features/profile/displayName";
 import { TakeTaskButton, MarkDoneButton, VerifyTaskButton } from "@/features/tasks/task-actions";
-import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import {
+  getCategoriaIcon,
+  getCategoriaLabel,
+  getEstadoBadge,
+  getUrgencia,
+} from "@/features/tasks/taskDisplay";
+import { relativeTime } from "@/lib/time";
+import { cn } from "@/lib/utils";
 import type { Profile } from "@/features/profile/types";
 
-const ESTADO_LABELS: Record<string, string> = {
-  abierta: "Abierta",
-  tomada: "Tomada",
-  hecha: "Hecha",
-  verificada: "Verificada",
-};
-
-const ESTADO_CLASSES: Record<string, string> = {
-  abierta: "bg-warm-yellow/20 text-warm-yellow",
-  tomada: "bg-blue-raw/20 text-brand-blue",
-  hecha: "bg-mint-raw/20 text-brand-mint",
-  verificada: "bg-surface-inset text-text-muted",
+// Mensajes de cierre: estados donde no hay acción posible y sólo se informa.
+const ESTADO_MESSAGES: Record<string, string> = {
+  verificada: "Tarea verificada y completada.",
+  cancelada: "Esta tarea fue cancelada.",
 };
 
 export default async function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -44,91 +45,98 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     .single();
 
   const creador = task.creador as unknown as Profile | null;
-  const tomador = task.tomador as unknown as Profile | null;
 
   const isOwner = task.creado_por === user.id;
   const isTaker = task.tomada_por === user.id;
   const isAdmin = currentProfile?.is_platform_admin ?? false;
-  const isSerrano = currentProfile && currentProfile.tier !== "tourist";
+  const isSerrano = Boolean(currentProfile && currentProfile.tier !== "tourist");
+
+  const estado = task.estado ?? "abierta";
+  const badge = getEstadoBadge(estado);
+  const urgencia = getUrgencia(task.urgencia ?? "media");
+  const CategoriaIcon = getCategoriaIcon(task.categoria);
+
+  // El textarea de crear tarea persiste "" y nunca null, así que los dos casos
+  // significan lo mismo: no hay descripción.
+  const descripcion = task.descripcion?.trim();
+
+  const closingMessage = ESTADO_MESSAGES[estado];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <Link href="/nodo/tasks" className="text-text-muted hover:text-text-secondary">
-          <svg
-            className="size-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-          </svg>
+    <div className="flex flex-col gap-[18px]">
+      <div className="flex flex-row items-center justify-between w-full">
+        <Link href="/nodo/tasks" aria-label="Volver a tareas">
+          <ChevronLeft className="size-6 text-text-primary" />
         </Link>
-        <h1 className="font-display text-2xl font-bold text-text-primary">{task.titulo}</h1>
+        <h1 className="font-display text-base font-medium text-text-primary">Tarea</h1>
+        {/* Contrapeso del chevron: mantiene el título ópticamente centrado
+            mientras el menú `···` no está. */}
+        <span aria-hidden="true" className="size-[22px]" />
       </div>
 
-      <span
-        className={`inline-flex items-center rounded-md px-3 py-1 text-xs font-semibold font-display self-start ${ESTADO_CLASSES[task.estado ?? "abierta"]}`}
-      >
-        {ESTADO_LABELS[task.estado ?? "abierta"]}
-      </span>
-
-      <div className="flex flex-wrap gap-2">
-        <span className="text-xs bg-surface border border-border rounded-pill px-3 py-1 text-text-secondary">
-          {task.categoria}
-        </span>
-        <span className="text-xs bg-surface border border-border rounded-pill px-3 py-1 text-text-secondary">
-          {task.urgencia}
-        </span>
+      <div className="flex flex-row items-center gap-3 w-full">
+        <div className="size-12 rounded-[14px] bg-warm-yellow/[0.09] flex items-center justify-center shrink-0">
+          <CategoriaIcon className="size-[22px] text-warm-orange" aria-hidden="true" />
+        </div>
+        <div className="flex-1 flex flex-col gap-1 min-w-0">
+          <h2 className="font-display text-xl font-bold text-text-primary w-full">{task.titulo}</h2>
+          <span
+            className={cn(
+              "self-start rounded-pill px-[11px] py-1 font-display text-xs font-semibold",
+              badge.bg,
+              badge.text,
+            )}
+          >
+            {badge.label}
+          </span>
+        </div>
       </div>
 
-      {task.descripcion && (
-        <section>
-          <h3 className="font-display text-sm font-semibold text-text-secondary mb-2">
-            Descripción
-          </h3>
-          <p className="text-sm text-text-primary leading-relaxed">{task.descripcion}</p>
-        </section>
+      <div className="w-full flex flex-col gap-[10px] p-4 bg-surface border border-border rounded-md">
+        <div className="flex flex-row items-center gap-2">
+          <Tag className="size-[15px] text-text-muted" aria-hidden="true" />
+          <span className="font-body text-[13px] font-normal text-text-secondary">
+            {getCategoriaLabel(task.categoria)}
+          </span>
+        </div>
+        <div className="flex flex-row items-center gap-2">
+          <Flame className={cn("size-[15px]", urgencia.color)} aria-hidden="true" />
+          <span className="font-body text-[13px] font-normal text-text-secondary">
+            {urgencia.label}
+          </span>
+        </div>
+        {creador && (
+          <div className="flex flex-row items-center gap-2">
+            <User className="size-[15px] text-text-muted" aria-hidden="true" />
+            <span className="font-body text-[13px] font-normal text-text-secondary">
+              {`Publicó ${displayName(creador)} · ${relativeTime(task.created_at)}`}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {descripcion && (
+        <p className="w-full font-body text-sm leading-[21px] text-text-secondary">{descripcion}</p>
       )}
 
-      <section className="flex flex-col gap-2">
-        <h3 className="font-display text-sm font-semibold text-text-secondary">Información</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {creador && <Field label="Creada por" value={displayName(creador)} />}
-          {tomador && <Field label="Tomada por" value={displayName(tomador)} />}
-          <Field label="Creada" value={new Date(task.created_at).toLocaleDateString("es-AR")} />
-        </div>
-      </section>
+      {/* Cada acción cuelga directo del wrapper: en Pencil el CTA es hermano
+          del resto, no hijo de otro contenedor. Metido adentro de un flex
+          intermedio heredaría el gap de ese padre y la separación quedaría mal. */}
+      {estado === "abierta" && isSerrano && !isOwner && <TakeTaskButton taskId={task.id} />}
 
-      <div className="flex flex-col gap-2 pt-2">
-        {task.estado === "abierta" && isSerrano && !isOwner && <TakeTaskButton taskId={task.id} />}
+      {estado === "tomada" && isTaker && <MarkDoneButton taskId={task.id} />}
 
-        {task.estado === "tomada" && isTaker && <MarkDoneButton taskId={task.id} />}
+      {estado === "tomada" && !isTaker && (
+        <p className="font-body text-sm text-text-muted text-center">
+          Esta tarea ya fue tomada por otro serrano.
+        </p>
+      )}
 
-        {task.estado === "hecha" && isAdmin && <VerifyTaskButton taskId={task.id} />}
+      {estado === "hecha" && isAdmin && <VerifyTaskButton taskId={task.id} />}
 
-        {task.estado === "tomada" && !isTaker && (
-          <p className="text-sm text-text-muted text-center py-2">
-            Esta tarea ya fue tomada por otro serrano.
-          </p>
-        )}
-
-        {task.estado === "verificada" && (
-          <p className="text-sm text-brand-mint text-center py-2">
-            ✔ Tarea verificada y completada.
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-surface border border-border p-3">
-      <p className="text-xs text-text-muted">{label}</p>
-      <p className="text-sm text-text-primary font-medium mt-0.5">{value}</p>
+      {closingMessage && (
+        <p className="font-body text-sm text-text-muted text-center">{closingMessage}</p>
+      )}
     </div>
   );
 }

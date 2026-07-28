@@ -260,12 +260,14 @@ Edit screen `H3BY0u` / wrapper `vPUkG`: identical wrapper `gap: 18`, `padding: [
   - [x] `TaskCard` points at it; props and rendered classes unchanged, its 30 existing tests pass untouched
   - [x] Fixed the live hub defect: it passed the raw enum as `category`, so every card showed the generic icon and the text "reparacion"
   - [x] The hub's `ESTADO_LABELS` now derives from `ESTADO_BADGE` instead of repeating the labels
-- [ ] **T4 — Red: detail page tests** (AC: 1–5, 9)
+- [x] **T4 — Red: detail page tests** (AC: 1–5, 9)
   - [ ] `src/app/(app)/nodo/tasks/[id]/page.test.tsx`, class-string assertions per the `EmptyState.test.tsx` / `page.test.tsx` convention
   - [ ] Include a **structural** assertion that the CTA's `parentElement` is the wrapper, not a nested div
   - [ ] Verify RED
-- [ ] **T5 — Green: rewrite the detail page** (AC: 1–5)
-  - [ ] lucide instead of inline svg; delete the `Field` helper, the section headings and the invented copy
+- [x] **T5 — Green: rewrite the detail page** (AC: 1–5)
+  - [x] lucide instead of inline svg; `Field` helper, section headings and invented copy deleted
+  - [x] CTA copy corrected to the Pencil string "Tomar esta tarea" in `task-actions.tsx`
+  - [x] 37 tests; the structural assertion confirms the CTA hangs off the wrapper
 - [ ] **T6 — Red + Green: `···` menu** (AC: 6)
   - [ ] Client component; tests first: visibility matrix, keyboard behaviour, confirm-before-cancel
 - [ ] **T7 — Red + Green: edit route** (AC: 8)
