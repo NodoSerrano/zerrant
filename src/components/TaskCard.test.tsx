@@ -208,6 +208,25 @@ describe("TaskCard", () => {
     expect(() => render(<TaskCard {...defaultProps} category="" />)).not.toThrow();
     expect(screen.getByText(/hace 2 días/)).toBeInTheDocument();
   });
+
+  // Los props vienen tipados, pero el dato de origen es un enum de Postgres que
+  // puede crecer por migración. Si el componente indexa sin fallback, el valor
+  // nuevo lo hace explotar y se lleva puesta la pantalla que lo renderiza.
+  it("falls back to the 'Abierta' badge for an estado it does not know", () => {
+    const unknownEstado = "cancelada" as unknown as typeof defaultProps.estado;
+    render(<TaskCard {...defaultProps} estado={unknownEstado} />);
+
+    const badge = screen.getByText("Abierta");
+    expect(badge.className).toContain("bg-blue-raw/20");
+    expect(badge.className).toContain("text-brand-blue");
+  });
+
+  it("falls back to 'Urgencia media' for an urgencia it does not know", () => {
+    const unknownUrgencia = "critica" as unknown as typeof defaultProps.urgencia;
+    render(<TaskCard {...defaultProps} urgencia={unknownUrgencia} />);
+
+    expect(screen.getByText("Urgencia media").className).toContain("text-warm-yellow");
+  });
 });
 
 describe("TaskCard href mode", () => {

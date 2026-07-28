@@ -14,7 +14,13 @@ const ESTADO_LABELS: Record<string, string> = {
   verificada: "Verificada",
 };
 
-const ESTADO_MAP: Record<string, "abierta" | "tomada" | "hecha"> = {
+type CardEstado = "abierta" | "tomada" | "hecha";
+
+// `Record<TaskEstado, ...>` en vez de `Record<string, ...>`: si mañana el enum
+// de Postgres suma un valor, esto deja de compilar y hay que decidir cómo se
+// muestra. Con `string` el valor nuevo pasaba silencioso y llegaba `undefined`
+// a TaskCard.
+const ESTADO_MAP: Record<NonNullable<TaskEstado>, CardEstado> = {
   abierta: "abierta",
   tomada: "tomada",
   hecha: "hecha",
@@ -23,6 +29,13 @@ const ESTADO_MAP: Record<string, "abierta" | "tomada" | "hecha"> = {
   // un diseño para "verificada", agregarlo al componente.
   verificada: "hecha",
 };
+
+// El chequeo de tipos cubre el código; esto cubre los datos. Una fila escrita
+// por una migración anterior, o por otro cliente, puede traer un estado que
+// este build no conoce.
+function toCardEstado(estado: TaskEstado | null): CardEstado {
+  return ESTADO_MAP[estado as NonNullable<TaskEstado>] ?? "abierta";
+}
 
 export default async function TasksPage({
   searchParams,
@@ -107,7 +120,7 @@ export default async function TasksPage({
               title={task.titulo}
               category={task.categoria}
               timeAgo={relativeTime(task.created_at)}
-              estado={ESTADO_MAP[task.estado ?? "abierta"]}
+              estado={toCardEstado(task.estado)}
               urgencia={task.urgencia ?? "media"}
               actionLabel="Tomar"
             />

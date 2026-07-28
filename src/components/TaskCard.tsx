@@ -51,8 +51,11 @@ export function TaskCard({
   className,
 }: TaskCardProps) {
   const Icon = getCategoryIcon(category);
-  const estadoData = estadoConfig[estado];
-  const urgenciaData = urgenciaConfig[urgencia];
+  // Los datos vienen de enums de Postgres que pueden crecer. Sin fallback, un
+  // valor que el componente todavía no conoce lo hace explotar y se lleva
+  // puesta la pantalla que lo renderiza.
+  const estadoData = estadoConfig[estado] ?? estadoConfig.abierta;
+  const urgenciaData = urgenciaConfig[urgencia] ?? urgenciaConfig.media;
 
   const baseClasses = cn(
     "rounded-[20px] bg-surface border border-border shadow-[0_10px_30px_-12px_rgba(26,22,20,0.15)] p-4 flex flex-col gap-3 w-full",

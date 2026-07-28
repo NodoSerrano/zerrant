@@ -178,6 +178,59 @@ describe("TasksPage", () => {
     });
   });
 
+  describe("estado mapping robustness", () => {
+    // El enum `task_estado` de Postgres puede crecer. Si el hub traduce estados
+    // con un lookup parcial, cualquier valor nuevo llega como `undefined` a
+    // TaskCard y la pantalla entera revienta al leer `estadoData.bg`. La lista
+    // tiene que degradar, no caerse.
+    function taskWithEstado(estado: unknown) {
+      return {
+        id: "task-1",
+        titulo: "Tarea con estado nuevo",
+        categoria: "reparacion",
+        estado,
+        urgencia: "alta",
+        created_at: "2026-07-27T12:00:00Z",
+        creado_por: "user-1",
+        profiles: { nombre: "Juan", apellido: "Perez", apodo: null, nombre_visible: "Juan" },
+      };
+    }
+
+    it("renders a task whose estado is not in the map instead of crashing", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [taskWithEstado("un-estado-que-todavia-no-existe")] }),
+      );
+
+      await renderPage();
+
+      expect(screen.getByText("Tarea con estado nuevo")).toBeInTheDocument();
+    });
+
+    it("falls back to the 'Abierta' badge for an unmapped estado", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [taskWithEstado("un-estado-que-todavia-no-existe")] }),
+      );
+
+      await renderPage();
+
+      const badge = screen.getByText("Abierta", { selector: "span" });
+      expect(badge.className).toContain("bg-blue-raw/20");
+    });
+
+    it("renders a task with a null estado instead of crashing", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [taskWithEstado(null)] }),
+      );
+
+      await renderPage();
+
+      expect(screen.getByText("Tarea con estado nuevo")).toBeInTheDocument();
+    });
+  });
+
   describe("auth and permissions", () => {
     it("shows FAB when user is serrano", async () => {
       const { createClient } = await import("@/lib/supabase/server");
