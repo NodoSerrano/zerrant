@@ -13553,6 +13553,428 @@
       "fontFamily": "$font-display",
       "fontSize": 28,
       "fontWeight": "700"
+    },
+    {
+      "type": "frame",
+      "id": "H3BY0u",
+      "x": 2820,
+      "y": 4012,
+      "name": "4.7 · Editar tarea",
+      "clip": true,
+      "width": 390,
+      "height": 844,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "oBJKi",
+          "type": "ref",
+          "ref": "UFbiI",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "vPUkG",
+          "name": "wrapper",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 18,
+          "padding": [
+            6,
+            20,
+            24,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "f0bjQ",
+              "name": "tct",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "oPFZ3",
+                  "width": 24,
+                  "height": 24,
+                  "iconFontName": "chevron-left",
+                  "iconFontFamily": "lucide",
+                  "fill": "$text-primary"
+                },
+                {
+                  "type": "text",
+                  "id": "OZh82",
+                  "fill": "$text-primary",
+                  "content": "Editar tarea",
+                  "fontFamily": "$font-display",
+                  "fontSize": 16,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "k9cqb",
+                  "width": 22,
+                  "height": 22,
+                  "iconFontName": "ellipsis",
+                  "iconFontFamily": "lucide",
+                  "fill": "$text-primary"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "PpIBo",
+              "name": "form",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 16,
+              "children": [
+                {
+                  "id": "EJCet",
+                  "type": "ref",
+                  "ref": "D7fHHd",
+                  "width": "fill_container",
+                  "name": "tit",
+                  "descendants": {
+                    "Xqq44": {
+                      "content": "Título"
+                    },
+                    "H9VEvo": {
+                      "content": "Ej: Reparar el caño del baño"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "S38K5",
+                  "name": "dw",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "jhbvc",
+                      "fill": "$text-secondary",
+                      "content": "Descripción",
+                      "fontFamily": "$font-body",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "SUBz3",
+                      "name": "df",
+                      "width": "fill_container",
+                      "height": 84,
+                      "fill": "$surface",
+                      "cornerRadius": 16,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "$border"
+                      },
+                      "layout": "vertical",
+                      "padding": 16,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "vb5RE",
+                          "fill": "$text-muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "¿Qué hay que hacer y dónde?",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-body",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "L2ATec",
+                  "name": "cw",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Y2JEMt",
+                      "fill": "$text-secondary",
+                      "content": "Categoría",
+                      "fontFamily": "$font-body",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "WNLGX",
+                      "name": "cr1",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "lST4G",
+                          "name": "cc1",
+                          "fill": "$primary",
+                          "cornerRadius": 999,
+                          "padding": [
+                            14,
+                            8
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "jVXTc",
+                              "fill": "$on-primary",
+                              "content": "Reparación",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "sWyJ1",
+                          "name": "cc2",
+                          "fill": "$surface",
+                          "cornerRadius": 999,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "$border"
+                          },
+                          "padding": [
+                            14,
+                            8
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "g7qet",
+                              "fill": "$text-secondary",
+                              "content": "Limpieza",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "iv3Y7",
+                          "name": "cc3",
+                          "fill": "$surface",
+                          "cornerRadius": 999,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "$border"
+                          },
+                          "padding": [
+                            14,
+                            8
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "PzgUu",
+                              "fill": "$text-secondary",
+                              "content": "Compra",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "QSceO",
+                      "name": "cr2",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Zrawf",
+                          "name": "cc4",
+                          "fill": "$surface",
+                          "cornerRadius": 999,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "$border"
+                          },
+                          "padding": [
+                            14,
+                            8
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "vbnKD",
+                              "fill": "$text-secondary",
+                              "content": "Mantenimiento",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "xcyI2",
+                          "name": "cc5",
+                          "fill": "$surface",
+                          "cornerRadius": 999,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "$border"
+                          },
+                          "padding": [
+                            14,
+                            8
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "JIpSS",
+                              "fill": "$text-secondary",
+                              "content": "Otro",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "tcgPN",
+                  "name": "uw",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "RGAfo",
+                      "fill": "$text-secondary",
+                      "content": "Urgencia",
+                      "fontFamily": "$font-body",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "MQMRa",
+                      "name": "useg",
+                      "width": "fill_container",
+                      "fill": "$surface-inset",
+                      "cornerRadius": 16,
+                      "gap": 4,
+                      "padding": 4,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "jTuGR",
+                          "name": "u1",
+                          "width": "fill_container",
+                          "height": 38,
+                          "cornerRadius": 12,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "KXCjX",
+                              "fill": "$text-muted",
+                              "content": "Baja",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "yfXpF",
+                          "name": "u2",
+                          "width": "fill_container",
+                          "height": 38,
+                          "fill": "$primary",
+                          "cornerRadius": 12,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "GQWAe",
+                              "fill": "$on-primary",
+                              "content": "Media",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Gf9pb",
+                          "name": "u3",
+                          "width": "fill_container",
+                          "height": 38,
+                          "cornerRadius": 12,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "lNub7",
+                              "fill": "$text-muted",
+                              "content": "Alta",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "bZuIp",
+              "type": "ref",
+              "ref": "qt9Zw",
+              "width": "fill_container",
+              "name": "pct",
+              "descendants": {
+                "n7GW6b": {
+                  "content": "Guardar cambios"
+                }
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "themes": {
