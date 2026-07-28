@@ -175,6 +175,18 @@ describe("TasksPage", () => {
       expect(screen.getByText("Tomada")).toBeInTheDocument();
       expect(screen.getByText("Hecha")).toBeInTheDocument();
       expect(screen.getByText("Verificada")).toBeInTheDocument();
+      expect(screen.getByText("Cancelada")).toBeInTheDocument();
+    });
+
+    it("the Cancelada pill filters by that estado", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+      const { container } = await renderPage();
+
+      const pill = Array.from(container.querySelectorAll("a")).find(
+        (a) => a.textContent === "Cancelada",
+      );
+      expect(pill).toHaveAttribute("href", "/nodo/tasks?estado=cancelada");
     });
   });
 
@@ -217,6 +229,18 @@ describe("TasksPage", () => {
 
       const badge = screen.getByText("Abierta", { selector: "span" });
       expect(badge.className).toContain("bg-blue-raw/20");
+    });
+
+    it("shows a cancelled task with its own badge, not as 'Abierta'", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [taskWithEstado("cancelada")] }),
+      );
+
+      await renderPage();
+
+      const badge = screen.getByText("Cancelada", { selector: "span" });
+      expect(badge.className).toContain("bg-surface-inset");
     });
 
     it("renders a task with a null estado instead of crashing", async () => {

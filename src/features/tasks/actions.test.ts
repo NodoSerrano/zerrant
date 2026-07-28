@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   tasksUpdate: vi.fn(),
   tasksUpdateEq1: vi.fn(),
   tasksUpdateEq2: vi.fn(),
+  tasksUpdateIn: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -29,7 +30,13 @@ vi.mock("@/lib/supabase/server", () => ({
           insert: mocks.tasksInsert,
           update: mocks.tasksUpdate.mockImplementation(() => ({
             eq: mocks.tasksUpdateEq1.mockImplementation(() => ({
-              eq: mocks.tasksUpdateEq2,
+              // El segundo `.eq()` es terminal para takeTask/markTaskDone/
+              // verifyTask, pero `cancelTask` encadena un `.in()` después. El
+              // resultado tiene que ser las dos cosas: awaitable y encadenable.
+              eq: (...args: unknown[]) =>
+                Object.assign(Promise.resolve(mocks.tasksUpdateEq2(...args)), {
+                  in: mocks.tasksUpdateIn,
+                }),
             })),
           })),
         };
@@ -39,7 +46,7 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
-import { createTask, takeTask, markTaskDone, verifyTask } from "./actions";
+import { createTask, takeTask, markTaskDone, verifyTask, cancelTask, updateTask } from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -221,5 +228,189 @@ describe("verifyTask", () => {
 
     expect(result).toEqual({ error: "Solo un admin puede verificar tareas" });
     expect(mocks.tasksUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe("cancelTask", () => {
+  const makeFormData = (taskId = "task-001") => {
+    const fd = new FormData();
+    fd.set("taskId", taskId);
+    return fd;
+  };
+
+  it("cancels the task and clears tomada_por", async () => {
+    setupAuth("owner-user-id");
+    mocks.tasksUpdateIn.mockResolvedValue({ data: null, error: null });
+
+    try {
+      await cancelTask(null, makeFormData());
+    } catch {
+      // redirect throws
+    }
+
+    // `tomada_por` se limpia: si la tarea estaba tomada, cancelarla tiene que
+    // soltar a quien la tenía, no dejarlo colgado de una tarea muerta.
+    expect(mocks.tasksUpdate).toHaveBeenCalledWith({
+      estado: "cancelada",
+      tomada_por: null,
+    });
+  });
+
+  // Defensa en profundidad: la guarda del action evita el caso normal, y el
+  // filtro del update la sostiene aunque alguien postee directo. La policy de
+  // RLS por sí sola no alcanza — deja escribir también al `tomada_por`.
+  it("scopes the update to the creator and to cancellable estados", async () => {
+    setupAuth("owner-user-id");
+    mocks.tasksUpdateIn.mockResolvedValue({ data: null, error: null });
+
+    try {
+      await cancelTask(null, makeFormData());
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.tasksUpdateEq1).toHaveBeenCalledWith("id", "task-001");
+    expect(mocks.tasksUpdateEq2).toHaveBeenCalledWith("creado_por", "owner-user-id");
+    expect(mocks.tasksUpdateIn).toHaveBeenCalledWith("estado", ["abierta", "tomada"]);
+  });
+
+  it("rejects an unauthenticated user without touching the table", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+
+    const result = await cancelTask(null, makeFormData());
+
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.tasksUpdate).not.toHaveBeenCalled();
+  });
+
+  it("rejects a request without taskId without touching the table", async () => {
+    setupAuth("owner-user-id");
+
+    const result = await cancelTask(null, new FormData());
+
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.tasksUpdate).not.toHaveBeenCalled();
+  });
+
+  it("does not leak the raw Postgres message when the update fails", async () => {
+    setupAuth("owner-user-id");
+    mocks.tasksUpdateIn.mockResolvedValue({
+      data: null,
+      error: { message: 'permission denied for column "estado"' },
+    });
+
+    const result = await cancelTask(null, makeFormData());
+
+    expect(result).toEqual({ error: "No pudimos cancelar la tarea. Probá de nuevo." });
+  });
+});
+
+describe("updateTask", () => {
+  const makeFormData = (overrides: Record<string, string> = {}) => {
+    const fd = new FormData();
+    fd.set("taskId", "task-001");
+    fd.set("titulo", "Reparar el caño del baño");
+    fd.set("descripcion", "Pierde agua abajo de la pileta");
+    fd.set("categoria", "reparacion");
+    fd.set("urgencia", "alta");
+    for (const [k, v] of Object.entries(overrides)) fd.set(k, v);
+    return fd;
+  };
+
+  it("saves the edited fields", async () => {
+    setupAuth("owner-user-id");
+    mocks.tasksUpdateEq2.mockResolvedValue({ data: null, error: null });
+
+    try {
+      await updateTask(null, makeFormData());
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.tasksUpdate).toHaveBeenCalledWith({
+      titulo: "Reparar el caño del baño",
+      descripcion: "Pierde agua abajo de la pileta",
+      categoria: "reparacion",
+      urgencia: "alta",
+    });
+  });
+
+  // La policy de RLS deja escribir al `creado_por` **o** al `tomada_por`, y el
+  // grant por columna incluye `titulo` y `descripcion`. Sin este filtro, quien
+  // toma una tarea puede reescribirle el texto.
+  it("scopes the update to the creator, not merely to the task id", async () => {
+    setupAuth("owner-user-id");
+    mocks.tasksUpdateEq2.mockResolvedValue({ data: null, error: null });
+
+    try {
+      await updateTask(null, makeFormData());
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.tasksUpdateEq1).toHaveBeenCalledWith("id", "task-001");
+    expect(mocks.tasksUpdateEq2).toHaveBeenCalledWith("creado_por", "owner-user-id");
+  });
+
+  it("trims the title before saving", async () => {
+    setupAuth("owner-user-id");
+    mocks.tasksUpdateEq2.mockResolvedValue({ data: null, error: null });
+
+    try {
+      await updateTask(null, makeFormData({ titulo: "   Cambiar la cerradura   " }));
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.tasksUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ titulo: "Cambiar la cerradura" }),
+    );
+  });
+
+  // `titulo` es NOT NULL pero acepta la cadena vacía: sin esta guarda, el
+  // `required` del HTML es lo único que impide una tarea sin título.
+  it("rejects a blank title without touching the table", async () => {
+    setupAuth("owner-user-id");
+
+    const result = await updateTask(null, makeFormData({ titulo: "   " }));
+
+    expect(result).toEqual({ error: "El título no puede estar vacío" });
+    expect(mocks.tasksUpdate).not.toHaveBeenCalled();
+  });
+
+  // La columna es nullable: "sin descripción" y "descripción vacía" tienen que
+  // llegar iguales a la base, para que el detalle pueda distinguir un caso solo.
+  it("stores an empty description as null", async () => {
+    setupAuth("owner-user-id");
+    mocks.tasksUpdateEq2.mockResolvedValue({ data: null, error: null });
+
+    try {
+      await updateTask(null, makeFormData({ descripcion: "   " }));
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.tasksUpdate).toHaveBeenCalledWith(expect.objectContaining({ descripcion: null }));
+  });
+
+  it("rejects an unauthenticated user without touching the table", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+
+    const result = await updateTask(null, makeFormData());
+
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.tasksUpdate).not.toHaveBeenCalled();
+  });
+
+  it("does not leak the raw Postgres message when the update fails", async () => {
+    setupAuth("owner-user-id");
+    mocks.tasksUpdateEq2.mockResolvedValue({
+      data: null,
+      error: { message: 'null value in column "titulo" violates not-null' },
+    });
+
+    const result = await updateTask(null, makeFormData());
+
+    expect(result).toEqual({ error: "No pudimos guardar los cambios. Probá de nuevo." });
   });
 });

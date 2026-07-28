@@ -8,7 +8,7 @@ interface TaskCardProps {
   title: string;
   category: string;
   timeAgo: string;
-  estado: "abierta" | "tomada" | "hecha";
+  estado: "abierta" | "tomada" | "hecha" | "cancelada";
   urgencia: "alta" | "media" | "baja";
   actionLabel: string;
   onAction?: () => void;
@@ -27,6 +27,9 @@ const estadoConfig = {
   abierta: { label: "Abierta", bg: "bg-blue-raw/20", text: "text-brand-blue" },
   tomada: { label: "Tomada", bg: "bg-coral/20", text: "text-coral" },
   hecha: { label: "Hecha", bg: "bg-mint-raw/20", text: "text-brand-mint" },
+  // Pencil no diseñó un chip para "cancelada". Se deriva del par neutro que el
+  // DS ya usa para lo inactivo, en vez de inventar un color.
+  cancelada: { label: "Cancelada", bg: "bg-surface-inset", text: "text-text-muted" },
 } as const;
 
 const urgenciaConfig = {
@@ -56,6 +59,14 @@ export function TaskCard({
   // puesta la pantalla que lo renderiza.
   const estadoData = estadoConfig[estado] ?? estadoConfig.abierta;
   const urgenciaData = urgenciaConfig[urgencia] ?? urgenciaConfig.media;
+
+  // Una tarea cancelada ya no se puede tomar. El consumidor fija el
+  // `actionLabel` sin mirar el estado, así que la tarjeta lo apaga: se sigue
+  // leyendo, pero no se ofrece como algo accionable.
+  const actionClasses = cn(
+    "shrink-0 rounded-pill bg-surface-inset border border-border px-4 py-[7px] font-display text-[13px] font-semibold",
+    estado === "cancelada" ? "text-text-muted" : "text-brand-green",
+  );
 
   const baseClasses = cn(
     "rounded-[20px] bg-surface border border-border shadow-[0_10px_30px_-12px_rgba(26,22,20,0.15)] p-4 flex flex-col gap-3 w-full",
@@ -97,14 +108,13 @@ export function TaskCard({
           </span>
         </div>
         {href ? (
-          <span className="shrink-0 rounded-pill bg-surface-inset border border-border px-4 py-[7px] font-display text-[13px] font-semibold text-brand-green">
-            {actionLabel}
-          </span>
+          <span className={actionClasses}>{actionLabel}</span>
         ) : (
           <button
             type="button"
-            className="shrink-0 rounded-pill bg-surface-inset border border-border px-4 py-[7px] font-display text-[13px] font-semibold text-brand-green"
+            className={actionClasses}
             onClick={onAction}
+            disabled={estado === "cancelada"}
           >
             {actionLabel}
           </button>

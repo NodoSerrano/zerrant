@@ -248,13 +248,13 @@ Edit screen `H3BY0u` / wrapper `vPUkG`: identical wrapper `gap: 18`, `padding: [
 
 ## Tasks / Subtasks
 
-- [ ] **T1 — Red: migration + action tests** (AC: 7, 8)
+- [x] **T1 — Red: migration + action tests** (AC: 7, 8)
   - [ ] `supabase/migrations/<ts>_task_estado_cancelada.sql`
   - [ ] Extend `src/features/tasks/actions.test.ts` (mocked Supabase, existing style): `cancelTask` owner from `abierta`; owner from `tomada` clears `tomada_por`; non-owner rejected; `hecha` rejected; unauthenticated rejected. `updateTask` owner ok; taker-but-not-owner rejected; empty/whitespace `titulo` rejected; DB error does not leak
   - [ ] Verify RED
-- [ ] **T2 — Green: `cancelTask` + `updateTask`** (AC: 7, 8)
-  - [ ] Add to `src/features/tasks/actions.ts`, mirroring `takeTask`'s shape
-  - [ ] Regenerate `database.types.ts`
+- [x] **T2 — Green: `cancelTask` + `updateTask`** (AC: 7, 8)
+  - [x] Added to `src/features/tasks/actions.ts`, mirroring `takeTask`'s shape
+  - [x] `database.types.ts` widened by hand — no Supabase CLI in this environment
 - [ ] **T3 — Red + Green: shared task display map** (AC: 2, 3, 4)
   - [ ] `src/features/tasks/taskDisplay.ts` + tests — enum-keyed category icons/labels, estado config incl. `verificada`/`cancelada`, urgency config
   - [ ] Point `TaskCard` at it without changing its props or rendered classes; its existing tests must pass unchanged
@@ -273,8 +273,8 @@ Edit screen `H3BY0u` / wrapper `vPUkG`: identical wrapper `gap: 18`, `padding: [
   - [x] RED: hub renders a task with an unmapped estado; reproduced the exact crash at `TaskCard.tsx:82`
   - [x] GREEN: `TaskCard` fallbacks + `Record<NonNullable<TaskEstado>, CardEstado>` + `toCardEstado()`
   - [x] Component-level tests for both fallbacks; 375/375 pass
-- [ ] **T8 — Hub survival** (AC: 7, 9)
-  - [ ] `cancelada` gets its own `ESTADO_MAP` / `ESTADO_LABELS` entry once the migration lands; test that a cancelled task renders on the hub with its own label
+- [x] **T8 — Hub survival** (AC: 7, 9)
+  - [x] `cancelada` got its own `ESTADO_MAP` / `ESTADO_LABELS` entry once the migration lands; test that a cancelled task renders on the hub with its own label
 - [ ] **T9 — Verify**
   - [ ] Four gates by direct binary (see Dev Notes)
   - [ ] Browser at 375px on both routes: screenshot **and measure** with `getBoundingClientRect` — confirm the wrapper gap is 18px, not 16

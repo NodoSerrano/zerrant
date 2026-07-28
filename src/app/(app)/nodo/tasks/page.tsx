@@ -12,9 +12,10 @@ const ESTADO_LABELS: Record<string, string> = {
   tomada: "Tomada",
   hecha: "Hecha",
   verificada: "Verificada",
+  cancelada: "Cancelada",
 };
 
-type CardEstado = "abierta" | "tomada" | "hecha";
+type CardEstado = "abierta" | "tomada" | "hecha" | "cancelada";
 
 // `Record<TaskEstado, ...>` en vez de `Record<string, ...>`: si mañana el enum
 // de Postgres suma un valor, esto deja de compilar y hay que decidir cómo se
@@ -28,6 +29,7 @@ const ESTADO_MAP: Record<NonNullable<TaskEstado>, CardEstado> = {
   // "Hecha" visualmente; el filtro de URL sí las aísla. Cuando Pencil defina
   // un diseño para "verificada", agregarlo al componente.
   verificada: "hecha",
+  cancelada: "cancelada",
 };
 
 // El chequeo de tipos cubre el código; esto cubre los datos. Una fila escrita
@@ -70,7 +72,7 @@ export default async function TasksPage({
     .single();
   const canCreate = profile && profile.tier !== "tourist";
 
-  const filtros = ["todas", "abierta", "tomada", "hecha", "verificada"];
+  const filtros = ["todas", "abierta", "tomada", "hecha", "verificada", "cancelada"];
 
   return (
     <div className="flex flex-col gap-5 relative">
