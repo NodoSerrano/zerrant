@@ -125,6 +125,48 @@ export type Database = {
           },
         ];
       };
+      membership_requests: {
+        Row: {
+          created_at: string;
+          estado: Database["public"]["Enums"]["membership_request_estado"];
+          id: string;
+          mensaje: string | null;
+          profile_id: string;
+          resuelta_por: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          estado?: Database["public"]["Enums"]["membership_request_estado"];
+          id?: string;
+          mensaje?: string | null;
+          profile_id: string;
+          resuelta_por?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          estado?: Database["public"]["Enums"]["membership_request_estado"];
+          id?: string;
+          mensaje?: string | null;
+          profile_id?: string;
+          resuelta_por?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "membership_requests_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "membership_requests_resuelta_por_fkey";
+            columns: ["resuelta_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -134,6 +176,7 @@ export type Database = {
     };
     Enums: {
       disponibilidad: "disponible" | "ocupado" | "solo_eventos";
+      membership_request_estado: "pendiente" | "aprobada" | "rechazada";
       nombre_visible: "apodo" | "nombre_apellido" | "apellido_nombre";
       task_categoria: "reparacion" | "limpieza" | "compra" | "mantenimiento" | "otro";
       task_estado: "abierta" | "tomada" | "hecha" | "verificada";
@@ -266,6 +309,7 @@ export const Constants = {
   public: {
     Enums: {
       disponibilidad: ["disponible", "ocupado", "solo_eventos"],
+      membership_request_estado: ["pendiente", "aprobada", "rechazada"],
       nombre_visible: ["apodo", "nombre_apellido", "apellido_nombre"],
       task_categoria: ["reparacion", "limpieza", "compra", "mantenimiento", "otro"],
       task_estado: ["abierta", "tomada", "hecha", "verificada"],
