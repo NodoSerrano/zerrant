@@ -2,6 +2,22 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { TaskCard } from "./TaskCard";
 
+vi.mock("next/link", () => ({
+  default: ({
+    href,
+    className,
+    children,
+  }: {
+    href: string;
+    className?: string;
+    children: React.ReactNode;
+  }) => (
+    <a href={href} className={className}>
+      {children}
+    </a>
+  ),
+}));
+
 describe("TaskCard", () => {
   const defaultProps = {
     title: "Arreglar la cerca del huerto",
@@ -191,5 +207,61 @@ describe("TaskCard", () => {
   it("renders empty category without crashing", () => {
     expect(() => render(<TaskCard {...defaultProps} category="" />)).not.toThrow();
     expect(screen.getByText(/hace 2 días/)).toBeInTheDocument();
+  });
+});
+
+describe("TaskCard href mode", () => {
+  const hrefProps = {
+    title: "Arreglar la cerca del huerto",
+    category: "Reparación",
+    timeAgo: "hace 2 días",
+    estado: "abierta" as const,
+    urgencia: "alta" as const,
+    actionLabel: "Tomar",
+    href: "/nodo/tasks/abc-123",
+  };
+
+  it("renders card as <a> when href is set", () => {
+    const { container } = render(<TaskCard {...hrefProps} />);
+    const link = container.querySelector("a");
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute("href", "/nodo/tasks/abc-123");
+  });
+
+  it("does not render <button> for action when href is set", () => {
+    render(<TaskCard {...hrefProps} />);
+    expect(screen.getByText("Tomar")).toBeInTheDocument();
+    expect(screen.getByText("Tomar").tagName).toBe("SPAN");
+  });
+
+  it("renders as <div> when href is not set (backward compat)", () => {
+    const { container } = render(<TaskCard {...hrefProps} href={undefined} />);
+    expect(container.querySelector("a")).not.toBeInTheDocument();
+    expect(container.firstElementChild?.tagName).toBe("DIV");
+  });
+
+  it("action button is <button> when href is not set", () => {
+    render(<TaskCard {...hrefProps} href={undefined} />);
+    expect(screen.getByText("Tomar").tagName).toBe("BUTTON");
+  });
+
+  it("merges className on Link wrapper", () => {
+    const { container } = render(<TaskCard {...hrefProps} className="my-custom" />);
+    const link = container.querySelector("a");
+    expect(link).toHaveClass("my-custom");
+    expect(link).toHaveClass("rounded-[20px]");
+    expect(link).toHaveClass("bg-surface");
+  });
+
+  it("preserves card styling classes on link wrapper", () => {
+    const { container } = render(<TaskCard {...hrefProps} />);
+    const link = container.querySelector("a")!;
+    expect(link).toHaveClass("rounded-[20px]");
+    expect(link).toHaveClass("bg-surface");
+    expect(link).toHaveClass("border");
+    expect(link).toHaveClass("p-4");
+    expect(link).toHaveClass("gap-3");
+    expect(link).toHaveClass("flex");
+    expect(link).toHaveClass("flex-col");
   });
 });
