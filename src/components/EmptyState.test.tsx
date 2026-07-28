@@ -2,6 +2,22 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { EmptyState } from "./EmptyState";
 
+vi.mock("next/link", () => ({
+  default: ({
+    href,
+    className,
+    children,
+  }: {
+    href: string;
+    className?: string;
+    children: React.ReactNode;
+  }) => (
+    <a href={href} className={className}>
+      {children}
+    </a>
+  ),
+}));
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -54,7 +70,7 @@ describe("EmptyState", () => {
   });
 
   it("renders the CTA button with default label and plus icon", () => {
-    render(<EmptyState subtitle="No hay nada" />);
+    render(<EmptyState subtitle="No hay nada" actionLabel="Publicar tarea" onAction={() => {}} />);
 
     const btn = screen.getByRole("button", { name: /Publicar tarea/i });
     expect(btn).toBeInTheDocument();
@@ -72,31 +88,56 @@ describe("EmptyState", () => {
   });
 
   it("renders custom action label", () => {
-    render(<EmptyState subtitle="Vacío" actionLabel="Crear algo" />);
+    render(<EmptyState subtitle="Vacio" actionLabel="Crear algo" onAction={() => {}} />);
 
     expect(screen.getByRole("button", { name: /Crear algo/i })).toBeInTheDocument();
   });
 
   it("calls onAction when CTA button is clicked", () => {
     const onAction = vi.fn();
-    render(<EmptyState subtitle="Vacío" onAction={onAction} />);
+    render(<EmptyState subtitle="Vacio" actionLabel="Publicar tarea" onAction={onAction} />);
 
     fireEvent.click(screen.getByRole("button", { name: /Publicar tarea/i }));
     expect(onAction).toHaveBeenCalledTimes(1);
   });
 
-  it("does not throw when onAction is not provided", () => {
-    render(<EmptyState subtitle="Vacío" />);
+  it("does not render button when no onAction and no href", () => {
+    render(<EmptyState subtitle="Vacio" />);
 
-    expect(() => {
-      fireEvent.click(screen.getByRole("button", { name: /Publicar tarea/i }));
-    }).not.toThrow();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 
   it("merges custom className on container", () => {
-    render(<EmptyState subtitle="Vacío" className="my-custom" />);
+    render(<EmptyState subtitle="Vacio" className="my-custom" onAction={() => {}} />);
 
     const container = screen.getByText("No hay tareas").parentElement?.parentElement;
     expect(container?.className).toContain("my-custom");
+  });
+});
+
+describe("EmptyState href mode", () => {
+  it("renders action as a link when href is set", () => {
+    render(<EmptyState subtitle="test" href="/nodo/tasks/new" />);
+    const link = screen.getByRole("link");
+    expect(link).toHaveAttribute("href", "/nodo/tasks/new");
+    expect(link).toHaveClass("bg-linear-to-br");
+    expect(link).toHaveClass("from-brand-green");
+    expect(link).toHaveClass("to-brand-blue");
+  });
+
+  it("does not render button when href is set", () => {
+    render(<EmptyState subtitle="test" href="/nodo/tasks/new" />);
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("uses provided actionLabel in link", () => {
+    render(<EmptyState subtitle="test" href="/nodo/tasks/new" actionLabel="Crear tarea" />);
+    expect(screen.getByRole("link", { name: /Crear tarea/ })).toBeInTheDocument();
+  });
+
+  it("uses default label 'Publicar tarea' in link when no actionLabel", () => {
+    render(<EmptyState subtitle="test" href="/nodo/tasks/new" />);
+    expect(screen.getByRole("link", { name: /Publicar tarea/ })).toBeInTheDocument();
   });
 });

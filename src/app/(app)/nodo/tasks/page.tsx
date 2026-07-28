@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { PrimaryButton } from "@/components/PrimaryButton";
+import { relativeTime } from "@/lib/time";
+import { TaskCard } from "@/components/TaskCard";
+import { EmptyState } from "@/components/EmptyState";
+import { cn } from "@/lib/utils";
 import type { TaskEstado } from "@/features/tasks/types";
 
 const ESTADO_LABELS: Record<string, string> = {
@@ -10,23 +14,11 @@ const ESTADO_LABELS: Record<string, string> = {
   verificada: "Verificada",
 };
 
-const ESTADO_CLASSES: Record<string, string> = {
-  abierta: "bg-warm-yellow/20 text-warm-yellow",
-  tomada: "bg-blue-raw/20 text-brand-blue",
-  hecha: "bg-mint-raw/20 text-brand-mint",
-  verificada: "bg-surface-inset text-text-muted",
-};
-
-const URGENCIA_LABELS: Record<string, string> = {
-  baja: "Baja",
-  media: "Media",
-  alta: "Alta",
-};
-
-const URGENCIA_CLASSES: Record<string, string> = {
-  baja: "text-text-muted",
-  media: "text-text-secondary",
-  alta: "text-coral",
+const ESTADO_MAP: Record<string, "abierta" | "tomada" | "hecha"> = {
+  abierta: "abierta",
+  tomada: "tomada",
+  hecha: "hecha",
+  verificada: "hecha",
 };
 
 export default async function TasksPage({
@@ -40,7 +32,7 @@ export default async function TasksPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return <p className="text-text-secondary">Iniciá sesión para ver las tareas.</p>;
+  if (!user) return <p className="text-text-secondary p-5">Iniciá sesión para ver las tareas.</p>;
 
   const { estado } = await searchParams;
 
@@ -65,14 +57,16 @@ export default async function TasksPage({
   const filtros = ["todas", "abierta", "tomada", "hecha", "verificada"];
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold text-text-primary">Tareas</h1>
-        {canCreate && (
-          <Link href="/nodo/tasks/new">
-            <PrimaryButton size="sm">Crear tarea</PrimaryButton>
-          </Link>
-        )}
+    <div className="flex flex-col gap-5 relative">
+      <h1 className="font-display text-2xl font-bold text-text-primary">Nodo</h1>
+
+      <div className="flex rounded-pill bg-surface p-0.5 border border-border">
+        <span className="flex-1 text-center py-2 font-display text-sm font-semibold bg-primary text-on-primary rounded-pill">
+          Tareas
+        </span>
+        <span className="flex-1 text-center py-2 font-display text-sm font-medium text-text-muted">
+          Proyectos
+        </span>
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
@@ -80,11 +74,12 @@ export default async function TasksPage({
           <Link
             key={f}
             href={f === "todas" ? "/nodo/tasks" : `/nodo/tasks?estado=${f}`}
-            className={`inline-flex items-center rounded-pill px-3 py-1.5 text-xs font-semibold font-display whitespace-nowrap transition-colors ${
+            className={cn(
+              "inline-flex items-center rounded-pill px-3 py-1.5 text-xs font-semibold font-display whitespace-nowrap transition-colors",
               (f === "todas" && !estado) || estado === f
                 ? "bg-primary text-on-primary"
-                : "bg-surface border border-border text-text-secondary hover:text-text-primary"
-            }`}
+                : "bg-surface border border-border text-text-secondary hover:text-text-primary",
+            )}
           >
             {f === "todas" ? "Todas" : ESTADO_LABELS[f]}
           </Link>
@@ -92,47 +87,46 @@ export default async function TasksPage({
       </div>
 
       {!tasks || tasks.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-12 text-center">
-          <span className="text-3xl">📋</span>
-          <p className="text-text-muted text-sm">
-            No hay tareas {estado ? `con estado "${ESTADO_LABELS[estado]}"` : "todavía"}
-          </p>
-          {canCreate && (
-            <Link href="/nodo/tasks/new">
-              <PrimaryButton size="sm">Crear la primera</PrimaryButton>
-            </Link>
-          )}
-        </div>
+        <EmptyState
+          href={canCreate ? "/nodo/tasks/new" : undefined}
+          subtitle={
+            canCreate
+              ? "Parece que todavia no hay tareas publicadas. Queres crear la primera?"
+              : "Parece que todavia no hay tareas publicadas."
+          }
+        />
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           {tasks.map((task) => (
-            <Link
+            <TaskCard
               key={task.id}
               href={`/nodo/tasks/${task.id}`}
-              className="rounded-lg border border-border bg-surface p-4 hover:border-primary/30 transition-colors"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-display font-semibold text-text-primary text-sm">
-                  {task.titulo}
-                </h3>
-                <span
-                  className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold font-display shrink-0 ${ESTADO_CLASSES[task.estado ?? "abierta"]}`}
-                >
-                  {ESTADO_LABELS[task.estado ?? "abierta"]}
-                </span>
-              </div>
-              <div className="flex items-center gap-3 mt-2">
-                <span
-                  className={`text-[11px] font-medium ${URGENCIA_CLASSES[task.urgencia ?? "media"]}`}
-                >
-                  {URGENCIA_LABELS[task.urgencia ?? "media"]}
-                </span>
-                <span className="text-[11px] text-text-muted">{task.categoria}</span>
-                {task.tomada_por && <span className="text-[11px] text-text-muted">· Tomada</span>}
-              </div>
-            </Link>
+              title={task.titulo}
+              category={task.categoria}
+              timeAgo={relativeTime(task.created_at)}
+              estado={ESTADO_MAP[task.estado ?? "abierta"]}
+              urgencia={task.urgencia ?? "media"}
+              actionLabel="Tomar"
+            />
           ))}
         </div>
+      )}
+
+      {canCreate && (
+        <Link
+          href="/nodo/tasks/new"
+          className={cn(
+            "fixed bottom-24 right-5 z-40",
+            "size-14 rounded-full",
+            "bg-linear-to-br from-brand-green to-brand-blue",
+            "shadow-[0_4px_14px_rgba(26,22,20,0.25)]",
+            "flex items-center justify-center",
+            "active:scale-95 transition-transform",
+          )}
+          aria-label="Crear tarea"
+        >
+          <Plus className="size-6 text-on-primary" strokeWidth={2.5} />
+        </Link>
       )}
     </div>
   );
