@@ -14,8 +14,14 @@ export async function createClient() {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
-          for (const { name, value, options } of cookiesToSet) {
-            cookieStore.set(name, value, options);
+          try {
+            for (const { name, value, options } of cookiesToSet) {
+              cookieStore.set(name, value, options);
+            }
+          } catch {
+            // setAll fue llamado desde un Server Component. Ignoramos el error
+            // porque el middleware ya refresca las sesiones. Si no hay middleware,
+            // el cliente usará la sesión existente hasta que expire.
           }
         },
       },
