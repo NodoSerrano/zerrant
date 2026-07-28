@@ -268,8 +268,10 @@ Edit screen `H3BY0u` / wrapper `vPUkG`: identical wrapper `gap: 18`, `padding: [
   - [x] lucide instead of inline svg; `Field` helper, section headings and invented copy deleted
   - [x] CTA copy corrected to the Pencil string "Tomar esta tarea" in `task-actions.tsx`
   - [x] 37 tests; the structural assertion confirms the CTA hangs off the wrapper
-- [ ] **T6 — Red + Green: `···` menu** (AC: 6)
-  - [ ] Client component; tests first: visibility matrix, keyboard behaviour, confirm-before-cancel
+- [x] **T6 — Red + Green: `···` menu** (AC: 6)
+  - [x] `TaskMenu.tsx` client component; 16 tests: visibility matrix, `aria-expanded`, Escape returns focus, two-step confirmation
+  - [x] Wired into the detail header, keeping the spacer for the no-menu case
+  - [x] Confirmation is a two-step inside the menu surface, not `window.confirm` — derived from DS tokens, since Pencil designed no menu contents
 - [ ] **T7 — Red + Green: edit route** (AC: 8)
   - [ ] Generalise `NewTaskForm` → shared `TaskForm`; `/nodo/tasks/new` tests must pass untouched
   - [ ] `src/app/(app)/nodo/tasks/[id]/edit/page.tsx` + tests, incl. the non-owner redirect guard

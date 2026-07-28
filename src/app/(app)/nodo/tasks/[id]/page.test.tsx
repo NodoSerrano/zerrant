@@ -350,6 +350,35 @@ describe("TaskDetailPage — primary action (AC5)", () => {
   });
 });
 
+describe("TaskDetailPage — header menu (AC6)", () => {
+  it("offers the menu to the creator while the task is still open", async () => {
+    await renderDetail({ viewerId: CREATOR.id });
+
+    expect(screen.getByRole("button", { name: "Más opciones" })).toBeInTheDocument();
+  });
+
+  it("does not offer it to anyone else", async () => {
+    await renderDetail({ viewerId: TAKER.id });
+
+    expect(screen.queryByRole("button", { name: "Más opciones" })).not.toBeInTheDocument();
+  });
+
+  it("does not offer it once the task is done", async () => {
+    await renderDetail({ task: makeTask({ estado: "hecha" }), viewerId: CREATOR.id });
+
+    expect(screen.queryByRole("button", { name: "Más opciones" })).not.toBeInTheDocument();
+  });
+
+  // Sin menú el header quedaría descentrado, porque el chevron de la izquierda
+  // no tendría contrapeso.
+  it("keeps a spacer so the title stays centred when there is no menu", async () => {
+    await renderDetail({ viewerId: TAKER.id });
+
+    const header = screen.getByText("Tarea").parentElement!;
+    expect(header.children).toHaveLength(3);
+  });
+});
+
 describe("TaskDetailPage — layout structure (AC1, AC5)", () => {
   it("spaces the wrapper at the 18px Pencil rhythm", async () => {
     const { container } = await renderDetail();

@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { displayName } from "@/features/profile/displayName";
 import { TakeTaskButton, MarkDoneButton, VerifyTaskButton } from "@/features/tasks/task-actions";
+import { TaskMenu } from "@/features/tasks/TaskMenu";
 import {
   getCategoriaIcon,
   getCategoriaLabel,
@@ -62,6 +63,11 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
 
   const closingMessage = ESTADO_MESSAGES[estado];
 
+  // El menú sólo tiene sentido para el creador y mientras la tarea siga viva.
+  // Se decide acá además de adentro del componente para no montar un client
+  // component que no va a dibujar nada.
+  const showMenu = isOwner && (estado === "abierta" || estado === "tomada");
+
   return (
     <div className="flex flex-col gap-[18px]">
       <div className="flex flex-row items-center justify-between w-full">
@@ -69,9 +75,13 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
           <ChevronLeft className="size-6 text-text-primary" />
         </Link>
         <h1 className="font-display text-base font-medium text-text-primary">Tarea</h1>
-        {/* Contrapeso del chevron: mantiene el título ópticamente centrado
-            mientras el menú `···` no está. */}
-        <span aria-hidden="true" className="size-[22px]" />
+        {showMenu ? (
+          <TaskMenu taskId={task.id} estado={estado} isOwner={isOwner} />
+        ) : (
+          // Contrapeso del chevron: sin esto el título queda descentrado
+          // cuando no hay menú que mostrar.
+          <span aria-hidden="true" className="size-[22px]" />
+        )}
       </div>
 
       <div className="flex flex-row items-center gap-3 w-full">
