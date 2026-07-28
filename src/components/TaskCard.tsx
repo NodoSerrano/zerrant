@@ -60,10 +60,13 @@ export function TaskCard({
     >
       <div className="flex items-center gap-3 w-full">
         <div className="size-10 rounded-xl bg-warm-yellow/[0.09] flex items-center justify-center shrink-0">
-          <Icon size={18} className="text-warm-orange" />
+          <Icon size={18} className="text-warm-orange" aria-hidden="true" />
         </div>
         <div className="flex-1 flex flex-col gap-0.5 min-w-0">
-          <span className="font-display text-[15px] font-medium text-text-primary truncate">
+          <span
+            className="font-display text-[15px] font-medium text-text-primary truncate"
+            title={title}
+          >
             {title}
           </span>
           <span className="font-body text-xs font-normal text-text-muted">
@@ -82,7 +85,7 @@ export function TaskCard({
       </div>
       <div className="flex justify-between items-center w-full">
         <div className="flex items-center gap-[5px]">
-          <Flame size={14} className={urgenciaData.color} />
+          <Flame size={14} className={urgenciaData.color} aria-hidden="true" />
           <span className={cn("font-body text-xs font-normal", urgenciaData.color)}>
             {urgenciaData.label}
           </span>

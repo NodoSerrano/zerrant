@@ -83,32 +83,44 @@ describe("TaskCard", () => {
 
   it("renders Wrench icon for Reparación category", () => {
     const { container } = render(<TaskCard {...defaultProps} category="Reparación" />);
-    expect(container.querySelector("svg")).toBeTruthy();
+    const svg = container.querySelector("svg");
+    expect(svg).toBeTruthy();
+    expect(svg!.getAttribute("class")).toContain("lucide-wrench");
   });
 
   it("renders SprayCan icon for Limpieza category", () => {
     const { container } = render(<TaskCard {...defaultProps} category="Limpieza" />);
-    expect(container.querySelector("svg")).toBeTruthy();
+    const svg = container.querySelector("svg");
+    expect(svg).toBeTruthy();
+    expect(svg!.getAttribute("class")).toContain("lucide-spray-can");
   });
 
   it("renders ShoppingCart icon for Compra category", () => {
     const { container } = render(<TaskCard {...defaultProps} category="Compra" />);
-    expect(container.querySelector("svg")).toBeTruthy();
+    const svg = container.querySelector("svg");
+    expect(svg).toBeTruthy();
+    expect(svg!.getAttribute("class")).toContain("lucide-shopping-cart");
   });
 
   it("renders Settings icon for Mantenimiento category", () => {
     const { container } = render(<TaskCard {...defaultProps} category="Mantenimiento" />);
-    expect(container.querySelector("svg")).toBeTruthy();
+    const svg = container.querySelector("svg");
+    expect(svg).toBeTruthy();
+    expect(svg!.getAttribute("class")).toContain("lucide-settings");
   });
 
   it("renders MoreHorizontal icon for Otro category", () => {
     const { container } = render(<TaskCard {...defaultProps} category="Otro" />);
-    expect(container.querySelector("svg")).toBeTruthy();
+    const svg = container.querySelector("svg");
+    expect(svg).toBeTruthy();
+    expect(svg!.getAttribute("class")).toContain("lucide-ellipsis");
   });
 
   it("falls back to MoreHorizontal icon for unknown category", () => {
     const { container } = render(<TaskCard {...defaultProps} category="Fantasía" />);
-    expect(container.querySelector("svg")).toBeTruthy();
+    const svg = container.querySelector("svg");
+    expect(svg).toBeTruthy();
+    expect(svg!.getAttribute("class")).toContain("lucide-ellipsis");
   });
 
   it("calls onAction when action button is clicked", () => {
@@ -145,5 +157,39 @@ describe("TaskCard", () => {
     const { container } = render(<TaskCard {...defaultProps} />);
     const svgs = container.querySelectorAll("svg");
     expect(svgs.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("sets title attribute on truncated title span", () => {
+    render(<TaskCard {...defaultProps} title="Arreglar la cerca del huerto" />);
+    const titleEl = screen.getByText("Arreglar la cerca del huerto");
+    expect(titleEl).toHaveAttribute("title", "Arreglar la cerca del huerto");
+  });
+
+  it("renders category icon with aria-hidden", () => {
+    const { container } = render(<TaskCard {...defaultProps} />);
+    const icons = container.querySelectorAll("svg");
+    icons.forEach((svg) => {
+      expect(svg).toHaveAttribute("aria-hidden", "true");
+    });
+  });
+
+  it("renders empty title without crashing", () => {
+    expect(() => render(<TaskCard {...defaultProps} title="" />)).not.toThrow();
+    expect(screen.getByText("Reparación · hace 2 días")).toBeInTheDocument();
+  });
+
+  it("renders empty actionLabel without crashing", () => {
+    expect(() => render(<TaskCard {...defaultProps} actionLabel="" />)).not.toThrow();
+    expect(screen.getByText("Abierta")).toBeInTheDocument();
+  });
+
+  it("renders empty timeAgo without crashing", () => {
+    expect(() => render(<TaskCard {...defaultProps} timeAgo="" />)).not.toThrow();
+    expect(screen.getByText("Reparación ·")).toBeInTheDocument();
+  });
+
+  it("renders empty category without crashing", () => {
+    expect(() => render(<TaskCard {...defaultProps} category="" />)).not.toThrow();
+    expect(screen.getByText(/hace 2 días/)).toBeInTheDocument();
   });
 });
