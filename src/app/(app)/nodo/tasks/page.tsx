@@ -5,15 +5,14 @@ import { relativeTime } from "@/lib/time";
 import { TaskCard } from "@/components/TaskCard";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
+import { ESTADO_BADGE, getCategoriaLabel } from "@/features/tasks/taskDisplay";
 import type { TaskEstado } from "@/features/tasks/types";
 
-const ESTADO_LABELS: Record<string, string> = {
-  abierta: "Abierta",
-  tomada: "Tomada",
-  hecha: "Hecha",
-  verificada: "Verificada",
-  cancelada: "Cancelada",
-};
+// Las etiquetas de las pills salen del mismo lugar que las de los chips, para
+// que no se pueda renombrar un estado en una pantalla y no en la otra.
+const ESTADO_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(ESTADO_BADGE).map(([estado, badge]) => [estado, badge.label]),
+);
 
 type CardEstado = "abierta" | "tomada" | "hecha" | "cancelada";
 
@@ -120,7 +119,7 @@ export default async function TasksPage({
               key={task.id}
               href={`/nodo/tasks/${task.id}`}
               title={task.titulo}
-              category={task.categoria}
+              category={getCategoriaLabel(task.categoria)}
               timeAgo={relativeTime(task.created_at)}
               estado={toCardEstado(task.estado)}
               urgencia={task.urgencia ?? "media"}

@@ -255,9 +255,11 @@ Edit screen `H3BY0u` / wrapper `vPUkG`: identical wrapper `gap: 18`, `padding: [
 - [x] **T2 — Green: `cancelTask` + `updateTask`** (AC: 7, 8)
   - [x] Added to `src/features/tasks/actions.ts`, mirroring `takeTask`'s shape
   - [x] `database.types.ts` widened by hand — no Supabase CLI in this environment
-- [ ] **T3 — Red + Green: shared task display map** (AC: 2, 3, 4)
-  - [ ] `src/features/tasks/taskDisplay.ts` + tests — enum-keyed category icons/labels, estado config incl. `verificada`/`cancelada`, urgency config
-  - [ ] Point `TaskCard` at it without changing its props or rendered classes; its existing tests must pass unchanged
+- [x] **T3 — Red + Green: shared task display map** (AC: 2, 3, 4)
+  - [x] `src/features/tasks/taskDisplay.ts` + tests — enum-keyed category icons/labels, estado badge config incl. `verificada`/`cancelada`, urgency config
+  - [x] `TaskCard` points at it; props and rendered classes unchanged, its 30 existing tests pass untouched
+  - [x] Fixed the live hub defect: it passed the raw enum as `category`, so every card showed the generic icon and the text "reparacion"
+  - [x] The hub's `ESTADO_LABELS` now derives from `ESTADO_BADGE` instead of repeating the labels
 - [ ] **T4 — Red: detail page tests** (AC: 1–5, 9)
   - [ ] `src/app/(app)/nodo/tasks/[id]/page.test.tsx`, class-string assertions per the `EmptyState.test.tsx` / `page.test.tsx` convention
   - [ ] Include a **structural** assertion that the CTA's `parentElement` is the wrapper, not a nested div

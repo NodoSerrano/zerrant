@@ -190,6 +190,50 @@ describe("TasksPage", () => {
     });
   });
 
+  // La columna `categoria` guarda el valor del enum, en minúscula y sin tilde.
+  // Si el hub se lo pasa crudo a TaskCard, la tarjeta imprime "reparacion" y no
+  // encuentra el ícono, porque su índice está en castellano.
+  describe("categoria display", () => {
+    function taskWithCategoria(categoria: string) {
+      return {
+        id: "task-1",
+        titulo: "Arreglar el caño",
+        categoria,
+        estado: "abierta",
+        urgencia: "alta",
+        created_at: "2026-07-27T12:00:00Z",
+        creado_por: "user-1",
+        profiles: { nombre: "Juan", apellido: "Perez", apodo: null, nombre_visible: "Juan" },
+      };
+    }
+
+    it("shows the Spanish label, not the raw enum value", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [taskWithCategoria("reparacion")] }),
+      );
+
+      await renderPage();
+
+      expect(screen.getByText(/Reparación ·/)).toBeInTheDocument();
+      expect(screen.queryByText(/reparacion ·/)).not.toBeInTheDocument();
+    });
+
+    it("renders the icon that matches the categoria", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [taskWithCategoria("limpieza")] }),
+      );
+
+      const { container } = await renderPage();
+
+      const icons = Array.from(container.querySelectorAll("svg")).map((s) =>
+        s.getAttribute("class"),
+      );
+      expect(icons.some((c) => c?.includes("lucide-spray-can"))).toBe(true);
+    });
+  });
+
   describe("estado mapping robustness", () => {
     // El enum `task_estado` de Postgres puede crecer. Si el hub traduce estados
     // con un lookup parcial, cualquier valor nuevo llega como `undefined` a

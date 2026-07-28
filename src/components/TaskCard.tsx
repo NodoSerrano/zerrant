@@ -1,7 +1,8 @@
-import { Flame, MoreHorizontal, Settings, ShoppingCart, SprayCan, Wrench } from "lucide-react";
+import { Flame, MoreHorizontal } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { ESTADO_BADGE, URGENCIA_CONFIG, categoriaIconByLabel } from "@/features/tasks/taskDisplay";
 
 interface TaskCardProps {
   href?: string;
@@ -15,31 +16,11 @@ interface TaskCardProps {
   className?: string;
 }
 
-const categoryIcons: Record<string, LucideIcon> = {
-  Reparación: Wrench,
-  Limpieza: SprayCan,
-  Compra: ShoppingCart,
-  Mantenimiento: Settings,
-  Otro: MoreHorizontal,
-};
-
-const estadoConfig = {
-  abierta: { label: "Abierta", bg: "bg-blue-raw/20", text: "text-brand-blue" },
-  tomada: { label: "Tomada", bg: "bg-coral/20", text: "text-coral" },
-  hecha: { label: "Hecha", bg: "bg-mint-raw/20", text: "text-brand-mint" },
-  // Pencil no diseñó un chip para "cancelada". Se deriva del par neutro que el
-  // DS ya usa para lo inactivo, en vez de inventar un color.
-  cancelada: { label: "Cancelada", bg: "bg-surface-inset", text: "text-text-muted" },
-} as const;
-
-const urgenciaConfig = {
-  alta: { label: "Urgencia alta", color: "text-warm-orange" },
-  media: { label: "Urgencia media", color: "text-warm-yellow" },
-  baja: { label: "Urgencia baja", color: "text-text-muted" },
-} as const;
-
+// El componente recibe la categoría ya traducida, así que resuelve el ícono
+// por etiqueta. El índice sale de `taskDisplay`, que es el único lugar donde
+// vive el mapa de categorías.
 const getCategoryIcon = (category: string): LucideIcon => {
-  return categoryIcons[category] ?? MoreHorizontal;
+  return categoriaIconByLabel[category] ?? MoreHorizontal;
 };
 
 export function TaskCard({
@@ -57,8 +38,8 @@ export function TaskCard({
   // Los datos vienen de enums de Postgres que pueden crecer. Sin fallback, un
   // valor que el componente todavía no conoce lo hace explotar y se lleva
   // puesta la pantalla que lo renderiza.
-  const estadoData = estadoConfig[estado] ?? estadoConfig.abierta;
-  const urgenciaData = urgenciaConfig[urgencia] ?? urgenciaConfig.media;
+  const estadoData = ESTADO_BADGE[estado] ?? ESTADO_BADGE.abierta;
+  const urgenciaData = URGENCIA_CONFIG[urgencia] ?? URGENCIA_CONFIG.media;
 
   // Una tarea cancelada ya no se puede tomar. El consumidor fija el
   // `actionLabel` sin mirar el estado, así que la tarjeta lo apaga: se sigue
