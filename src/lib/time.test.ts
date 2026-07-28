@@ -31,12 +31,12 @@ describe("relativeTime", () => {
     expect(relativeTime("2026-07-28T09:00:00Z")).toBe("hace 3 horas");
   });
 
-  it("returns 'hace 1 dia' for 25 hours ago", () => {
-    expect(relativeTime("2026-07-27T11:00:00Z")).toBe("hace 1 dia");
+  it("returns 'hace 1 día' for 25 hours ago", () => {
+    expect(relativeTime("2026-07-27T11:00:00Z")).toBe("hace 1 día");
   });
 
-  it("returns 'hace 5 dias' for five days ago", () => {
-    expect(relativeTime("2026-07-23T12:00:00Z")).toBe("hace 5 dias");
+  it("returns 'hace 5 días' for five days ago", () => {
+    expect(relativeTime("2026-07-23T12:00:00Z")).toBe("hace 5 días");
   });
 
   it("returns 'hace 1 mes' for 35 days ago", () => {

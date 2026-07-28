@@ -9,7 +9,7 @@ export function relativeTime(date: string): string {
   if (diffMinutes < 1) return "ahora";
   if (diffMinutes < 60) return `hace ${diffMinutes} min`;
   if (diffHours < 24) return `hace ${diffHours} ${diffHours === 1 ? "hora" : "horas"}`;
-  if (diffDays < 30) return `hace ${diffDays} ${diffDays === 1 ? "dia" : "dias"}`;
+  if (diffDays < 30) return `hace ${diffDays} ${diffDays === 1 ? "día" : "días"}`;
   if (diffDays < 365) {
     const meses = Math.floor(diffDays / 30);
     return `hace ${meses} ${meses === 1 ? "mes" : "meses"}`;

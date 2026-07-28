@@ -18,6 +18,9 @@ const ESTADO_MAP: Record<string, "abierta" | "tomada" | "hecha"> = {
   abierta: "abierta",
   tomada: "tomada",
   hecha: "hecha",
+  // TaskCard solo tiene 3 estados. Las tareas verificadas se muestran como
+  // "Hecha" visualmente; el filtro de URL sí las aísla. Cuando Pencil defina
+  // un diseño para "verificada", agregarlo al componente.
   verificada: "hecha",
 };
 
@@ -64,7 +67,7 @@ export default async function TasksPage({
         <span className="flex-1 text-center py-2 font-display text-sm font-semibold bg-primary text-on-primary rounded-pill">
           Tareas
         </span>
-        <span className="flex-1 text-center py-2 font-display text-sm font-medium text-text-muted">
+        <span className="flex-1 text-center py-2 font-display text-sm font-medium text-text-muted cursor-default">
           Proyectos
         </span>
       </div>
@@ -121,7 +124,7 @@ export default async function TasksPage({
             "bg-linear-to-br from-brand-green to-brand-blue",
             "shadow-[0_4px_14px_rgba(26,22,20,0.25)]",
             "flex items-center justify-center",
-            "active:scale-95 transition-transform",
+            "active:scale-95 hover:brightness-110 transition-all",
           )}
           aria-label="Crear tarea"
         >

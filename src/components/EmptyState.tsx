@@ -36,7 +36,7 @@ export function EmptyState({ subtitle, href, actionLabel, onAction, className }:
           )}
         >
           <Plus className="size-[18px] text-on-primary" />
-          {actionLabel ?? defaultLabel}
+          {actionLabel || defaultLabel}
         </Link>
       ) : actionLabel && onAction ? (
         <button
