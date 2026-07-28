@@ -118,7 +118,7 @@ describe("NewTaskPage — authorization guard (AC7)", () => {
   });
 
   it("logs the profile read failure instead of swallowing it", async () => {
-    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
     setUser("serrano-id");
     mocks.profilesSelectSingle.mockResolvedValue({
       data: null,

@@ -33,7 +33,7 @@ export default async function NewTaskPage() {
     // La lectura falló (timeout, permisos, 5xx): no sabemos el tier. Rebotar a
     // un serrano legítimo sin explicación es peor que dejarlo entrar, porque el
     // insert igual queda protegido por la guarda de `createTask`.
-    console.error("[tasks/new] no se pudo leer el perfil para la guarda de tier", error);
+    console.warn("[tasks/new] no se pudo leer el perfil para la guarda de tier");
   } else if (!profile || profile.tier === "tourist") {
     redirect("/nodo/tasks");
   }

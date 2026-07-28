@@ -93,9 +93,9 @@ development_status:
   epic-3-retrospective: optional
 
   epic-4: in-progress
-  4-1-taskcard-component: ready-for-dev
+  4-1-taskcard-component: done
   4-2-empty-tasks-state-7-2: done
   4-3-nodo-tasks-hub-2-3: backlog
   4-4-task-detail-4-1: backlog
-  4-5-create-task-4-2: ready-for-dev
+  4-5-create-task-4-2: done
   epic-4-retrospective: optional
