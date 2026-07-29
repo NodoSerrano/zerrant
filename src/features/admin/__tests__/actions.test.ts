@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   profilesSelectSingle: vi.fn(),
   membershipUpdate: vi.fn(),
   membershipUpdateEq: vi.fn(),
+  membershipUpdate2: vi.fn(),
+  membershipUpdate2Eq: vi.fn(),
   membershipSelect: vi.fn(),
   membershipSelectEq: vi.fn(),
   membershipSelectSingle: vi.fn(),
@@ -44,6 +46,16 @@ vi.mock("@/lib/supabase/server", () => ({
       }
       return {};
     }),
+  }),
+}));
+
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn(() => {
+    throw new Error("NEXT_REDIRECT");
   }),
 }));
 
@@ -118,16 +130,47 @@ describe("approveRequest", () => {
     expect(result).toEqual({ error: "Error al actualizar" });
   });
 
-  it("returns error when profile fetch for tier update fails", async () => {
+  it("returns error when profile fetch for tier update fails and rolls back membership status", async () => {
     setupAuth();
     mocks.profilesSelectSingle.mockResolvedValue({ data: { is_platform_admin: true } });
-    mocks.membershipUpdateEq.mockResolvedValue({ error: null });
+    mocks.membershipUpdateEq
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null });
     mocks.membershipSelectSingle.mockResolvedValue({ data: null, error: { message: "Not found" } });
 
     const result = await approveRequest(null, makeFormData());
 
     expect(result).toEqual({ error: "Solicitud no encontrada" });
     expect(mocks.profilesUpdate).not.toHaveBeenCalled();
+    expect(mocks.membershipUpdate).toHaveBeenCalledTimes(2);
+    expect(mocks.membershipUpdate).toHaveBeenNthCalledWith(2, {
+      estado: "pendiente",
+      revisado_por: null,
+      actualizado_en: expect.any(String),
+    });
+  });
+
+  it("rolls back membership status when tier update fails", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { is_platform_admin: true } });
+    mocks.membershipUpdateEq
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null });
+    mocks.membershipSelectSingle.mockResolvedValue({
+      data: { profile_id: "tourist-1", tier_solicitado: "standard" },
+    });
+    mocks.profilesUpdateEq.mockResolvedValue({ error: { message: "Tier update failed" } });
+
+    const result = await approveRequest(null, makeFormData());
+
+    expect(result).toEqual({ error: "Error al actualizar el tier del perfil" });
+    expect(mocks.membershipUpdate).toHaveBeenCalledTimes(2);
+    expect(mocks.membershipUpdate).toHaveBeenNthCalledWith(2, {
+      estado: "pendiente",
+      revisado_por: null,
+      actualizado_en: expect.any(String),
+    });
+    expect(mocks.membershipUpdateEq).toHaveBeenCalledTimes(2);
   });
 });
 

@@ -50,13 +50,33 @@ export async function approveRequest(
     .single();
 
   if (fetchError || !request) {
+    await supabase
+      .from("membership_requests")
+      .update({
+        estado: "pendiente",
+        revisado_por: null,
+        actualizado_en: new Date().toISOString(),
+      })
+      .eq("id", requestId);
     return { error: "Solicitud no encontrada" };
   }
 
-  await supabase
+  const { error: tierError } = await supabase
     .from("profiles")
     .update({ tier: request.tier_solicitado })
     .eq("id", request.profile_id);
+
+  if (tierError) {
+    await supabase
+      .from("membership_requests")
+      .update({
+        estado: "pendiente",
+        revisado_por: null,
+        actualizado_en: new Date().toISOString(),
+      })
+      .eq("id", requestId);
+    return { error: "Error al actualizar el tier del perfil" };
+  }
 
   revalidatePath("/admin/membresias");
   redirect("/admin/membresias");

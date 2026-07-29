@@ -2,31 +2,13 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 const mocks = vi.hoisted(() => ({
-  getUser: vi.fn(),
-  profilesSelect: vi.fn(),
-  profilesSelectEq: vi.fn(),
-  profilesSelectSingle: vi.fn(),
   membershipResponse: Promise.resolve({ data: [] as unknown[], count: 0 }) as Promise<{ data: unknown[]; count: number }>,
   membershipSelect: vi.fn(),
 }));
 
-vi.mock("next/navigation", () => ({
-  redirect: vi.fn(),
-}));
-
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
-    auth: { getUser: mocks.getUser },
     from: vi.fn((table: string) => {
-      if (table === "profiles") {
-        return {
-          select: mocks.profilesSelect.mockImplementation(() => ({
-            eq: mocks.profilesSelectEq.mockImplementation(() => ({
-              single: mocks.profilesSelectSingle,
-            })),
-          })),
-        };
-      }
       if (table === "membership_requests") {
         return {
           select: mocks.membershipSelect.mockImplementation(() => ({
@@ -47,19 +29,10 @@ vi.mock("@/components/RequestCard", () => ({
 }));
 
 import AdminMembresiasPage from "../membresias/page";
-import { redirect } from "next/navigation";
 
 beforeEach(() => {
   vi.clearAllMocks();
 });
-
-const adminProfile = {
-  id: "admin-1",
-  is_platform_admin: true,
-  nombre: "Admin",
-  apellido: "User",
-  tier: "standard",
-};
 
 const pendingRequests = [
   {
@@ -88,18 +61,6 @@ const pendingRequests = [
   },
 ];
 
-function setupAdmin() {
-  mocks.getUser.mockResolvedValue({ data: { user: { id: "admin-1" } } });
-  mocks.profilesSelectSingle.mockResolvedValue({ data: adminProfile });
-}
-
-function setupNonAdmin() {
-  mocks.getUser.mockResolvedValue({ data: { user: { id: "regular-1" } } });
-  mocks.profilesSelectSingle.mockResolvedValue({
-    data: { ...adminProfile, id: "regular-1", is_platform_admin: false },
-  });
-}
-
 function setMembershipData(data: typeof pendingRequests, count: number) {
   mocks.membershipResponse = Promise.resolve({ data, count });
 }
@@ -109,93 +70,54 @@ function setEmptyMembership() {
 }
 
 describe("AdminMembresiasPage", () => {
-  it("redirects unauthenticated users to /auth/login", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: null } });
-
-    try {
-      await AdminMembresiasPage();
-    } catch {
-      // redirect throws
-    }
-
-    expect(redirect).toHaveBeenCalledWith("/auth/login");
-  });
-
-  it("redirects non-admin users to /nodo/tasks", async () => {
-    setupNonAdmin();
-
-    try {
-      await AdminMembresiasPage();
-    } catch {
-      // redirect throws
-    }
-
-    expect(redirect).toHaveBeenCalledWith("/nodo/tasks");
-  });
-
-  it("renders page header for admin users", async () => {
-    setupAdmin();
+  it("renders page header", async () => {
     setEmptyMembership();
-
     render(await AdminMembresiasPage());
-
     expect(screen.getByText("Panel de admin")).toBeInTheDocument();
   });
 
   it("renders solicitudes pendientes section title", async () => {
-    setupAdmin();
     setEmptyMembership();
-
     render(await AdminMembresiasPage());
-
     expect(screen.getByText("Solicitudes pendientes")).toBeInTheDocument();
     expect(screen.getByText("Turistas esperando ser Serranos")).toBeInTheDocument();
   });
 
   it("renders segmented tabs with Membresías active and Roles inactive", async () => {
-    setupAdmin();
     setEmptyMembership();
-
     render(await AdminMembresiasPage());
-
     expect(screen.getByText(/Membresías/)).toBeInTheDocument();
     expect(screen.getByText(/Roles/)).toBeInTheDocument();
   });
 
   it("renders counter badge with pending count", async () => {
-    setupAdmin();
     setMembershipData(pendingRequests, 2);
-
     render(await AdminMembresiasPage());
-
     expect(screen.getByText("2")).toBeInTheDocument();
   });
 
   it("renders RequestCards for each pending request", async () => {
-    setupAdmin();
     setMembershipData(pendingRequests, 2);
-
     render(await AdminMembresiasPage());
-
     expect(screen.getByText("Sofía Vega")).toBeInTheDocument();
     expect(screen.getByText("Julián Ríos")).toBeInTheDocument();
   });
 
   it("renders empty state when no pending requests", async () => {
-    setupAdmin();
     setEmptyMembership();
-
     render(await AdminMembresiasPage());
-
     expect(screen.getByText("No hay solicitudes pendientes")).toBeInTheDocument();
   });
 
-  it("does not render Serrano-only menu items in admin page", async () => {
-    setupAdmin();
-    setEmptyMembership();
-
+  it("handles null data from supabase gracefully", async () => {
+    mocks.membershipResponse = Promise.resolve({ data: null as unknown as unknown[], count: 0 });
     render(await AdminMembresiasPage());
+    expect(screen.getByText("No hay solicitudes pendientes")).toBeInTheDocument();
+  });
 
+  it("does not render non-admin UI elements", async () => {
+    setEmptyMembership();
+    render(await AdminMembresiasPage());
     expect(screen.queryByText("Proyectos")).not.toBeInTheDocument();
     expect(screen.queryByText("Aportes")).not.toBeInTheDocument();
   });

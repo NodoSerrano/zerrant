@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { RequestCard } from "@/components/RequestCard";
@@ -9,24 +8,6 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminMembresiasPage() {
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("is_platform_admin")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.is_platform_admin) {
-    redirect("/nodo/tasks");
-  }
 
   const { count: pendingCount, data: pendingRequests } = await supabase
     .from("membership_requests")
@@ -44,7 +25,9 @@ export default async function AdminMembresiasPage() {
     profiles: Profile;
   };
 
-  const requests = (pendingRequests as unknown as RequestWithProfile[]) ?? [];
+  const requests: RequestWithProfile[] = Array.isArray(pendingRequests)
+    ? (pendingRequests as unknown as RequestWithProfile[])
+    : [];
 
   return (
     <div className="flex flex-col min-h-screen bg-bg">

@@ -49,35 +49,47 @@ function displayName(profile: Profile): string {
   }
 }
 
+type ActionState = { error?: string } | null;
+
 function RequestCardActions({ requestId }: { requestId: string }) {
-  const [, approveAction] = useActionState(approveRequest, null);
-  const [, rejectAction] = useActionState(rejectRequest, null);
+  const [approveState, approveAction] = useActionState(approveRequest, null);
+  const [rejectState, rejectAction] = useActionState(rejectRequest, null);
+
+  const approveError = (approveState as ActionState)?.error;
+  const rejectError = (rejectState as ActionState)?.error;
 
   return (
-    <div className="flex gap-2.5">
-      <form action={approveAction} className="flex-1">
-        <input type="hidden" name="requestId" value={requestId} />
-        <button
-          type="submit"
-          className="rounded-pill bg-primary h-[44px] flex items-center justify-center gap-1.5 w-full"
-        >
-          <Check className="size-[17px] text-on-primary" />
-          <span className="font-display text-[15px] font-medium text-on-primary">
-            Aprobar
-          </span>
-        </button>
-      </form>
-      <form action={rejectAction} className="flex-1">
-        <input type="hidden" name="requestId" value={requestId} />
-        <button
-          type="submit"
-          className="rounded-pill bg-surface border border-border h-[44px] flex items-center justify-center w-full"
-        >
-          <span className="font-display text-[15px] font-medium text-text-secondary">
-            Rechazar
-          </span>
-        </button>
-      </form>
+    <div className="flex flex-col gap-2">
+      <div className="flex gap-2.5">
+        <form action={approveAction} className="flex-1">
+          <input type="hidden" name="requestId" value={requestId} />
+          <button
+            type="submit"
+            className="rounded-pill bg-primary h-[44px] flex items-center justify-center gap-1.5 w-full"
+          >
+            <Check className="size-[17px] text-on-primary" />
+            <span className="font-display text-[15px] font-medium text-on-primary">
+              Aprobar
+            </span>
+          </button>
+        </form>
+        <form action={rejectAction} className="flex-1">
+          <input type="hidden" name="requestId" value={requestId} />
+          <button
+            type="submit"
+            className="rounded-pill bg-surface border border-border h-[44px] flex items-center justify-center w-full"
+          >
+            <span className="font-display text-[15px] font-medium text-text-secondary">
+              Rechazar
+            </span>
+          </button>
+        </form>
+      </div>
+      {(approveError || rejectError) && (
+        <p className="font-body text-xs text-coral text-center">
+          {approveError || rejectError}
+        </p>
+      )}
     </div>
   );
 }
