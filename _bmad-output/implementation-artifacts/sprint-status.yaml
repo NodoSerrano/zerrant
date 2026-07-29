@@ -98,4 +98,14 @@ development_status:
   4-3-nodo-tasks-hub-2-3: backlog
   4-4-task-detail-4-1: backlog
   4-5-create-task-4-2: done
-  epic-4-retrospective: optional
+   epic-4-retrospective: optional
+
+   epic-3-membresia: in-progress
+   3-1-modelo-de-datos-rls-seed-admin: done
+   3-2-formulario-de-solicitud: review
+   3-3-confirmacion-de-envio: backlog
+   3-4-pantalla-post-solicitud: backlog
+   3-5-panel-admin-membresias: in-progress
+   3-6-roles-autoasignacion: review
+   3-7-roles-confirmacion-admin: backlog
+   epic-3-membresia-retrospective: optional
