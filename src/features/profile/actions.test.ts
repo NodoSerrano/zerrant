@@ -5,9 +5,10 @@ const mocks = vi.hoisted(() => ({
   profilesUpdate: vi.fn(),
   profilesUpdateEq: vi.fn(),
   profilesSelectSingle: vi.fn(),
-  profileRolesDelete: vi.fn(),
-  profileRolesDeleteEq: vi.fn(),
+  profileRolesSelectEq: vi.fn(),
+  profileRolesDeleteIn: vi.fn(),
   profileRolesInsert: vi.fn(),
+  rolesSelectIn: vi.fn(),
   storageUpload: vi.fn(),
   storageGetPublicUrl: vi.fn(),
   storageRemove: vi.fn(),
@@ -18,10 +19,22 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mocks.getUser },
     from: vi.fn((table: string) => {
+      if (table === "roles") {
+        return {
+          select: vi.fn(() => ({
+            in: mocks.rolesSelectIn,
+          })),
+        };
+      }
       if (table === "profile_roles") {
         return {
-          delete: mocks.profileRolesDelete.mockImplementation(() => ({
-            eq: mocks.profileRolesDeleteEq,
+          select: vi.fn(() => ({
+            eq: vi.fn(() => mocks.profileRolesSelectEq()),
+          })),
+          delete: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              in: mocks.profileRolesDeleteIn,
+            })),
           })),
           insert: mocks.profileRolesInsert,
         };
@@ -293,8 +306,8 @@ describe("saveOnboardingStep2", () => {
 describe("updateProfile", () => {
   it("updates profile with numeric tarifa_hora and redirects on success", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    mocks.profileRolesDeleteEq.mockResolvedValue({ data: null, error: null });
     mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+    mocks.profileRolesSelectEq.mockResolvedValue({ data: [], error: null });
 
     const fd = new FormData();
     fd.set("nombre", "Juan");
@@ -333,7 +346,6 @@ describe("updateProfile", () => {
 
   it("returns error when supabase update fails", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    mocks.profileRolesDeleteEq.mockResolvedValue({ data: null, error: null });
     mocks.profilesUpdateEq.mockResolvedValue({
       data: null,
       error: { message: "DB error" },
@@ -342,6 +354,7 @@ describe("updateProfile", () => {
     const result = await updateProfile(null, new FormData());
 
     expect(result).toEqual({ error: "No pudimos guardar tus datos. Probá de nuevo." });
+    expect(mocks.profileRolesSelectEq).not.toHaveBeenCalled();
   });
 });
 

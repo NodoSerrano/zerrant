@@ -1,12 +1,11 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, X, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { AvatarPicker } from "@/components/AvatarPicker";
-import { RoleChip } from "@/components/RoleChip";
 import { updateProfile, uploadAvatar } from "@/features/profile/actions";
 
 const NOMBRE_VISIBLE_OPTIONS = [
@@ -147,12 +146,16 @@ export function EditProfileForm({ defaults, availableRoles, currentRoleIds }: Ed
                   key={role.id}
                   type="button"
                   onClick={() => toggleRole(role.id)}
-                  className="cursor-pointer"
+                  aria-pressed={selected}
+                  className={
+                    selected
+                      ? "inline-flex items-center gap-1.5 rounded-pill px-3 py-[7px] text-[13px] font-medium bg-brand-green/9 text-brand-green cursor-pointer"
+                      : "inline-flex items-center gap-1.5 rounded-pill px-3 py-[7px] text-[13px] font-medium bg-surface border border-border text-text-secondary cursor-pointer"
+                  }
                 >
-                  <RoleChip label={role.nombre} confirmed={false} />
-                  {selected && (
-                    <input type="hidden" name="roles" value={role.id} />
-                  )}
+                  {selected ? <X size={13} /> : <Plus size={13} />}
+                  {role.nombre}
+                  {selected && <input type="hidden" name="roles" value={role.id} />}
                 </button>
               );
             })}

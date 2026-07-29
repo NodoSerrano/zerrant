@@ -127,34 +127,28 @@ export type Database = {
       };
       membership_requests: {
         Row: {
-          actualizado_en: string;
           created_at: string;
           estado: Database["public"]["Enums"]["membership_request_estado"];
           id: string;
           mensaje: string | null;
           profile_id: string;
-          revisado_por: string | null;
-          tier_solicitado: Database["public"]["Enums"]["tier"];
+          resuelta_por: string | null;
         };
         Insert: {
-          actualizado_en?: string;
           created_at?: string;
           estado?: Database["public"]["Enums"]["membership_request_estado"];
           id?: string;
           mensaje?: string | null;
           profile_id: string;
-          revisado_por?: string | null;
-          tier_solicitado?: Database["public"]["Enums"]["tier"];
+          resuelta_por?: string | null;
         };
         Update: {
-          actualizado_en?: string;
           created_at?: string;
           estado?: Database["public"]["Enums"]["membership_request_estado"];
           id?: string;
           mensaje?: string | null;
           profile_id?: string;
-          revisado_por?: string | null;
-          tier_solicitado?: Database["public"]["Enums"]["tier"];
+          resuelta_por?: string | null;
         };
         Relationships: [
           {
@@ -165,8 +159,8 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "membership_requests_revisado_por_fkey";
-            columns: ["revisado_por"];
+            foreignKeyName: "membership_requests_resuelta_por_fkey";
+            columns: ["resuelta_por"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];

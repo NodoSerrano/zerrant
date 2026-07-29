@@ -247,34 +247,6 @@ export async function updateProfile(_prevState: { error: string } | null, formDa
     return { error: "No autorizado" };
   }
 
-  const roleIds = formData.getAll("roles") as string[];
-
-  const { error: deleteRolesError } = await supabase
-    .from("profile_roles")
-    .delete()
-    .eq("profile_id", user.id);
-
-  if (deleteRolesError) {
-    console.error("[updateProfile] delete roles falló", deleteRolesError);
-    return { error: DB_ERROR };
-  }
-
-  if (roleIds.length > 0) {
-    const inserts = roleIds.map((roleId) => ({
-      profile_id: user.id,
-      role_id: roleId,
-    }));
-
-    const { error: insertRolesError } = await supabase
-      .from("profile_roles")
-      .insert(inserts);
-
-    if (insertRolesError) {
-      console.error("[updateProfile] insert roles falló", insertRolesError);
-      return { error: DB_ERROR };
-    }
-  }
-
   const update: ProfileUpdate = {
     nombre: (formData.get("nombre") as string) || null,
     apellido: (formData.get("apellido") as string) || null,
@@ -298,6 +270,52 @@ export async function updateProfile(_prevState: { error: string } | null, formDa
   if (error) {
     console.error("[updateProfile] update falló", error);
     return { error: DB_ERROR };
+  }
+
+  const roleIds = formData.getAll("roles") as string[];
+
+  if (roleIds.length > 0) {
+    const { data: validRoles } = await supabase.from("roles").select("id").in("id", roleIds);
+
+    if (!validRoles || validRoles.length !== roleIds.length) {
+      return { error: DB_ERROR };
+    }
+  }
+
+  const { data: currentRoles } = await supabase
+    .from("profile_roles")
+    .select("role_id, confirmado")
+    .eq("profile_id", user.id);
+
+  const currentRoleIds = new Set((currentRoles ?? []).map((r) => r.role_id));
+  const submittedRoleIds = new Set(roleIds);
+
+  const toDelete = (currentRoles ?? [])
+    .filter((r) => !r.confirmado && !submittedRoleIds.has(r.role_id))
+    .map((r) => r.role_id);
+
+  if (toDelete.length > 0) {
+    const { error: deleteError } = await supabase
+      .from("profile_roles")
+      .delete()
+      .eq("profile_id", user.id)
+      .in("role_id", toDelete);
+
+    if (deleteError) {
+      console.error("[updateProfile] delete roles falló", deleteError);
+    }
+  }
+
+  const toInsert = roleIds.filter((rid) => !currentRoleIds.has(rid));
+
+  if (toInsert.length > 0) {
+    const { error: insertError } = await supabase
+      .from("profile_roles")
+      .insert(toInsert.map((roleId) => ({ profile_id: user.id, role_id: roleId })));
+
+    if (insertError) {
+      console.error("[updateProfile] insert roles falló", insertError);
+    }
   }
 
   revalidatePath("/", "layout");

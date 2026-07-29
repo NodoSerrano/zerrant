@@ -4,31 +4,42 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   profilesUpdate: vi.fn(),
   profilesUpdateEq: vi.fn(),
-  profileRolesDelete: vi.fn(),
+  profileRolesSelectEq: vi.fn(),
   profileRolesDeleteEq: vi.fn(),
+  profileRolesDeleteIn: vi.fn(),
   profileRolesInsert: vi.fn(),
+  rolesSelectIn: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mocks.getUser },
     from: vi.fn((table: string) => {
-      if (table === "profiles") {
+      if (table === "roles") {
         return {
-          update: mocks.profilesUpdate.mockImplementation(() => ({
-            eq: mocks.profilesUpdateEq,
+          select: vi.fn(() => ({
+            in: mocks.rolesSelectIn,
           })),
         };
       }
       if (table === "profile_roles") {
         return {
-          delete: mocks.profileRolesDelete.mockImplementation(() => ({
-            eq: mocks.profileRolesDeleteEq,
+          select: vi.fn(() => ({
+            eq: vi.fn(() => mocks.profileRolesSelectEq()),
+          })),
+          delete: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              in: mocks.profileRolesDeleteIn,
+            })),
           })),
           insert: mocks.profileRolesInsert,
         };
       }
-      return {};
+      return {
+        update: mocks.profilesUpdate.mockImplementation(() => ({
+          eq: mocks.profilesUpdateEq,
+        })),
+      };
     }),
   }),
 }));
@@ -60,10 +71,8 @@ describe("updateProfile — roles", () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: userId } } });
   }
 
-  function setupSuccess() {
+  function setupProfileUpdateSuccess() {
     mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-    mocks.profileRolesDeleteEq.mockResolvedValue({ data: null, error: null });
-    mocks.profileRolesInsert.mockResolvedValue({ data: null, error: null });
   }
 
   function formWithRoles(roleIds: string[]): FormData {
@@ -85,9 +94,19 @@ describe("updateProfile — roles", () => {
     return fd;
   }
 
-  it("inserts selected roles when form includes roles[]", async () => {
+  it("inserts new roles and removes deselected unconfirmed ones", async () => {
     setupAuth();
-    setupSuccess();
+    setupProfileUpdateSuccess();
+    mocks.rolesSelectIn.mockResolvedValue({
+      data: [{ id: "role-a" }, { id: "role-b" }],
+      error: null,
+    });
+    mocks.profileRolesSelectEq.mockResolvedValue({
+      data: [{ role_id: "role-a", confirmado: true }],
+      error: null,
+    });
+    mocks.profileRolesDeleteIn.mockResolvedValue({ data: null, error: null });
+    mocks.profileRolesInsert.mockResolvedValue({ data: null, error: null });
 
     const fd = formWithRoles(["role-a", "role-b"]);
 
@@ -97,19 +116,25 @@ describe("updateProfile — roles", () => {
       // redirect throws
     }
 
-    expect(mocks.profileRolesDelete).toHaveBeenCalled();
-    expect(mocks.profileRolesDeleteEq).toHaveBeenCalledWith("profile_id", "test-user-id");
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith(BASE_FIELDS);
     expect(mocks.profileRolesInsert).toHaveBeenCalledWith([
-      { profile_id: "test-user-id", role_id: "role-a" },
       { profile_id: "test-user-id", role_id: "role-b" },
     ]);
   });
 
-  it("deletes all existing roles when form sends no roles[]", async () => {
+  it("preserves confirmed roles that are still selected", async () => {
     setupAuth();
-    setupSuccess();
+    setupProfileUpdateSuccess();
+    mocks.rolesSelectIn.mockResolvedValue({
+      data: [{ id: "role-a" }],
+      error: null,
+    });
+    mocks.profileRolesSelectEq.mockResolvedValue({
+      data: [{ role_id: "role-a", confirmado: true }],
+      error: null,
+    });
 
-    const fd = formWithRoles([]);
+    const fd = formWithRoles(["role-a"]);
 
     try {
       await updateProfile(null, fd);
@@ -117,49 +142,62 @@ describe("updateProfile — roles", () => {
       // redirect throws
     }
 
-    expect(mocks.profileRolesDelete).toHaveBeenCalled();
-    expect(mocks.profileRolesDeleteEq).toHaveBeenCalledWith("profile_id", "test-user-id");
     expect(mocks.profileRolesInsert).not.toHaveBeenCalled();
+    expect(mocks.profileRolesSelectEq).not.toHaveBeenCalledWith("profile_roles");
   });
 
-  it("returns error when role insert fails", async () => {
+  it("deletes unconfirmed roles that were deselected", async () => {
     setupAuth();
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-    mocks.profileRolesDeleteEq.mockResolvedValue({ data: null, error: null });
-    mocks.profileRolesInsert.mockResolvedValue({
-      data: null,
-      error: { message: "RLS reject" },
+    setupProfileUpdateSuccess();
+    mocks.rolesSelectIn.mockResolvedValue({
+      data: [{ id: "role-a" }, { id: "role-b" }],
+      error: null,
     });
-
-    const fd = formWithRoles(["role-a"]);
-
-    const result = await updateProfile(null, fd);
-
-    expect(result).toEqual({ error: "No pudimos guardar tus datos. Probá de nuevo." });
-  });
-
-  it("returns error when role delete fails", async () => {
-    setupAuth();
-    mocks.profileRolesDeleteEq.mockResolvedValue({
-      data: null,
-      error: { message: "RLS reject" },
+    mocks.profileRolesSelectEq.mockResolvedValue({
+      data: [
+        { role_id: "role-a", confirmado: false },
+        { role_id: "role-b", confirmado: false },
+        { role_id: "role-c", confirmado: false },
+      ],
+      error: null,
     });
-
-    const fd = formWithRoles(["role-a"]);
-
-    const result = await updateProfile(null, fd);
-
-    expect(result).toEqual({ error: "No pudimos guardar tus datos. Probá de nuevo." });
-    expect(mocks.profilesUpdate).not.toHaveBeenCalled();
-  });
-
-  it("still updates profile even when no roles[] are submitted", async () => {
-    setupAuth();
-    setupSuccess();
-    // Don't call setupSuccess for deletes - no roles means no delete
-    // Actually we should still delete existing when roles is empty
-    mocks.profileRolesDeleteEq.mockResolvedValue({ data: null, error: null });
+    mocks.profileRolesDeleteIn.mockResolvedValue({ data: null, error: null });
     mocks.profileRolesInsert.mockResolvedValue({ data: null, error: null });
+
+    const fd = formWithRoles(["role-a", "role-b"]);
+
+    try {
+      await updateProfile(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profileRolesDeleteIn).toHaveBeenCalledWith("role_id", ["role-c"]);
+  });
+
+  it("validates submitted role IDs against roles catalog", async () => {
+    setupAuth();
+    setupProfileUpdateSuccess();
+    mocks.rolesSelectIn.mockResolvedValue({
+      data: [{ id: "role-a" }],
+      error: null,
+    });
+
+    const fd = formWithRoles(["role-a", "role-inventada"]);
+
+    const result = await updateProfile(null, fd);
+
+    expect(result).toEqual({ error: "No pudimos guardar tus datos. Probá de nuevo." });
+  });
+
+  it("updates profile even when no roles are submitted", async () => {
+    setupAuth();
+    setupProfileUpdateSuccess();
+    mocks.profileRolesSelectEq.mockResolvedValue({
+      data: [{ role_id: "role-a", confirmado: false }],
+      error: null,
+    });
+    mocks.profileRolesDeleteIn.mockResolvedValue({ data: null, error: null });
 
     const fd = formWithRoles([]);
 
@@ -170,5 +208,20 @@ describe("updateProfile — roles", () => {
     }
 
     expect(mocks.profilesUpdate).toHaveBeenCalledWith(BASE_FIELDS);
+    expect(mocks.profileRolesDeleteIn).toHaveBeenCalledWith("role_id", ["role-a"]);
+    expect(mocks.profileRolesInsert).not.toHaveBeenCalled();
+  });
+
+  it("returns error when profile update fails before touching roles", async () => {
+    setupAuth();
+    mocks.profilesUpdateEq.mockResolvedValue({
+      data: null,
+      error: { message: "DB error" },
+    });
+
+    const result = await updateProfile(null, new FormData());
+
+    expect(result).toEqual({ error: "No pudimos guardar tus datos. Probá de nuevo." });
+    expect(mocks.profileRolesSelectEq).not.toHaveBeenCalled();
   });
 });
