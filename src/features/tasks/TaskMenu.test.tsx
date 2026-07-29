@@ -152,6 +152,20 @@ describe("TaskMenu — cancelling (AC6)", () => {
     expect(container.querySelector('input[name="taskId"]')).toHaveValue("task-1");
   });
 
+  // Medido en el navegador: con el menú a 180px los dos botones no entraban y
+  // "Sí, cancelar" partía en dos líneas. Ningún test de clases lo veía.
+  it("keeps the confirmation labels on a single line", () => {
+    render(<TaskMenu {...OWNER_OPEN} />);
+    openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Cancelar tarea" }));
+
+    expect(screen.getByRole("button", { name: "Sí, cancelar" }).className).toContain(
+      "whitespace-nowrap",
+    );
+    expect(screen.getByRole("button", { name: "Volver" }).className).toContain("whitespace-nowrap");
+    expect(screen.getByRole("menu").className).toContain("w-max");
+  });
+
   it("backs out of the confirmation without cancelling anything", () => {
     render(<TaskMenu {...OWNER_OPEN} />);
     openMenu();

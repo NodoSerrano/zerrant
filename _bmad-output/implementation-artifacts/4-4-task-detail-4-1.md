@@ -282,7 +282,13 @@ Edit screen `H3BY0u` / wrapper `vPUkG`: identical wrapper `gap: 18`, `padding: [
   - [x] Component-level tests for both fallbacks; 375/375 pass
 - [x] **T8 — Hub survival** (AC: 7, 9)
   - [x] `cancelada` got its own `ESTADO_MAP` / `ESTADO_LABELS` entry once the migration lands; test that a cancelled task renders on the hub with its own label
-- [ ] **T9 — Verify**
+- [x] **T9 — Verify**
+  - [x] Presentation extracted to `TaskDetailView` so the real component could be mounted with fixtures — the same split create task already uses
+  - [x] Measured at 375px: wrapper gaps 18/18/18/18, icon box 48 r14, badge `4px 11px` r999, meta card p16 r18 rows 10, chevron 24, spacer 22, title 16/500, task title 20/700, meta 13/400 `#5a5550`, description 14/21, CTA 54 r999, category icons 22/15. No horizontal overflow
+  - [x] Edit screen: CTA 18px from the fields (not 16), CTA parent is the form, pills wrap 3+2, segment 38/r16/p4, saved values preselected
+  - [x] Browser-only checks: `has-checked:` variants really generate CSS, Escape closes and returns focus, focus rings render on the trigger and on the `sr-only` radio labels
+  - [x] **Found and fixed a bug no class assertion could see**: the confirmation buttons wrapped to two lines in a 180px menu (51px tall instead of 33.5px)
+  - [x] Scratch routes and `.claude/launch.json` removed; `pnpm-workspace.yaml` clean
   - [ ] Four gates by direct binary (see Dev Notes)
   - [ ] Browser at 375px on both routes: screenshot **and measure** with `getBoundingClientRect` — confirm the wrapper gap is 18px, not 16
   - [ ] Append the RLS finding to `deferred-work.md`

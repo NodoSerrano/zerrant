@@ -71,7 +71,7 @@ export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskM
           id={menuId}
           role="menu"
           className={cn(
-            "absolute right-0 top-full z-40 mt-2 min-w-[180px] overflow-hidden py-1",
+            "absolute right-0 top-full z-40 mt-2 w-max min-w-[180px] max-w-[280px] overflow-hidden py-1",
             "bg-surface border border-border rounded-md",
             "shadow-[0_10px_30px_-12px_rgba(26,22,20,0.15)]",
           )}
@@ -89,14 +89,14 @@ export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskM
                 <button
                   type="submit"
                   disabled={pending}
-                  className="flex-1 rounded-pill bg-coral/10 px-3 py-1.5 font-display text-[13px] font-semibold text-coral disabled:opacity-50"
+                  className="flex-1 whitespace-nowrap rounded-pill bg-coral/10 px-3 py-1.5 font-display text-[13px] font-semibold text-coral disabled:opacity-50"
                 >
                   {pending ? "Cancelando..." : "Sí, cancelar"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirming(false)}
-                  className="flex-1 rounded-pill border border-border px-3 py-1.5 font-display text-[13px] font-semibold text-text-secondary"
+                  className="flex-1 whitespace-nowrap rounded-pill border border-border px-3 py-1.5 font-display text-[13px] font-semibold text-text-secondary"
                 >
                   Volver
                 </button>
