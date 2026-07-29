@@ -272,9 +272,10 @@ Edit screen `H3BY0u` / wrapper `vPUkG`: identical wrapper `gap: 18`, `padding: [
   - [x] `TaskMenu.tsx` client component; 16 tests: visibility matrix, `aria-expanded`, Escape returns focus, two-step confirmation
   - [x] Wired into the detail header, keeping the spacer for the no-menu case
   - [x] Confirmation is a two-step inside the menu surface, not `window.confirm` — derived from DS tokens, since Pencil designed no menu contents
-- [ ] **T7 — Red + Green: edit route** (AC: 8)
-  - [ ] Generalise `NewTaskForm` → shared `TaskForm`; `/nodo/tasks/new` tests must pass untouched
-  - [ ] `src/app/(app)/nodo/tasks/[id]/edit/page.tsx` + tests, incl. the non-owner redirect guard
+- [x] **T7 — Red + Green: edit route** (AC: 8)
+  - [x] `src/features/tasks/TaskForm.tsx` extracted; `NewTaskForm` composes header + `TaskForm`, so its 32 tests pass untouched
+  - [x] `src/app/(app)/nodo/tasks/[id]/edit/page.tsx` + 16 tests, incl. the non-owner redirect guard
+  - [x] `TaskMenu` gains `showEditItem`; the edit screen passes `false` per D6
 - [x] **T0 — Harden estado/urgency lookups before the enum grows** (AC: 7, 9 — D7)
   - [x] RED: hub renders a task with an unmapped estado; reproduced the exact crash at `TaskCard.tsx:82`
   - [x] GREEN: `TaskCard` fallbacks + `Record<NonNullable<TaskEstado>, CardEstado>` + `toCardEstado()`

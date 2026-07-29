@@ -18,9 +18,12 @@ interface TaskMenuProps {
   taskId: string;
   estado: string;
   isOwner: boolean;
+  /** En la pantalla de editar, "Editar" sería un no-op sobre la pantalla en la
+   *  que ya estás. Sólo queda cancelar. */
+  showEditItem?: boolean;
 }
 
-export function TaskMenu({ taskId, estado, isOwner }: TaskMenuProps) {
+export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskMenuProps) {
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [state, action, pending] = useActionState(cancelTask, null);
@@ -101,9 +104,11 @@ export function TaskMenu({ taskId, estado, isOwner }: TaskMenuProps) {
             </form>
           ) : (
             <>
-              <Link href={`/nodo/tasks/${taskId}/edit`} role="menuitem" className={ITEM_CLASSES}>
-                Editar
-              </Link>
+              {showEditItem && (
+                <Link href={`/nodo/tasks/${taskId}/edit`} role="menuitem" className={ITEM_CLASSES}>
+                  Editar
+                </Link>
+              )}
               <button
                 type="button"
                 role="menuitem"

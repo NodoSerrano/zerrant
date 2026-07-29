@@ -83,6 +83,16 @@ describe("TaskMenu — opening and items (AC6)", () => {
     );
   });
 
+  // En la pantalla de editar, "Editar" sería un no-op sobre la pantalla en la
+  // que ya estás; cancelar sigue teniendo sentido y evita volver al detalle.
+  it("drops the Editar item when the caller asks for the edit-screen variant", () => {
+    render(<TaskMenu {...OWNER_OPEN} showEditItem={false} />);
+    openMenu();
+
+    expect(screen.queryByRole("menuitem", { name: "Editar" })).not.toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Cancelar tarea" })).toBeInTheDocument();
+  });
+
   it("dresses the menu surface in design system tokens", () => {
     render(<TaskMenu {...OWNER_OPEN} />);
     openMenu();
