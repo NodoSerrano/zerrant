@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { AvatarPicker } from "@/components/AvatarPicker";
+import { RoleChip } from "@/components/RoleChip";
 import { updateProfile, uploadAvatar } from "@/features/profile/actions";
 
 const NOMBRE_VISIBLE_OPTIONS = [
@@ -40,12 +41,29 @@ interface EditProfileFormProps {
     tarifa_hora?: number | null;
     avatar_url?: string | null;
   };
+  availableRoles: { id: string; nombre: string }[];
+  currentRoleIds: string[];
 }
 
-export function EditProfileForm({ defaults }: EditProfileFormProps) {
+export function EditProfileForm({ defaults, availableRoles, currentRoleIds }: EditProfileFormProps) {
   const router = useRouter();
   const [state, action, pending] = useActionState(updateProfile, null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [selectedRoleIds, setSelectedRoleIds] = useState<Set<string>>(
+    () => new Set(currentRoleIds),
+  );
+
+  function toggleRole(roleId: string) {
+    setSelectedRoleIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(roleId)) {
+        next.delete(roleId);
+      } else {
+        next.add(roleId);
+      }
+      return next;
+    });
+  }
 
   return (
     <div className="flex flex-col gap-[18px] pt-[6px] px-5 pb-6">
@@ -122,12 +140,22 @@ export function EditProfileForm({ defaults }: EditProfileFormProps) {
         <div className="flex flex-col gap-2">
           <span className="text-[13px] font-medium text-text-secondary">Roles en el nodo</span>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center rounded-pill px-3 py-1.5 text-xs font-semibold font-display bg-surface-inset text-text-muted">
-              Charlas
-            </span>
-            <span className="inline-flex items-center rounded-pill px-3 py-1.5 text-xs font-semibold font-display bg-surface-inset text-text-muted">
-              Proyectos
-            </span>
+            {availableRoles.map((role) => {
+              const selected = selectedRoleIds.has(role.id);
+              return (
+                <button
+                  key={role.id}
+                  type="button"
+                  onClick={() => toggleRole(role.id)}
+                  className="cursor-pointer"
+                >
+                  <RoleChip label={role.nombre} confirmed={false} />
+                  {selected && (
+                    <input type="hidden" name="roles" value={role.id} />
+                  )}
+                </button>
+              );
+            })}
           </div>
           <p className="text-xs text-text-muted">Los roles nuevos los confirma un admin.</p>
         </div>

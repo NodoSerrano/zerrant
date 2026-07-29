@@ -27,5 +27,18 @@ export default async function EditProfilePage() {
     redirect("/onboarding/step1");
   }
 
-  return <EditProfileForm defaults={profile} />;
+  const { data: availableRoles } = await supabase.from("roles").select("id, nombre");
+
+  const { data: currentProfileRoles } = await supabase
+    .from("profile_roles")
+    .select("role_id")
+    .eq("profile_id", user.id);
+
+  return (
+    <EditProfileForm
+      defaults={profile}
+      availableRoles={availableRoles ?? []}
+      currentRoleIds={(currentProfileRoles ?? []).map((pr) => pr.role_id)}
+    />
+  );
 }

@@ -247,6 +247,34 @@ export async function updateProfile(_prevState: { error: string } | null, formDa
     return { error: "No autorizado" };
   }
 
+  const roleIds = formData.getAll("roles") as string[];
+
+  const { error: deleteRolesError } = await supabase
+    .from("profile_roles")
+    .delete()
+    .eq("profile_id", user.id);
+
+  if (deleteRolesError) {
+    console.error("[updateProfile] delete roles falló", deleteRolesError);
+    return { error: DB_ERROR };
+  }
+
+  if (roleIds.length > 0) {
+    const inserts = roleIds.map((roleId) => ({
+      profile_id: user.id,
+      role_id: roleId,
+    }));
+
+    const { error: insertRolesError } = await supabase
+      .from("profile_roles")
+      .insert(inserts);
+
+    if (insertRolesError) {
+      console.error("[updateProfile] insert roles falló", insertRolesError);
+      return { error: DB_ERROR };
+    }
+  }
+
   const update: ProfileUpdate = {
     nombre: (formData.get("nombre") as string) || null,
     apellido: (formData.get("apellido") as string) || null,

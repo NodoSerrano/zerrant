@@ -127,28 +127,34 @@ export type Database = {
       };
       membership_requests: {
         Row: {
+          actualizado_en: string;
           created_at: string;
           estado: Database["public"]["Enums"]["membership_request_estado"];
           id: string;
           mensaje: string | null;
           profile_id: string;
-          resuelta_por: string | null;
+          revisado_por: string | null;
+          tier_solicitado: Database["public"]["Enums"]["tier"];
         };
         Insert: {
+          actualizado_en?: string;
           created_at?: string;
           estado?: Database["public"]["Enums"]["membership_request_estado"];
           id?: string;
           mensaje?: string | null;
           profile_id: string;
-          resuelta_por?: string | null;
+          revisado_por?: string | null;
+          tier_solicitado?: Database["public"]["Enums"]["tier"];
         };
         Update: {
+          actualizado_en?: string;
           created_at?: string;
           estado?: Database["public"]["Enums"]["membership_request_estado"];
           id?: string;
           mensaje?: string | null;
           profile_id?: string;
-          resuelta_por?: string | null;
+          revisado_por?: string | null;
+          tier_solicitado?: Database["public"]["Enums"]["tier"];
         };
         Relationships: [
           {
@@ -159,10 +165,70 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "membership_requests_resuelta_por_fkey";
-            columns: ["resuelta_por"];
+            foreignKeyName: "membership_requests_revisado_por_fkey";
+            columns: ["revisado_por"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      roles: {
+        Row: {
+          created_at: string;
+          descripcion: string | null;
+          id: string;
+          nombre: string;
+        };
+        Insert: {
+          created_at?: string;
+          descripcion?: string | null;
+          id?: string;
+          nombre: string;
+        };
+        Update: {
+          created_at?: string;
+          descripcion?: string | null;
+          id?: string;
+          nombre?: string;
+        };
+        Relationships: [];
+      };
+      profile_roles: {
+        Row: {
+          confirmado: boolean;
+          created_at: string;
+          id: string;
+          profile_id: string;
+          role_id: string;
+        };
+        Insert: {
+          confirmado?: boolean;
+          created_at?: string;
+          id?: string;
+          profile_id: string;
+          role_id: string;
+        };
+        Update: {
+          confirmado?: boolean;
+          created_at?: string;
+          id?: string;
+          profile_id?: string;
+          role_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "profile_roles_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "profile_roles_role_id_fkey";
+            columns: ["role_id"];
+            isOneToOne: false;
+            referencedRelation: "roles";
             referencedColumns: ["id"];
           },
         ];

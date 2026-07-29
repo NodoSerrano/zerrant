@@ -5,6 +5,9 @@ const mocks = vi.hoisted(() => ({
   profilesUpdate: vi.fn(),
   profilesUpdateEq: vi.fn(),
   profilesSelectSingle: vi.fn(),
+  profileRolesDelete: vi.fn(),
+  profileRolesDeleteEq: vi.fn(),
+  profileRolesInsert: vi.fn(),
   storageUpload: vi.fn(),
   storageGetPublicUrl: vi.fn(),
   storageRemove: vi.fn(),
@@ -14,14 +17,24 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mocks.getUser },
-    from: vi.fn(() => ({
-      update: mocks.profilesUpdate.mockImplementation(() => ({
-        eq: mocks.profilesUpdateEq,
-      })),
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({ single: mocks.profilesSelectSingle })),
-      })),
-    })),
+    from: vi.fn((table: string) => {
+      if (table === "profile_roles") {
+        return {
+          delete: mocks.profileRolesDelete.mockImplementation(() => ({
+            eq: mocks.profileRolesDeleteEq,
+          })),
+          insert: mocks.profileRolesInsert,
+        };
+      }
+      return {
+        update: mocks.profilesUpdate.mockImplementation(() => ({
+          eq: mocks.profilesUpdateEq,
+        })),
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({ single: mocks.profilesSelectSingle })),
+        })),
+      };
+    }),
     storage: {
       from: vi.fn(() => ({
         upload: mocks.storageUpload,
@@ -280,6 +293,7 @@ describe("saveOnboardingStep2", () => {
 describe("updateProfile", () => {
   it("updates profile with numeric tarifa_hora and redirects on success", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profileRolesDeleteEq.mockResolvedValue({ data: null, error: null });
     mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
 
     const fd = new FormData();
@@ -319,6 +333,7 @@ describe("updateProfile", () => {
 
   it("returns error when supabase update fails", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profileRolesDeleteEq.mockResolvedValue({ data: null, error: null });
     mocks.profilesUpdateEq.mockResolvedValue({
       data: null,
       error: { message: "DB error" },

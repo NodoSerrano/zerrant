@@ -17,15 +17,27 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   profilesSelectSingle: vi.fn(),
   select: vi.fn(),
+  rolesSelectAll: vi.fn(),
+  profileRolesSelect: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mocks.getUser },
-    from: vi.fn(() => ({
-      select: mocks.select.mockImplementation(() => ({
-        eq: vi.fn(() => ({ single: mocks.profilesSelectSingle })),
-      })),
+    from: vi.fn((table: string) => ({
+      select: vi.fn((_args: unknown[]) => {
+        if (table === "roles") {
+          return mocks.rolesSelectAll();
+        }
+        return {
+          eq: vi.fn(() => {
+            if (table === "profile_roles") {
+              return mocks.profileRolesSelect();
+            }
+            return { single: mocks.profilesSelectSingle };
+          }),
+        };
+      }),
     })),
   }),
 }));
@@ -54,6 +66,20 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
   mocks.profilesSelectSingle.mockResolvedValue({ data: profileFixture, error: null });
+  mocks.rolesSelectAll.mockResolvedValue({
+    data: [
+      { id: "r-charlas", nombre: "Charlas" },
+      { id: "r-infra", nombre: "Infra" },
+      { id: "r-rrss", nombre: "RRSS" },
+      { id: "r-tesoreria", nombre: "Tesorería" },
+      { id: "r-organizacion", nombre: "Organización" },
+    ],
+    error: null,
+  });
+  mocks.profileRolesSelect.mockResolvedValue({
+    data: [{ role_id: "r-charlas" }, { role_id: "r-infra" }],
+    error: null,
+  });
 });
 
 describe("EditProfilePage", () => {
@@ -85,10 +111,15 @@ describe("EditProfilePage", () => {
     expect(screen.getByText("Nombre Apellido")).toBeInTheDocument();
   });
 
-  it("renders roles section as NO-OP with helper text", async () => {
+  it("renders roles section with toggleable RoleChips and helper text", async () => {
     render(await EditProfilePage());
 
     expect(screen.getByText("Roles en el nodo")).toBeInTheDocument();
+    expect(screen.getByText("Charlas")).toBeInTheDocument();
+    expect(screen.getByText("Infra")).toBeInTheDocument();
+    expect(screen.getByText("RRSS")).toBeInTheDocument();
+    expect(screen.getByText("Tesorería")).toBeInTheDocument();
+    expect(screen.getByText("Organización")).toBeInTheDocument();
     expect(screen.getByText(/Los roles nuevos los confirma un admin/)).toBeInTheDocument();
   });
 

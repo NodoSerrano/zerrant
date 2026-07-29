@@ -25,6 +25,11 @@ export default async function ProfilePage() {
     redirect("/onboarding/step1");
   }
 
+  const { data: profileRoles } = await supabase
+    .from("profile_roles")
+    .select("role_id, roles(nombre), confirmado")
+    .eq("profile_id", user.id);
+
   const name = displayName(profile);
   const isTourist = profile.tier === "tourist";
 
@@ -79,8 +84,6 @@ export default async function ProfilePage() {
     );
   }
 
-  const tierLabel = profile.tier.charAt(0).toUpperCase() + profile.tier.slice(1);
-
   const dispMap: Record<string, string> = {
     disponible: "Disponible",
     ocupado: "Ocupado",
@@ -115,7 +118,13 @@ export default async function ProfilePage() {
             </div>
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
-            <RoleChip label={tierLabel} />
+            <TierBadge tier={profile.tier} />
+            {(profileRoles ?? []).map((pr) => {
+              const nombre = (pr.roles as { nombre: string } | null)?.nombre;
+              return nombre ? (
+                <RoleChip key={pr.role_id} label={nombre} confirmed={pr.confirmado} />
+              ) : null;
+            })}
           </div>
         </div>
       </div>
