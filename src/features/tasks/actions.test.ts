@@ -7,9 +7,12 @@ const mocks = vi.hoisted(() => ({
   profilesSelectSingle: vi.fn(),
   tasksInsert: vi.fn(),
   tasksUpdate: vi.fn(),
-  tasksUpdateEq1: vi.fn(),
-  tasksUpdateEq2: vi.fn(),
-  tasksUpdateIn: vi.fn(),
+  // Cada eslabón del builder de PostgREST queda registrado en orden, así los
+  // tests pueden afirmar sobre los filtros sin atarse a cuántos hay ni a su
+  // anidamiento. El mock anterior era una cadena fija de dos `.eq()` y no
+  // soportaba el `.in()` ni el `.select()` que las acciones necesitan.
+  chainCalls: [] as unknown[][],
+  updateResult: { data: null, error: null } as { data: unknown; error: unknown },
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -26,19 +29,18 @@ vi.mock("@/lib/supabase/server", () => ({
         };
       }
       if (table === "tasks") {
+        const chain: Record<string, unknown> = {
+          then: (cb: (v: unknown) => unknown) => Promise.resolve(mocks.updateResult).then(cb),
+        };
+        for (const method of ["eq", "in", "select"]) {
+          chain[method] = (...args: unknown[]) => {
+            mocks.chainCalls.push([method, ...args]);
+            return chain;
+          };
+        }
         return {
           insert: mocks.tasksInsert,
-          update: mocks.tasksUpdate.mockImplementation(() => ({
-            eq: mocks.tasksUpdateEq1.mockImplementation(() => ({
-              // El segundo `.eq()` es terminal para takeTask/markTaskDone/
-              // verifyTask, pero `cancelTask` encadena un `.in()` después. El
-              // resultado tiene que ser las dos cosas: awaitable y encadenable.
-              eq: (...args: unknown[]) =>
-                Object.assign(Promise.resolve(mocks.tasksUpdateEq2(...args)), {
-                  in: mocks.tasksUpdateIn,
-                }),
-            })),
-          })),
+          update: mocks.tasksUpdate.mockImplementation(() => chain),
         };
       }
       return {};
@@ -50,7 +52,22 @@ import { createTask, takeTask, markTaskDone, verifyTask, cancelTask, updateTask 
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.chainCalls.length = 0;
+  mocks.updateResult = { data: null, error: null };
 });
+
+/** Una fila devuelta = el update matcheó. Vacío = los filtros no encontraron nada. */
+function updateMatched(rows = [{ id: "task-001" }]) {
+  mocks.updateResult = { data: rows, error: null };
+}
+
+function updateMatchedNothing() {
+  mocks.updateResult = { data: [], error: null };
+}
+
+function updateFailed(message: string) {
+  mocks.updateResult = { data: null, error: { message } };
+}
 
 function setupAuth(userId = "test-user-id") {
   mocks.getUser.mockResolvedValue({ data: { user: { id: userId } } });
@@ -118,7 +135,7 @@ describe("takeTask", () => {
   it("takes an open task and redirects on success", async () => {
     setupAuth();
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
-    mocks.tasksUpdateEq2.mockResolvedValue({ data: null, error: null });
+    updateMatched();
 
     try {
       await takeTask(null, makeFormData());
@@ -132,8 +149,8 @@ describe("takeTask", () => {
       estado: "tomada",
       tomada_por: "test-user-id",
     });
-    expect(mocks.tasksUpdateEq1).toHaveBeenCalledWith("id", "task-001");
-    expect(mocks.tasksUpdateEq2).toHaveBeenCalledWith("estado", "abierta");
+    expect(mocks.chainCalls).toContainEqual(["eq", "id", "task-001"]);
+    expect(mocks.chainCalls).toContainEqual(["eq", "estado", "abierta"]);
   });
 
   it("blocks tourist-tier users from taking tasks", async () => {
@@ -149,10 +166,7 @@ describe("takeTask", () => {
   it("returns error when task update fails", async () => {
     setupAuth();
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
-    mocks.tasksUpdateEq2.mockResolvedValue({
-      data: null,
-      error: { message: "Task already taken" },
-    });
+    updateFailed("Task already taken");
 
     const result = await takeTask(null, makeFormData());
 
@@ -169,7 +183,7 @@ describe("markTaskDone", () => {
 
   it("marks task as done for the user who took it and redirects", async () => {
     setupAuth("taker-user-id");
-    mocks.tasksUpdateEq2.mockResolvedValue({ data: null, error: null });
+    updateMatched();
 
     try {
       await markTaskDone(null, makeFormData());
@@ -178,16 +192,13 @@ describe("markTaskDone", () => {
     }
 
     expect(mocks.tasksUpdate).toHaveBeenCalledWith({ estado: "hecha" });
-    expect(mocks.tasksUpdateEq1).toHaveBeenCalledWith("id", "task-001");
-    expect(mocks.tasksUpdateEq2).toHaveBeenCalledWith("tomada_por", "taker-user-id");
+    expect(mocks.chainCalls).toContainEqual(["eq", "id", "task-001"]);
+    expect(mocks.chainCalls).toContainEqual(["eq", "tomada_por", "taker-user-id"]);
   });
 
   it("returns error when update fails", async () => {
     setupAuth();
-    mocks.tasksUpdateEq2.mockResolvedValue({
-      data: null,
-      error: { message: "Task not found" },
-    });
+    updateFailed("Task not found");
 
     const result = await markTaskDone(null, makeFormData());
 
@@ -205,7 +216,7 @@ describe("verifyTask", () => {
   it("allows platform admin to verify a done task and redirects", async () => {
     setupAuth("admin-user-id");
     mocks.profilesSelectSingle.mockResolvedValue({ data: { is_platform_admin: true } });
-    mocks.tasksUpdateEq2.mockResolvedValue({ data: null, error: null });
+    updateMatched();
 
     try {
       await verifyTask(null, makeFormData());
@@ -216,8 +227,8 @@ describe("verifyTask", () => {
     expect(mocks.profilesSelect).toHaveBeenCalledWith("is_platform_admin");
     expect(mocks.profilesSelectEq).toHaveBeenCalledWith("id", "admin-user-id");
     expect(mocks.tasksUpdate).toHaveBeenCalledWith({ estado: "verificada" });
-    expect(mocks.tasksUpdateEq1).toHaveBeenCalledWith("id", "task-001");
-    expect(mocks.tasksUpdateEq2).toHaveBeenCalledWith("estado", "hecha");
+    expect(mocks.chainCalls).toContainEqual(["eq", "id", "task-001"]);
+    expect(mocks.chainCalls).toContainEqual(["eq", "estado", "hecha"]);
   });
 
   it("blocks non-admin users from verifying tasks", async () => {
@@ -238,30 +249,12 @@ describe("cancelTask", () => {
     return fd;
   };
 
-  it("cancels the task and clears tomada_por", async () => {
-    setupAuth("owner-user-id");
-    mocks.tasksUpdateIn.mockResolvedValue({ data: null, error: null });
-
-    try {
-      await cancelTask(null, makeFormData());
-    } catch {
-      // redirect throws
-    }
-
-    // `tomada_por` se limpia: si la tarea estaba tomada, cancelarla tiene que
-    // soltar a quien la tenía, no dejarlo colgado de una tarea muerta.
-    expect(mocks.tasksUpdate).toHaveBeenCalledWith({
-      estado: "cancelada",
-      tomada_por: null,
-    });
-  });
-
   // Defensa en profundidad: la guarda del action evita el caso normal, y el
   // filtro del update la sostiene aunque alguien postee directo. La policy de
   // RLS por sí sola no alcanza — deja escribir también al `tomada_por`.
   it("scopes the update to the creator and to cancellable estados", async () => {
     setupAuth("owner-user-id");
-    mocks.tasksUpdateIn.mockResolvedValue({ data: null, error: null });
+    updateMatched();
 
     try {
       await cancelTask(null, makeFormData());
@@ -269,9 +262,9 @@ describe("cancelTask", () => {
       // redirect throws
     }
 
-    expect(mocks.tasksUpdateEq1).toHaveBeenCalledWith("id", "task-001");
-    expect(mocks.tasksUpdateEq2).toHaveBeenCalledWith("creado_por", "owner-user-id");
-    expect(mocks.tasksUpdateIn).toHaveBeenCalledWith("estado", ["abierta", "tomada"]);
+    expect(mocks.chainCalls).toContainEqual(["eq", "id", "task-001"]);
+    expect(mocks.chainCalls).toContainEqual(["eq", "creado_por", "owner-user-id"]);
+    expect(mocks.chainCalls).toContainEqual(["in", "estado", ["abierta", "tomada"]]);
   });
 
   it("rejects an unauthenticated user without touching the table", async () => {
@@ -294,14 +287,36 @@ describe("cancelTask", () => {
 
   it("does not leak the raw Postgres message when the update fails", async () => {
     setupAuth("owner-user-id");
-    mocks.tasksUpdateIn.mockResolvedValue({
-      data: null,
-      error: { message: 'permission denied for column "estado"' },
-    });
+    updateFailed('permission denied for column "estado"');
 
     const result = await cancelTask(null, makeFormData());
 
     expect(result).toEqual({ error: "No pudimos cancelar la tarea. Probá de nuevo." });
+  });
+
+  // PostgREST no considera error un UPDATE que no matchea ninguna fila: devuelve
+  // `error: null`. Sin mirar las filas afectadas, la acción redirige como si
+  // hubiera funcionado y el usuario cree que canceló algo que sigue vivo.
+  it("reports a rejection when the filters match no row", async () => {
+    setupAuth("owner-user-id");
+    updateMatchedNothing();
+
+    const result = await cancelTask(null, makeFormData());
+
+    expect(result).toEqual({ error: "No pudimos cancelar esta tarea." });
+  });
+
+  it("keeps tomada_por so a cancelled task still records who held it", async () => {
+    setupAuth("owner-user-id");
+    updateMatched();
+
+    try {
+      await cancelTask(null, makeFormData());
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.tasksUpdate).toHaveBeenCalledWith({ estado: "cancelada" });
   });
 });
 
@@ -319,7 +334,7 @@ describe("updateTask", () => {
 
   it("saves the edited fields", async () => {
     setupAuth("owner-user-id");
-    mocks.tasksUpdateEq2.mockResolvedValue({ data: null, error: null });
+    updateMatched();
 
     try {
       await updateTask(null, makeFormData());
@@ -340,7 +355,7 @@ describe("updateTask", () => {
   // toma una tarea puede reescribirle el texto.
   it("scopes the update to the creator, not merely to the task id", async () => {
     setupAuth("owner-user-id");
-    mocks.tasksUpdateEq2.mockResolvedValue({ data: null, error: null });
+    updateMatched();
 
     try {
       await updateTask(null, makeFormData());
@@ -348,13 +363,13 @@ describe("updateTask", () => {
       // redirect throws
     }
 
-    expect(mocks.tasksUpdateEq1).toHaveBeenCalledWith("id", "task-001");
-    expect(mocks.tasksUpdateEq2).toHaveBeenCalledWith("creado_por", "owner-user-id");
+    expect(mocks.chainCalls).toContainEqual(["eq", "id", "task-001"]);
+    expect(mocks.chainCalls).toContainEqual(["eq", "creado_por", "owner-user-id"]);
   });
 
   it("trims the title before saving", async () => {
     setupAuth("owner-user-id");
-    mocks.tasksUpdateEq2.mockResolvedValue({ data: null, error: null });
+    updateMatched();
 
     try {
       await updateTask(null, makeFormData({ titulo: "   Cambiar la cerradura   " }));
@@ -382,7 +397,7 @@ describe("updateTask", () => {
   // llegar iguales a la base, para que el detalle pueda distinguir un caso solo.
   it("stores an empty description as null", async () => {
     setupAuth("owner-user-id");
-    mocks.tasksUpdateEq2.mockResolvedValue({ data: null, error: null });
+    updateMatched();
 
     try {
       await updateTask(null, makeFormData({ descripcion: "   " }));
@@ -404,13 +419,65 @@ describe("updateTask", () => {
 
   it("does not leak the raw Postgres message when the update fails", async () => {
     setupAuth("owner-user-id");
-    mocks.tasksUpdateEq2.mockResolvedValue({
-      data: null,
-      error: { message: 'null value in column "titulo" violates not-null' },
-    });
+    updateFailed('null value in column "titulo" violates not-null');
 
     const result = await updateTask(null, makeFormData());
 
     expect(result).toEqual({ error: "No pudimos guardar los cambios. Probá de nuevo." });
+  });
+
+  it("reports a rejection when the filters match no row", async () => {
+    setupAuth("owner-user-id");
+    updateMatchedNothing();
+
+    const result = await updateTask(null, makeFormData());
+
+    expect(result).toEqual({ error: "No pudimos guardar los cambios." });
+  });
+
+  // Editar sólo tiene sentido mientras nadie se comprometió con la tarea. Una vez
+  // tomada, cambiarle el alcance le cambia el trabajo al tomador sin avisarle; y
+  // una hecha o verificada no se reescribe, porque rompe el registro.
+  it("only edits a task that is still abierta", async () => {
+    setupAuth("owner-user-id");
+    updateMatched();
+
+    try {
+      await updateTask(null, makeFormData());
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.chainCalls).toContainEqual(["eq", "estado", "abierta"]);
+  });
+
+  it.each([
+    ["categoria", "teletransportacion"],
+    ["urgencia", "critica"],
+  ])("rejects an out-of-range %s instead of casting it blindly", async (field, value) => {
+    setupAuth("owner-user-id");
+
+    const result = await updateTask(null, makeFormData({ [field]: value }));
+
+    expect(result).toEqual({ error: "Revisá los datos de la tarea." });
+    expect(mocks.tasksUpdate).not.toHaveBeenCalled();
+  });
+
+  // Un POST parcial no tiene por qué borrar la descripción que ya estaba.
+  it("leaves descripcion untouched when the field is absent from the submission", async () => {
+    setupAuth("owner-user-id");
+    updateMatched();
+    const fd = makeFormData();
+    fd.delete("descripcion");
+
+    try {
+      await updateTask(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.tasksUpdate).toHaveBeenCalledWith(
+      expect.not.objectContaining({ descripcion: expect.anything() }),
+    );
   });
 });

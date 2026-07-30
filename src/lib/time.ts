@@ -1,6 +1,11 @@
 export function relativeTime(date: string): string {
   const now = Date.now();
   const then = new Date(date).getTime();
+
+  // El dato viene de una columna: una fecha ilegible no debe convertirse en
+  // "hace NaN días" en pantalla.
+  if (Number.isNaN(then)) return "";
+
   const diffMs = now - then;
   const diffMinutes = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);

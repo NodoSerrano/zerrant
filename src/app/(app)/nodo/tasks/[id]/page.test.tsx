@@ -244,6 +244,22 @@ describe("TaskDetailPage — meta card (AC4)", () => {
     expect(screen.getByText("Publicó Lucía Gómez · hace 2 días")).toBeInTheDocument();
   });
 
+  // El join de `tomador` ya se pagaba y no se mostraba en ningún lado: quien
+  // tomó la tarea era invisible en la pantalla.
+  it("shows who took the task once there is a taker", async () => {
+    await renderDetail({
+      task: makeTask({ estado: "tomada", tomada_por: TAKER.id, tomador: TAKER }),
+    });
+
+    expect(screen.getByText("Tomada por Juan Pérez")).toBeInTheDocument();
+  });
+
+  it("omits the taker row while nobody took it", async () => {
+    await renderDetail();
+
+    expect(screen.queryByText(/Tomada por/)).not.toBeInTheDocument();
+  });
+
   it("omits the author row when the creator profile is missing", async () => {
     await renderDetail({ task: makeTask({ creador: null }) });
 
@@ -336,6 +352,41 @@ describe("TaskDetailPage — primary action (AC5)", () => {
     expect(screen.queryByRole("button", { name: /Verificar/ })).not.toBeInTheDocument();
   });
 
+  // Sin este mensaje la pantalla terminaba en seco después de la descripción
+  // para todos menos el admin.
+  it("explains a done task to the taker and the creator, not only to an admin", async () => {
+    await renderDetail({
+      task: makeTask({ estado: "hecha", tomada_por: TAKER.id, tomador: TAKER }),
+      viewerId: TAKER.id,
+    });
+
+    expect(
+      screen.getByText("Trabajo terminado. Falta que un admin lo verifique."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the admin the verify CTA instead of the waiting message", async () => {
+    await renderDetail({
+      task: makeTask({ estado: "hecha", tomada_por: TAKER.id, tomador: TAKER }),
+      viewerId: "admin-1",
+      isAdmin: true,
+    });
+
+    expect(screen.getByRole("button", { name: "Verificar tarea" })).toBeInTheDocument();
+    expect(screen.queryByText(/Falta que un admin/)).not.toBeInTheDocument();
+  });
+
+  // El dato era correcto pero le hablaba al lector equivocado: el creador no es
+  // "otro serrano" respecto de su propia tarea.
+  it("addresses the creator directly when someone took their task", async () => {
+    await renderDetail({
+      task: makeTask({ estado: "tomada", tomada_por: TAKER.id, tomador: TAKER }),
+      viewerId: CREATOR.id,
+    });
+
+    expect(screen.getByText("Alguien ya tomó esta tarea.")).toBeInTheDocument();
+  });
+
   it("states the outcome on a verified task, without the tick glyph", async () => {
     await renderDetail({ task: makeTask({ estado: "verificada" }) });
 
@@ -386,6 +437,7 @@ describe("TaskDetailPage — layout structure (AC1, AC5)", () => {
     const wrapper = container.firstElementChild!;
     expect(wrapper.className).toContain("flex-col");
     expect(wrapper.className).toContain("gap-[18px]");
+    expect(wrapper.className).toContain("w-full");
   });
 
   // El CTA cuelga del wrapper en Pencil, no de un contenedor intermedio. Metido

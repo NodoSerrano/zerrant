@@ -4,7 +4,7 @@ baseline_commit: 47d25f5
 
 # Story 4.4: Task detail (4.1)
 
-Status: ready-for-dev
+Status: review
 
 <!-- Story context engine — from epics.md Story 4.4, SPEC.md CAP-9, screen-inventory.md, Pencil frames dyDLm + H3BY0u, and Linear ZER-22. -->
 
@@ -205,8 +205,8 @@ Still pending in this story: give `cancelada` a real entry in `ESTADO_MAP` / `ES
 
 ### 10. Out of scope
 
-- **No** hub redesign — only the two `cancelada` map entries from AC 7
-- **No** change to `TaskCard`'s visual contract or public props
+- **No** hub redesign beyond what `cancelada` needs: the two map entries, the filter pill, and the greyed-out action label (approved after this story was written; the greying is keyed on "is it actionable", not on a list of terminal estados)
+- **No** change to `TaskCard`'s layout or class strings; the `estado` prop union does gain `cancelada`, which the approved greying requires
 - **No** `src/app/(app)/layout.tsx` changes — the `p-5` vs Pencil `[6,20,24,20]` padding and the TabBar-on-modal-screens question are already recorded in `deferred-work.md` under ZER-21. Leave them
 - **No** `globals.css` / `@theme` changes — every token needed exists
 - **No** widening of the tasks RLS policy
@@ -249,9 +249,9 @@ Edit screen `H3BY0u` / wrapper `vPUkG`: identical wrapper `gap: 18`, `padding: [
 ## Tasks / Subtasks
 
 - [x] **T1 — Red: migration + action tests** (AC: 7, 8)
-  - [ ] `supabase/migrations/<ts>_task_estado_cancelada.sql`
-  - [ ] Extend `src/features/tasks/actions.test.ts` (mocked Supabase, existing style): `cancelTask` owner from `abierta`; owner from `tomada` clears `tomada_por`; non-owner rejected; `hecha` rejected; unauthenticated rejected. `updateTask` owner ok; taker-but-not-owner rejected; empty/whitespace `titulo` rejected; DB error does not leak
-  - [ ] Verify RED
+  - [x] `supabase/migrations/<ts>_task_estado_cancelada.sql`
+  - [x] Extend `src/features/tasks/actions.test.ts` (mocked Supabase, existing style): `cancelTask` owner from `abierta`; owner from `tomada` clears `tomada_por`; non-owner rejected; `hecha` rejected; unauthenticated rejected. `updateTask` owner ok; taker-but-not-owner rejected; empty/whitespace `titulo` rejected; DB error does not leak
+  - [x] Verify RED
 - [x] **T2 — Green: `cancelTask` + `updateTask`** (AC: 7, 8)
   - [x] Added to `src/features/tasks/actions.ts`, mirroring `takeTask`'s shape
   - [x] `database.types.ts` widened by hand — no Supabase CLI in this environment
@@ -261,9 +261,9 @@ Edit screen `H3BY0u` / wrapper `vPUkG`: identical wrapper `gap: 18`, `padding: [
   - [x] Fixed the live hub defect: it passed the raw enum as `category`, so every card showed the generic icon and the text "reparacion"
   - [x] The hub's `ESTADO_LABELS` now derives from `ESTADO_BADGE` instead of repeating the labels
 - [x] **T4 — Red: detail page tests** (AC: 1–5, 9)
-  - [ ] `src/app/(app)/nodo/tasks/[id]/page.test.tsx`, class-string assertions per the `EmptyState.test.tsx` / `page.test.tsx` convention
-  - [ ] Include a **structural** assertion that the CTA's `parentElement` is the wrapper, not a nested div
-  - [ ] Verify RED
+  - [x] `src/app/(app)/nodo/tasks/[id]/page.test.tsx`, class-string assertions per the `EmptyState.test.tsx` / `page.test.tsx` convention
+  - [x] Include a **structural** assertion that the CTA's `parentElement` is the wrapper, not a nested div
+  - [x] Verify RED
 - [x] **T5 — Green: rewrite the detail page** (AC: 1–5)
   - [x] lucide instead of inline svg; `Field` helper, section headings and invented copy deleted
   - [x] CTA copy corrected to the Pencil string "Tomar esta tarea" in `task-actions.tsx`
@@ -289,9 +289,42 @@ Edit screen `H3BY0u` / wrapper `vPUkG`: identical wrapper `gap: 18`, `padding: [
   - [x] Browser-only checks: `has-checked:` variants really generate CSS, Escape closes and returns focus, focus rings render on the trigger and on the `sr-only` radio labels
   - [x] **Found and fixed a bug no class assertion could see**: the confirmation buttons wrapped to two lines in a 180px menu (51px tall instead of 33.5px)
   - [x] Scratch routes and `.claude/launch.json` removed; `pnpm-workspace.yaml` clean
-  - [ ] Four gates by direct binary (see Dev Notes)
-  - [ ] Browser at 375px on both routes: screenshot **and measure** with `getBoundingClientRect` — confirm the wrapper gap is 18px, not 16
-  - [ ] Append the RLS finding to `deferred-work.md`
+  - [x] Four gates by direct binary (see Dev Notes)
+  - [x] Browser at 375px on both routes: screenshot **and measure** with `getBoundingClientRect` — confirm the wrapper gap is 18px, not 16
+  - [x] Append the RLS finding to `deferred-work.md`
+
+### Review Findings
+
+Three adversarial layers (Blind Hunter, Edge Case Hunter, Acceptance Auditor) on `47d25f5..dfbc0c5`, 2026-07-29. Each finding verified against the source before rating.
+
+- [x] [Review][Decision] **The taker's identity is no longer reachable anywhere in the UI** — the detail page still joins `tomador:tomada_por(*)` but nothing consumes it; the placeholder's `Tomada por` field was removed and the three-row meta card has no replacement. **Resuelto:** cuarta fila en la meta-card con ícono `user-check`, reusando el patrón de fila existente en vez de inventar una sección. [`src/app/(app)/nodo/tasks/[id]/page.tsx:19`]
+- [x] [Review][Decision] **A `hecha` task shows no CTA and no message to anyone but an admin** — the taker who just finished it, and the creator, fall through every branch and the screen ends after the description. `ESTADO_MESSAGES` covers only `verificada` and `cancelada`. **Resuelto:** `ESTADO_MESSAGES` suma `hecha` → "Trabajo terminado. Falta que un admin lo verifique."; el admin sigue viendo su CTA en vez del mensaje. [`src/features/tasks/TaskDetailView.tsx:125`]
+- [x] [Review][Decision] **An unknown estado degrades to `abierta`, i.e. to *actionable*** — the fallback avoids the crash but "Abierta" is the one state that renders a take affordance. A future enum value would ship as open and green. **Resuelto:** el gris de `TaskCard` pasa a decidirse por accionabilidad (`estado === "abierta"`) en vez de por el literal `cancelada`, así el fallback deja de importar. [`src/app/(app)/nodo/tasks/page.tsx:38`, `src/features/tasks/taskDisplay.ts:56`]
+- [x] [Review][Decision] **Cancelling silently orphans the taker** — `tomada_por` is nulled with no notification and no record of who held it, que contradecía el comentario de la migración. **Resuelto:** `cancelTask` ya no toca `tomada_por`. [`src/features/tasks/actions.ts:179`]
+- [x] [Review][Decision] **Editing a `tomada` task changes the deal under the taker** — the menu deliberately stays open while `tomada`, **Resuelto:** editar queda restringido a `abierta`, en el ítem del menú, en la guarda de la ruta y en el filtro de `updateTask`. Cancelar sigue disponible en `abierta` y `tomada`. [`src/features/tasks/actions.ts:217`]
+
+- [x] [Review][Patch] A zero-row update is reported as success — `cancelTask` and `updateTask` redirect as if they worked when the filters match nothing [`src/features/tasks/actions.ts:177`, `:217`]
+- [x] [Review][Patch] `updateTask` has no estado guard — the creator can rewrite a `verificada` or `cancelada` task [`src/features/tasks/actions.ts:217`]
+- [x] [Review][Patch] The `/edit` route guard checks ownership but not estado, so the terminal-state form is reachable by URL [`src/app/(app)/nodo/tasks/[id]/edit/page.tsx:26`]
+- [x] [Review][Patch] `updateTask` blind-casts `categoria`/`urgencia` with no allow-list and nulls `descripcion` on any submit that omits it [`src/features/tasks/actions.ts:222`]
+- [x] [Review][Patch] The edit header loses its `size-[22px]` spacer when the menu is hidden, so the title jumps — AC 8 requires it [`src/app/(app)/nodo/tasks/[id]/edit/page.tsx:37`]
+- [x] [Review][Patch] The migration is not idempotent — `add value` without `if not exists` aborts on any re-run or reset-and-replay [`supabase/migrations/20260728150000_task_estado_cancelada.sql:14`]
+- [x] [Review][Patch] `role="menu"` contains no `menuitem` during the confirmation step — a screen-reader user lands in an empty menu with a pending destructive action [`src/features/tasks/TaskMenu.tsx:79`]
+- [x] [Review][Patch] The menu has no outside-click or focus-out dismissal; only `Escape` closes it [`src/features/tasks/TaskMenu.tsx:35`]
+- [x] [Review][Patch] Focus never moves into the menu on open — the Escape test passes only because focus never left the trigger [`src/features/tasks/TaskMenu.tsx:52`]
+- [x] [Review][Patch] A failed cancel leaves `state.error` set, so reopening shows a stale error for an attempt not yet made [`src/features/tasks/TaskMenu.tsx:29`]
+- [x] [Review][Patch] "Volver" stays enabled while the cancel is in flight and unmounts the form mid-request [`src/features/tasks/TaskMenu.tsx:96`]
+- [x] [Review][Patch] `relativeTime(createdAt)` is unguarded — an unparsable date renders "hace NaN días" [`src/features/tasks/TaskDetailView.tsx:112`]
+- [x] [Review][Patch] The `tomada` + owner case tells the creator "Esta tarea ya fue tomada por otro serrano." — right data, wrong reader [`src/features/tasks/TaskDetailView.tsx:129`]
+- [x] [Review][Patch] Both wrappers omit the `w-full` that AC 1 specifies [`src/features/tasks/TaskDetailView.tsx:62`, `src/app/(app)/nodo/tasks/[id]/edit/page.tsx:29`]
+- [x] [Review][Patch] Story metadata contradicts the shipped code — `Status: review`, sprint-status `ready-for-dev`, Dev Agent Record all `TBD`, and sub-bullets unchecked under checked parents
+- [x] [Review][Patch] AC 10 still forbids the `TaskCard` contract change and the `cancelada` filter pill, both of which the user later approved — the spec was never updated to match the decisions
+- [x] [Review][Patch] The RLS finding was never appended to `deferred-work.md`, though AC 7 and Files to Touch both require it
+
+- [x] [Review][Defer] The taker can write `estado` directly, bypassing the platform-admin check on `verificada` — pre-existing; the grant includes `estado` and the policy admits `tomada_por` [`supabase/migrations/20260725160000_grants_por_columna.sql:52`]
+- [x] [Review][Defer] `takeTask` / `markTaskDone` / `verifyTask` share the zero-row-success shape — pre-existing, not introduced here [`src/features/tasks/actions.ts:60`, `:104`, `:132`]
+- [x] [Review][Defer] A whitespace-only `descripcion` from `createTask` round-trips inconsistently: hidden on detail, prefilled on edit, normalised to `null` on the next save — pre-existing, rooted in `createTask` [`src/features/tasks/actions.ts:41`]
+- [x] [Review][Defer] The hub never excludes cancelled tasks from the default list — the pill was the agreed scope; excluding them is a separate product call [`src/app/(app)/nodo/tasks/page.tsx:74`]
 
 ## Files to Touch
 
@@ -377,23 +410,47 @@ rg "cancelada" "src/app/(app)/nodo/tasks/page.tsx"
 
 ### Agent Model Used
 
-TBD
+Claude Opus 5
 
 ### Debug Log References
 
-TBD
+Ninguna. Los cuatro gates se corrieron por binario directo desde el checkout
+principal, porque el worktree no tiene `node_modules` propio.
 
 ### Completion Notes List
 
-TBD
+- Los dos defectos más serios los encontró el code review, no los tests: un
+  update que no matchea ninguna fila se reportaba como éxito, y `updateTask` no
+  tenía guarda de estado. Los tests mockeaban la cadena de Supabase y afirmaban
+  sobre los filtros, nunca sobre el resultado cuando el filtro no matchea.
+- El mock de `tasks` se reescribió como un registrador encadenable: el anterior
+  era una cadena fija de dos `.eq()` y no soportaba `.in()` ni `.select()`.
+- La verificación visual a 375px encontró un bug que ninguna aserción de clases
+  podía ver: los botones de confirmación partían en dos líneas.
+- Queda sin probar contra una base real: no hay CLI de Supabase ni runtime de
+  contenedores en este entorno. `database.types.ts` se editó a mano.
 
 ### Change Log
 
 | Date | Change |
 | ---- | ------ |
 | 2026-07-28 | Story created — ready for dev |
+| 2026-07-29 | Code review: 5 decisiones resueltas, 17 patches aplicados, 4 diferidos |
 | 2026-07-28 | Rebased onto `main` `47d25f5`; edit frame `H3BY0u` landed from the team, T1 (Pencil work) dropped; reuse targets and hub blast radius added |
 
 ### File List
 
-TBD
+- `supabase/migrations/20260728150000_task_estado_cancelada.sql` (nuevo)
+- `src/features/tasks/actions.ts`, `actions.test.ts`
+- `src/features/tasks/taskDisplay.ts`, `taskDisplay.test.ts` (nuevos)
+- `src/features/tasks/TaskDetailView.tsx` (nuevo)
+- `src/features/tasks/TaskForm.tsx` (nuevo)
+- `src/features/tasks/TaskMenu.tsx`, `TaskMenu.test.tsx` (nuevos)
+- `src/features/tasks/task-actions.tsx`
+- `src/app/(app)/nodo/tasks/[id]/page.tsx`, `page.test.tsx`
+- `src/app/(app)/nodo/tasks/[id]/edit/page.tsx`, `page.test.tsx` (nuevos)
+- `src/app/(app)/nodo/tasks/new/NewTaskForm.tsx`
+- `src/app/(app)/nodo/tasks/page.tsx`, `page.test.tsx`
+- `src/components/TaskCard.tsx`, `TaskCard.test.tsx`
+- `src/lib/time.ts`, `time.test.ts`
+- `src/lib/supabase/database.types.ts`

@@ -25,8 +25,12 @@ export default async function EditTaskPage({ params }: { params: Promise<{ id: s
   // porque un POST directo se saltea el render.
   if (task.creado_por !== user.id) redirect(`/nodo/tasks/${id}`);
 
+  // Editar sólo mientras nadie se comprometió con la tarea. `updateTask` repite
+  // el filtro, porque un POST directo se saltea este render.
+  if (task.estado !== "abierta") redirect(`/nodo/tasks/${id}`);
+
   return (
-    <div className="flex flex-col gap-[18px]">
+    <div className="flex w-full flex-col gap-[18px]">
       <div className="flex flex-row items-center justify-between w-full">
         {/* El frame usa chevron-left, no la `x` de crear tarea: editar es una
             navegación hacia atrás, no el cierre de un modal. */}
@@ -34,7 +38,14 @@ export default async function EditTaskPage({ params }: { params: Promise<{ id: s
           <ChevronLeft className="size-6 text-text-primary" />
         </Link>
         <h1 className="font-display text-base font-medium text-text-primary">Editar tarea</h1>
-        <TaskMenu taskId={task.id} estado={task.estado ?? "abierta"} isOwner showEditItem={false} />
+        {/* La guarda de arriba ya deja pasar sólo tareas abiertas, así que el
+            menú siempre se dibuja. El contrapeso queda por si esa guarda cambia:
+            sin él, `justify-between` colapsa a dos hijos y el título se corre. */}
+        {task.estado === "abierta" ? (
+          <TaskMenu taskId={task.id} estado={task.estado} isOwner showEditItem={false} />
+        ) : (
+          <span aria-hidden="true" className="size-[22px]" />
+        )}
       </div>
 
       <TaskForm

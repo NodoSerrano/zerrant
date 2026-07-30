@@ -109,6 +109,12 @@ describe("EditTaskPage — header, frame H3BY0u (AC8)", () => {
     expect(back.querySelector("svg")?.getAttribute("class")).toContain("lucide-chevron-left");
   });
 
+  it("stretches the wrapper to the full width", async () => {
+    const { container } = await renderEdit();
+
+    expect(container.firstElementChild!.className).toContain("w-full");
+  });
+
   it("titles the screen 'Editar tarea' with the Pencil type styles", async () => {
     await renderEdit();
 
@@ -167,6 +173,19 @@ describe("EditTaskPage — prefilled form (AC8)", () => {
 
     expect(container.querySelector('input[name="taskId"]')).toHaveValue("task-1");
   });
+});
+
+describe("EditTaskPage — estado guard (AC8)", () => {
+  // Editar sólo mientras nadie se comprometió. La ruta es adivinable y el botón
+  // de atrás llega acá después de cancelar desde la propia pantalla.
+  it.each(["tomada", "hecha", "verificada", "cancelada"])(
+    "sends the creator back to the detail screen when the task is %s",
+    async (estado) => {
+      await expect(renderEdit({ task: makeTask({ estado }) })).rejects.toThrow(
+        "NEXT_REDIRECT:/nodo/tasks/task-1",
+      );
+    },
+  );
 });
 
 describe("EditTaskPage — CTA (AC8)", () => {

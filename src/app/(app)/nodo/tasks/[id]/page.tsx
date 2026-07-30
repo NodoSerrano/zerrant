@@ -29,6 +29,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     .single();
 
   const creador = task.creador as unknown as Profile | null;
+  const tomador = task.tomador as unknown as Profile | null;
 
   return (
     <TaskDetailView
@@ -40,6 +41,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
       estado={task.estado ?? "abierta"}
       createdAt={task.created_at}
       autor={creador ? displayName(creador) : null}
+      tomador={tomador ? displayName(tomador) : null}
       isOwner={task.creado_por === user.id}
       isTaker={task.tomada_por === user.id}
       isAdmin={currentProfile?.is_platform_admin ?? false}

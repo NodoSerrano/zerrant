@@ -42,6 +42,14 @@ describe("TaskMenu — visibility (AC6)", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it("does not offer Editar once the task is taken — that would change the deal under the taker", () => {
+    render(<TaskMenu {...OWNER_OPEN} estado="tomada" />);
+    openMenu();
+
+    expect(screen.queryByRole("menuitem", { name: "Editar" })).not.toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Cancelar tarea" })).toBeInTheDocument();
+  });
+
   it.each(["abierta", "tomada"])("renders the trigger for the creator when %s", (estado) => {
     render(<TaskMenu {...OWNER_OPEN} estado={estado} />);
 
@@ -114,6 +122,43 @@ describe("TaskMenu — opening and items (AC6)", () => {
   });
 });
 
+describe("TaskMenu — dismissal and focus (AC6)", () => {
+  it("closes when the pointer goes down outside the menu", () => {
+    render(
+      <div>
+        <TaskMenu {...OWNER_OPEN} />
+        <button type="button">Otra cosa</button>
+      </div>,
+    );
+    openMenu();
+
+    fireEvent.mouseDown(screen.getByRole("button", { name: "Otra cosa" }));
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  // Si el foco se queda en el disparador, el siguiente Tab lleva al contenido de
+  // atrás en vez de al primer ítem del menú abierto.
+  it("moves focus into the menu when it opens", () => {
+    render(<TaskMenu {...OWNER_OPEN} />);
+    openMenu();
+
+    expect(document.activeElement).toBe(screen.getByRole("menuitem", { name: "Editar" }));
+  });
+
+  // Durante la confirmación no queda ningún `menuitem`: dejar `role="menu"`
+  // metería a un lector de pantalla en un menú vacío con una acción destructiva
+  // pendiente.
+  it("stops claiming to be a menu while it is asking for confirmation", () => {
+    render(<TaskMenu {...OWNER_OPEN} />);
+    openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Cancelar tarea" }));
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Confirmar cancelación" })).toBeInTheDocument();
+  });
+});
+
 describe("TaskMenu — keyboard (AC6)", () => {
   it("closes on Escape and gives focus back to the trigger", () => {
     render(<TaskMenu {...OWNER_OPEN} />);
@@ -163,7 +208,7 @@ describe("TaskMenu — cancelling (AC6)", () => {
       "whitespace-nowrap",
     );
     expect(screen.getByRole("button", { name: "Volver" }).className).toContain("whitespace-nowrap");
-    expect(screen.getByRole("menu").className).toContain("w-max");
+    expect(screen.getByRole("dialog").className).toContain("w-max");
   });
 
   it("backs out of the confirmation without cancelling anything", () => {

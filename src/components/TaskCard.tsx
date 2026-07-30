@@ -41,12 +41,15 @@ export function TaskCard({
   const estadoData = ESTADO_BADGE[estado] ?? ESTADO_BADGE.abierta;
   const urgenciaData = URGENCIA_CONFIG[urgencia] ?? URGENCIA_CONFIG.media;
 
-  // Una tarea cancelada ya no se puede tomar. El consumidor fija el
-  // `actionLabel` sin mirar el estado, así que la tarjeta lo apaga: se sigue
-  // leyendo, pero no se ofrece como algo accionable.
+  // Sólo una tarea abierta se puede tomar. El consumidor fija el `actionLabel`
+  // sin mirar el estado, así que la tarjeta lo apaga cuando no hay nada que
+  // hacer: se sigue leyendo, pero no se ofrece como accionable. El criterio es
+  // "¿es accionable?" y no una lista de estados terminales, para que el próximo
+  // valor del enum no repita el problema.
+  const accionable = estado === "abierta";
   const actionClasses = cn(
     "shrink-0 rounded-pill bg-surface-inset border border-border px-4 py-[7px] font-display text-[13px] font-semibold",
-    estado === "cancelada" ? "text-text-muted" : "text-brand-green",
+    accionable ? "text-brand-green" : "text-text-muted",
   );
 
   const baseClasses = cn(
@@ -91,12 +94,7 @@ export function TaskCard({
         {href ? (
           <span className={actionClasses}>{actionLabel}</span>
         ) : (
-          <button
-            type="button"
-            className={actionClasses}
-            onClick={onAction}
-            disabled={estado === "cancelada"}
-          >
+          <button type="button" className={actionClasses} onClick={onAction} disabled={!accionable}>
             {actionLabel}
           </button>
         )}

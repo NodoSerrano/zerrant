@@ -244,6 +244,15 @@ describe("TaskCard", () => {
     expect(action.className).not.toContain("text-brand-green");
   });
 
+  // El apagado tiene que salir de "¿esto se puede tomar?", no de una lista de
+  // estados terminales: si no, el próximo valor del enum repite el bug.
+  it("greys out the action label on any estado that is not actionable", () => {
+    const unknownEstado = "pausada" as unknown as typeof defaultProps.estado;
+    render(<TaskCard {...defaultProps} estado={unknownEstado} actionLabel="Tomar" />);
+
+    expect(screen.getByText("Tomar").className).toContain("text-text-muted");
+  });
+
   it("keeps the action label green on a task that is still actionable", () => {
     render(<TaskCard {...defaultProps} estado="abierta" actionLabel="Tomar" />);
 

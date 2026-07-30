@@ -1,4 +1,4 @@
-import { ChevronLeft, Flame, Tag, User } from "lucide-react";
+import { ChevronLeft, Flame, Tag, User, UserCheck } from "lucide-react";
 import Link from "next/link";
 import { TakeTaskButton, MarkDoneButton, VerifyTaskButton } from "./task-actions";
 import { TaskMenu } from "./TaskMenu";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 
 // Estados donde no queda acción posible y sólo se informa el desenlace.
 const ESTADO_MESSAGES: Record<string, string> = {
+  hecha: "Trabajo terminado. Falta que un admin lo verifique.",
   verificada: "Tarea verificada y completada.",
   cancelada: "Esta tarea fue cancelada.",
 };
@@ -25,6 +26,7 @@ export interface TaskDetailViewProps {
   estado: string;
   createdAt: string;
   autor: string | null;
+  tomador: string | null;
   isOwner: boolean;
   isTaker: boolean;
   isAdmin: boolean;
@@ -40,6 +42,7 @@ export function TaskDetailView({
   estado,
   createdAt,
   autor,
+  tomador,
   isOwner,
   isTaker,
   isAdmin,
@@ -59,7 +62,7 @@ export function TaskDetailView({
   const showMenu = isOwner && (estado === "abierta" || estado === "tomada");
 
   return (
-    <div className="flex flex-col gap-[18px]">
+    <div className="flex w-full flex-col gap-[18px]">
       <div className="flex flex-row items-center justify-between w-full">
         <Link href="/nodo/tasks" aria-label="Volver a tareas">
           <ChevronLeft className="size-6 text-text-primary" />
@@ -113,6 +116,14 @@ export function TaskDetailView({
             </span>
           </div>
         )}
+        {tomador && (
+          <div className="flex flex-row items-center gap-2">
+            <UserCheck className="size-[15px] text-text-muted" aria-hidden="true" />
+            <span className="font-body text-[13px] font-normal text-text-secondary">
+              {`Tomada por ${tomador}`}
+            </span>
+          </div>
+        )}
       </div>
 
       {cuerpo && (
@@ -128,13 +139,13 @@ export function TaskDetailView({
 
       {estado === "tomada" && !isTaker && (
         <p className="font-body text-sm text-text-muted text-center">
-          Esta tarea ya fue tomada por otro serrano.
+          {isOwner ? "Alguien ya tomó esta tarea." : "Esta tarea ya fue tomada por otro serrano."}
         </p>
       )}
 
       {estado === "hecha" && isAdmin && <VerifyTaskButton taskId={taskId} />}
 
-      {closingMessage && (
+      {closingMessage && !(estado === "hecha" && isAdmin) && (
         <p className="font-body text-sm text-text-muted text-center">{closingMessage}</p>
       )}
     </div>

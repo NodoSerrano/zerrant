@@ -6,10 +6,12 @@ import { Ellipsis } from "lucide-react";
 import { cancelTask } from "./actions";
 import { cn } from "@/lib/utils";
 
-// Sólo desde estos estados hay algo que ofrecer. Una tarea hecha, verificada o
-// cancelada no se edita ni se cancela, así que el disparador no se dibuja:
-// nada de controles muertos.
-const ESTADOS_CON_ACCIONES = ["abierta", "tomada"];
+// Cada acción vive en su propia ventana de estados. Cancelar sigue teniendo
+// sentido con la tarea ya tomada; editar no, porque le cambiaría el trabajo a
+// quien la aceptó sin avisarle. Si no queda ninguna acción, el disparador no se
+// dibuja: nada de controles muertos.
+const ESTADOS_CANCELABLES = ["abierta", "tomada"];
+const ESTADOS_EDITABLES = ["abierta"];
 
 const ITEM_CLASSES =
   "block w-full text-left px-4 py-2.5 font-body text-sm text-text-primary hover:bg-surface-inset focus-visible:outline-hidden focus-visible:bg-surface-inset";
@@ -28,25 +30,54 @@ export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskM
   const [confirming, setConfirming] = useState(false);
   const [state, action, pending] = useActionState(cancelTask, null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const firstItemRef = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
   const menuId = useId();
+
+  const puedeCancelar = ESTADOS_CANCELABLES.includes(estado);
+  const puedeEditar = showEditItem && ESTADOS_EDITABLES.includes(estado);
+
+  function close({ restoreFocus }: { restoreFocus: boolean }) {
+    setOpen(false);
+    setConfirming(false);
+    if (restoreFocus) triggerRef.current?.focus();
+  }
 
   // Escape cierra y devuelve el foco al disparador: si no, el foco queda
   // colgado en un nodo que dejó de existir y el usuario de teclado se pierde.
+  // Un click afuera también cierra, pero sin robar el foco de donde el usuario
+  // acaba de hacer click.
   useEffect(() => {
     if (!open) return;
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
-      setOpen(false);
-      setConfirming(false);
-      triggerRef.current?.focus();
+      close({ restoreFocus: true });
+    }
+
+    function onPointerDown(event: MouseEvent | TouchEvent) {
+      const target = event.target as Node;
+      if (menuRef.current?.contains(target) || triggerRef.current?.contains(target)) return;
+      close({ restoreFocus: false });
     }
 
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("touchstart", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("touchstart", onPointerDown);
+    };
   }, [open]);
 
-  if (!isOwner || !ESTADOS_CON_ACCIONES.includes(estado)) return null;
+  // Al abrir, el foco entra al menú. Si se queda en el disparador, el siguiente
+  // Tab lleva al contenido de atrás en vez de al primer ítem.
+  useEffect(() => {
+    if (open && !confirming) firstItemRef.current?.focus();
+  }, [open, confirming]);
+
+  if (!isOwner || !puedeCancelar) return null;
 
   return (
     <div className="relative">
@@ -58,8 +89,8 @@ export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskM
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
         onClick={() => {
-          setOpen((v) => !v);
-          setConfirming(false);
+          if (open) close({ restoreFocus: false });
+          else setOpen(true);
         }}
         className="rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
       >
@@ -69,7 +100,13 @@ export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskM
       {open && (
         <div
           id={menuId}
-          role="menu"
+          ref={menuRef}
+          // Durante la confirmación el contenedor deja de tener `menuitem`s, así
+          // que dejar `role="menu"` metería a un lector de pantalla en un menú
+          // vacío con una acción destructiva pendiente.
+          role={confirming ? "dialog" : "menu"}
+          aria-label={confirming ? "Confirmar cancelación" : undefined}
+          aria-modal={confirming ? false : undefined}
           className={cn(
             "absolute right-0 top-full z-40 mt-2 w-max min-w-[180px] max-w-[280px] overflow-hidden py-1",
             "bg-surface border border-border rounded-md",
@@ -95,8 +132,11 @@ export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskM
                 </button>
                 <button
                   type="button"
+                  // Deshabilitado en vuelo: si no, desmonta el form a mitad del
+                  // pedido y el usuario se queda sin resultado ni error.
+                  disabled={pending}
                   onClick={() => setConfirming(false)}
-                  className="flex-1 whitespace-nowrap rounded-pill border border-border px-3 py-1.5 font-display text-[13px] font-semibold text-text-secondary"
+                  className="flex-1 whitespace-nowrap rounded-pill border border-border px-3 py-1.5 font-display text-[13px] font-semibold text-text-secondary disabled:opacity-50"
                 >
                   Volver
                 </button>
@@ -104,12 +144,18 @@ export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskM
             </form>
           ) : (
             <>
-              {showEditItem && (
-                <Link href={`/nodo/tasks/${taskId}/edit`} role="menuitem" className={ITEM_CLASSES}>
+              {puedeEditar && (
+                <Link
+                  ref={firstItemRef as React.Ref<HTMLAnchorElement>}
+                  href={`/nodo/tasks/${taskId}/edit`}
+                  role="menuitem"
+                  className={ITEM_CLASSES}
+                >
                   Editar
                 </Link>
               )}
               <button
+                ref={puedeEditar ? undefined : (firstItemRef as React.Ref<HTMLButtonElement>)}
                 type="button"
                 role="menuitem"
                 onClick={() => setConfirming(true)}

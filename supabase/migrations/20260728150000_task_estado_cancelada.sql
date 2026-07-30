@@ -11,4 +11,11 @@
 -- restricción de que *sólo* el creador cancele la aplica `cancelTask` en el
 -- action y en el filtro del update.
 
-alter type task_estado add value 'cancelada';
+-- `if not exists` para que un reset-and-replay, o una base de branch que ya la
+-- tenga, no aborte con `enum label "cancelada" already exists` y bloquee las
+-- migraciones que vienen después.
+--
+-- Postgres no deja *usar* un valor agregado en la misma transacción, así que
+-- este archivo se queda solo con este statement: cualquier backfill o policy
+-- que mencione 'cancelada' va en una migración posterior.
+alter type task_estado add value if not exists 'cancelada';
