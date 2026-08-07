@@ -5,20 +5,15 @@ const mocks = vi.hoisted(() => ({
   profilesSelect: vi.fn(),
   profilesSelectEq: vi.fn(),
   profilesSelectSingle: vi.fn(),
+  rpc: vi.fn(),
   membershipUpdate: vi.fn(),
   membershipUpdateEq: vi.fn(),
-  membershipUpdate2: vi.fn(),
-  membershipUpdate2Eq: vi.fn(),
-  membershipSelect: vi.fn(),
-  membershipSelectEq: vi.fn(),
-  membershipSelectSingle: vi.fn(),
-  profilesUpdate: vi.fn(),
-  profilesUpdateEq: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mocks.getUser },
+    rpc: mocks.rpc,
     from: vi.fn((table: string) => {
       if (table === "profiles") {
         return {
@@ -27,20 +22,12 @@ vi.mock("@/lib/supabase/server", () => ({
               single: mocks.profilesSelectSingle,
             })),
           })),
-          update: mocks.profilesUpdate.mockImplementation(() => ({
-            eq: mocks.profilesUpdateEq,
-          })),
         };
       }
       if (table === "membership_requests") {
         return {
           update: mocks.membershipUpdate.mockImplementation(() => ({
             eq: mocks.membershipUpdateEq,
-          })),
-          select: mocks.membershipSelect.mockImplementation(() => ({
-            eq: mocks.membershipSelectEq.mockImplementation(() => ({
-              single: mocks.membershipSelectSingle,
-            })),
           })),
         };
       }
@@ -76,14 +63,10 @@ const makeFormData = (requestId = "req-001") => {
 };
 
 describe("approveRequest", () => {
-  it("allows platform admin to approve a pending request and updates profile tier", async () => {
+  it("delegates to RPC and redirects on success", async () => {
     setupAuth("admin-user-id");
     mocks.profilesSelectSingle.mockResolvedValue({ data: { is_platform_admin: true } });
-    mocks.membershipUpdateEq.mockResolvedValue({ error: null });
-    mocks.membershipSelectSingle.mockResolvedValue({
-      data: { profile_id: "tourist-1", tier_solicitado: "standard" },
-    });
-    mocks.profilesUpdateEq.mockResolvedValue({ error: null });
+    mocks.rpc.mockResolvedValue({ data: { success: true }, error: null });
 
     try {
       await approveRequest(null, makeFormData());
@@ -91,14 +74,9 @@ describe("approveRequest", () => {
       // redirect throws
     }
 
-    expect(mocks.membershipUpdate).toHaveBeenCalledWith({
-      estado: "aprobada",
-      revisado_por: "admin-user-id",
-      actualizado_en: expect.any(String),
+    expect(mocks.rpc).toHaveBeenCalledWith("approve_membership_request", {
+      p_request_id: "req-001",
     });
-    expect(mocks.membershipUpdateEq).toHaveBeenCalledWith("id", "req-001");
-    expect(mocks.profilesUpdate).toHaveBeenCalledWith({ tier: "standard" });
-    expect(mocks.profilesUpdateEq).toHaveBeenCalledWith("id", "tourist-1");
   });
 
   it("returns error when unauthenticated", async () => {
@@ -107,7 +85,7 @@ describe("approveRequest", () => {
     const result = await approveRequest(null, new FormData());
 
     expect(result).toEqual({ error: "No autorizado" });
-    expect(mocks.membershipUpdate).not.toHaveBeenCalled();
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
   it("returns error when user is not platform admin", async () => {
@@ -117,60 +95,36 @@ describe("approveRequest", () => {
     const result = await approveRequest(null, makeFormData());
 
     expect(result).toEqual({ error: "Solo un admin puede aprobar solicitudes" });
-    expect(mocks.membershipUpdate).not.toHaveBeenCalled();
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
-  it("returns error when membership update fails", async () => {
+  it("returns error when RPC itself fails (client error)", async () => {
     setupAuth();
     mocks.profilesSelectSingle.mockResolvedValue({ data: { is_platform_admin: true } });
-    mocks.membershipUpdateEq.mockResolvedValue({ error: { message: "Error al actualizar" } });
+    mocks.rpc.mockResolvedValue({ data: null, error: { message: "DB error" } });
 
     const result = await approveRequest(null, makeFormData());
 
-    expect(result).toEqual({ error: "Error al actualizar" });
+    expect(result).toEqual({ error: "DB error" });
+    expect(mocks.rpc).toHaveBeenCalledWith("approve_membership_request", {
+      p_request_id: "req-001",
+    });
   });
 
-  it("returns error when profile fetch for tier update fails and rolls back membership status", async () => {
+  it("returns error when RPC succeeds but returns an application error", async () => {
     setupAuth();
     mocks.profilesSelectSingle.mockResolvedValue({ data: { is_platform_admin: true } });
-    mocks.membershipUpdateEq
-      .mockResolvedValueOnce({ error: null })
-      .mockResolvedValueOnce({ error: null });
-    mocks.membershipSelectSingle.mockResolvedValue({ data: null, error: { message: "Not found" } });
+    mocks.rpc.mockResolvedValue({
+      data: { error: "Solicitud no encontrada" },
+      error: null,
+    });
 
     const result = await approveRequest(null, makeFormData());
 
     expect(result).toEqual({ error: "Solicitud no encontrada" });
-    expect(mocks.profilesUpdate).not.toHaveBeenCalled();
-    expect(mocks.membershipUpdate).toHaveBeenCalledTimes(2);
-    expect(mocks.membershipUpdate).toHaveBeenNthCalledWith(2, {
-      estado: "pendiente",
-      revisado_por: null,
-      actualizado_en: expect.any(String),
+    expect(mocks.rpc).toHaveBeenCalledWith("approve_membership_request", {
+      p_request_id: "req-001",
     });
-  });
-
-  it("rolls back membership status when tier update fails", async () => {
-    setupAuth();
-    mocks.profilesSelectSingle.mockResolvedValue({ data: { is_platform_admin: true } });
-    mocks.membershipUpdateEq
-      .mockResolvedValueOnce({ error: null })
-      .mockResolvedValueOnce({ error: null });
-    mocks.membershipSelectSingle.mockResolvedValue({
-      data: { profile_id: "tourist-1", tier_solicitado: "standard" },
-    });
-    mocks.profilesUpdateEq.mockResolvedValue({ error: { message: "Tier update failed" } });
-
-    const result = await approveRequest(null, makeFormData());
-
-    expect(result).toEqual({ error: "Error al actualizar el tier del perfil" });
-    expect(mocks.membershipUpdate).toHaveBeenCalledTimes(2);
-    expect(mocks.membershipUpdate).toHaveBeenNthCalledWith(2, {
-      estado: "pendiente",
-      revisado_por: null,
-      actualizado_en: expect.any(String),
-    });
-    expect(mocks.membershipUpdateEq).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -192,7 +146,7 @@ describe("rejectRequest", () => {
       actualizado_en: expect.any(String),
     });
     expect(mocks.membershipUpdateEq).toHaveBeenCalledWith("id", "req-001");
-    expect(mocks.profilesUpdate).not.toHaveBeenCalled();
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
   it("returns error when unauthenticated", async () => {

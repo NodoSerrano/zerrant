@@ -30,52 +30,17 @@ export async function approveRequest(
 
   const requestId = formData.get("requestId") as string;
 
-  const { error: updateError } = await supabase
-    .from("membership_requests")
-    .update({
-      estado: "aprobada",
-      revisado_por: user.id,
-      actualizado_en: new Date().toISOString(),
-    })
-    .eq("id", requestId);
+  const { data, error: rpcError } = await supabase.rpc(
+    "approve_membership_request",
+    { p_request_id: requestId },
+  );
 
-  if (updateError) {
-    return { error: updateError.message };
+  if (rpcError) {
+    return { error: rpcError.message };
   }
 
-  const { data: request, error: fetchError } = await supabase
-    .from("membership_requests")
-    .select("profile_id, tier_solicitado")
-    .eq("id", requestId)
-    .single();
-
-  if (fetchError || !request) {
-    await supabase
-      .from("membership_requests")
-      .update({
-        estado: "pendiente",
-        revisado_por: null,
-        actualizado_en: new Date().toISOString(),
-      })
-      .eq("id", requestId);
-    return { error: "Solicitud no encontrada" };
-  }
-
-  const { error: tierError } = await supabase
-    .from("profiles")
-    .update({ tier: request.tier_solicitado })
-    .eq("id", request.profile_id);
-
-  if (tierError) {
-    await supabase
-      .from("membership_requests")
-      .update({
-        estado: "pendiente",
-        revisado_por: null,
-        actualizado_en: new Date().toISOString(),
-      })
-      .eq("id", requestId);
-    return { error: "Error al actualizar el tier del perfil" };
+  if (data?.error) {
+    return { error: data.error };
   }
 
   revalidatePath("/admin/membresias");

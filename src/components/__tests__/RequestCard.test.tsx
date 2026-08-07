@@ -1,11 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { RequestCard, type RequestCardData } from "../RequestCard";
 import type { Profile } from "@/features/profile/types";
 
-vi.mock("@/features/admin/actions", () => ({
+const mocks = vi.hoisted(() => ({
   approveRequest: vi.fn(),
   rejectRequest: vi.fn(),
+}));
+
+vi.mock("@/features/admin/actions", () => ({
+  approveRequest: mocks.approveRequest,
+  rejectRequest: mocks.rejectRequest,
 }));
 
 const mockProfile = {
@@ -85,5 +90,33 @@ describe("RequestCard", () => {
     const { container } = render(<RequestCard request={mockRequest} />);
     const card = container.firstElementChild as HTMLElement;
     expect(card.className).toContain("rounded-[24px]");
+  });
+
+  it("shows approve error message when action returns error", async () => {
+    mocks.approveRequest.mockResolvedValue({ error: "Error al aprobar" });
+    mocks.rejectRequest.mockResolvedValue(null);
+
+    render(<RequestCard request={mockRequest} />);
+
+    const approveBtn = screen.getByText("Aprobar");
+    fireEvent.click(approveBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText("Error al aprobar")).toBeInTheDocument();
+    });
+  });
+
+  it("shows reject error message when action returns error", async () => {
+    mocks.approveRequest.mockResolvedValue(null);
+    mocks.rejectRequest.mockResolvedValue({ error: "Error al rechazar" });
+
+    render(<RequestCard request={mockRequest} />);
+
+    const rejectBtn = screen.getByText("Rechazar");
+    fireEvent.click(rejectBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText("Error al rechazar")).toBeInTheDocument();
+    });
   });
 });
