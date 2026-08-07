@@ -4,7 +4,7 @@ baseline_commit: TBD
 
 # Story 3.5: Panel admin — cola de membresías (6.1)
 
-Status: ready-for-dev
+Status: done
 
 <!-- Story context engine — from Linear ZER-28, M3 milestone, Pencil frame sIj6D. -->
 
@@ -592,3 +592,29 @@ TBD
 - `src/app/(app)/admin/__tests__/membresias-page.test.tsx` (new)
 - `src/components/__tests__/RequestCard.test.tsx` (new)
 - `src/features/admin/__tests__/actions.test.ts` (new)
+
+## Review Findings
+
+### Patch
+
+- [x] [Review][Patch] RPC `approve_membership_request` es `security definer` sin verificar `is_platform_admin` ni revocar EXECUTE — cualquier usuario (anon/authenticated) puede llamarla vía PostgREST y auto-aprobarse/escalar tier. Falta check dentro de la función + `revoke execute ... from anon, authenticated` [supabase/migrations/20260807140000_approve_membership_rpc.sql:7,27-35]
+- [x] [Review][Patch] El embed `profiles` en la página queda null bajo RLS (solo existe "Users can read own profile") → RequestCard crashea en `displayName()` / página siempre vacía. Falta política SELECT de admin en `profiles` [src/app/(app)/admin/membresias/page.tsx:15]
+- [x] [Review][Patch] `rejectRequest` no es atómico y no guarda `estado='pendiente'`: race approve/reject deja `tier` otorgado con estado `rechazada`; update de 0 filas reporta éxito silencioso. Ruta por RPC o `update...eq('estado','pendiente')` + rowcount check [src/features/admin/actions.ts:76-83]
+- [x] [Review][Patch] Sin GRANT en `membership_requests`/`profile_roles`/`roles` → SELECT de página y UPDATE de reject fallan con 42501 en DB fresca (solo el approve funciona por ser security definer) [supabase/migrations/20260728190000_membership_roles.sql]
+- [x] [Review][Patch] `tier_solicitado` es controlado por el cliente y no se valida: un tourist puede insertar `tier_solicitado='founder'` y el admin (o el propio user vía RPC) le otorga founder. Validar/capear server-side [supabase/migrations/20260807140000_approve_membership_rpc.sql:33-35]
+- [x] [Review][Patch] `pnpm typecheck` FALLA: `approve_membership_request` no está en `database.types.ts` (Functions = never) → TS2345/TS2339. Regenerar tipos. Violación AC 11 [src/features/admin/actions.ts:33-43]
+- [x] [Review][Patch] `sprint-status.yaml` no parsea (indent 3 espacios en `epic-3-membresia`/`epic-4-retrospective` bajo mapping de 2). ZER-31 item 5b no arreglado — empeorado [_bmad-output/implementation-artifacts/sprint-status.yaml:101-111]
+- [x] [Review][Patch] Cast doble `as unknown as RequestWithProfile[]` persiste (ZER-31 item 4 parcial: solo se agregó guard `Array.isArray`); el tipo miente sobre el shape del row [src/app/(app)/admin/membresias/page.tsx:28-30]
+- [x] [Review][Patch] `requestId` sin validar (null/garbage → error DB crudo expuesto en UI). Validar UUID y devolver mensaje genérico [src/features/admin/actions.ts:31,74]
+- [x] [Review][Patch] Falta test del guard de layout `/admin/*` (non-admin → /nodo/tasks, anon → /auth/login) — AC 11 y observación ZER-31 siguen sin cobertura [src/app/(app)/admin/layout.tsx]
+- [x] [Review][Patch] Meta del RequestCard usa `text-xs` (12px) vs spec `text-[11px]` (AC 5) [src/components/RequestCard.tsx:113]
+
+### Deferred
+
+- [x] [Review][Defer] — none
+
+### Dismissed
+
+- Email omitido en RequestCard — sancionado por Dev Notes 320-324 (AC 5).
+- Tab "Roles · 0" hardcoded — alineado al AC 3 / story (M3.7 lo implementa).
+- Guard duplicado (layout + page) — ZER-31 item 3 resuelto: el guard quedó solo en layout.

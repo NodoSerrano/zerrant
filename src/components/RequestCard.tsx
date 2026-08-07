@@ -6,9 +6,18 @@ import { approveRequest, rejectRequest } from "@/features/admin/actions";
 import { Avatar } from "./Avatar";
 import { type Profile } from "@/features/profile/types";
 
+export interface RequestProfileData {
+  id: string;
+  nombre: string | null;
+  apellido: string | null;
+  apodo: string | null;
+  nombre_visible: Profile["nombre_visible"];
+  avatar_url: string | null;
+}
+
 export interface RequestCardData {
   id: string;
-  profile: Profile;
+  profile: RequestProfileData;
   mensaje: string | null;
   created_at: string;
 }
@@ -30,7 +39,7 @@ function timeAgo(date: string): string {
   return `hace ${weeks} ${weeks === 1 ? "semana" : "semanas"}`;
 }
 
-function displayName(profile: Profile): string {
+function displayName(profile: RequestProfileData): string {
   switch (profile.nombre_visible) {
     case "apodo":
       if (profile.apodo) return profile.apodo;
@@ -110,7 +119,7 @@ export function RequestCard({ request }: { request: RequestCardData }) {
           <span className="font-display text-[16px] font-medium text-text-primary truncate">
             {name || "Sin nombre"}
           </span>
-          <span className="font-body text-xs text-text-muted">
+          <span className="font-body text-[11px] text-text-muted">
             Solicitó {timeAgo(request.created_at)}
           </span>
         </div>

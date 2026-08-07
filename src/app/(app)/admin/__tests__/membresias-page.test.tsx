@@ -115,6 +115,33 @@ describe("AdminMembresiasPage", () => {
     expect(screen.getByText("No hay solicitudes pendientes")).toBeInTheDocument();
   });
 
+  it("filters out requests with null profiles instead of crashing", async () => {
+    const withNullProfile = [
+      {
+        id: "req-1",
+        mensaje: "Quiero ayudar",
+        created_at: new Date().toISOString(),
+        profiles: {
+          nombre: "Sofía",
+          apellido: "Vega",
+          apodo: null,
+          nombre_visible: "nombre_apellido" as const,
+          avatar_url: null,
+        },
+      },
+      {
+        id: "req-2",
+        mensaje: null,
+        created_at: new Date().toISOString(),
+        profiles: null,
+      },
+    ];
+    mocks.membershipResponse = Promise.resolve({ data: withNullProfile, count: 2 });
+    render(await AdminMembresiasPage());
+    expect(screen.getByText("Sofía Vega")).toBeInTheDocument();
+    expect(screen.getAllByTestId("request-card")).toHaveLength(1);
+  });
+
   it("does not render non-admin UI elements", async () => {
     setEmptyMembership();
     render(await AdminMembresiasPage());

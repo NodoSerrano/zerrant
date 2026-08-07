@@ -4,6 +4,17 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function getRequestId(formData: FormData): string | null {
+  const raw = formData.get("requestId");
+  if (typeof raw !== "string" || !UUID_RE.test(raw)) {
+    return null;
+  }
+  return raw;
+}
+
 export async function approveRequest(
   _prevState: unknown,
   formData: FormData,
@@ -28,7 +39,10 @@ export async function approveRequest(
     return { error: "Solo un admin puede aprobar solicitudes" };
   }
 
-  const requestId = formData.get("requestId") as string;
+  const requestId = getRequestId(formData);
+  if (!requestId) {
+    return { error: "Solicitud inválida" };
+  }
 
   const { data, error: rpcError } = await supabase.rpc(
     "approve_membership_request",
@@ -36,7 +50,7 @@ export async function approveRequest(
   );
 
   if (rpcError) {
-    return { error: rpcError.message };
+    return { error: "Error al aprobar la solicitud" };
   }
 
   if (data?.error) {
@@ -71,19 +85,22 @@ export async function rejectRequest(
     return { error: "Solo un admin puede rechazar solicitudes" };
   }
 
-  const requestId = formData.get("requestId") as string;
+  const requestId = getRequestId(formData);
+  if (!requestId) {
+    return { error: "Solicitud inválida" };
+  }
 
-  const { error: updateError } = await supabase
-    .from("membership_requests")
-    .update({
-      estado: "rechazada",
-      revisado_por: user.id,
-      actualizado_en: new Date().toISOString(),
-    })
-    .eq("id", requestId);
+  const { data, error: rpcError } = await supabase.rpc(
+    "reject_membership_request",
+    { p_request_id: requestId },
+  );
 
-  if (updateError) {
-    return { error: updateError.message };
+  if (rpcError) {
+    return { error: "Error al rechazar la solicitud" };
+  }
+
+  if (data?.error) {
+    return { error: data.error };
   }
 
   revalidatePath("/admin/membresias");

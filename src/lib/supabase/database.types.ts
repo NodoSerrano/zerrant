@@ -178,7 +178,24 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      approve_membership_request: {
+        Args: {
+          p_request_id: string;
+        };
+        Returns: {
+          error?: string;
+          success?: boolean;
+        };
+      };
+      reject_membership_request: {
+        Args: {
+          p_request_id: string;
+        };
+        Returns: {
+          error?: string;
+          success?: boolean;
+        };
+      };
     };
     Enums: {
       disponibilidad: "disponible" | "ocupado" | "solo_eventos";

@@ -1,10 +1,21 @@
 import { ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { RequestCard } from "@/components/RequestCard";
-import type { Profile } from "@/features/profile/types";
+import {
+  RequestCard,
+  type RequestCardData,
+  type RequestProfileData,
+} from "@/components/RequestCard";
+import type { Tier } from "@/features/profile/types";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
+
+type RequestRow = {
+  id: string;
+  mensaje: string | null;
+  created_at: string;
+  profiles: RequestProfileData & { tier: Tier };
+};
 
 export default async function AdminMembresiasPage() {
   const supabase = await createClient();
@@ -18,16 +29,30 @@ export default async function AdminMembresiasPage() {
     .eq("estado", "pendiente")
     .order("created_at", { ascending: false });
 
-  type RequestWithProfile = {
-    id: string;
-    mensaje: string | null;
-    created_at: string;
-    profiles: Profile;
-  };
-
-  const requests: RequestWithProfile[] = Array.isArray(pendingRequests)
-    ? (pendingRequests as unknown as RequestWithProfile[])
-    : [];
+  const requests: RequestCardData[] = (Array.isArray(pendingRequests)
+    ? pendingRequests
+    : []
+  )
+    .filter(
+      (row): row is RequestRow =>
+        row !== null &&
+        typeof row === "object" &&
+        row.profiles !== null &&
+        typeof row.profiles === "object",
+    )
+    .map((row) => ({
+      id: row.id,
+      mensaje: row.mensaje,
+      created_at: row.created_at,
+      profile: {
+        id: row.profiles.id,
+        nombre: row.profiles.nombre,
+        apellido: row.profiles.apellido,
+        apodo: row.profiles.apodo,
+        nombre_visible: row.profiles.nombre_visible,
+        avatar_url: row.profiles.avatar_url,
+      } satisfies RequestProfileData,
+    }));
 
   return (
     <div className="flex flex-col min-h-screen bg-bg">
@@ -81,7 +106,7 @@ export default async function AdminMembresiasPage() {
                 key={r.id}
                 request={{
                   id: r.id,
-                  profile: r.profiles,
+                  profile: r.profile,
                   mensaje: r.mensaje,
                   created_at: r.created_at,
                 }}
