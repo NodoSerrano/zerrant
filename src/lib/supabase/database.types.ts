@@ -127,28 +127,34 @@ export type Database = {
       };
       membership_requests: {
         Row: {
+          actualizado_en: string;
           created_at: string;
           estado: Database["public"]["Enums"]["membership_request_estado"];
           id: string;
           mensaje: string | null;
           profile_id: string;
-          resuelta_por: string | null;
+          revisado_por: string | null;
+          tier_solicitado: Database["public"]["Enums"]["tier"];
         };
         Insert: {
+          actualizado_en?: string;
           created_at?: string;
           estado?: Database["public"]["Enums"]["membership_request_estado"];
           id?: string;
           mensaje?: string | null;
           profile_id: string;
-          resuelta_por?: string | null;
+          revisado_por?: string | null;
+          tier_solicitado?: Database["public"]["Enums"]["tier"];
         };
         Update: {
+          actualizado_en?: string;
           created_at?: string;
           estado?: Database["public"]["Enums"]["membership_request_estado"];
           id?: string;
           mensaje?: string | null;
           profile_id?: string;
-          resuelta_por?: string | null;
+          revisado_por?: string | null;
+          tier_solicitado?: Database["public"]["Enums"]["tier"];
         };
         Relationships: [
           {
@@ -159,8 +165,8 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "membership_requests_resuelta_por_fkey";
-            columns: ["resuelta_por"];
+            foreignKeyName: "membership_requests_revisado_por_fkey";
+            columns: ["revisado_por"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
@@ -172,7 +178,24 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      approve_membership_request: {
+        Args: {
+          p_request_id: string;
+        };
+        Returns: {
+          error?: string;
+          success?: boolean;
+        };
+      };
+      reject_membership_request: {
+        Args: {
+          p_request_id: string;
+        };
+        Returns: {
+          error?: string;
+          success?: boolean;
+        };
+      };
     };
     Enums: {
       disponibilidad: "disponible" | "ocupado" | "solo_eventos";
