@@ -93,7 +93,7 @@ jobs:
             issue_comment)
               PR_NUMBER="$PR_NUMBER_ISSUE"
               PR_TITLE="$ISSUE_TITLE"
-              # Exact command after trim CR/whitespace (Hive note: avoid  / trailing space misses)
+              # Exact command after stripping CR and outer whitespace
               CMD=$(printf '%s' "${COMMENT_BODY:-}" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
               if [ "$CMD" != '/hive-review' ]; then
                 echo "comment is not an exact /hive-review line; skipping"
