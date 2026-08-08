@@ -9,7 +9,8 @@ name: Request Hive review
 # - review_requested: when someone (re)requests nogal-lab from the GitHub UI
 # - workflow_dispatch: Actions tab → Run workflow
 # - issue_comment: PR comment with a line that is exactly /hive-review (force re-review)
-#   Only OWNER/MEMBER/COLLABORATOR/CONTRIBUTOR (not random ISSUE_AUTHOR outsiders).
+#   Only OWNER/MEMBER/COLLABORATOR/CONTRIBUTOR (not NONE/FIRST_TIMER).
+#   CONTRIBUTOR is broader than MEMBER — intentional for team parity; tighten if abused.
 #
 # Security: this job only POSTs repo/number/title to Hive. It does NOT checkout
 # PR head code. Safe under pull_request_target.
@@ -92,8 +93,9 @@ jobs:
             issue_comment)
               PR_NUMBER="$PR_NUMBER_ISSUE"
               PR_TITLE="$ISSUE_TITLE"
-              # Exact line match (job if only does substring+association)
-              if ! printf '%s\n' "${COMMENT_BODY:-}" | grep -qx '/hive-review'; then
+              # Exact command after trim CR/whitespace (Hive note: avoid  / trailing space misses)
+              CMD=$(printf '%s' "${COMMENT_BODY:-}" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+              if [ "$CMD" != '/hive-review' ]; then
                 echo "comment is not an exact /hive-review line; skipping"
                 exit 0
               fi
