@@ -20,9 +20,11 @@ export default async function CheckEmailPage({ searchParams }: CheckEmailPagePro
         <MailCheck className="size-[42px] text-brand-blue" />
       </div>
 
-      <div>
+      <div className="flex flex-col items-center gap-2.5">
         <h2 className="font-display text-[22px] font-bold text-text-primary">Revisá tu email</h2>
-        <p className="text-text-secondary text-sm mt-2">{subtitle}</p>
+        <p className="font-body text-sm font-normal text-text-secondary leading-normal">
+          {subtitle}
+        </p>
       </div>
 
       <SecondaryButton className="w-full" disabled>
