@@ -111,4 +111,24 @@ describe("confirmProfileRole", () => {
 
     expect(result).toEqual({ error: "DB error" });
   });
+
+  it("only sends confirmado in the update payload (no PK mutation)", async () => {
+    setupAuth("admin-user-id");
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: { is_platform_admin: true },
+    });
+    mocks.profileRolesUpdateEq2.mockResolvedValue({ error: null });
+
+    try {
+      await confirmProfileRole(null, makeFormData());
+    } catch {
+      // redirect throws
+    }
+
+    const updateCall = mocks.profileRolesUpdate.mock.calls[0][0];
+    expect(updateCall).toEqual({ confirmado: true });
+    expect(Object.keys(updateCall)).toHaveLength(1);
+    expect(updateCall).not.toHaveProperty("profile_id");
+    expect(updateCall).not.toHaveProperty("role_id");
+  });
 });
