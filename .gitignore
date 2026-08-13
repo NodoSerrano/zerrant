@@ -42,3 +42,6 @@ Thumbs.db
 
 # claude local settings
 .claude/settings.local.json
+
+# superpowers session artifacts
+.superpowers/

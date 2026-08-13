@@ -48,7 +48,7 @@ export async function signUpWithPassword(_prevState: { error: string } | null, f
     return { error: error.message };
   }
 
-  redirect("/auth/check-email");
+  redirect(`/auth/check-email?email=${encodeURIComponent(data.email)}&flow=signup`);
 }
 
 export async function signInWithGoogle(_formData: FormData) {
@@ -83,7 +83,7 @@ export async function sendPasswordReset(_prevState: { error: string } | null, fo
     return { error: error.message };
   }
 
-  redirect("/auth/check-email");
+  redirect(`/auth/check-email?email=${encodeURIComponent(email)}&flow=recovery`);
 }
 
 export async function resetPassword(_prevState: { error: string } | null, formData: FormData) {
