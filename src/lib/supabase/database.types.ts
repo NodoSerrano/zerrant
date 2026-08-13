@@ -173,6 +173,66 @@ export type Database = {
           },
         ];
       };
+      roles: {
+        Row: {
+          id: string;
+          nombre: string;
+          descripcion: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          nombre: string;
+          descripcion?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          nombre?: string;
+          descripcion?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      profile_roles: {
+        Row: {
+          id: string;
+          profile_id: string;
+          role_id: string;
+          confirmado: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          profile_id: string;
+          role_id: string;
+          confirmado?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          profile_id?: string;
+          role_id?: string;
+          confirmado?: boolean;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "profile_roles_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "profile_roles_role_id_fkey";
+            columns: ["role_id"];
+            isOneToOne: false;
+            referencedRelation: "roles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;

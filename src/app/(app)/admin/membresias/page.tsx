@@ -20,19 +20,24 @@ type RequestRow = {
 export default async function AdminMembresiasPage() {
   const supabase = await createClient();
 
-  const { count: pendingCount, data: pendingRequests } = await supabase
-    .from("membership_requests")
-    .select(
-      "id, mensaje, created_at, profiles!membership_requests_profile_id_fkey(nombre, apellido, apodo, nombre_visible, avatar_url, tier, id)",
-      { count: "exact" },
-    )
-    .eq("estado", "pendiente")
-    .order("created_at", { ascending: false });
+  const [{ count: pendingCount, data: pendingRequests }, { count: rolesCount }] = await Promise.all(
+    [
+      supabase
+        .from("membership_requests")
+        .select(
+          "id, mensaje, created_at, profiles!membership_requests_profile_id_fkey(nombre, apellido, apodo, nombre_visible, avatar_url, tier, id)",
+          { count: "exact" },
+        )
+        .eq("estado", "pendiente")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("profile_roles")
+        .select("id", { count: "exact", head: true })
+        .eq("confirmado", false),
+    ],
+  );
 
-  const requests: RequestCardData[] = (Array.isArray(pendingRequests)
-    ? pendingRequests
-    : []
-  )
+  const requests: RequestCardData[] = (Array.isArray(pendingRequests) ? pendingRequests : [])
     .filter(
       (row): row is RequestRow =>
         row !== null &&
@@ -88,11 +93,14 @@ export default async function AdminMembresiasPage() {
               Membresías · {pendingCount ?? 0}
             </span>
           </div>
-          <div className="rounded-[11px] h-[38px] flex-1 flex items-center justify-center">
+          <Link
+            href="/admin/roles"
+            className="rounded-[11px] h-[38px] flex-1 flex items-center justify-center"
+          >
             <span className="font-display text-[13px] font-medium text-text-muted">
-              Roles · 0
+              Roles · {rolesCount ?? 0}
             </span>
-          </div>
+          </Link>
         </div>
 
         <div className="flex flex-col gap-3">
