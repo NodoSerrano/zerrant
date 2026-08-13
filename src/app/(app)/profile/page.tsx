@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Pencil, Mountain } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/Avatar";
@@ -67,11 +68,14 @@ export default async function ProfilePage() {
             Sumate como Serrano para aparecer en el plantel, crear eventos y participar de los
             proyectos.
           </p>
-          <div className="rounded-pill bg-on-primary h-[46px] flex items-center justify-center w-full">
+          <Link
+            href="/solicitar"
+            className="rounded-pill bg-on-primary h-[46px] flex items-center justify-center w-full"
+          >
             <span className="font-display text-[15px] font-semibold text-brand-blue">
               Solicitar ser Serrano
             </span>
-          </div>
+          </Link>
         </div>
 
         <TouristMenu />

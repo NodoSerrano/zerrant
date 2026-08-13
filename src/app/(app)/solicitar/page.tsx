@@ -4,8 +4,6 @@ import { SolicitarForm } from "./SolicitarForm";
 
 export const dynamic = "force-dynamic";
 
-const NO_ROWS = "PGRST116";
-
 export default async function SolicitarPage() {
   const supabase = await createClient();
 
@@ -23,11 +21,10 @@ export default async function SolicitarPage() {
     .eq("id", user.id)
     .single();
 
-  if (error && error.code !== NO_ROWS) {
-    console.warn("[solicitar] no se pudo leer el perfil para la guarda de tier");
-  } else if (profile && profile.tier !== "tourist") {
-    redirect("/nodo/tasks");
-  } else if (!profile) {
+  if (profile?.tier !== "tourist") {
+    if (error) {
+      console.warn("[solicitar] no se pudo leer el perfil para la guarda de tier", error);
+    }
     redirect("/nodo/tasks");
   }
 

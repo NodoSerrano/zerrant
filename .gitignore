@@ -45,3 +45,6 @@ Thumbs.db
 
 # superpowers session artifacts
 .superpowers/
+
+# git worktrees
+.worktrees/

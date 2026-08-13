@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ChevronLeft, Info, UserPlus } from "lucide-react";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { createMembershipRequest } from "@/features/membership/actions";
@@ -9,19 +9,24 @@ import { cn } from "@/lib/utils";
 
 export function SolicitarForm() {
   const [state, action, pending] = useActionState(createMembershipRequest, null);
-  const router = useRouter();
+
+  const leaveClass = cn(
+    "rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40",
+    pending && "pointer-events-none opacity-50",
+  );
 
   return (
     <div className="flex flex-col gap-5 pt-1.5 px-6 pb-6">
       <div>
-        <button
-          type="button"
+        <Link
+          href="/profile"
           aria-label="Volver"
-          onClick={() => (window.history.length > 1 ? router.back() : router.push("/nodo/tasks"))}
-          className="rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
+          aria-disabled={pending || undefined}
+          tabIndex={pending ? -1 : undefined}
+          className={leaveClass}
         >
           <ChevronLeft className="size-6 text-text-primary" />
-        </button>
+        </Link>
       </div>
 
       <div className="flex justify-center">
@@ -77,13 +82,17 @@ export function SolicitarForm() {
         </PrimaryButton>
       </form>
 
-      <button
-        type="button"
-        onClick={() => (window.history.length > 1 ? router.back() : router.push("/nodo/tasks"))}
-        className="font-display text-[15px] font-medium text-text-muted text-center"
+      <Link
+        href="/profile"
+        aria-disabled={pending || undefined}
+        tabIndex={pending ? -1 : undefined}
+        className={cn(
+          leaveClass,
+          "font-display text-[15px] font-medium text-text-muted text-center",
+        )}
       >
         Ahora no
-      </button>
+      </Link>
     </div>
   );
 }
