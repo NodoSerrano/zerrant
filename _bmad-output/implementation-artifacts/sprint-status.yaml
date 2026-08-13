@@ -43,6 +43,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: "2026-07-23T18:20:22-03:00"
+last_updated: "2026-08-07T14:00:00-03:00"
 last_updated: "2026-07-29T00:00:00-03:00"
 project: nodo
 project_key: NOKEY
@@ -99,3 +100,13 @@ development_status:
   4-4-task-detail-4-1: review
   4-5-create-task-4-2: done
   epic-4-retrospective: optional
+
+  epic-3-membresia: in-progress
+  3-1-modelo-de-datos-rls-seed-admin: done
+  3-2-formulario-de-solicitud: review
+  3-3-confirmacion-de-envio: backlog
+  3-4-pantalla-post-solicitud: backlog
+  3-5-panel-admin-membresias: done
+  3-6-roles-autoasignacion: review
+  3-7-roles-confirmacion-admin: backlog
+  epic-3-membresia-retrospective: optional
