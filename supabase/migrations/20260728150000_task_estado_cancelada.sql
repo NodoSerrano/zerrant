@@ -1,0 +1,21 @@
+-- ZER-22 — el creador de una tarea puede cancelarla desde el menú `···` del
+-- detalle o de la pantalla de editar.
+--
+-- Cancelar es un cambio de estado, no un borrado: `tasks` no tiene policy de
+-- DELETE y la tarea cancelada tiene que seguir siendo auditable (quién la
+-- publicó, cuándo, quién la había tomado).
+--
+-- No hace falta tocar grants: `estado` ya está en el `grant update` por columna
+-- de 20260725160000_grants_por_columna.sql. La policy "Serranos can update
+-- tasks they took" tampoco cambia: ya permite escribir al `creado_por`, y la
+-- restricción de que *sólo* el creador cancele la aplica `cancelTask` en el
+-- action y en el filtro del update.
+
+-- `if not exists` para que un reset-and-replay, o una base de branch que ya la
+-- tenga, no aborte con `enum label "cancelada" already exists` y bloquee las
+-- migraciones que vienen después.
+--
+-- Postgres no deja *usar* un valor agregado en la misma transacción, así que
+-- este archivo se queda solo con este statement: cualquier backfill o policy
+-- que mencione 'cancelada' va en una migración posterior.
+alter type task_estado add value if not exists 'cancelada';

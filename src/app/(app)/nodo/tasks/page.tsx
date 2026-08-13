@@ -5,16 +5,22 @@ import { relativeTime } from "@/lib/time";
 import { TaskCard } from "@/components/TaskCard";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
+import { ESTADO_BADGE, getCategoriaLabel } from "@/features/tasks/taskDisplay";
 import type { TaskEstado } from "@/features/tasks/types";
 
-const ESTADO_LABELS: Record<string, string> = {
-  abierta: "Abierta",
-  tomada: "Tomada",
-  hecha: "Hecha",
-  verificada: "Verificada",
-};
+// Las etiquetas de las pills salen del mismo lugar que las de los chips, para
+// que no se pueda renombrar un estado en una pantalla y no en la otra.
+const ESTADO_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(ESTADO_BADGE).map(([estado, badge]) => [estado, badge.label]),
+);
 
-const ESTADO_MAP: Record<string, "abierta" | "tomada" | "hecha"> = {
+type CardEstado = "abierta" | "tomada" | "hecha" | "cancelada";
+
+// `Record<TaskEstado, ...>` en vez de `Record<string, ...>`: si mañana el enum
+// de Postgres suma un valor, esto deja de compilar y hay que decidir cómo se
+// muestra. Con `string` el valor nuevo pasaba silencioso y llegaba `undefined`
+// a TaskCard.
+const ESTADO_MAP: Record<NonNullable<TaskEstado>, CardEstado> = {
   abierta: "abierta",
   tomada: "tomada",
   hecha: "hecha",
@@ -22,7 +28,15 @@ const ESTADO_MAP: Record<string, "abierta" | "tomada" | "hecha"> = {
   // "Hecha" visualmente; el filtro de URL sí las aísla. Cuando Pencil defina
   // un diseño para "verificada", agregarlo al componente.
   verificada: "hecha",
+  cancelada: "cancelada",
 };
+
+// El chequeo de tipos cubre el código; esto cubre los datos. Una fila escrita
+// por una migración anterior, o por otro cliente, puede traer un estado que
+// este build no conoce.
+function toCardEstado(estado: TaskEstado | null): CardEstado {
+  return ESTADO_MAP[estado as NonNullable<TaskEstado>] ?? "abierta";
+}
 
 export default async function TasksPage({
   searchParams,
@@ -57,7 +71,7 @@ export default async function TasksPage({
     .single();
   const canCreate = profile && profile.tier !== "tourist";
 
-  const filtros = ["todas", "abierta", "tomada", "hecha", "verificada"];
+  const filtros = ["todas", "abierta", "tomada", "hecha", "verificada", "cancelada"];
 
   return (
     <div className="flex flex-col gap-5 relative">
@@ -105,9 +119,9 @@ export default async function TasksPage({
               key={task.id}
               href={`/nodo/tasks/${task.id}`}
               title={task.titulo}
-              category={task.categoria}
+              category={getCategoriaLabel(task.categoria)}
               timeAgo={relativeTime(task.created_at)}
-              estado={ESTADO_MAP[task.estado ?? "abierta"]}
+              estado={toCardEstado(task.estado)}
               urgencia={task.urgencia ?? "media"}
               actionLabel="Tomar"
             />
