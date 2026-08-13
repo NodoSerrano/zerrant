@@ -1,32 +1,122 @@
 name: Request Hive review
 
-# Solo PRs cuya base es main (opened / ready_for_review / reopened).
-# No corre en cada push (synchronize) para no quemar reviews en cada commit.
+# Uses pull_request_target so the workflow always comes from the default branch
+# (main). Plain pull_request only sees the merge of base+head — PRs opened
+# before this file existed never fire review_requested until they update branch.
+#
+# Triggers:
+# - opened / ready_for_review: first automatic review task
+# - review_requested: when someone (re)requests nogal-lab from the GitHub UI
+# - workflow_dispatch: Actions tab → Run workflow
+# - issue_comment: PR comment with a line that is exactly /hive-review (force re-review)
+#   Only OWNER/MEMBER/COLLABORATOR/CONTRIBUTOR (not random ISSUE_AUTHOR outsiders).
+#
+# Security: this job only POSTs repo/number/title to Hive. It does NOT checkout
+# PR head code. Safe under pull_request_target.
 on:
-  pull_request:
-    types: [opened, ready_for_review, reopened]
-    branches: [main]
+  pull_request_target:
+    types: [opened, ready_for_review, review_requested]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number to review
+        required: true
+        type: string
+      force:
+        description: Bypass Hive cooldown (re-review)
+        required: false
+        default: true
+        type: boolean
+  issue_comment:
+    types: [created]
 
 jobs:
   request-review:
-    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    # issue_comment: exact /hive-review line + trusted author_association only
+    if: |
+      (github.event_name == 'pull_request_target' && (github.event.action != 'review_requested' || github.event.requested_reviewer.login == 'nogal-lab')) ||
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR","CONTRIBUTOR"]'), github.event.comment.author_association) &&
+       contains(github.event.comment.body, '/hive-review'))
+    permissions:
+      contents: read
+      pull-requests: read
+      # issues:read only so issue_comment can read PR-linked issue + comment body
+      issues: read
     steps:
       - name: Create review task in Hive
         env:
           HIVE_WEBHOOK_TOKEN: ${{ secrets.HIVE_WEBHOOK_TOKEN }}
           REPO: ${{ github.repository }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_ACTION: ${{ github.event.action }}
+          PR_NUMBER_PR: ${{ github.event.pull_request.number }}
+          PR_TITLE_PR: ${{ github.event.pull_request.title }}
+          PR_NUMBER_DISPATCH: ${{ inputs.pr_number }}
+          FORCE_DISPATCH: ${{ inputs.force }}
+          PR_NUMBER_ISSUE: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
-          # All GitHub context goes through env vars (never inline expressions in run:)
-          # to prevent command injection via branch names, titles, etc.
+          set -euo pipefail
+          PR_NUMBER=""
+          PR_TITLE=""
+          FORCE=false
+
+          case "$EVENT_NAME" in
+            pull_request_target)
+              PR_NUMBER="$PR_NUMBER_PR"
+              PR_TITLE="$PR_TITLE_PR"
+              if [ "$PR_ACTION" = "review_requested" ]; then
+                COUNT=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/reviews" \
+                  --jq '[.[] | select(.user.login == "nogal-lab")] | length' 2>/dev/null || echo 0)
+                case "$COUNT" in (''|*[!0-9]*) COUNT=0;; esac
+                if [ "$COUNT" -gt 0 ]; then
+                  FORCE=true
+                  echo "nogal-lab already reviewed (${COUNT}); forcing re-review"
+                else
+                  echo "nogal-lab not reviewed yet; webhook without force"
+                fi
+              fi
+              ;;
+            workflow_dispatch)
+              PR_NUMBER="$PR_NUMBER_DISPATCH"
+              case "$FORCE_DISPATCH" in true|True|TRUE|1) FORCE=true;; *) FORCE=false;; esac
+              PR_TITLE=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}" --jq .title 2>/dev/null || echo "PR #${PR_NUMBER}")
+              echo "manual dispatch PR=${PR_NUMBER} force=${FORCE}"
+              ;;
+            issue_comment)
+              PR_NUMBER="$PR_NUMBER_ISSUE"
+              PR_TITLE="$ISSUE_TITLE"
+              # Exact line match (job if only does substring+association)
+              if ! printf '%s\n' "${COMMENT_BODY:-}" | grep -qx '/hive-review'; then
+                echo "comment is not an exact /hive-review line; skipping"
+                exit 0
+              fi
+              FORCE=true
+              echo "comment /hive-review on PR=${PR_NUMBER} force=true"
+              ;;
+            *)
+              echo "::warning::Unsupported event $EVENT_NAME"
+              exit 0
+              ;;
+          esac
+
           case "$PR_NUMBER" in (''|*[!0-9]*) echo "::warning::Non-numeric PR number, skipping"; exit 0;; esac
-          if [ -z "$HIVE_WEBHOOK_TOKEN" ]; then
-            echo "::warning::HIVE_WEBHOOK_TOKEN secret missing"; exit 0
+          case "$FORCE" in true|false) ;; *) FORCE=false;; esac
+
+          if [ -z "${HIVE_WEBHOOK_TOKEN:-}" ]; then
+            echo "::warning::HIVE_WEBHOOK_TOKEN missing"
+            exit 0
           fi
-          # Best-effort: a failed review request must never block a PR
-          curl -s -m 30 --retry 3 --retry-delay 5 -o /tmp/resp.json -w '%{http_code}' \
+
+          set +e
+          HTTP=$(curl -sS -m 45 --retry 2 --retry-delay 3 --retry-all-errors \
+            -o /tmp/resp.json -w '%{http_code}' \
             -X POST https://nogal-labs.com.ar/hive/api/webhooks/github-pr-opened \
             -H "Content-Type: application/json" \
             -H "X-Hive-Token: ${HIVE_WEBHOOK_TOKEN}" \
@@ -34,6 +124,16 @@ jobs:
               --arg repo "$REPO" \
               --arg title "$PR_TITLE" \
               --argjson number "$PR_NUMBER" \
-              '{repo: $repo, number: $number, title: $title}')" | tee /tmp/code
-          cat /tmp/resp.json || true
-          [ "$(cat /tmp/code)" = "200" ] && echo "Review task created" || echo "::warning::Hive review request failed (HTTP $(cat /tmp/code)), continuing anyway"
+              --argjson force "${FORCE:-false}" \
+              '{repo: $repo, number: $number, title: $title, force: $force}')")
+          CURL_RC=$?
+          set -e
+          if [ -z "$HTTP" ]; then HTTP="000"; fi
+          echo "http=$HTTP curl_rc=$CURL_RC force=$FORCE"
+          cat /tmp/resp.json 2>/dev/null || true
+          if [ "$HTTP" = "200" ]; then
+            echo "Review task ok (force=${FORCE})"
+          else
+            echo "::warning::Hive review request failed (HTTP $HTTP curl_rc=$CURL_RC), continuing anyway"
+          fi
+          exit 0

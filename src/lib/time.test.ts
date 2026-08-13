@@ -55,3 +55,11 @@ describe("relativeTime", () => {
     expect(relativeTime("2024-07-28T12:00:00Z")).toBe("hace 2 años");
   });
 });
+
+// El valor entra desde una columna de la base: una fecha inválida producía
+// aritmética con NaN y la pantalla mostraba "hace NaN días".
+describe("relativeTime — entradas inválidas", () => {
+  it.each([["no-es-una-fecha"], [""]])("devuelve una cadena vacía para %p", (input) => {
+    expect(relativeTime(input)).toBe("");
+  });
+});

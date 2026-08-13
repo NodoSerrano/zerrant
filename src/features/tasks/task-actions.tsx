@@ -12,7 +12,7 @@ export function TakeTaskButton({ taskId }: { taskId: string }) {
       <input type="hidden" name="taskId" value={taskId} />
       {state?.error && <p className="text-sm text-coral mb-2">{state.error}</p>}
       <PrimaryButton type="submit" disabled={pending} className="w-full">
-        {pending ? "Tomando..." : "Tomar tarea"}
+        {pending ? "Tomando..." : "Tomar esta tarea"}
       </PrimaryButton>
     </form>
   );

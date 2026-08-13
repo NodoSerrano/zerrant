@@ -1,42 +1,26 @@
-import { Flame, MoreHorizontal, Settings, ShoppingCart, SprayCan, Wrench } from "lucide-react";
+import { Flame, MoreHorizontal } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { ESTADO_BADGE, URGENCIA_CONFIG, categoriaIconByLabel } from "@/features/tasks/taskDisplay";
 
 interface TaskCardProps {
   href?: string;
   title: string;
   category: string;
   timeAgo: string;
-  estado: "abierta" | "tomada" | "hecha";
+  estado: "abierta" | "tomada" | "hecha" | "cancelada";
   urgencia: "alta" | "media" | "baja";
   actionLabel: string;
   onAction?: () => void;
   className?: string;
 }
 
-const categoryIcons: Record<string, LucideIcon> = {
-  Reparación: Wrench,
-  Limpieza: SprayCan,
-  Compra: ShoppingCart,
-  Mantenimiento: Settings,
-  Otro: MoreHorizontal,
-};
-
-const estadoConfig = {
-  abierta: { label: "Abierta", bg: "bg-blue-raw/20", text: "text-brand-blue" },
-  tomada: { label: "Tomada", bg: "bg-coral/20", text: "text-coral" },
-  hecha: { label: "Hecha", bg: "bg-mint-raw/20", text: "text-brand-mint" },
-} as const;
-
-const urgenciaConfig = {
-  alta: { label: "Urgencia alta", color: "text-warm-orange" },
-  media: { label: "Urgencia media", color: "text-warm-yellow" },
-  baja: { label: "Urgencia baja", color: "text-text-muted" },
-} as const;
-
+// El componente recibe la categoría ya traducida, así que resuelve el ícono
+// por etiqueta. El índice sale de `taskDisplay`, que es el único lugar donde
+// vive el mapa de categorías.
 const getCategoryIcon = (category: string): LucideIcon => {
-  return categoryIcons[category] ?? MoreHorizontal;
+  return categoriaIconByLabel[category] ?? MoreHorizontal;
 };
 
 export function TaskCard({
@@ -51,8 +35,22 @@ export function TaskCard({
   className,
 }: TaskCardProps) {
   const Icon = getCategoryIcon(category);
-  const estadoData = estadoConfig[estado];
-  const urgenciaData = urgenciaConfig[urgencia];
+  // Los datos vienen de enums de Postgres que pueden crecer. Sin fallback, un
+  // valor que el componente todavía no conoce lo hace explotar y se lleva
+  // puesta la pantalla que lo renderiza.
+  const estadoData = ESTADO_BADGE[estado] ?? ESTADO_BADGE.abierta;
+  const urgenciaData = URGENCIA_CONFIG[urgencia] ?? URGENCIA_CONFIG.media;
+
+  // Sólo una tarea abierta se puede tomar. El consumidor fija el `actionLabel`
+  // sin mirar el estado, así que la tarjeta lo apaga cuando no hay nada que
+  // hacer: se sigue leyendo, pero no se ofrece como accionable. El criterio es
+  // "¿es accionable?" y no una lista de estados terminales, para que el próximo
+  // valor del enum no repita el problema.
+  const accionable = estado === "abierta";
+  const actionClasses = cn(
+    "shrink-0 rounded-pill bg-surface-inset border border-border px-4 py-[7px] font-display text-[13px] font-semibold",
+    accionable ? "text-brand-green" : "text-text-muted",
+  );
 
   const baseClasses = cn(
     "rounded-[20px] bg-surface border border-border shadow-[0_10px_30px_-12px_rgba(26,22,20,0.15)] p-4 flex flex-col gap-3 w-full",
@@ -94,15 +92,9 @@ export function TaskCard({
           </span>
         </div>
         {href ? (
-          <span className="shrink-0 rounded-pill bg-surface-inset border border-border px-4 py-[7px] font-display text-[13px] font-semibold text-brand-green">
-            {actionLabel}
-          </span>
+          <span className={actionClasses}>{actionLabel}</span>
         ) : (
-          <button
-            type="button"
-            className="shrink-0 rounded-pill bg-surface-inset border border-border px-4 py-[7px] font-display text-[13px] font-semibold text-brand-green"
-            onClick={onAction}
-          >
+          <button type="button" className={actionClasses} onClick={onAction} disabled={!accionable}>
             {actionLabel}
           </button>
         )}

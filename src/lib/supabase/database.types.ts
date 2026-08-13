@@ -202,7 +202,7 @@ export type Database = {
       membership_request_estado: "pendiente" | "aprobada" | "rechazada";
       nombre_visible: "apodo" | "nombre_apellido" | "apellido_nombre";
       task_categoria: "reparacion" | "limpieza" | "compra" | "mantenimiento" | "otro";
-      task_estado: "abierta" | "tomada" | "hecha" | "verificada";
+      task_estado: "abierta" | "tomada" | "hecha" | "verificada" | "cancelada";
       task_urgencia: "baja" | "media" | "alta";
       tier: "tourist" | "scholar" | "standard" | "founder";
       visibilidad_tarifa: "publica" | "privada";
@@ -335,7 +335,7 @@ export const Constants = {
       membership_request_estado: ["pendiente", "aprobada", "rechazada"],
       nombre_visible: ["apodo", "nombre_apellido", "apellido_nombre"],
       task_categoria: ["reparacion", "limpieza", "compra", "mantenimiento", "otro"],
-      task_estado: ["abierta", "tomada", "hecha", "verificada"],
+      task_estado: ["abierta", "tomada", "hecha", "verificada", "cancelada"],
       task_urgencia: ["baja", "media", "alta"],
       tier: ["tourist", "scholar", "standard", "founder"],
       visibilidad_tarifa: ["publica", "privada"],

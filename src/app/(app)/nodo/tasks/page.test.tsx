@@ -175,6 +175,127 @@ describe("TasksPage", () => {
       expect(screen.getByText("Tomada")).toBeInTheDocument();
       expect(screen.getByText("Hecha")).toBeInTheDocument();
       expect(screen.getByText("Verificada")).toBeInTheDocument();
+      expect(screen.getByText("Cancelada")).toBeInTheDocument();
+    });
+
+    it("the Cancelada pill filters by that estado", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+      const { container } = await renderPage();
+
+      const pill = Array.from(container.querySelectorAll("a")).find(
+        (a) => a.textContent === "Cancelada",
+      );
+      expect(pill).toHaveAttribute("href", "/nodo/tasks?estado=cancelada");
+    });
+  });
+
+  // La columna `categoria` guarda el valor del enum, en minúscula y sin tilde.
+  // Si el hub se lo pasa crudo a TaskCard, la tarjeta imprime "reparacion" y no
+  // encuentra el ícono, porque su índice está en castellano.
+  describe("categoria display", () => {
+    function taskWithCategoria(categoria: string) {
+      return {
+        id: "task-1",
+        titulo: "Arreglar el caño",
+        categoria,
+        estado: "abierta",
+        urgencia: "alta",
+        created_at: "2026-07-27T12:00:00Z",
+        creado_por: "user-1",
+        profiles: { nombre: "Juan", apellido: "Perez", apodo: null, nombre_visible: "Juan" },
+      };
+    }
+
+    it("shows the Spanish label, not the raw enum value", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [taskWithCategoria("reparacion")] }),
+      );
+
+      await renderPage();
+
+      expect(screen.getByText(/Reparación ·/)).toBeInTheDocument();
+      expect(screen.queryByText(/reparacion ·/)).not.toBeInTheDocument();
+    });
+
+    it("renders the icon that matches the categoria", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [taskWithCategoria("limpieza")] }),
+      );
+
+      const { container } = await renderPage();
+
+      const icons = Array.from(container.querySelectorAll("svg")).map((s) =>
+        s.getAttribute("class"),
+      );
+      expect(icons.some((c) => c?.includes("lucide-spray-can"))).toBe(true);
+    });
+  });
+
+  describe("estado mapping robustness", () => {
+    // El enum `task_estado` de Postgres puede crecer. Si el hub traduce estados
+    // con un lookup parcial, cualquier valor nuevo llega como `undefined` a
+    // TaskCard y la pantalla entera revienta al leer `estadoData.bg`. La lista
+    // tiene que degradar, no caerse.
+    function taskWithEstado(estado: unknown) {
+      return {
+        id: "task-1",
+        titulo: "Tarea con estado nuevo",
+        categoria: "reparacion",
+        estado,
+        urgencia: "alta",
+        created_at: "2026-07-27T12:00:00Z",
+        creado_por: "user-1",
+        profiles: { nombre: "Juan", apellido: "Perez", apodo: null, nombre_visible: "Juan" },
+      };
+    }
+
+    it("renders a task whose estado is not in the map instead of crashing", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [taskWithEstado("un-estado-que-todavia-no-existe")] }),
+      );
+
+      await renderPage();
+
+      expect(screen.getByText("Tarea con estado nuevo")).toBeInTheDocument();
+    });
+
+    it("falls back to the 'Abierta' badge for an unmapped estado", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [taskWithEstado("un-estado-que-todavia-no-existe")] }),
+      );
+
+      await renderPage();
+
+      const badge = screen.getByText("Abierta", { selector: "span" });
+      expect(badge.className).toContain("bg-blue-raw/20");
+    });
+
+    it("shows a cancelled task with its own badge, not as 'Abierta'", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [taskWithEstado("cancelada")] }),
+      );
+
+      await renderPage();
+
+      const badge = screen.getByText("Cancelada", { selector: "span" });
+      expect(badge.className).toContain("bg-surface-inset");
+    });
+
+    it("renders a task with a null estado instead of crashing", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [taskWithEstado(null)] }),
+      );
+
+      await renderPage();
+
+      expect(screen.getByText("Tarea con estado nuevo")).toBeInTheDocument();
     });
   });
 
