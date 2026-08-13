@@ -1,11 +1,9 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   useActionState: vi.fn(),
   formAction: vi.fn(),
-  back: vi.fn(),
-  push: vi.fn(),
 }));
 
 vi.mock("react", async (importOriginal) => {
@@ -16,59 +14,37 @@ vi.mock("react", async (importOriginal) => {
   };
 });
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ back: mocks.back, push: mocks.push }),
-}));
-
 import { SolicitarForm } from "./SolicitarForm";
-
-function setHistoryLength(length: number) {
-  Object.defineProperty(window.history, "length", { value: length, configurable: true });
-}
 
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.useActionState.mockReturnValue([null, mocks.formAction, false]);
-  setHistoryLength(2);
 });
 
 describe("SolicitarForm — header (AC1)", () => {
   it("renders a 24×24 chevron-left back button in text-primary", () => {
     render(<SolicitarForm />);
 
-    const back = screen.getByRole("button", { name: /volver|cerrar/i });
+    const back = screen.getByRole("link", { name: /volver|cerrar/i });
     const icon = back.querySelector("svg");
     expect(icon).toBeTruthy();
     expect(icon!.classList.contains("size-6")).toBe(true);
     expect(icon!.classList.contains("text-text-primary")).toBe(true);
   });
 
-  it("calls router.back() when the back button is clicked", () => {
+  it("links the back control to /profile", () => {
     render(<SolicitarForm />);
 
-    fireEvent.click(screen.getByRole("button", { name: /volver|cerrar/i }));
-
-    expect(mocks.back).toHaveBeenCalledTimes(1);
-    expect(mocks.push).not.toHaveBeenCalled();
-  });
-
-  it("falls back to /nodo/tasks when there is no history", () => {
-    setHistoryLength(1);
-    render(<SolicitarForm />);
-
-    fireEvent.click(screen.getByRole("button", { name: /volver|cerrar/i }));
-
-    expect(mocks.push).toHaveBeenCalledWith("/nodo/tasks");
-    expect(mocks.back).not.toHaveBeenCalled();
-  });
-
-  it("does not submit the form when pressing back (type=button)", () => {
-    render(<SolicitarForm />);
-
-    expect(screen.getByRole("button", { name: /volver|cerrar/i })).toHaveAttribute(
-      "type",
-      "button",
+    expect(screen.getByRole("link", { name: /volver|cerrar/i })).toHaveAttribute(
+      "href",
+      "/profile",
     );
+  });
+
+  it("does not submit the form when pressing back", () => {
+    render(<SolicitarForm />);
+
+    expect(screen.getByRole("link", { name: /volver|cerrar/i }).closest("form")).toBeNull();
   });
 });
 
@@ -200,10 +176,11 @@ describe("SolicitarForm — CTA and link", () => {
     expect(screen.queryByRole("button", { name: "Enviar solicitud" })).toBeNull();
   });
 
-  it('renders "Ahora no" link with 15px display 500 muted centered', () => {
+  it('renders "Ahora no" as a link to /profile', () => {
     render(<SolicitarForm />);
 
-    const link = screen.getByText("Ahora no");
+    const link = screen.getByRole("link", { name: "Ahora no" });
+    expect(link).toHaveAttribute("href", "/profile");
     expect(link.className).toContain("font-display");
     expect(link.className).toContain("text-[15px]");
     expect(link.className).toContain("font-medium");
@@ -211,12 +188,15 @@ describe("SolicitarForm — CTA and link", () => {
     expect(link.className).toContain("text-center");
   });
 
-  it('links "Ahora no" back using router.back()', () => {
+  it("disables leave links while the action is pending", () => {
+    mocks.useActionState.mockReturnValue([null, mocks.formAction, true]);
     render(<SolicitarForm />);
 
-    fireEvent.click(screen.getByText("Ahora no"));
-
-    expect(mocks.back).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("link", { name: /volver|cerrar/i })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    expect(screen.getByRole("link", { name: "Ahora no" })).toHaveAttribute("aria-disabled", "true");
   });
 });
 

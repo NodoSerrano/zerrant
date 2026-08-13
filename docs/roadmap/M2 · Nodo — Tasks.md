@@ -1,6 +1,6 @@
 ---
 tags: [roadmap, milestone]
-status: todo
+status: done
 depends-on: "[[M1 · Cuenta y perfil]]"
 ---
 
@@ -11,12 +11,15 @@ depends-on: "[[M1 · Cuenta y perfil]]"
 **Entregable:** tab **Nodo** con listado de tareas, crear tarea, detalle y tomar. Es el primer feature "de verdad" para testear con la comunidad.
 
 ## Pantallas (diseño)
+
 `2.3 Nodo — Tareas` · `4.1 Detalle de tarea` · `4.2 Crear tarea` · `7.2 Vacío Tareas`.
 
 ## Datos
+
 `tasks` (categoría, urgencia, estado `abierta→tomada→hecha→verificada`, `tomada_por`). Ver [[Modelo de datos]].
 
 ## Alcance
+
 - [ ] Tab **Nodo** (hub) con sub-pestaña **Tareas** (la de Proyectos llega en [[M5 · Proyectos]]).
 - [ ] Crear tarea: título, descripción, categoría, urgencia.
 - [ ] Listado con estado + acción **Tomar**; detalle de tarea.
@@ -25,9 +28,11 @@ depends-on: "[[M1 · Cuenta y perfil]]"
 - [ ] RLS: crear = cualquier serrano; tomar/actualizar según reglas.
 
 ## Fuera de alcance
+
 Puntaje/valuación (parkeado), sub-pestaña Proyectos.
 
 ## Done (DoD)
+
 - Se publica una tarea y aparece en el listado.
 - Otro serrano la toma y se marca como hecha.
 

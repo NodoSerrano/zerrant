@@ -82,14 +82,11 @@ describe("ProfilePage (tourist)", () => {
     expect(screen.getByText(/Sumate como Serrano para aparecer en el plantel/)).toBeInTheDocument();
   });
 
-  it("renders the Solicitar ser Serrano CTA button styled but as a NO-OP", async () => {
+  it("renders the Solicitar ser Serrano CTA linking to /solicitar", async () => {
     render(await ProfilePage());
 
-    const cta = screen.getByText("Solicitar ser Serrano");
-    expect(cta).toBeInTheDocument();
-
-    const ctaParent = cta.closest("a, button, [role=button]");
-    expect(ctaParent).toBeNull();
+    const cta = screen.getByRole("link", { name: "Solicitar ser Serrano" });
+    expect(cta).toHaveAttribute("href", "/solicitar");
   });
 
   it("renders Editar perfil menu row linking to /profile/edit", async () => {

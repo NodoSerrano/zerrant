@@ -97,17 +97,15 @@ describe("SolicitarPage — authorization", () => {
     expect(mocks.redirect).toHaveBeenCalledWith("/nodo/tasks");
   });
 
-  it("renders the form when profile read fails (not PGRST116)", async () => {
+  it("redirects when profile read fails (not PGRST116)", async () => {
     setUser("maybe-tourist-id");
     mocks.profilesSelectSingle.mockResolvedValue({
       data: null,
       error: { code: "57014", message: "canceling statement due to statement timeout" },
     });
 
-    const result = await renderPage();
-
-    expect(mocks.redirect).not.toHaveBeenCalled();
-    expect(result).toBeTruthy();
+    await expect(renderPage()).rejects.toThrow("NEXT_REDIRECT:/nodo/tasks");
+    expect(mocks.redirect).toHaveBeenCalledWith("/nodo/tasks");
   });
 
   it("redirects when profile does not exist (PGRST116)", async () => {
