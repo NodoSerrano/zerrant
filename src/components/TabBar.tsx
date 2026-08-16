@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { House, Users, Layers, Calendar, User, type LucideIcon } from "lucide-react";
 
@@ -19,12 +20,12 @@ const tabIcons: Record<Tab, LucideIcon> = {
   perfil: User,
 };
 
-const tabs: { id: Tab; label: string }[] = [
-  { id: "inicio", label: "INICIO" },
-  { id: "plantel", label: "PLANTEL" },
-  { id: "nodo", label: "NODO" },
+const tabs: { id: Tab; label: string; href?: string }[] = [
+  { id: "inicio", label: "INICIO", href: "/" },
+  { id: "plantel", label: "PLANTEL", href: "/plantel" },
+  { id: "nodo", label: "NODO", href: "/nodo/tasks" },
   { id: "agenda", label: "AGENDA" },
-  { id: "perfil", label: "PERFIL" },
+  { id: "perfil", label: "PERFIL", href: "/profile" },
 ];
 
 export function TabBar({ active = "inicio", onTabChange, className }: TabBarProps) {
@@ -41,19 +42,31 @@ export function TabBar({ active = "inicio", onTabChange, className }: TabBarProp
           const isNodo = tab.id === "nodo";
           const Icon = tabIcons[tab.id];
 
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange?.(tab.id)}
-              className={cn(
-                "flex flex-col items-center justify-center gap-[3px] flex-1 rounded-[26px]",
-                "font-display text-[10px] font-semibold transition-colors",
-                isActive ? "bg-primary text-on-primary" : "text-text-muted",
-                isNodo ? "tracking-[0.3px]" : "tracking-[0.5px]",
-              )}
-            >
+          const itemClass = cn(
+            "flex flex-col items-center justify-center gap-[3px] flex-1 rounded-[26px]",
+            "font-display text-[10px] font-semibold transition-colors",
+            isActive ? "bg-primary text-on-primary" : "text-text-muted",
+            isNodo ? "tracking-[0.3px]" : "tracking-[0.5px]",
+          );
+
+          const content = (
+            <>
               <Icon size={18} />
               <span>{tab.label}</span>
+            </>
+          );
+
+          if (tab.href) {
+            return (
+              <Link key={tab.id} href={tab.href} className={itemClass}>
+                {content}
+              </Link>
+            );
+          }
+
+          return (
+            <button key={tab.id} onClick={() => onTabChange?.(tab.id)} className={itemClass}>
+              {content}
             </button>
           );
         })}
