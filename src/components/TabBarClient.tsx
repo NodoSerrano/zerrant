@@ -8,9 +8,11 @@ export function TabBarClient() {
 
   const active: Tab = pathname.startsWith("/nodo")
     ? "nodo"
-    : pathname.startsWith("/profile") || pathname.startsWith("/onboarding")
-      ? "perfil"
-      : "inicio";
+    : pathname.startsWith("/plantel")
+      ? "plantel"
+      : pathname.startsWith("/profile") || pathname.startsWith("/onboarding")
+        ? "perfil"
+        : "inicio";
 
   return <TabBar active={active} />;
 }

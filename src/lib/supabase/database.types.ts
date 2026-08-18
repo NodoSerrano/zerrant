@@ -125,6 +125,120 @@ export type Database = {
           },
         ];
       };
+      roles: {
+        Row: {
+          created_at: string;
+          descripcion: string | null;
+          id: string;
+          nombre: string;
+        };
+        Insert: {
+          created_at?: string;
+          descripcion?: string | null;
+          id?: string;
+          nombre: string;
+        };
+        Update: {
+          created_at?: string;
+          descripcion?: string | null;
+          id?: string;
+          nombre?: string;
+        };
+        Relationships: [];
+      };
+      profile_roles: {
+        Row: {
+          confirmado: boolean;
+          created_at: string;
+          id: string;
+          profile_id: string;
+          role_id: string;
+        };
+        Insert: {
+          confirmado?: boolean;
+          created_at?: string;
+          id?: string;
+          profile_id: string;
+          role_id: string;
+        };
+        Update: {
+          confirmado?: boolean;
+          created_at?: string;
+          id?: string;
+          profile_id?: string;
+          role_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "profile_roles_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "profile_roles_role_id_fkey";
+            columns: ["role_id"];
+            isOneToOne: false;
+            referencedRelation: "roles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      skills: {
+        Row: {
+          created_at: string;
+          id: string;
+          nombre: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          nombre: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          nombre?: string;
+        };
+        Relationships: [];
+      };
+      profile_skills: {
+        Row: {
+          created_at: string;
+          id: string;
+          profile_id: string;
+          skill_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          profile_id: string;
+          skill_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          profile_id?: string;
+          skill_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "profile_skills_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "profile_skills_skill_id_fkey";
+            columns: ["skill_id"];
+            isOneToOne: false;
+            referencedRelation: "skills";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       membership_requests: {
         Row: {
           actualizado_en: string;
