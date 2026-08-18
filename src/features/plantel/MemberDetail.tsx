@@ -22,10 +22,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="font-display text-[17px] font-medium text-text-primary">{children}</h2>;
 }
 
-function VerTodos({ children }: { children: React.ReactNode }) {
-  return <span className="font-body text-[13px] font-medium text-brand-green">{children}</span>;
-}
-
 export function MemberDetail({ member }: { member: SerranoMemberDetail }) {
   const label = availabilityLabel(member.disponibilidad);
   const dot = member.disponibilidad ? AVAILABILITY_DOT[member.disponibilidad] : null;
@@ -72,18 +68,12 @@ export function MemberDetail({ member }: { member: SerranoMemberDetail }) {
       )}
 
       <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <SectionTitle>Aportes</SectionTitle>
-          <VerTodos>Ver todos</VerTodos>
-        </div>
+        <SectionTitle>Aportes</SectionTitle>
         <p className="font-body text-sm text-text-secondary">Todavía no hay aportes.</p>
       </section>
 
       <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <SectionTitle>Proyectos</SectionTitle>
-          <VerTodos>Ver todos</VerTodos>
-        </div>
+        <SectionTitle>Proyectos</SectionTitle>
         <p className="font-body text-sm text-text-secondary">Todavía no hay proyectos.</p>
       </section>
 

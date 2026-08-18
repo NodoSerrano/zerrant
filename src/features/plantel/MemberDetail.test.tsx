@@ -89,6 +89,11 @@ describe("MemberDetail", () => {
     expect(screen.getByText("Todavía no hay proyectos.")).toBeInTheDocument();
   });
 
+  it("does not render a Ver todos affordance", () => {
+    render(<MemberDetail member={member} />);
+    expect(screen.queryByText("Ver todos")).not.toBeInTheDocument();
+  });
+
   it("renders skill chips", () => {
     render(<MemberDetail member={member} />);
     expect(screen.getByText("Habilidades")).toBeInTheDocument();
@@ -108,7 +113,12 @@ describe("MemberDetail", () => {
     expect(screen.getByText("USD 40 / hora")).toBeInTheDocument();
   });
 
-  it("renders an integer rate without decimals", () => {
+  it("renders an integer rate as-is", () => {
+    render(<MemberDetail member={{ ...member, tarifaHora: 40 }} />);
+    expect(screen.getByText("USD 40 / hora")).toBeInTheDocument();
+  });
+
+  it("renders a decimal rate as stored", () => {
     render(<MemberDetail member={{ ...member, tarifaHora: 40.5 }} />);
     expect(screen.getByText("USD 40.5 / hora")).toBeInTheDocument();
   });

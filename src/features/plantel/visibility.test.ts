@@ -35,20 +35,63 @@ describe("canSeeRate", () => {
 
 describe("telegramHref", () => {
   it("strips a leading @ and builds the t.me deep link", () => {
-    expect(telegramHref("@juan")).toBe("https://t.me/juan");
+    expect(telegramHref("@juancito")).toBe("https://t.me/juancito");
   });
 
   it("keeps a bare handle", () => {
-    expect(telegramHref("juan")).toBe("https://t.me/juan");
+    expect(telegramHref("juancito")).toBe("https://t.me/juancito");
   });
 
   it("trims whitespace", () => {
-    expect(telegramHref("  @juan  ")).toBe("https://t.me/juan");
+    expect(telegramHref("  @juancito  ")).toBe("https://t.me/juancito");
   });
 
-  it("keeps an existing http(s) URL as-is", () => {
-    expect(telegramHref("https://t.me/juan")).toBe("https://t.me/juan");
-    expect(telegramHref("http://t.me/juan")).toBe("http://t.me/juan");
+  it("normalizes a t.me URL to the canonical form", () => {
+    expect(telegramHref("https://t.me/juancito")).toBe("https://t.me/juancito");
+  });
+
+  it("upgrades http to https", () => {
+    expect(telegramHref("http://t.me/juancito")).toBe("https://t.me/juancito");
+  });
+
+  it("canonicalizes a telegram.me URL to t.me", () => {
+    expect(telegramHref("https://telegram.me/juancito")).toBe("https://t.me/juancito");
+  });
+
+  it("accepts a schemeless t.me URL", () => {
+    expect(telegramHref("t.me/juancito")).toBe("https://t.me/juancito");
+  });
+
+  it("rejects an arbitrary external URL", () => {
+    expect(telegramHref("https://evil.example")).toBeNull();
+    expect(telegramHref("https://evil.example/juancito")).toBeNull();
+  });
+
+  it("rejects a lookalike host that is not exactly t.me", () => {
+    expect(telegramHref("https://t.me.evil.com/juancito")).toBeNull();
+  });
+
+  it("rejects javascript and other non-http schemes", () => {
+    expect(telegramHref("javascript:alert(1)")).toBeNull();
+  });
+
+  it("rejects URLs with a query string", () => {
+    expect(telegramHref("https://t.me/juancito?x=1")).toBeNull();
+  });
+
+  it("rejects non-handle telegram paths", () => {
+    expect(telegramHref("https://t.me/+invite")).toBeNull();
+    expect(telegramHref("https://t.me/s/canal")).toBeNull();
+  });
+
+  it("rejects handles with slashes or spaces", () => {
+    expect(telegramHref("juancito/extra")).toBeNull();
+    expect(telegramHref("juan perez")).toBeNull();
+  });
+
+  it("rejects handles shorter than 5 chars", () => {
+    expect(telegramHref("@ab")).toBeNull();
+    expect(telegramHref("juan")).toBeNull();
   });
 
   it("returns null for empty or blank values", () => {
