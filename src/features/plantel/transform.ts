@@ -1,4 +1,5 @@
-import type { Disponibilidad, SerranoMember, SerranoTier } from "./types";
+import { canSeeRate, telegramHref } from "./visibility";
+import type { Disponibilidad, SerranoMember, SerranoMemberDetail, SerranoTier } from "./types";
 
 type ProfileRow = {
   id: string;
@@ -9,6 +10,13 @@ type ProfileRow = {
   avatar_url: string | null;
   tier: "tourist" | "scholar" | "standard" | "founder";
   disponibilidad: Disponibilidad | null;
+};
+
+type DetailProfileRow = ProfileRow & {
+  bio: string | null;
+  contacto_telegram: string | null;
+  tarifa_hora: number | null;
+  visibilidad_tarifa: "publica" | "privada";
 };
 
 type RoleAssignment = { profile_id: string; roles: { nombre: string } | null };
@@ -36,6 +44,33 @@ function visibleName(profile: ProfileRow): string {
     default:
       return [profile.nombre, profile.apellido].filter(Boolean).join(" ");
   }
+}
+
+export function buildSerranoMemberDetail(
+  profile: DetailProfileRow,
+  roles: string[],
+  skills: string[],
+  viewer: { isSelf: boolean; isAdmin: boolean },
+): SerranoMemberDetail {
+  const visible = canSeeRate({
+    isSelf: viewer.isSelf,
+    isAdmin: viewer.isAdmin,
+    visibilidadTarifa: profile.visibilidad_tarifa,
+    hasTarifa: profile.tarifa_hora !== null,
+  });
+
+  return {
+    id: profile.id,
+    name: visibleName(profile),
+    avatarUrl: profile.avatar_url,
+    tier: profile.tier as SerranoTier,
+    disponibilidad: profile.disponibilidad,
+    roles,
+    skills,
+    bio: profile.bio,
+    tarifaHora: visible ? profile.tarifa_hora : null,
+    telegramHref: telegramHref(profile.contacto_telegram),
+  };
 }
 
 export function buildSerranoMembers(
