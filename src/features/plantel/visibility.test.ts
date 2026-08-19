@@ -82,6 +82,9 @@ describe("telegramHref", () => {
   it("rejects non-handle telegram paths", () => {
     expect(telegramHref("https://t.me/+invite")).toBeNull();
     expect(telegramHref("https://t.me/s/canal")).toBeNull();
+    expect(telegramHref("https://t.me/")).toBeNull();
+    expect(telegramHref("https://t.me/juancito/")).toBeNull();
+    expect(telegramHref("https://t.me//juancito")).toBeNull();
   });
 
   it("rejects handles with slashes or spaces", () => {

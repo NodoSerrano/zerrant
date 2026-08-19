@@ -39,9 +39,9 @@ export function telegramHref(value: string | null | undefined): string | null {
     if (!TELEGRAM_HOSTS.has(url.hostname)) return null;
     if (url.search || url.hash) return null;
 
-    const segments = url.pathname.split("/").filter(Boolean);
-    if (segments.length !== 1) return null;
-    handle = segments[0];
+    const match = url.pathname.match(/^\/([^/]+)$/);
+    if (!match) return null;
+    handle = match[1];
   } else {
     handle = trimmed;
   }
