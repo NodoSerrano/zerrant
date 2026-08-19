@@ -21,3 +21,16 @@ export type PlantelFilters = {
   rol: string | null;
   skill: string | null;
 };
+
+export type SerranoMemberDetail = {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  tier: SerranoTier;
+  disponibilidad: Disponibilidad | null;
+  roles: string[];
+  skills: string[];
+  bio: string | null;
+  tarifaHora: number | null;
+  telegramHref: string | null;
+};
