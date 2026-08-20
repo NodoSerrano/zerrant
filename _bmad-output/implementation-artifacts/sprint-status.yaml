@@ -70,6 +70,7 @@ linear_ids:
   4-4-task-detail-4-1: ZER-22
   4-5-create-task-4-2: ZER-21
   4-1-plantel-list-and-filters: ZER-32
+  4-3-editar-habilidades: ZER-34
 
 development_status:
   epic-1: done
@@ -114,4 +115,5 @@ development_status:
 
   epic-4-plantel: in-progress
   4-1-plantel-list-and-filters: review
+  4-3-editar-habilidades: in-progress
   epic-4-plantel-retrospective: optional
