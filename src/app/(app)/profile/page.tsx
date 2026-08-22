@@ -1,4 +1,5 @@
 import { Pencil, Mountain } from "lucide-react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/Avatar";
 import { TierBadge } from "@/components/TierBadge";
@@ -7,6 +8,7 @@ import { displayName } from "@/features/profile/displayName";
 import { redirect } from "next/navigation";
 import { TouristMenu } from "./TouristMenu";
 import { SerranoMenu } from "./SerranoMenu";
+import { PostRequestScreen } from "./PostRequestScreen";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -29,6 +31,20 @@ export default async function ProfilePage() {
   const isTourist = profile.tier === "tourist";
 
   if (isTourist) {
+    // Solicitud de membresía en curso: la pantalla 1.8 reemplaza TODO el shell
+    // tourist. Cualquier error de lectura falla cerrado (se muestra el shell).
+    const { data: pendingRequest, error: pendingError } = await supabase
+      .from("membership_requests")
+      .select("id")
+      .eq("profile_id", user.id)
+      .eq("estado", "pendiente")
+      .limit(1)
+      .maybeSingle();
+
+    if (!pendingError && pendingRequest) {
+      return <PostRequestScreen />;
+    }
+
     return (
       <div className="flex flex-col gap-4 pt-2 px-5 pb-5">
         <div className="flex justify-between items-center">
@@ -67,11 +83,14 @@ export default async function ProfilePage() {
             Sumate como Serrano para aparecer en el plantel, crear eventos y participar de los
             proyectos.
           </p>
-          <div className="rounded-pill bg-on-primary h-[46px] flex items-center justify-center w-full">
+          <Link
+            href="/solicitar"
+            className="rounded-pill bg-on-primary h-[46px] flex items-center justify-center w-full"
+          >
             <span className="font-display text-[15px] font-semibold text-brand-blue">
               Solicitar ser Serrano
             </span>
-          </div>
+          </Link>
         </div>
 
         <TouristMenu />
