@@ -12,9 +12,11 @@ language plpgsql
 security definer set search_path = ''
 as $$
 declare
+  -- Con `set search_path = ''` los tipos del DECLARE deben ir calificados,
+  -- si no CREATE FUNCTION falla con "type does not exist" en DBs frescas.
   v_profile_id uuid;
-  v_tier_solicitado tier;
-  v_estado membership_request_estado;
+  v_tier_solicitado public.tier;
+  v_estado public.membership_request_estado;
 begin
   if not exists (
     select 1 from public.profiles
