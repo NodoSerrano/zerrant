@@ -42,18 +42,11 @@
 
 @variant dark (&:where(.dark, .dark *));
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #1a1614;
-    --color-surface: #262019;
-    --color-surface-inset: #201b17;
-    --color-text-primary: #f8f4ed;
-    --color-text-secondary: #c4bdb2;
-    --color-text-muted: #8a847c;
-    --color-border: #37302a;
-  }
-}
-
+/* Unica fuente de verdad del tema oscuro: la clase .dark en <html>.
+   La preferencia del sistema la resuelve el script inline en layout.tsx
+   (agrega .dark si no hay eleccion guardada y el SO prefiere dark).
+   No usar @media prefers-color-scheme aca: compite con la clase y
+   rompe el toggle cuando el SO esta en modo oscuro. */
 .dark {
   --color-bg: #1a1614;
   --color-surface: #262019;
