@@ -13,8 +13,8 @@ import {
 import type { AvatarUploadState } from "@/features/profile/actions";
 import { cn } from "@/lib/utils";
 
-// HEIC/HEIF entran acá aunque el bucket no los acepte: el server los convierte a
-// JPEG antes de subirlos (ver features/profile/avatar-convert.ts).
+// HEIC/HEIF get in here even though the bucket doesn't accept them: the server
+// converts them to JPEG before uploading (see features/profile/avatar-convert.ts).
 const ACCEPTED_MIME = "image/jpeg,image/png,image/webp,image/heic,image/heif";
 
 interface AvatarPickerProps {
@@ -23,7 +23,7 @@ interface AvatarPickerProps {
     formData: FormData,
   ) => Promise<AvatarUploadState> | AvatarUploadState;
   initialUrl?: string | null;
-  /** Para que el formulario que lo contiene no se envíe con la foto a medio subir. */
+  /** Keeps the enclosing form from submitting while a photo is mid-upload. */
   onUploadingChange?: (uploading: boolean) => void;
   className?: string;
 }
@@ -37,8 +37,8 @@ export function AvatarPicker({
   const [state, dispatch, pending] = useActionState(action, null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // La foto vive acá y no en el state de la action: un error posterior reemplaza
-  // el state entero y borraría de la UI una foto que sí quedó guardada.
+  // The photo lives here, not in the action state: a later error replaces the
+  // whole state and would wipe from the UI a photo that did get saved.
   const [url, setUrl] = useState<string | null>(initialUrl ?? null);
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export function AvatarPicker({
     formData.set("avatar", file);
     startTransition(() => dispatch(formData));
 
-    // Sin esto, volver a elegir el mismo archivo no dispara change.
+    // Without this, picking the same file again doesn't fire change.
     event.target.value = "";
   }
 
@@ -89,8 +89,8 @@ export function AvatarPicker({
         <span className="font-display text-[13px] font-medium text-primary">{label}</span>
       </button>
 
-      {/* El control accesible es el botón de arriba: este input queda fuera del
-          foco y del árbol de accesibilidad para no duplicarlo. */}
+      {/* The accessible control is the button above: this input stays out of
+          the focus order and the accessibility tree so it isn't duplicated. */}
       <input
         ref={inputRef}
         type="file"

@@ -2,7 +2,7 @@ export const AVATAR_BUCKET = "avatars";
 
 export const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 
-/** Formatos que aceptamos del usuario. HEIC entra pero se convierte antes de subir. */
+/** Formats we accept from the user. HEIC gets in but is converted before uploading. */
 export const AVATAR_ACCEPTED_TYPES = [
   "image/jpeg",
   "image/png",
@@ -11,7 +11,7 @@ export const AVATAR_ACCEPTED_TYPES = [
   "image/heif",
 ] as const;
 
-/** Formatos que terminan en Storage: los que todos los browsers saben renderizar. */
+/** Formats that end up in Storage: the ones every browser can render. */
 export const AVATAR_STORED_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 
 const EXTENSION_BY_TYPE: Record<string, string> = {
@@ -26,7 +26,7 @@ const HEIC_BRANDS = ["heic", "heix", "heim", "heis", "mif1", "msf1"];
 
 const PUBLIC_PREFIX = `/storage/v1/object/public/${AVATAR_BUCKET}/`;
 
-/** Valida lo que el browser declara. La verdad la da sniffImageType sobre los bytes. */
+/** Validates what the browser declares. The truth comes from sniffImageType over the bytes. */
 export function validateAvatarFile(file: unknown): string | null {
   if (!(file instanceof File) || file.size === 0) {
     return "Seleccioná una imagen";
@@ -55,7 +55,7 @@ function startsWith(bytes: Uint8Array, signature: number[]): boolean {
   return signature.every((byte, i) => bytes[i] === byte);
 }
 
-/** Detecta el tipo real por magic numbers — no confía en el mime que declara el cliente. */
+/** Detects the real type via magic numbers — it doesn't trust the mime the client declares. */
 export function sniffImageType(bytes: Uint8Array): string | null {
   if (bytes.length < 3) {
     return null;
@@ -69,7 +69,7 @@ export function sniffImageType(bytes: Uint8Array): string | null {
     return "image/png";
   }
 
-  // WebP y HEIC declaran su marca recién en el byte 8
+  // WebP and HEIC declare their brand as late as byte 8
   if (bytes.length < 12) {
     return null;
   }
@@ -85,7 +85,7 @@ export function sniffImageType(bytes: Uint8Array): string | null {
   return null;
 }
 
-/** Carpeta `<userId>/` — es lo que la policy de storage.objects usa para autorizar. */
+/** `<userId>/` folder — it's what the storage.objects policy uses to authorize. */
 export function avatarObjectPath(userId: string, mime: string): string {
   const extension = EXTENSION_BY_TYPE[mime] ?? "jpg";
   return `${userId}/${crypto.randomUUID()}.${extension}`;

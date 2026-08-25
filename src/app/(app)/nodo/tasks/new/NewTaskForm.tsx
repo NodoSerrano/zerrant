@@ -14,17 +14,17 @@ export function NewTaskForm() {
         <button
           type="button"
           aria-label="Cerrar"
-          // `back()` respeta de dónde vino el usuario, pero si esta pantalla es
-          // la primera del historial (deep link, atajo de la PWA, pestaña nueva
-          // o recarga) no tiene a dónde volver: quedaría muerto, o en una PWA
-          // standalone saldría de la app.
+          // `back()` respects where the user came from, but if this screen is
+          // the first history entry (deep link, PWA shortcut, new tab or
+          // reload) there's nowhere to go back to: the button would be dead,
+          // or in a standalone PWA it would exit the app.
           onClick={() => (window.history.length > 1 ? router.back() : router.push("/nodo/tasks"))}
           className="rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
         >
           <X className="size-6 text-text-primary" />
         </button>
         <h1 className="font-display text-base font-medium text-text-primary">Nueva tarea</h1>
-        {/* Contrapeso del ícono: mantiene el título ópticamente centrado. */}
+        {/* Icon counterweight: keeps the title optically centered. */}
         <span aria-hidden="true" className="size-6" />
       </div>
 

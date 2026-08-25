@@ -5,8 +5,8 @@ import { AVATAR_STORED_TYPES } from "./avatar";
 type WebSafeImage = { bytes: Uint8Array; mime: string };
 
 /**
- * HEIC solo lo renderiza Safari, así que nunca lo guardamos crudo: lo pasamos a
- * JPEG antes de subirlo. El resto de los formatos se devuelven sin tocar.
+ * Only Safari renders HEIC, so we never store it raw: it's converted to
+ * JPEG before uploading. All other formats are returned untouched.
  */
 export async function ensureWebSafeImage(bytes: Uint8Array, mime: string): Promise<WebSafeImage> {
   if (AVATAR_STORED_TYPES.includes(mime as (typeof AVATAR_STORED_TYPES)[number])) {

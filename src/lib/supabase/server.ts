@@ -19,9 +19,9 @@ export async function createClient() {
               cookieStore.set(name, value, options);
             }
           } catch {
-            // setAll fue llamado desde un Server Component. Ignoramos el error
-            // porque el middleware ya refresca las sesiones. Si no hay middleware,
-            // el cliente usará la sesión existente hasta que expire.
+            // setAll was called from a Server Component. The error is ignored
+            // because the middleware already refreshes sessions. Without
+            // middleware, the client keeps the existing session until it expires.
           }
         },
       },

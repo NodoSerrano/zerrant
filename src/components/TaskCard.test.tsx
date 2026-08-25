@@ -209,9 +209,9 @@ describe("TaskCard", () => {
     expect(screen.getByText(/hace 2 días/)).toBeInTheDocument();
   });
 
-  // Los props vienen tipados, pero el dato de origen es un enum de Postgres que
-  // puede crecer por migración. Si el componente indexa sin fallback, el valor
-  // nuevo lo hace explotar y se lleva puesta la pantalla que lo renderiza.
+  // Props come typed, but the source data is a Postgres enum that can grow
+  // via migration. If the component indexes without a fallback, the new value
+  // crashes it and takes down the screen that renders it.
   it("falls back to the 'Abierta' badge for an estado it does not know", () => {
     const unknownEstado = "archivada" as unknown as typeof defaultProps.estado;
     render(<TaskCard {...defaultProps} estado={unknownEstado} />);
@@ -221,9 +221,9 @@ describe("TaskCard", () => {
     expect(badge.className).toContain("text-brand-blue");
   });
 
-  // Pencil no diseñó un chip para "cancelada". El par neutro del DS
-  // (`surface-inset` / `text-muted`) es el que ya usa el sistema para lo
-  // inactivo, así que el estado se deriva en vez de inventarse.
+  // Pencil didn't design a chip for "cancelada". The DS's neutral pair
+  // (`surface-inset` / `text-muted`) is what the system already uses for
+  // inactive things, so the state is derived rather than invented.
   it("renders a neutral 'Cancelada' badge", () => {
     render(<TaskCard {...defaultProps} estado="cancelada" />);
 
@@ -232,10 +232,10 @@ describe("TaskCard", () => {
     expect(badge.className).toContain("text-text-muted");
   });
 
-  // El `actionLabel` lo fija quien consume la tarjeta y no siempre distingue
-  // por estado: una tarea cancelada puede llegar con "Tomar". Se muestra igual
-  // —la tarjeta es un link al detalle, la etiqueta no dispara nada— pero
-  // apagada, para no ofrecer una acción que ya no existe.
+  // The `actionLabel` is set by whoever consumes the card and doesn't always
+  // distinguish by state: a cancelled task can arrive with "Tomar". It is
+  // still shown —the card is a link to the detail, the label triggers
+  // nothing— but dimmed, so it no longer offers an action that is gone.
   it("greys out the action label on a cancelled task", () => {
     render(<TaskCard {...defaultProps} estado="cancelada" actionLabel="Tomar" />);
 
@@ -244,8 +244,8 @@ describe("TaskCard", () => {
     expect(action.className).not.toContain("text-brand-green");
   });
 
-  // El apagado tiene que salir de "¿esto se puede tomar?", no de una lista de
-  // estados terminales: si no, el próximo valor del enum repite el bug.
+  // The dimming must come from "can this be taken?", not from a list of
+  // terminal states: otherwise the next enum value repeats the bug.
   it("greys out the action label on any estado that is not actionable", () => {
     const unknownEstado = "pausada" as unknown as typeof defaultProps.estado;
     render(<TaskCard {...defaultProps} estado={unknownEstado} actionLabel="Tomar" />);

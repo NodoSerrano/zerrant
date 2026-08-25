@@ -10,7 +10,7 @@ export default async function OnboardingStep1() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // El gate del proxy ya garantiza sesión; esto es sólo para prellenar.
+  // The proxy gate already guarantees a session; this is only for prefilling.
   const { data: profile } = user
     ? await supabase
         .from("profiles")

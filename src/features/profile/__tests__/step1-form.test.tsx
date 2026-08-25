@@ -23,8 +23,8 @@ describe("Step1Form", () => {
   it("has no back control (onboarding cannot be skipped)", () => {
     render(<Step1Form />);
 
-    // Los únicos controles del paso 1 son la foto y el submit: cualquier chevron
-    // "atrás" (link o button) aparecería acá.
+    // Step 1's only controls are the photo and the submit: any "back"
+    // chevron (link or button) would show up here.
     expect(screen.getAllByRole("button").map((el) => el.textContent)).toEqual([
       "Agregar foto",
       "Guardar y continuar",

@@ -13,7 +13,7 @@ import {
 import { ensureWebSafeImage } from "./avatar-convert";
 import type { ProfileUpdate } from "./types";
 
-/** Lo que se le muestra al usuario cuando Postgres falla: nunca el mensaje del motor. */
+/** What the user sees when Postgres fails: never the engine's message. */
 const DB_ERROR = "No pudimos guardar tus datos. Probá de nuevo.";
 
 const NOMBRE_VISIBLE_VALUES = ["apodo", "nombre_apellido", "apellido_nombre"] as const;
@@ -22,7 +22,7 @@ function text(value: FormDataEntryValue | null): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-/** `YYYY-MM-DD` real, no futura y no absurda. El input `type=date` puede degradar a texto libre. */
+/** A real `YYYY-MM-DD`, not in the future and not absurd. The `type=date` input can degrade to free text. */
 function isValidBirthDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return false;
@@ -42,7 +42,7 @@ function nombreVisible(value: FormDataEntryValue | null): ProfileUpdate["nombre_
     : null;
 }
 
-/** Los datos que el gate de onboarding exige antes de dejar salir. */
+/** The data the onboarding gate requires before letting the user out. */
 async function step1Data(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const { data } = await supabase
     .from("profiles")
@@ -71,8 +71,9 @@ export async function saveOnboardingStep1(
   const apellido = text(formData.get("apellido"));
   const fechaNacimiento = text(formData.get("fecha_nacimiento"));
 
-  // Estos tres son los que el gate de onboarding mira para dejarte salir, así que
-  // el server los exige aunque el browser ya valide los `required`.
+  // These three are what the onboarding gate checks before letting the user
+  // out, so the server requires them even though the browser already validates
+  // the `required` attributes.
   if (!nombre || !apellido || !fechaNacimiento) {
     return { error: "Completá nombre, apellido y fecha de nacimiento" };
   }
@@ -88,8 +89,8 @@ export async function saveOnboardingStep1(
     fecha_nacimiento: fechaNacimiento,
   };
 
-  // La columna es NOT NULL con default: sólo la pisamos si el form manda un valor
-  // del enum (hoy se elige en editar perfil, no en el onboarding).
+  // The column is NOT NULL with a default: only overwrite it if the form sends
+  // an enum value (today it's chosen in profile edit, not in onboarding).
   const visible = nombreVisible(formData.get("nombre_visible"));
   if (visible) {
     update.nombre_visible = visible;
@@ -120,8 +121,8 @@ export async function saveOnboardingStep2(
     return { error: "No autorizado" };
   }
 
-  // El paso 2 no puede cerrar el onboarding sin los datos obligatorios del paso 1:
-  // entrar directo por URL dejaría un perfil "completo" con nombre y apellido en null.
+  // Step 2 cannot close onboarding without step 1's required data: entering
+  // directly by URL would leave a "complete" profile with null first and last name.
   const step1 = await step1Data(supabase, user.id);
   if (!step1?.nombre || !step1?.apellido || !step1?.fecha_nacimiento) {
     redirect("/onboarding/step1");
@@ -131,8 +132,8 @@ export async function saveOnboardingStep2(
     bio: text(formData.get("bio")),
     contacto_telegram: text(formData.get("contacto_telegram")),
     sitio_url: text(formData.get("sitio_url")),
-    // Cierra el onboarding: es el único dato que prueba haber pasado por el paso 2,
-    // porque sus campos son todos opcionales.
+    // Closes onboarding: it's the only piece of data proving step 2 was
+    // visited, because all of its fields are optional.
     onboarding_completado_en: new Date().toISOString(),
   };
 
@@ -150,8 +151,8 @@ export async function saveOnboardingStep2(
 export type AvatarUploadState = { error?: string; avatarUrl?: string };
 
 /**
- * A diferencia del resto de las actions de este archivo, ésta no redirige:
- * devuelve la URL para que onboarding y editar-perfil puedan mostrar el preview.
+ * Unlike the other actions in this file, this one doesn't redirect:
+ * it returns the URL so onboarding and profile edit can show the preview.
  */
 export async function uploadAvatar(
   _prevState: AvatarUploadState | null,
@@ -176,7 +177,7 @@ export async function uploadAvatar(
 
   const original = new Uint8Array(await (file as File).arrayBuffer());
 
-  // El mime que declara el browser no es confiable: mandamos los bytes.
+  // The mime the browser declares is not trustworthy: we send the bytes.
   const sniffed = sniffImageType(original);
   if (!sniffed) {
     return { error: "El archivo no es una imagen válida" };
@@ -220,7 +221,7 @@ export async function uploadAvatar(
     .eq("id", user.id);
 
   if (dbError) {
-    // No dejamos el objeto huérfano si el perfil no llegó a apuntarlo.
+    // Don't leave an orphaned object if the profile never came to point at it.
     await supabase.storage.from(AVATAR_BUCKET).remove([path]);
     console.error("[uploadAvatar] no se pudo guardar avatar_url", dbError);
     return { error: DB_ERROR };

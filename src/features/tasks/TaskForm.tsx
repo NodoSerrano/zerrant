@@ -5,9 +5,9 @@ import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { cn } from "@/lib/utils";
 
-// Crear y editar comparten el mismo formulario: los frames `V0ODk` y `H3BY0u`
-// sólo se diferencian en el header y en la etiqueta del CTA. Vive acá para que
-// un cambio de diseño en los campos no haya que aplicarlo dos veces.
+// Create and edit share the same form: Pencil frames `V0ODk` and `H3BY0u`
+// differ only in the header and the CTA label. It lives here so a design
+// change to the fields doesn't have to be applied twice.
 
 const CATEGORIAS = [
   { value: "reparacion", label: "Reparación" },
@@ -25,9 +25,9 @@ const URGENCIAS = [
 
 const GROUP_LABEL = "text-[13px] font-medium text-text-secondary";
 
-// El radio va visualmente oculto pero sigue siendo el control real: así el form
-// funciona sin JS, FormData sigue llevando el valor y el foco de teclado se
-// conserva. El estilo del "seleccionado" sale de `has-checked:` sobre el label.
+// The radio is visually hidden but remains the real control: this way the
+// form works without JS, FormData still carries the value and keyboard focus
+// is preserved. The "selected" styling comes from `has-checked:` on the label.
 const FOCUS_RING = "has-focus-visible:ring-2 has-focus-visible:ring-primary/40";
 
 type TaskFormState = { error: string } | null;
@@ -46,7 +46,7 @@ interface TaskFormProps {
   submitLabel: string;
   pendingLabel: string;
   defaults?: TaskFormDefaults;
-  /** Campos que viajan en el submit sin que el usuario los vea, como `taskId`. */
+  /** Fields that travel with the submit without the user seeing them, like `taskId`. */
   hiddenFields?: Record<string, string>;
 }
 
@@ -63,8 +63,8 @@ export function TaskForm({
   const urgencia = defaults?.urgencia ?? "media";
 
   return (
-    // El CTA es hermano del grupo de campos, no hijo: en Pencil el form
-    // (gap 16) y el botón cuelgan los dos del wrapper con gap 18.
+    // The CTA is a sibling of the field group, not a child: in Pencil the
+    // form (gap 16) and the button both hang from the wrapper with gap 18.
     <form action={formAction} className="flex flex-col gap-[18px]">
       {hiddenFields &&
         Object.entries(hiddenFields).map(([name, value]) => (
@@ -107,8 +107,9 @@ export function TaskForm({
                   "inline-flex cursor-pointer items-center rounded-pill border px-[14px] py-2",
                   "font-display text-[13px] font-medium transition-colors",
                   "border-border bg-surface text-text-secondary",
-                  // Pencil quita el stroke en el chip activo. Usamos un borde
-                  // del mismo color que el fondo: se ve igual y no mueve nada.
+                  // Pencil removes the stroke on the active chip. We use a
+                  // border the same color as the background: it looks the same
+                  // and doesn't shift anything.
                   "has-checked:border-primary has-checked:bg-primary has-checked:text-on-primary",
                   FOCUS_RING,
                 )}
