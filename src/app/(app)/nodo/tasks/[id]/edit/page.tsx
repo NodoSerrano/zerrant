@@ -20,27 +20,28 @@ export default async function EditTaskPage({ params }: { params: Promise<{ id: s
 
   if (!task) notFound();
 
-  // Defensa en profundidad: este redirect es UX, para no mostrar un formulario
-  // que no se va a poder enviar. La guarda de verdad vive en `updateTask`,
-  // porque un POST directo se saltea el render.
+  // Defense in depth: this redirect is UX, so we don't show a form that
+  // couldn't be submitted. The real guard lives in `updateTask`, because a
+  // direct POST skips this render.
   if (task.creado_por !== user.id) redirect(`/nodo/tasks/${id}`);
 
-  // Editar sólo mientras nadie se comprometió con la tarea. `updateTask` repite
-  // el filtro, porque un POST directo se saltea este render.
+  // Edit only while nobody has committed to the task. `updateTask` repeats
+  // the filter, because a direct POST skips this render.
   if (task.estado !== "abierta") redirect(`/nodo/tasks/${id}`);
 
   return (
     <div className="flex w-full flex-col gap-[18px]">
       <div className="flex flex-row items-center justify-between w-full">
-        {/* El frame usa chevron-left, no la `x` de crear tarea: editar es una
-            navegación hacia atrás, no el cierre de un modal. */}
+        {/* The frame uses chevron-left, not the `x` from create task: editing
+            is backward navigation, not the closing of a modal. */}
         <Link href={`/nodo/tasks/${id}`} aria-label="Volver a la tarea">
           <ChevronLeft className="size-6 text-text-primary" />
         </Link>
         <h1 className="font-display text-base font-medium text-text-primary">Editar tarea</h1>
-        {/* La guarda de arriba ya deja pasar sólo tareas abiertas, así que el
-            menú siempre se dibuja. El contrapeso queda por si esa guarda cambia:
-            sin él, `justify-between` colapsa a dos hijos y el título se corre. */}
+        {/* The guard above only lets open tasks through, so the menu always
+            renders. The counterweight stays in case that guard changes:
+            without it, `justify-between` collapses to two children and the
+            title shifts. */}
         {task.estado === "abierta" ? (
           <TaskMenu taskId={task.id} estado={task.estado} isOwner showEditItem={false} />
         ) : (

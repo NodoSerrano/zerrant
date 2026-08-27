@@ -21,8 +21,8 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
-// redirect() corta la ejecución lanzando. Lo replicamos para que el server
-// component no siga renderizando después de redirigir, igual que en producción.
+// redirect() cuts execution by throwing. We replicate that so the server
+// component doesn't keep rendering after redirecting, same as in production.
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     mocks.redirect(url);
@@ -30,8 +30,8 @@ vi.mock("next/navigation", () => ({
   },
 }));
 
-// El form es un client component con sus propios tests; acá sólo nos importa
-// si la página lo renderiza o no.
+// The form is a client component with its own tests; here we only care
+// about whether the page renders it or not.
 vi.mock("./NewTaskForm", () => ({
   NewTaskForm: () => null,
 }));
@@ -103,9 +103,9 @@ describe("NewTaskPage — authorization guard (AC7)", () => {
 
   it("renders the form when the profile read fails for a reason other than 'no rows'", async () => {
     setUser("serrano-id");
-    // 57014 = query cancelada por timeout. No sabemos el tier: encerrar a un
-    // serrano legítimo es peor que dejarlo pasar, porque `createTask` vuelve a
-    // chequear antes de insertar. Mismo criterio que `src/proxy.ts`.
+    // 57014 = query cancelled by timeout. We don't know the tier: locking out a
+    // legitimate serrano is worse than letting them through, because `createTask`
+    // re-checks before inserting. Same criterion as `src/proxy.ts`.
     mocks.profilesSelectSingle.mockResolvedValue({
       data: null,
       error: { code: "57014", message: "canceling statement due to statement timeout" },
@@ -145,7 +145,7 @@ describe("NewTaskPage — authorization guard (AC7)", () => {
     setUser("tourist-id");
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "tourist" } });
 
-    // El throw del redirect garantiza que nunca se llega al render del form.
+    // The redirect throw guarantees the form render is never reached.
     await expect(renderPage()).rejects.toThrow("NEXT_REDIRECT:/nodo/tasks");
   });
 });

@@ -190,9 +190,9 @@ describe("TasksPage", () => {
     });
   });
 
-  // La columna `categoria` guarda el valor del enum, en minúscula y sin tilde.
-  // Si el hub se lo pasa crudo a TaskCard, la tarjeta imprime "reparacion" y no
-  // encuentra el ícono, porque su índice está en castellano.
+  // The `categoria` column stores the enum value, lowercase and unaccented.
+  // If the hub passes it raw to TaskCard, the card prints "reparacion" and
+  // finds no icon, because its index is keyed by the Spanish label.
   describe("categoria display", () => {
     function taskWithCategoria(categoria: string) {
       return {
@@ -235,10 +235,10 @@ describe("TasksPage", () => {
   });
 
   describe("estado mapping robustness", () => {
-    // El enum `task_estado` de Postgres puede crecer. Si el hub traduce estados
-    // con un lookup parcial, cualquier valor nuevo llega como `undefined` a
-    // TaskCard y la pantalla entera revienta al leer `estadoData.bg`. La lista
-    // tiene que degradar, no caerse.
+    // The Postgres `task_estado` enum can grow. If the hub translates states
+    // with a partial lookup, any new value reaches TaskCard as `undefined`
+    // and the whole screen crashes reading `estadoData.bg`. The list has to
+    // degrade, not fall over.
     function taskWithEstado(estado: unknown) {
       return {
         id: "task-1",

@@ -173,7 +173,7 @@ describe("proxy", () => {
 
   it("keeps the user in the onboarding until step 2 is submitted", async () => {
     authAs();
-    // Paso 1 guardado, paso 2 todavía no: la marca sigue vacía.
+    // Step 1 saved, step 2 not yet: the flag is still empty.
     onboardingPending({ nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" });
 
     const result = await proxy(makeRequest("/nodo/tasks"));
@@ -206,8 +206,9 @@ describe("proxy", () => {
 
   it("lets the request through when the profile query itself fails", async () => {
     authAs();
-    // Un fallo de infra (timeout, permisos, 5xx) no puede encerrar a toda la app
-    // en el onboarding: es preferible dejar pasar que trabar a quien ya lo terminó.
+    // An infra failure (timeout, permissions, 5xx) cannot lock the whole app
+    // into onboarding: letting users through beats trapping those who already
+    // finished it.
     mockProfileSingle.mockResolvedValue({
       data: null,
       error: { code: "57014", message: "canceling statement due to statement timeout" },

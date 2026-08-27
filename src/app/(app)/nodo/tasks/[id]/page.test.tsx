@@ -22,8 +22,8 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
-// redirect() y notFound() cortan la ejecución lanzando. Se replica para que el
-// server component no siga renderizando después, igual que en producción.
+// redirect() and notFound() cut execution by throwing. We replicate that so
+// the server component doesn't keep rendering afterwards, same as in production.
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     mocks.redirect(url);
@@ -59,7 +59,7 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-// `nombre_visible` es la preferencia de cómo mostrar el nombre, no el nombre.
+// `nombre_visible` is the preference for how to show the name, not the name itself.
 const CREATOR = {
   id: "creator-1",
   nombre: "Lucía",
@@ -92,7 +92,7 @@ function makeTask(overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** viewer: quién mira. tier/admin definen qué acciones le corresponden. */
+/** viewer: who is looking. tier/admin determine which actions they get. */
 async function renderDetail({
   task = makeTask(),
   viewerId = "someone-else",
@@ -236,16 +236,16 @@ describe("TaskDetailPage — meta card (AC4)", () => {
     expect(container.querySelector("svg.lucide-flame")!.getAttribute("class")).toContain(color);
   });
 
-  // relativeTime ya existe y está testeado en src/lib/time.ts. La pantalla vieja
-  // usaba toLocaleDateString, que no es lo que pide el frame.
+  // relativeTime already exists and is tested in src/lib/time.ts. The old
+  // screen used toLocaleDateString, which is not what the frame asks for.
   it("shows who published it and how long ago, in relative time", async () => {
     await renderDetail();
 
     expect(screen.getByText("Publicó Lucía Gómez · hace 2 días")).toBeInTheDocument();
   });
 
-  // El join de `tomador` ya se pagaba y no se mostraba en ningún lado: quien
-  // tomó la tarea era invisible en la pantalla.
+  // The `tomador` join was already being paid for but never shown anywhere:
+  // whoever took the task was invisible on the screen.
   it("shows who took the task once there is a taker", async () => {
     await renderDetail({
       task: makeTask({ estado: "tomada", tomada_por: TAKER.id, tomador: TAKER }),
@@ -286,8 +286,8 @@ describe("TaskDetailPage — description (AC5)", () => {
     expect(body.className).toContain("text-text-secondary");
   });
 
-  // createTask persiste el textarea vacío como "" y nunca como null, así que la
-  // guarda tiene que tratar los dos casos igual.
+  // createTask persists an empty textarea as "" and never as null, so the
+  // guard has to treat both cases the same.
   it.each([[null], [""], ["   "]])("omits the description when it is %p", async (descripcion) => {
     const { container } = await renderDetail({ task: makeTask({ descripcion }) });
 
@@ -352,8 +352,8 @@ describe("TaskDetailPage — primary action (AC5)", () => {
     expect(screen.queryByRole("button", { name: /Verificar/ })).not.toBeInTheDocument();
   });
 
-  // Sin este mensaje la pantalla terminaba en seco después de la descripción
-  // para todos menos el admin.
+  // Without this message the screen ended abruptly after the description
+  // for everyone but the admin.
   it("explains a done task to the taker and the creator, not only to an admin", async () => {
     await renderDetail({
       task: makeTask({ estado: "hecha", tomada_por: TAKER.id, tomador: TAKER }),
@@ -376,8 +376,8 @@ describe("TaskDetailPage — primary action (AC5)", () => {
     expect(screen.queryByText(/Falta que un admin/)).not.toBeInTheDocument();
   });
 
-  // El dato era correcto pero le hablaba al lector equivocado: el creador no es
-  // "otro serrano" respecto de su propia tarea.
+  // The data was correct but it spoke to the wrong reader: the creator is not
+  // "otro serrano" with respect to their own task.
   it("addresses the creator directly when someone took their task", async () => {
     await renderDetail({
       task: makeTask({ estado: "tomada", tomada_por: TAKER.id, tomador: TAKER }),
@@ -420,8 +420,8 @@ describe("TaskDetailPage — header menu (AC6)", () => {
     expect(screen.queryByRole("button", { name: "Más opciones" })).not.toBeInTheDocument();
   });
 
-  // Sin menú el header quedaría descentrado, porque el chevron de la izquierda
-  // no tendría contrapeso.
+  // Without the menu the header would sit off-center, because the left
+  // chevron would have no counterweight.
   it("keeps a spacer so the title stays centred when there is no menu", async () => {
     await renderDetail({ viewerId: TAKER.id });
 
@@ -440,10 +440,10 @@ describe("TaskDetailPage — layout structure (AC1, AC5)", () => {
     expect(wrapper.className).toContain("w-full");
   });
 
-  // El CTA cuelga del wrapper en Pencil, no de un contenedor intermedio. Metido
-  // adentro de otro flex hereda el gap de ese padre y la separación queda mal
-  // sin que ningún test de clases lo note — es el bug que ZER-21 tuvo que
-  // descoser.
+  // The CTA hangs off the wrapper in Pencil, not off an intermediate container.
+  // Placed inside another flex it inherits that parent's gap and the spacing
+  // goes wrong without any class-based test noticing — it's the bug ZER-21
+  // had to unpick.
   it("hangs the CTA off the wrapper, not off a nested container", async () => {
     const { container } = await renderDetail({ viewerId: TAKER.id, tier: "standard" });
 

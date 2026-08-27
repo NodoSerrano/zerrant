@@ -4,9 +4,9 @@ import { NewTaskForm } from "./NewTaskForm";
 
 export const dynamic = "force-dynamic";
 
-// PostgREST devuelve este código cuando `.single()` no encuentra la fila; el
-// resto de los códigos son fallos de verdad y se tratan distinto. Mismo criterio
-// que el gate de onboarding en `src/proxy.ts`.
+// PostgREST returns this code when `.single()` finds no row; all other codes
+// are real failures and are handled differently. Same criterion as the
+// onboarding gate in `src/proxy.ts`.
 const NO_ROWS = "PGRST116";
 
 export default async function NewTaskPage() {
@@ -26,13 +26,13 @@ export default async function NewTaskPage() {
     .eq("id", user.id)
     .single();
 
-  // Los turistas no publican tareas. `createTask` vuelve a chequearlo del lado
-  // del server: esto es UX (no mostrar un form inutilizable), aquello es
-  // seguridad (un POST directo no pasa por este render).
+  // Tourists don't publish tasks. `createTask` re-checks it server-side:
+  // this is UX (don't show an unusable form), that is security (a direct
+  // POST doesn't go through this render).
   if (error && error.code !== NO_ROWS) {
-    // La lectura falló (timeout, permisos, 5xx): no sabemos el tier. Rebotar a
-    // un serrano legítimo sin explicación es peor que dejarlo entrar, porque el
-    // insert igual queda protegido por la guarda de `createTask`.
+    // The read failed (timeout, permissions, 5xx): we don't know the tier.
+    // Bouncing a legitimate serrano without explanation is worse than letting
+    // them in, because the insert is still protected by the `createTask` guard.
     console.warn("[tasks/new] no se pudo leer el perfil para la guarda de tier");
   } else if (!profile || profile.tier === "tourist") {
     redirect("/nodo/tasks");

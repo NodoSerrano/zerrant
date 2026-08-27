@@ -56,10 +56,10 @@ describe("relativeTime", () => {
   });
 });
 
-// El valor entra desde una columna de la base: una fecha inválida producía
-// aritmética con NaN y la pantalla mostraba "hace NaN días".
-describe("relativeTime — entradas inválidas", () => {
-  it.each([["no-es-una-fecha"], [""]])("devuelve una cadena vacía para %p", (input) => {
+// The value comes from a database column: an invalid date used to produce
+// NaN arithmetic and the screen showed "hace NaN días".
+describe("relativeTime — invalid inputs", () => {
+  it.each([["no-es-una-fecha"], [""]])("returns an empty string for %p", (input) => {
     expect(relativeTime(input)).toBe("");
   });
 });

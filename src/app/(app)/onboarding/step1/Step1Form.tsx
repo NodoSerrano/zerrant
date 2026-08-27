@@ -76,8 +76,9 @@ export function Step1Form({ defaults, avatarUrl }: Step1FormProps) {
           </p>
         )}
 
-        {/* Enviar con la subida en vuelo desmontaría el picker antes de saber si
-            la foto entró: el usuario creería que la tiene y no. */}
+        {/* Submitting while the upload is in flight would unmount the picker
+            before knowing whether the photo got in: the user would believe
+            they have it and they don't. */}
         <PrimaryButton type="submit" disabled={pending || uploadingPhoto} className="mt-2">
           {uploadingPhoto ? "Subiendo foto..." : pending ? "Guardando..." : "Guardar y continuar"}
         </PrimaryButton>

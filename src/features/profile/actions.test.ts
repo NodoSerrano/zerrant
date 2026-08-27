@@ -32,11 +32,11 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
-// La conversión real tiene su propio test en avatar-convert.test.ts; acá sólo
-// verificamos que la action la use.
+// Real conversion has its own test in avatar-convert.test.ts; here we only
+// verify that the action uses it.
 vi.mock("./avatar-convert", () => ({ ensureWebSafeImage: mocks.ensureWebSafeImage }));
 
-// revalidatePath necesita el store de Next, que no existe fuera de un request.
+// revalidatePath needs Next's store, which doesn't exist outside a request.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import { saveOnboardingStep1, saveOnboardingStep2, updateProfile, uploadAvatar } from "./actions";

@@ -6,11 +6,11 @@ import { getCategoriaIcon, getCategoriaLabel, getEstadoBadge, getUrgencia } from
 import { relativeTime } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
-// Presentación del detalle, separada de la lectura de datos. Es el mismo corte
-// que ya usa crear tarea (`page.tsx` guarda + `NewTaskForm` dibuja): deja la
-// pantalla montable con datos de prueba para medirla en el navegador.
+// Detail presentation, separated from data reading. It's the same split
+// create task already uses (`page.tsx` fetches + `NewTaskForm` draws): it
+// leaves the screen mountable with test data to measure it in the browser.
 
-// Estados donde no queda acción posible y sólo se informa el desenlace.
+// States where no action remains and only the outcome is reported.
 const ESTADO_MESSAGES: Record<string, string> = {
   hecha: "Trabajo terminado. Falta que un admin lo verifique.",
   verificada: "Tarea verificada y completada.",
@@ -52,13 +52,13 @@ export function TaskDetailView({
   const urgenciaData = getUrgencia(urgencia);
   const CategoriaIcon = getCategoriaIcon(categoria);
 
-  // El textarea de crear tarea persiste "" y nunca null, así que los dos casos
-  // significan lo mismo: no hay descripción.
+  // The create-task textarea persists "" and never null, so both cases mean
+  // the same thing: there is no description.
   const cuerpo = descripcion?.trim();
 
   const closingMessage = ESTADO_MESSAGES[estado];
 
-  // El menú sólo tiene sentido para el creador y mientras la tarea siga viva.
+  // The menu only makes sense for the creator and while the task is still alive.
   const showMenu = isOwner && (estado === "abierta" || estado === "tomada");
 
   return (
@@ -71,8 +71,8 @@ export function TaskDetailView({
         {showMenu ? (
           <TaskMenu taskId={taskId} estado={estado} isOwner={isOwner} />
         ) : (
-          // Contrapeso del chevron: sin esto el título queda descentrado
-          // cuando no hay menú que mostrar.
+          // Chevron counterweight: without this the title sits off-center
+          // when there is no menu to show.
           <span aria-hidden="true" className="size-[22px]" />
         )}
       </div>
@@ -130,9 +130,10 @@ export function TaskDetailView({
         <p className="w-full font-body text-sm leading-[21px] text-text-secondary">{cuerpo}</p>
       )}
 
-      {/* Cada acción cuelga directo del wrapper: en Pencil el CTA es hermano
-          del resto, no hijo de otro contenedor. Metido adentro de un flex
-          intermedio heredaría el gap de ese padre y la separación quedaría mal. */}
+      {/* Every action hangs straight off the wrapper: in Pencil the CTA is a
+          sibling of the rest, not a child of another container. Placed inside
+          an intermediate flex it would inherit that parent's gap and the
+          spacing would be wrong. */}
       {estado === "abierta" && isSerrano && !isOwner && <TakeTaskButton taskId={taskId} />}
 
       {estado === "tomada" && isTaker && <MarkDoneButton taskId={taskId} />}

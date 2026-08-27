@@ -2,8 +2,8 @@ export function relativeTime(date: string): string {
   const now = Date.now();
   const then = new Date(date).getTime();
 
-  // El dato viene de una columna: una fecha ilegible no debe convertirse en
-  // "hace NaN días" en pantalla.
+  // The value comes from a database column: an unparseable date must never
+  // render as "hace NaN días" on screen.
   if (Number.isNaN(then)) return "";
 
   const diffMs = now - then;

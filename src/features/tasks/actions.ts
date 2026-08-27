@@ -7,9 +7,9 @@ import type { TaskCategoria, TaskUpdate, TaskUrgencia } from "./types";
 
 const CANCEL_ERROR = "No pudimos cancelar la tarea. Probá de nuevo.";
 const UPDATE_ERROR = "No pudimos guardar los cambios. Probá de nuevo.";
-// Cuando los filtros no matchean ninguna fila, PostgREST no devuelve error: el
-// update simplemente no toca nada. Sin distinguir ese caso, la acción redirige
-// como si hubiera funcionado.
+// When the filters match no rows, PostgREST doesn't return an error: the
+// update simply touches nothing. Without telling that case apart, the action
+// redirects as if it had worked.
 const CANCEL_REJECTED = "No pudimos cancelar esta tarea.";
 const UPDATE_REJECTED = "No pudimos guardar los cambios.";
 const INVALID_INPUT = "Revisá los datos de la tarea.";
@@ -17,15 +17,15 @@ const INVALID_INPUT = "Revisá los datos de la tarea.";
 const CATEGORIAS: TaskCategoria[] = ["reparacion", "limpieza", "compra", "mantenimiento", "otro"];
 const URGENCIAS: TaskUrgencia[] = ["baja", "media", "alta"];
 
-// Estados desde los que todavía tiene sentido cancelar. Una tarea `hecha` o
-// `verificada` ya se trabajó: cancelarla borraría el registro de ese trabajo.
+// States from which cancelling still makes sense. A `hecha` or `verificada`
+// task was already worked on: cancelling it would erase the record of that work.
 const CANCELABLE_ESTADOS = ["abierta", "tomada"] as const;
 
 function trimmed(value: FormDataEntryValue | null): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-/** Valida contra la lista del enum en vez de castear a ciegas. */
+/** Validates against the enum list instead of blindly casting. */
 function oneOf<T extends string>(value: FormDataEntryValue | null, allowed: T[]): T | null {
   return typeof value === "string" && (allowed as string[]).includes(value) ? (value as T) : null;
 }
@@ -185,11 +185,11 @@ export async function cancelTask(_prevState: { error: string } | null, formData:
     return { error: "No autorizado" };
   }
 
-  // Los tres filtros son la guarda: sólo el creador, sólo esta tarea, y sólo
-  // desde un estado cancelable. La policy de RLS no alcanza — deja escribir
-  // también a quien la tomó.
-  // `tomada_por` se conserva: el estado ya dice que está cancelada, y borrar
-  // quién la tenía perdería el rastro de un trabajo que alguien llegó a aceptar.
+  // The three filters are the guard: only the creator, only this task, and
+  // only from a cancelable state. The RLS policy alone isn't enough — it also
+  // lets whoever took the task write.
+  // `tomada_por` is preserved: the state already says it's cancelled, and
+  // erasing who had it would lose the trail of work someone agreed to do.
   const { data, error } = await supabase
     .from("tasks")
     .update({ estado: "cancelada" })
@@ -202,8 +202,8 @@ export async function cancelTask(_prevState: { error: string } | null, formData:
     return { error: CANCEL_ERROR };
   }
 
-  // Cero filas = los filtros rechazaron la operación (no es su tarea, o ya no
-  // está en un estado cancelable). No es un error de base, pero tampoco un éxito.
+  // Zero rows = the filters rejected the operation (not the user's task, or no
+  // longer in a cancelable state). Not a database error, but not a success either.
   if (!data || data.length === 0) {
     return { error: CANCEL_REJECTED };
   }
@@ -231,8 +231,8 @@ export async function updateTask(_prevState: { error: string } | null, formData:
 
   const titulo = trimmed(formData.get("titulo"));
 
-  // `titulo` es NOT NULL pero acepta la cadena vacía, así que sin este chequeo
-  // el `required` del HTML es la única defensa.
+  // `titulo` is NOT NULL but accepts the empty string, so without this check
+  // the HTML `required` is the only defense.
   if (!titulo) {
     return { error: "El título no puede estar vacío" };
   }
@@ -246,8 +246,8 @@ export async function updateTask(_prevState: { error: string } | null, formData:
 
   const cambios: TaskUpdate = { titulo, categoria, urgencia };
 
-  // Un envío parcial no tiene por qué borrar la descripción que ya estaba: sólo
-  // se toca la columna si el campo vino en el formulario.
+  // A partial submit shouldn't wipe the description that was already there: the
+  // column is only touched if the field came in the form.
   if (formData.has("descripcion")) {
     cambios.descripcion = trimmed(formData.get("descripcion"));
   }
@@ -256,11 +256,11 @@ export async function updateTask(_prevState: { error: string } | null, formData:
     .from("tasks")
     .update(cambios)
     .eq("id", taskId)
-    // Sin este filtro, quien tomó la tarea puede reescribirle el texto: la
-    // policy de RLS y el grant por columna se lo permiten.
+    // Without this filter, whoever took the task could rewrite its text: the
+    // RLS policy and the column grant allow it.
     .eq("creado_por", user.id)
-    // Una vez tomada, cambiarle el alcance le cambia el trabajo al tomador sin
-    // avisarle; hecha o verificada, reescribirla rompe el registro.
+    // Once taken, changing its scope changes the taker's work without
+    // warning; hecha or verificada, rewriting it breaks the record.
     .eq("estado", "abierta")
     .select("id");
 

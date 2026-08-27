@@ -1,8 +1,8 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-// El form usa useActionState, así que lo mockeamos para poder forzar los
-// estados `pending` y `error` sin ejecutar el server action de verdad.
+// The form uses useActionState, so we mock it to be able to force the
+// `pending` and `error` states without actually running the server action.
 const mocks = vi.hoisted(() => ({
   useActionState: vi.fn(),
   formAction: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock("next/navigation", () => ({
 
 import { NewTaskForm } from "./NewTaskForm";
 
-/** jsdom fija `history.length` en 1; lo pisamos para simular cada caso. */
+/** jsdom pins `history.length` to 1; we overwrite it to simulate each case. */
 function setHistoryLength(length: number) {
   Object.defineProperty(window.history, "length", { value: length, configurable: true });
 }
@@ -79,8 +79,8 @@ describe("NewTaskForm — header (AC1)", () => {
   });
 
   it("falls back to /nodo/tasks when there is no history to go back to", () => {
-    // Deep link, atajo de la PWA, pestaña nueva o recarga: esta pantalla es la
-    // primera entrada del historial y `back()` no tiene a dónde volver.
+    // Deep link, PWA shortcut, new tab or reload: this screen is the first
+    // history entry and `back()` has nowhere to go back to.
     setHistoryLength(1);
     render(<NewTaskForm />);
 
@@ -93,7 +93,7 @@ describe("NewTaskForm — header (AC1)", () => {
   it("does not submit the form when closing", () => {
     render(<NewTaskForm />);
 
-    // Un <button> sin type dentro de un <form> envía el form. Debe ser type="button".
+    // A <button> without type inside a <form> submits the form. It must be type="button".
     expect(screen.getByRole("button", { name: "Cerrar" })).toHaveAttribute("type", "button");
   });
 });
@@ -110,8 +110,8 @@ describe("NewTaskForm — layout (AC1, AC2)", () => {
   it("stacks the form fields with gap-4", () => {
     render(<NewTaskForm />);
 
-    // Los campos viven en su propio contenedor: en Pencil `MWvoK` (gap 16) es un
-    // hermano del CTA, no su padre.
+    // The fields live in their own container: in Pencil `MWvoK` (gap 16) is a
+    // sibling of the CTA, not its parent.
     const fields = screen.getByLabelText("Título").closest("form")?.firstElementChild;
     expect(fields?.className).toContain("flex-col");
     expect(fields?.className).toContain("gap-4");
@@ -120,9 +120,9 @@ describe("NewTaskForm — layout (AC1, AC2)", () => {
   it("separates the CTA from the fields by 18px, not 16px", () => {
     render(<NewTaskForm />);
 
-    // El CTA es hermano del grupo de campos dentro del wrapper `gap: 18` de
-    // Pencil. Si el botón cuelga del contenedor de campos hereda gap-4 y queda
-    // 2px corto.
+    // The CTA is a sibling of the field group inside Pencil's `gap: 18`
+    // wrapper. If the button hung off the fields container it would inherit
+    // gap-4 and land 2px short.
     const form = document.querySelector("form");
     expect(form?.className).toContain("flex-col");
     expect(form?.className).toContain("gap-[18px]");
@@ -132,7 +132,7 @@ describe("NewTaskForm — layout (AC1, AC2)", () => {
   });
 });
 
-describe("NewTaskForm — Título (AC2)", () => {
+describe("NewTaskForm — Title (AC2)", () => {
   it("renders a required text input named 'titulo' with the Pencil placeholder", () => {
     render(<NewTaskForm />);
 
@@ -143,7 +143,7 @@ describe("NewTaskForm — Título (AC2)", () => {
   });
 });
 
-describe("NewTaskForm — Descripción (AC3)", () => {
+describe("NewTaskForm — Description (AC3)", () => {
   it("renders a textarea named 'descripcion' with the Pencil placeholder", () => {
     render(<NewTaskForm />);
 
@@ -178,7 +178,7 @@ describe("NewTaskForm — Descripción (AC3)", () => {
   });
 });
 
-describe("NewTaskForm — Categoría (AC4)", () => {
+describe("NewTaskForm — Category (AC4)", () => {
   const CATEGORIAS = [
     ["Reparación", "reparacion"],
     ["Limpieza", "limpieza"],
@@ -235,8 +235,8 @@ describe("NewTaskForm — Categoría (AC4)", () => {
     expect(pill?.className).toContain("bg-surface");
     expect(pill?.className).toContain("border-border");
     expect(pill?.className).toContain("text-text-secondary");
-    // Pencil quita el stroke en el seleccionado; usamos border-primary para que
-    // coincida con el fondo y no haya salto de layout.
+    // Pencil removes the stroke on the selected pill; we use border-primary so
+    // it matches the background and there's no layout shift.
     expect(pill?.className).toContain("has-checked:bg-primary");
     expect(pill?.className).toContain("has-checked:text-on-primary");
     expect(pill?.className).toContain("has-checked:border-primary");
@@ -260,7 +260,7 @@ describe("NewTaskForm — Categoría (AC4)", () => {
   });
 });
 
-describe("NewTaskForm — Urgencia (AC5)", () => {
+describe("NewTaskForm — Urgency (AC5)", () => {
   const URGENCIAS = [
     ["Baja", "baja"],
     ["Media", "media"],

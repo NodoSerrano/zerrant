@@ -2,9 +2,9 @@ import { MoreHorizontal, Settings, ShoppingCart, SprayCan, Wrench } from "lucide
 import type { LucideIcon } from "lucide-react";
 import type { TaskCategoria } from "./types";
 
-// Presentación de las tareas en un solo lugar. El hub, la tarjeta y el detalle
-// tienen que coincidir: si cada pantalla arma su propio índice, se
-// desincronizan sin que nadie se entere.
+// Task presentation in a single place. The hub, the card and the detail must
+// agree: if each screen builds its own index, they drift apart without
+// anyone noticing.
 
 export const CATEGORIA_LABELS: Record<NonNullable<TaskCategoria>, string> = {
   reparacion: "Reparación",
@@ -22,9 +22,9 @@ export const CATEGORIA_ICONS: Record<NonNullable<TaskCategoria>, LucideIcon> = {
   otro: MoreHorizontal,
 };
 
-// TaskCard recibe la etiqueta ya traducida, no el enum. Este índice se deriva
-// del mapa por enum en vez de escribirse aparte, así no hay dos listas que
-// puedan quedar distintas.
+// TaskCard receives the label already translated, not the enum. This index is
+// derived from the enum-keyed map instead of being written separately, so
+// there aren't two lists that can drift apart.
 export const categoriaIconByLabel: Record<string, LucideIcon> = Object.fromEntries(
   (Object.keys(CATEGORIA_LABELS) as NonNullable<TaskCategoria>[]).map((c) => [
     CATEGORIA_LABELS[c],
@@ -40,8 +40,8 @@ export function getCategoriaIcon(categoria: string): LucideIcon {
   return CATEGORIA_ICONS[categoria as NonNullable<TaskCategoria>] ?? MoreHorizontal;
 }
 
-// `abierta` sale exacto del frame `dyDLm` de Pencil. Los otros cuatro se
-// derivan del design system: Pencil sólo diseñó el chip del estado abierto.
+// `abierta` comes verbatim from Pencil frame `dyDLm`. The other four are
+// derived from the design system: Pencil only designed the open-state chip.
 export const ESTADO_BADGE = {
   abierta: { label: "Abierta", bg: "bg-blue-raw/20", text: "text-brand-blue" },
   tomada: { label: "Tomada", bg: "bg-coral/20", text: "text-coral" },

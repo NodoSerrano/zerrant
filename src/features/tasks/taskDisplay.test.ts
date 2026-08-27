@@ -10,8 +10,8 @@ import {
 } from "./taskDisplay";
 
 describe("CATEGORIA_LABELS", () => {
-  // La columna guarda el valor del enum (`reparacion`); la UI muestra el
-  // castellano con tilde. Sin esta traducción el hub imprime el valor crudo.
+  // The column stores the enum value (`reparacion`); the UI shows the
+  // accented Spanish label. Without this translation the hub prints the raw value.
   it("maps every enum value to its Spanish label", () => {
     expect(CATEGORIA_LABELS).toEqual({
       reparacion: "Reparación",
@@ -29,7 +29,7 @@ describe("getCategoriaIcon", () => {
     ["limpieza", "SprayCan"],
     ["compra", "ShoppingCart"],
     ["mantenimiento", "Settings"],
-    // `MoreHorizontal` es un alias de lucide: su displayName real es "Ellipsis".
+    // `MoreHorizontal` is a lucide alias: its real displayName is "Ellipsis".
     ["otro", "Ellipsis"],
   ])("returns the %s icon", (categoria, expected) => {
     expect(getCategoriaIcon(categoria).displayName).toBe(expected);
@@ -41,8 +41,8 @@ describe("getCategoriaIcon", () => {
 });
 
 describe("categoriaIconByLabel", () => {
-  // TaskCard recibe la etiqueta ya traducida, no el enum. Este índice se deriva
-  // del mapa por enum para que no haya dos listas que se puedan desincronizar.
+  // TaskCard receives the label already translated, not the enum. This index
+  // is derived from the enum-keyed map so there aren't two lists that can drift.
   it("is keyed by the same Spanish labels that CATEGORIA_LABELS produces", () => {
     expect(Object.keys(categoriaIconByLabel).sort()).toEqual(
       Object.values(CATEGORIA_LABELS).sort(),
@@ -55,8 +55,8 @@ describe("categoriaIconByLabel", () => {
 });
 
 describe("getEstadoBadge", () => {
-  // `abierta` sale exacto del frame dyDLm de Pencil. El resto se deriva del
-  // design system, porque Pencil no diseñó un chip por estado.
+  // `abierta` comes verbatim from Pencil frame dyDLm. The rest is derived from
+  // the design system, because Pencil didn't design a chip per state.
   it.each([
     ["abierta", "Abierta", "bg-blue-raw/20", "text-brand-blue"],
     ["tomada", "Tomada", "bg-coral/20", "text-coral"],

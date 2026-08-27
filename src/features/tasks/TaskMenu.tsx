@@ -6,10 +6,10 @@ import { Ellipsis } from "lucide-react";
 import { cancelTask } from "./actions";
 import { cn } from "@/lib/utils";
 
-// Cada acción vive en su propia ventana de estados. Cancelar sigue teniendo
-// sentido con la tarea ya tomada; editar no, porque le cambiaría el trabajo a
-// quien la aceptó sin avisarle. Si no queda ninguna acción, el disparador no se
-// dibuja: nada de controles muertos.
+// Each action lives in its own window of states. Cancelling still makes sense
+// once the task is taken; editing doesn't, because it would change the work of
+// whoever accepted it without warning. When no action remains, the trigger
+// isn't drawn: no dead controls.
 const ESTADOS_CANCELABLES = ["abierta", "tomada"];
 const ESTADOS_EDITABLES = ["abierta"];
 
@@ -20,8 +20,8 @@ interface TaskMenuProps {
   taskId: string;
   estado: string;
   isOwner: boolean;
-  /** En la pantalla de editar, "Editar" sería un no-op sobre la pantalla en la
-   *  que ya estás. Sólo queda cancelar. */
+  /** On the edit screen, "Editar" would be a no-op on the screen you are
+   *  already on. Only cancelling remains. */
   showEditItem?: boolean;
 }
 
@@ -43,10 +43,10 @@ export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskM
     if (restoreFocus) triggerRef.current?.focus();
   }
 
-  // Escape cierra y devuelve el foco al disparador: si no, el foco queda
-  // colgado en un nodo que dejó de existir y el usuario de teclado se pierde.
-  // Un click afuera también cierra, pero sin robar el foco de donde el usuario
-  // acaba de hacer click.
+  // Escape closes and returns focus to the trigger: otherwise the focus stays
+  // stranded on a node that no longer exists and the keyboard user gets lost.
+  // An outside click also closes, but without stealing focus from where the
+  // user just clicked.
   useEffect(() => {
     if (!open) return;
 
@@ -71,8 +71,8 @@ export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskM
     };
   }, [open]);
 
-  // Al abrir, el foco entra al menú. Si se queda en el disparador, el siguiente
-  // Tab lleva al contenido de atrás en vez de al primer ítem.
+  // On open, focus moves into the menu. If it stayed on the trigger, the next
+  // Tab would go to the content behind instead of the first item.
   useEffect(() => {
     if (open && !confirming) firstItemRef.current?.focus();
   }, [open, confirming]);
@@ -101,9 +101,9 @@ export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskM
         <div
           id={menuId}
           ref={menuRef}
-          // Durante la confirmación el contenedor deja de tener `menuitem`s, así
-          // que dejar `role="menu"` metería a un lector de pantalla en un menú
-          // vacío con una acción destructiva pendiente.
+          // During confirmation the container no longer has `menuitem`s, so
+          // keeping `role="menu"` would put a screen reader in an empty menu
+          // with a destructive action pending.
           role={confirming ? "dialog" : "menu"}
           aria-label={confirming ? "Confirmar cancelación" : undefined}
           aria-modal={confirming ? false : undefined}
@@ -132,8 +132,8 @@ export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskM
                 </button>
                 <button
                   type="button"
-                  // Deshabilitado en vuelo: si no, desmonta el form a mitad del
-                  // pedido y el usuario se queda sin resultado ni error.
+                  // Disabled while in flight: otherwise it unmounts the form
+                  // mid-request and the user is left with neither result nor error.
                   disabled={pending}
                   onClick={() => setConfirming(false)}
                   className="flex-1 whitespace-nowrap rounded-pill border border-border px-3 py-1.5 font-display text-[13px] font-semibold text-text-secondary disabled:opacity-50"

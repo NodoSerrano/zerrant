@@ -12,8 +12,8 @@ function fileInput(): HTMLInputElement {
   return input as HTMLInputElement;
 }
 
-// jsdom no deja asignar `files` directamente, así que lo definimos a mano antes
-// de disparar el change, que es lo que hace el browser al elegir un archivo.
+// jsdom doesn't allow assigning `files` directly, so we define it by hand
+// before firing change, which is what the browser does when a file is picked.
 function choose(file: File) {
   const input = fileInput();
   Object.defineProperty(input, "files", { value: [file], configurable: true });
@@ -27,7 +27,7 @@ describe("AvatarPicker", () => {
     const trigger = screen.getByRole("button", { name: "Agregar foto" });
     expect(trigger).toBeInTheDocument();
     expect(screen.queryByRole("img")).toBeNull();
-    // El ícono es decorativo: lo nombra el botón, no el svg.
+    // The icon is decorative: the button names it, not the svg.
     const icon = trigger.querySelector("svg.lucide");
     expect(icon).toBeTruthy();
     expect(icon).toHaveAttribute("aria-hidden", "true");
@@ -37,7 +37,7 @@ describe("AvatarPicker", () => {
     render(<AvatarPicker action={vi.fn()} />);
     const input = fileInput();
 
-    // El control accesible es el botón; el input duplicado sólo confundiría.
+    // The accessible control is the button; the duplicate input would only confuse.
     expect(input).toHaveAttribute("tabindex", "-1");
     expect(input).toHaveAttribute("aria-hidden", "true");
   });
@@ -104,7 +104,7 @@ describe("AvatarPicker", () => {
     choose(jpeg("otra.jpg"));
     expect(await screen.findByRole("alert")).toBeInTheDocument();
 
-    // La foto sigue guardada en el perfil: borrarla de la UI mentiría.
+    // The photo stays saved on the profile: removing it from the UI would lie.
     expect(screen.getByRole("img", { name: "Foto de perfil" })).toBeInTheDocument();
     expect(screen.getByText("Cambiar foto")).toBeInTheDocument();
   });

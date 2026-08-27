@@ -16,9 +16,9 @@ interface TaskCardProps {
   className?: string;
 }
 
-// El componente recibe la categoría ya traducida, así que resuelve el ícono
-// por etiqueta. El índice sale de `taskDisplay`, que es el único lugar donde
-// vive el mapa de categorías.
+// The component receives the category already translated, so it resolves the
+// icon by label. The index comes from `taskDisplay`, the only place where
+// the category map lives.
 const getCategoryIcon = (category: string): LucideIcon => {
   return categoriaIconByLabel[category] ?? MoreHorizontal;
 };
@@ -35,17 +35,17 @@ export function TaskCard({
   className,
 }: TaskCardProps) {
   const Icon = getCategoryIcon(category);
-  // Los datos vienen de enums de Postgres que pueden crecer. Sin fallback, un
-  // valor que el componente todavía no conoce lo hace explotar y se lleva
-  // puesta la pantalla que lo renderiza.
+  // The data comes from Postgres enums that can grow. Without a fallback, a
+  // value the component doesn't know yet crashes it and takes down the
+  // screen that renders it.
   const estadoData = ESTADO_BADGE[estado] ?? ESTADO_BADGE.abierta;
   const urgenciaData = URGENCIA_CONFIG[urgencia] ?? URGENCIA_CONFIG.media;
 
-  // Sólo una tarea abierta se puede tomar. El consumidor fija el `actionLabel`
-  // sin mirar el estado, así que la tarjeta lo apaga cuando no hay nada que
-  // hacer: se sigue leyendo, pero no se ofrece como accionable. El criterio es
-  // "¿es accionable?" y no una lista de estados terminales, para que el próximo
-  // valor del enum no repita el problema.
+  // Only an open task can be taken. The consumer sets the `actionLabel`
+  // without looking at the state, so the card dims it when there is nothing
+  // to do: it stays readable, but is no longer offered as actionable. The
+  // criterion is "is it actionable?", not a list of terminal states, so the
+  // next enum value doesn't repeat the problem.
   const accionable = estado === "abierta";
   const actionClasses = cn(
     "shrink-0 rounded-pill bg-surface-inset border border-border px-4 py-[7px] font-display text-[13px] font-semibold",

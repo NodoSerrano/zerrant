@@ -82,9 +82,9 @@ describe("EditTaskPage — authorization (AC8)", () => {
     await expect(renderEdit({ task: null })).rejects.toThrow("NEXT_NOT_FOUND");
   });
 
-  // Defensa en profundidad: el redirect es UX, para no mostrar un formulario que
-  // no se puede enviar. La guarda de verdad está en `updateTask`, porque un POST
-  // directo se saltea el render.
+  // Defense in depth: the redirect is UX, so we don't show a form that
+  // can't be submitted. The real guard lives in `updateTask`, because a
+  // direct POST skips the render.
   it("sends anyone who is not the creator back to the detail screen", async () => {
     await expect(renderEdit({ viewerId: "someone-else" })).rejects.toThrow(
       "NEXT_REDIRECT:/nodo/tasks/task-1",
@@ -99,8 +99,8 @@ describe("EditTaskPage — authorization (AC8)", () => {
 });
 
 describe("EditTaskPage — header, frame H3BY0u (AC8)", () => {
-  // El frame usa chevron-left, no la `x` de crear tarea: editar es una
-  // navegación hacia atrás, no el cierre de un modal.
+  // The frame uses chevron-left, not the `x` from create task: editing is
+  // backward navigation, not the closing of a modal.
   it("exits through a back chevron pointing at the detail screen", async () => {
     const { container } = await renderEdit();
 
@@ -166,8 +166,8 @@ describe("EditTaskPage — prefilled form (AC8)", () => {
     expect(screen.getByLabelText("Descripción")).toHaveValue("");
   });
 
-  // `updateTask` necesita saber qué fila actualizar, y el form tiene que
-  // funcionar sin JavaScript.
+  // `updateTask` needs to know which row to update, and the form has to
+  // work without JavaScript.
   it("carries the task id in the form", async () => {
     const { container } = await renderEdit();
 
@@ -176,8 +176,8 @@ describe("EditTaskPage — prefilled form (AC8)", () => {
 });
 
 describe("EditTaskPage — estado guard (AC8)", () => {
-  // Editar sólo mientras nadie se comprometió. La ruta es adivinable y el botón
-  // de atrás llega acá después de cancelar desde la propia pantalla.
+  // Edit only while nobody has committed to the task. The route is guessable
+  // and the back button lands here after cancelling from the screen itself.
   it.each(["tomada", "hecha", "verificada", "cancelada"])(
     "sends the creator back to the detail screen when the task is %s",
     async (estado) => {
@@ -203,8 +203,8 @@ describe("EditTaskPage — CTA (AC8)", () => {
     expect(screen.queryByRole("button", { name: "Cancelar" })).not.toBeInTheDocument();
   });
 
-  // Mismo bug que ZER-21 tuvo que descoser: en Pencil el CTA cuelga del wrapper
-  // con gap 18, no del grupo de campos que tiene gap 16.
+  // Same bug ZER-21 had to unpick: in Pencil the CTA hangs off the wrapper
+  // with gap 18, not off the field group which has gap 16.
   it("separates the CTA from the fields by 18px, not 16px", async () => {
     await renderEdit();
 

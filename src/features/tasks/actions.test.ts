@@ -7,10 +7,10 @@ const mocks = vi.hoisted(() => ({
   profilesSelectSingle: vi.fn(),
   tasksInsert: vi.fn(),
   tasksUpdate: vi.fn(),
-  // Cada eslabón del builder de PostgREST queda registrado en orden, así los
-  // tests pueden afirmar sobre los filtros sin atarse a cuántos hay ni a su
-  // anidamiento. El mock anterior era una cadena fija de dos `.eq()` y no
-  // soportaba el `.in()` ni el `.select()` que las acciones necesitan.
+  // Every link of the PostgREST builder chain gets recorded in order, so the
+  // tests can assert on the filters without being tied to how many there are
+  // or how they nest. The previous mock was a fixed two-`.eq()` chain and
+  // couldn't handle the `.in()` or `.select()` the actions need.
   chainCalls: [] as unknown[][],
   updateResult: { data: null, error: null } as { data: unknown; error: unknown },
 }));
@@ -56,7 +56,7 @@ beforeEach(() => {
   mocks.updateResult = { data: null, error: null };
 });
 
-/** Una fila devuelta = el update matcheó. Vacío = los filtros no encontraron nada. */
+/** A returned row = the update matched. Empty = the filters found nothing. */
 function updateMatched(rows = [{ id: "task-001" }]) {
   mocks.updateResult = { data: rows, error: null };
 }
@@ -249,9 +249,9 @@ describe("cancelTask", () => {
     return fd;
   };
 
-  // Defensa en profundidad: la guarda del action evita el caso normal, y el
-  // filtro del update la sostiene aunque alguien postee directo. La policy de
-  // RLS por sí sola no alcanza — deja escribir también al `tomada_por`.
+  // Defense in depth: the action's guard prevents the normal case, and the
+  // update filter holds even if someone posts directly. The RLS policy alone
+  // isn't enough — it also lets `tomada_por` write.
   it("scopes the update to the creator and to cancellable estados", async () => {
     setupAuth("owner-user-id");
     updateMatched();
@@ -294,9 +294,9 @@ describe("cancelTask", () => {
     expect(result).toEqual({ error: "No pudimos cancelar la tarea. Probá de nuevo." });
   });
 
-  // PostgREST no considera error un UPDATE que no matchea ninguna fila: devuelve
-  // `error: null`. Sin mirar las filas afectadas, la acción redirige como si
-  // hubiera funcionado y el usuario cree que canceló algo que sigue vivo.
+  // PostgREST doesn't consider an UPDATE that matches no rows an error: it
+  // returns `error: null`. Without checking the affected rows, the action
+  // redirects as if it worked and the user believes they cancelled a live task.
   it("reports a rejection when the filters match no row", async () => {
     setupAuth("owner-user-id");
     updateMatchedNothing();
@@ -350,9 +350,9 @@ describe("updateTask", () => {
     });
   });
 
-  // La policy de RLS deja escribir al `creado_por` **o** al `tomada_por`, y el
-  // grant por columna incluye `titulo` y `descripcion`. Sin este filtro, quien
-  // toma una tarea puede reescribirle el texto.
+  // The RLS policy lets `creado_por` **or** `tomada_por` write, and the
+  // column grant includes `titulo` and `descripcion`. Without this filter,
+  // whoever takes a task can rewrite its text.
   it("scopes the update to the creator, not merely to the task id", async () => {
     setupAuth("owner-user-id");
     updateMatched();
@@ -382,8 +382,8 @@ describe("updateTask", () => {
     );
   });
 
-  // `titulo` es NOT NULL pero acepta la cadena vacía: sin esta guarda, el
-  // `required` del HTML es lo único que impide una tarea sin título.
+  // `titulo` is NOT NULL but accepts the empty string: without this guard, the
+  // HTML `required` is the only thing preventing a title-less task.
   it("rejects a blank title without touching the table", async () => {
     setupAuth("owner-user-id");
 
@@ -393,8 +393,8 @@ describe("updateTask", () => {
     expect(mocks.tasksUpdate).not.toHaveBeenCalled();
   });
 
-  // La columna es nullable: "sin descripción" y "descripción vacía" tienen que
-  // llegar iguales a la base, para que el detalle pueda distinguir un caso solo.
+  // The column is nullable: "no description" and "empty description" must
+  // reach the database the same way, so the detail only has one case to tell apart.
   it("stores an empty description as null", async () => {
     setupAuth("owner-user-id");
     updateMatched();
@@ -435,9 +435,9 @@ describe("updateTask", () => {
     expect(result).toEqual({ error: "No pudimos guardar los cambios." });
   });
 
-  // Editar sólo tiene sentido mientras nadie se comprometió con la tarea. Una vez
-  // tomada, cambiarle el alcance le cambia el trabajo al tomador sin avisarle; y
-  // una hecha o verificada no se reescribe, porque rompe el registro.
+  // Editing only makes sense while nobody has committed to the task. Once
+  // taken, changing its scope changes the taker's work without warning; and a
+  // hecha or verificada task isn't rewritten, because that breaks the record.
   it("only edits a task that is still abierta", async () => {
     setupAuth("owner-user-id");
     updateMatched();
@@ -463,7 +463,7 @@ describe("updateTask", () => {
     expect(mocks.tasksUpdate).not.toHaveBeenCalled();
   });
 
-  // Un POST parcial no tiene por qué borrar la descripción que ya estaba.
+  // A partial POST shouldn't wipe the description that was already there.
   it("leaves descripcion untouched when the field is absent from the submission", async () => {
     setupAuth("owner-user-id");
     updateMatched();

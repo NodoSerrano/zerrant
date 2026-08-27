@@ -5,8 +5,8 @@ vi.mock("./actions", () => ({
   cancelTask: vi.fn(),
 }));
 
-// El Link real reenvía cualquier prop al <a>; el mock tiene que hacer lo mismo
-// o se pierde el `role` que hace al item accesible.
+// The real Link forwards any prop to the <a>; the mock must do the same
+// or the `role` that makes the item accessible is lost.
 vi.mock("next/link", () => ({
   default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
     <a href={href} {...rest}>
@@ -28,8 +28,8 @@ function openMenu() {
 }
 
 describe("TaskMenu — visibility (AC6)", () => {
-  // Regla production-first: nada de controles muertos. Si no hay acción que
-  // ofrecer, el disparador directamente no se dibuja.
+  // Production-first rule: no dead controls. If there is no action to
+  // offer, the trigger simply isn't drawn.
   it("renders nothing when the viewer is not the creator", () => {
     const { container } = render(<TaskMenu {...OWNER_OPEN} isOwner={false} />);
 
@@ -91,8 +91,8 @@ describe("TaskMenu — opening and items (AC6)", () => {
     );
   });
 
-  // En la pantalla de editar, "Editar" sería un no-op sobre la pantalla en la
-  // que ya estás; cancelar sigue teniendo sentido y evita volver al detalle.
+  // On the edit screen, "Editar" would be a no-op on the screen you are
+  // already on; cancelling still makes sense and avoids going back to the detail.
   it("drops the Editar item when the caller asks for the edit-screen variant", () => {
     render(<TaskMenu {...OWNER_OPEN} showEditItem={false} />);
     openMenu();
@@ -137,8 +137,8 @@ describe("TaskMenu — dismissal and focus (AC6)", () => {
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
-  // Si el foco se queda en el disparador, el siguiente Tab lleva al contenido de
-  // atrás en vez de al primer ítem del menú abierto.
+  // If focus stayed on the trigger, the next Tab would go to the content
+  // behind instead of the first item of the open menu.
   it("moves focus into the menu when it opens", () => {
     render(<TaskMenu {...OWNER_OPEN} />);
     openMenu();
@@ -146,9 +146,9 @@ describe("TaskMenu — dismissal and focus (AC6)", () => {
     expect(document.activeElement).toBe(screen.getByRole("menuitem", { name: "Editar" }));
   });
 
-  // Durante la confirmación no queda ningún `menuitem`: dejar `role="menu"`
-  // metería a un lector de pantalla en un menú vacío con una acción destructiva
-  // pendiente.
+  // During confirmation there are no `menuitem`s left: keeping `role="menu"`
+  // would put a screen reader in an empty menu with a destructive action
+  // pending.
   it("stops claiming to be a menu while it is asking for confirmation", () => {
     render(<TaskMenu {...OWNER_OPEN} />);
     openMenu();
@@ -173,8 +173,8 @@ describe("TaskMenu — keyboard (AC6)", () => {
 });
 
 describe("TaskMenu — cancelling (AC6)", () => {
-  // Cancelar no se deshace con un click: la tarea vuelve a un estado del que ya
-  // no se puede salir. Se confirma antes de disparar el server action.
+  // Cancelling isn't undone with a click: the task goes to a state there is
+  // no way out of. It asks for confirmation before firing the server action.
   it("does not submit straight away — it asks first", () => {
     render(<TaskMenu {...OWNER_OPEN} />);
     openMenu();
@@ -197,8 +197,8 @@ describe("TaskMenu — cancelling (AC6)", () => {
     expect(container.querySelector('input[name="taskId"]')).toHaveValue("task-1");
   });
 
-  // Medido en el navegador: con el menú a 180px los dos botones no entraban y
-  // "Sí, cancelar" partía en dos líneas. Ningún test de clases lo veía.
+  // Measured in the browser: with the menu at 180px the two buttons didn't fit
+  // and "Sí, cancelar" wrapped onto two lines. No class-based test caught it.
   it("keeps the confirmation labels on a single line", () => {
     render(<TaskMenu {...OWNER_OPEN} />);
     openMenu();
