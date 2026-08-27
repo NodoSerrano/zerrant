@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Folder,
   Gift,
@@ -56,11 +57,13 @@ export function SerranoMenu({ disponibilidad, visibilidadTarifa }: SerranoMenuPr
       </div>
 
       <div className="rounded-[20px] bg-surface border border-border overflow-hidden flex flex-col">
-        <div className="flex items-center gap-3 px-4 py-[15px] w-full text-text-primary/40">
-          <Sparkles size={20} className="text-brand-violet/40 shrink-0" />
-          <span className="font-body text-[15px] text-left flex-1">Mis habilidades</span>
-          <ChevronRight size={18} className="text-text-muted/40 shrink-0" />
-        </div>
+        <Link href="/profile/habilidades" className="flex items-center gap-3 px-4 py-[15px] w-full">
+          <Sparkles size={20} className="text-brand-violet shrink-0" />
+          <span className="font-body text-[15px] text-text-primary text-left flex-1">
+            Mis habilidades
+          </span>
+          <ChevronRight size={18} className="text-text-muted shrink-0" />
+        </Link>
 
         <div className="h-px bg-border w-full" />
 
