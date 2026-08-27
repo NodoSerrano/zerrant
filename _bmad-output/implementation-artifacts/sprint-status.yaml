@@ -106,7 +106,7 @@ development_status:
   3-1-modelo-de-datos-rls-seed-admin: done
   3-2-formulario-de-solicitud: review
   3-3-confirmacion-de-envio: backlog
-  3-4-pantalla-post-solicitud: backlog
+  3-4-pantalla-post-solicitud: review
   3-5-panel-admin-membresias: done
   3-6-roles-autoasignacion: review
   3-7-roles-confirmacion-admin: backlog
