@@ -2,8 +2,12 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 const mocks = vi.hoisted(() => ({
-  membershipResponse: Promise.resolve({ data: [] as unknown[], count: 0 }) as Promise<{ data: unknown[]; count: number }>,
+  membershipResponse: Promise.resolve({ data: [] as unknown[], count: 0 }) as Promise<{
+    data: unknown[];
+    count: number;
+  }>,
   membershipSelect: vi.fn(),
+  rolesCountResponse: Promise.resolve({ count: 0 }) as Promise<{ count: number }>,
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -17,6 +21,13 @@ vi.mock("@/lib/supabase/server", () => ({
           })),
         };
       }
+      if (table === "profile_roles") {
+        return {
+          select: vi.fn().mockImplementation(() => ({
+            eq: vi.fn(() => mocks.rolesCountResponse),
+          })),
+        };
+      }
       return {};
     }),
   }),
@@ -24,7 +35,9 @@ vi.mock("@/lib/supabase/server", () => ({
 
 vi.mock("@/components/RequestCard", () => ({
   RequestCard: ({ request }: { request: { profile: { nombre: string; apellido: string } } }) => (
-    <div data-testid="request-card">{request.profile.nombre} {request.profile.apellido}</div>
+    <div data-testid="request-card">
+      {request.profile.nombre} {request.profile.apellido}
+    </div>
   ),
 }));
 

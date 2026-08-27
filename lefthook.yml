@@ -47,4 +47,4 @@ commit-msg:
       skip:
         - merge
         - rebase
-      run: pnpm exec commitlint --edit {1}
+      run: pnpm exec commitlint --edit "{1}"
