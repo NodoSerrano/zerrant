@@ -85,6 +85,7 @@ export function EditSkills({ initialSkills, catalog }: EditSkillsProps) {
               key={skill}
               type="button"
               onClick={() => remove(skill)}
+              aria-label={`Quitar ${skill}`}
               className="inline-flex items-center gap-1.5 rounded-pill bg-brand-green/10 px-3 py-[7px] font-body text-[13px] font-medium text-brand-green"
             >
               {skill}
@@ -105,6 +106,7 @@ export function EditSkills({ initialSkills, catalog }: EditSkillsProps) {
                 key={skill}
                 type="button"
                 onClick={() => add(skill)}
+                aria-label={`Agregar ${skill}`}
                 className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-surface px-3 py-[7px] font-body text-[13px] font-medium text-text-secondary"
               >
                 <Plus size={13} className="text-text-muted" aria-hidden />

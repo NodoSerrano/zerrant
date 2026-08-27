@@ -2,31 +2,38 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
+  profilesSelectEq: vi.fn(),
+  profilesSingle: vi.fn(),
   skillsSelect: vi.fn(),
-  profileSkillsSelectEq: vi.fn(),
-  deleteIn: vi.fn(),
-  upsert: vi.fn(),
+  rpc: vi.fn(),
+  revalidatePath: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mocks.getUser },
     from: vi.fn((table: string) => {
+      if (table === "profiles") {
+        return {
+          select: vi.fn(() => ({
+            eq: mocks.profilesSelectEq.mockImplementation(() => ({
+              single: mocks.profilesSingle,
+            })),
+          })),
+        };
+      }
       if (table === "skills") {
         return { select: mocks.skillsSelect };
       }
-      return {
-        select: vi.fn(() => ({ eq: mocks.profileSkillsSelectEq })),
-        delete: vi.fn(() => ({
-          eq: vi.fn(() => ({ in: mocks.deleteIn })),
-        })),
-        upsert: mocks.upsert,
-      };
+      return {};
     }),
+    rpc: mocks.rpc,
   }),
 }));
 
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/cache", () => ({
+  revalidatePath: (...args: unknown[]) => mocks.revalidatePath(...args),
+}));
 
 import { saveProfileSkills } from "./skills-actions";
 
@@ -42,6 +49,13 @@ function formDataWith(...names: string[]): FormData {
   return fd;
 }
 
+function serranoUser() {
+  mocks.getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
+  mocks.profilesSingle.mockResolvedValue({ data: { tier: "standard" }, error: null });
+  mocks.skillsSelect.mockResolvedValue({ data: CATALOG, error: null });
+  mocks.rpc.mockResolvedValue({ data: { success: true }, error: null });
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -53,18 +67,32 @@ describe("saveProfileSkills", () => {
     const result = await saveProfileSkills(null, formDataWith("Solidity"));
 
     expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it("returns No autorizado when the caller is a tourist", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
+    mocks.profilesSingle.mockResolvedValue({ data: { tier: "tourist" }, error: null });
+
+    const result = await saveProfileSkills(null, formDataWith("Solidity"));
+
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.rpc).not.toHaveBeenCalled();
     expect(mocks.skillsSelect).not.toHaveBeenCalled();
   });
 
-  it("deletes removed skills and inserts added ones", async () => {
+  it("returns No autorizado when the profile is missing", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
-    mocks.skillsSelect.mockResolvedValue({ data: CATALOG, error: null });
-    mocks.profileSkillsSelectEq.mockResolvedValue({
-      data: [{ skill_id: "s1" }, { skill_id: "s3" }],
-      error: null,
-    });
-    mocks.deleteIn.mockResolvedValue({ error: null });
-    mocks.upsert.mockResolvedValue({ error: null });
+    mocks.profilesSingle.mockResolvedValue({ data: null, error: { message: "no row" } });
+
+    const result = await saveProfileSkills(null, formDataWith("Solidity"));
+
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it("syncs skills via a single RPC with resolved catalog ids", async () => {
+    serranoUser();
 
     try {
       await saveProfileSkills(null, formDataWith("Solidity", "Rust"));
@@ -72,18 +100,15 @@ describe("saveProfileSkills", () => {
       // redirect throws
     }
 
-    expect(mocks.deleteIn).toHaveBeenCalledWith("skill_id", ["s3"]);
-    expect(mocks.upsert).toHaveBeenCalledWith([{ profile_id: "u1", skill_id: "s2" }], {
-      onConflict: "profile_id,skill_id",
-      ignoreDuplicates: true,
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_profile_skills", {
+      p_skill_ids: ["s1", "s2"],
     });
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/profile");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/plantel");
   });
 
   it("dedupes case-insensitive names and ignores names missing from the catalog", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
-    mocks.skillsSelect.mockResolvedValue({ data: CATALOG, error: null });
-    mocks.profileSkillsSelectEq.mockResolvedValue({ data: [], error: null });
-    mocks.upsert.mockResolvedValue({ error: null });
+    serranoUser();
 
     try {
       await saveProfileSkills(null, formDataWith("solidity", "Solidity", "Rust", "Cobol"));
@@ -91,60 +116,51 @@ describe("saveProfileSkills", () => {
       // redirect throws
     }
 
-    expect(mocks.upsert).toHaveBeenCalledWith(
-      [
-        { profile_id: "u1", skill_id: "s1" },
-        { profile_id: "u1", skill_id: "s2" },
-      ],
-      { onConflict: "profile_id,skill_id", ignoreDuplicates: true },
-    );
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_profile_skills", {
+      p_skill_ids: ["s1", "s2"],
+    });
   });
 
-  it("skips DB writes when nothing changed", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
-    mocks.skillsSelect.mockResolvedValue({ data: CATALOG, error: null });
-    mocks.profileSkillsSelectEq.mockResolvedValue({ data: [{ skill_id: "s1" }], error: null });
+  it("syncs an empty skill list when the form has no skills", async () => {
+    serranoUser();
 
     try {
-      await saveProfileSkills(null, formDataWith("Solidity"));
+      await saveProfileSkills(null, formDataWith());
     } catch {
       // redirect throws
     }
 
-    expect(mocks.deleteIn).not.toHaveBeenCalled();
-    expect(mocks.upsert).not.toHaveBeenCalled();
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_profile_skills", {
+      p_skill_ids: [],
+    });
   });
 
   it("returns DB error when the catalog read fails", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
+    mocks.profilesSingle.mockResolvedValue({ data: { tier: "standard" }, error: null });
     mocks.skillsSelect.mockResolvedValue({ data: null, error: { message: "boom" } });
 
     const result = await saveProfileSkills(null, formDataWith("Solidity"));
 
     expect(result).toEqual({ error: "No pudimos guardar tus habilidades. Probá de nuevo." });
-    expect(mocks.upsert).not.toHaveBeenCalled();
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
-  it("returns DB error and stops before insert when delete fails", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
-    mocks.skillsSelect.mockResolvedValue({ data: CATALOG, error: null });
-    mocks.profileSkillsSelectEq.mockResolvedValue({ data: [{ skill_id: "s1" }], error: null });
-    mocks.deleteIn.mockResolvedValue({ error: { message: "boom" } });
-
-    const result = await saveProfileSkills(null, formDataWith());
-
-    expect(result).toEqual({ error: "No pudimos guardar tus habilidades. Probá de nuevo." });
-    expect(mocks.upsert).not.toHaveBeenCalled();
-  });
-
-  it("returns DB error when insert fails", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
-    mocks.skillsSelect.mockResolvedValue({ data: CATALOG, error: null });
-    mocks.profileSkillsSelectEq.mockResolvedValue({ data: [], error: null });
-    mocks.upsert.mockResolvedValue({ error: { message: "boom" } });
+  it("returns DB error when the RPC fails", async () => {
+    serranoUser();
+    mocks.rpc.mockResolvedValue({ data: null, error: { message: "boom" } });
 
     const result = await saveProfileSkills(null, formDataWith("Solidity"));
 
     expect(result).toEqual({ error: "No pudimos guardar tus habilidades. Probá de nuevo." });
+  });
+
+  it("returns the RPC business error when the function rejects the caller", async () => {
+    serranoUser();
+    mocks.rpc.mockResolvedValue({ data: { error: "No autorizado" }, error: null });
+
+    const result = await saveProfileSkills(null, formDataWith("Solidity"));
+
+    expect(result).toEqual({ error: "No autorizado" });
   });
 });

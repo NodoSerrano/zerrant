@@ -68,32 +68,34 @@ describe("EditSkills", () => {
     );
   });
 
-  it("renders current skills as green removable chips", () => {
+  it("renders current skills as green removable chips with aria-labels", () => {
     render(<EditSkills initialSkills={["Solidity"]} catalog={CATALOG} />);
-    const chip = screen.getByRole("button", { name: "Solidity" });
+    const chip = screen.getByRole("button", { name: "Quitar Solidity" });
     expect(chip.className).toContain("bg-brand-green/10");
   });
 
-  it("renders suggestions excluding the selected skills", () => {
+  it("renders suggestions excluding the selected skills with aria-labels", () => {
     render(<EditSkills initialSkills={["Solidity"]} catalog={CATALOG} />);
     expect(screen.getByText("Sugerencias")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Rust" }).className).toContain("bg-surface");
-    expect(screen.getByRole("button", { name: "Solidity" }).className).toContain(
+    expect(screen.getByRole("button", { name: "Agregar Rust" }).className).toContain("bg-surface");
+    expect(screen.getByRole("button", { name: "Quitar Solidity" }).className).toContain(
       "bg-brand-green/10",
     );
   });
 
   it("adds a suggestion to the selected skills when clicked", () => {
     render(<EditSkills initialSkills={[]} catalog={CATALOG} />);
-    fireEvent.click(screen.getByRole("button", { name: "Rust" }));
+    fireEvent.click(screen.getByRole("button", { name: "Agregar Rust" }));
 
     expect(hiddenValues()).toContain("Rust");
-    expect(screen.getByRole("button", { name: "Rust" }).className).toContain("bg-brand-green/10");
+    expect(screen.getByRole("button", { name: "Quitar Rust" }).className).toContain(
+      "bg-brand-green/10",
+    );
   });
 
   it("removes a selected skill when its chip is clicked", () => {
     render(<EditSkills initialSkills={["Solidity"]} catalog={CATALOG} />);
-    fireEvent.click(screen.getByRole("button", { name: "Solidity" }));
+    fireEvent.click(screen.getByRole("button", { name: "Quitar Solidity" }));
 
     expect(hiddenValues()).not.toContain("Solidity");
   });
@@ -104,8 +106,8 @@ describe("EditSkills", () => {
       target: { value: "dev" },
     });
 
-    expect(screen.getByRole("button", { name: "DevOps" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Rust" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Agregar DevOps" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Agregar Rust" })).not.toBeInTheDocument();
   });
 
   it("carries the selected skills as hidden inputs for submission", () => {

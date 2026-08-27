@@ -43,8 +43,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: "2026-07-23T18:20:22-03:00"
-last_updated: "2026-08-07T14:00:00-03:00"
-last_updated: "2026-07-29T00:00:00-03:00"
+last_updated: "2026-08-27T00:00:00-03:00"
 project: nodo
 project_key: NOKEY
 tracking_system: linear

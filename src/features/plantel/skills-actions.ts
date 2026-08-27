@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { computeSkillDiff, dedupeSkillNames, normalizeSkillName } from "./skills";
+import { dedupeSkillNames, normalizeSkillName } from "./skills";
 
 const DB_ERROR = "No pudimos guardar tus habilidades. Probá de nuevo.";
 
@@ -18,6 +18,16 @@ export async function saveProfileSkills(
   } = await supabase.auth.getUser();
 
   if (!user) {
+    return { error: "No autorizado" };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tier")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || profile.tier === "tourist") {
     return { error: "No autorizado" };
   }
 
@@ -44,44 +54,20 @@ export async function saveProfileSkills(
     .map((name) => idByName.get(name.toLocaleLowerCase()))
     .filter((id): id is string => Boolean(id));
 
-  const { data: current, error: currentError } = await supabase
-    .from("profile_skills")
-    .select("skill_id")
-    .eq("profile_id", user.id);
+  const { data, error: rpcError } = await supabase.rpc("sync_profile_skills", {
+    p_skill_ids: targetIds,
+  });
 
-  if (currentError) {
-    console.error("[saveProfileSkills] lectura de skills actuales falló", currentError);
+  if (rpcError) {
+    console.error("[saveProfileSkills] rpc falló", rpcError);
     return { error: DB_ERROR };
   }
 
-  const currentIds = (current ?? []).map((row) => row.skill_id);
-  const { toAdd, toRemove } = computeSkillDiff(currentIds, targetIds);
-
-  if (toRemove.length > 0) {
-    const { error } = await supabase
-      .from("profile_skills")
-      .delete()
-      .eq("profile_id", user.id)
-      .in("skill_id", toRemove);
-
-    if (error) {
-      console.error("[saveProfileSkills] delete falló", error);
-      return { error: DB_ERROR };
-    }
+  if (data?.error) {
+    return { error: data.error };
   }
 
-  if (toAdd.length > 0) {
-    const { error } = await supabase.from("profile_skills").upsert(
-      toAdd.map((skill_id) => ({ profile_id: user.id, skill_id })),
-      { onConflict: "profile_id,skill_id", ignoreDuplicates: true },
-    );
-
-    if (error) {
-      console.error("[saveProfileSkills] insert falló", error);
-      return { error: DB_ERROR };
-    }
-  }
-
-  revalidatePath("/", "layout");
+  revalidatePath("/profile");
+  revalidatePath("/plantel");
   redirect("/profile");
 }
