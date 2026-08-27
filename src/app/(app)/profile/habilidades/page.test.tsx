@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   profilesSingle: vi.fn(),
   profileSkillsSelect: vi.fn(),
   profileSkillsEq: vi.fn(),
+  profileSkillsOrder: vi.fn(),
   skillsSelect: vi.fn(),
   skillsOrder: vi.fn(),
   redirect: vi.fn(),
@@ -27,7 +28,9 @@ vi.mock("@/lib/supabase/server", () => ({
       if (table === "profile_skills") {
         return {
           select: mocks.profileSkillsSelect.mockImplementation(() => ({
-            eq: mocks.profileSkillsEq,
+            eq: mocks.profileSkillsEq.mockImplementation(() => ({
+              order: mocks.profileSkillsOrder,
+            })),
           })),
         };
       }
@@ -73,7 +76,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
   mocks.profilesSingle.mockResolvedValue({ data: { tier: "standard" }, error: null });
-  mocks.profileSkillsEq.mockResolvedValue({
+  mocks.profileSkillsOrder.mockResolvedValue({
     data: [{ skills: { nombre: "Solidity" } }, { skills: null }],
   });
   mocks.skillsOrder.mockResolvedValue({ data: [{ nombre: "Rust" }, { nombre: "Solidity" }] });
@@ -104,6 +107,7 @@ describe("HabilidadesPage", () => {
 
     expect(mocks.profileSkillsSelect).toHaveBeenCalledWith("skills(nombre)");
     expect(mocks.profileSkillsEq).toHaveBeenCalledWith("profile_id", "user-1");
+    expect(mocks.profileSkillsOrder).toHaveBeenCalledWith("created_at");
     expect(mocks.skillsOrder).toHaveBeenCalledWith("nombre");
 
     const initial = screen.getAllByTestId("initial-skill").map((el) => el.textContent);

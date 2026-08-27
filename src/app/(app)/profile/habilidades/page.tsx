@@ -30,7 +30,11 @@ export default async function HabilidadesPage() {
   }
 
   const [{ data: skillAssignments }, { data: catalog }] = await Promise.all([
-    supabase.from("profile_skills").select("skills(nombre)").eq("profile_id", user.id),
+    supabase
+      .from("profile_skills")
+      .select("skills(nombre)")
+      .eq("profile_id", user.id)
+      .order("created_at"),
     supabase.from("skills").select("nombre").order("nombre"),
   ]);
 

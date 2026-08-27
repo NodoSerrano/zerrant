@@ -126,4 +126,20 @@ describe("EditSkills", () => {
 
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("No autorizado"));
   });
+
+  it("prevents the default Enter action in the search field so the form is not submitted", () => {
+    render(<EditSkills initialSkills={[]} catalog={CATALOG} />);
+
+    const search = screen.getByRole("textbox", { name: "Agregar habilidad" });
+    const event = new KeyboardEvent("keydown", {
+      key: "Enter",
+      bubbles: true,
+      cancelable: true,
+    });
+    const preventDefault = vi.spyOn(event, "preventDefault");
+
+    search.dispatchEvent(event);
+
+    expect(preventDefault).toHaveBeenCalled();
+  });
 });

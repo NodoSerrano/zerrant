@@ -69,6 +69,9 @@ export function EditSkills({ initialSkills, catalog }: EditSkillsProps) {
           type="text"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") event.preventDefault();
+          }}
           placeholder="Agregar habilidad..."
           aria-label="Agregar habilidad"
           className="flex-1 bg-transparent font-body text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none"
