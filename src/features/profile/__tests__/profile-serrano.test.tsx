@@ -81,6 +81,13 @@ describe("ProfilePage (serrano)", () => {
     expect(screen.getByText("Mis aportes")).toBeInTheDocument();
   });
 
+  it("links Mis aportes to /profile/aportes", async () => {
+    render(await ProfilePage());
+
+    const link = screen.getByRole("link", { name: /Mis aportes/i });
+    expect(link).toHaveAttribute("href", "/profile/aportes");
+  });
+
   it("renders settings group rows", async () => {
     render(await ProfilePage());
 
