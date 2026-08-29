@@ -1,11 +1,14 @@
 # generated: 2026-07-23T18:20:22-03:00
-# last_updated: 2026-07-29T00:00:00-03:00
+# last_updated: 2026-08-29T00:00:00-03:00
 # project: nodo
 # project_key: NOKEY
 # tracking_system: linear
 # linear_project: Nodo Serrano — UI Fidelity M0-M2
 # linear_project_url: https://linear.app/zerrant/project/nodo-serrano-ui-fidelity-m0-m2-38ca59210685
 # story_location: {project-root}/_bmad-output/implementation-artifacts
+#
+# NOTE: Linear is SSOT for issue state. This file tracks BMAD story keys ↔ Linear IDs
+# and local implementation-artifact status. Reconciled 2026-08-29 vs Linear ZER board.
 
 # STATUS DEFINITIONS:
 # ==================
@@ -43,8 +46,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: "2026-07-23T18:20:22-03:00"
-last_updated: "2026-08-07T14:00:00-03:00"
-last_updated: "2026-07-29T00:00:00-03:00"
+last_updated: "2026-08-29T00:00:00-03:00"
 project: nodo
 project_key: NOKEY
 tracking_system: linear
@@ -69,7 +71,18 @@ linear_ids:
   4-3-nodo-tasks-hub-2-3: ZER-20
   4-4-task-detail-4-1: ZER-22
   4-5-create-task-4-2: ZER-21
+  3-1-modelo-de-datos-rls-seed-admin: ZER-24
+  3-2-formulario-de-solicitud: ZER-25
+  3-3-confirmacion-de-envio: ZER-26
+  3-4-pantalla-post-solicitud: ZER-27
+  3-5-panel-admin-membresias: ZER-28
+  3-6-roles-autoasignacion: ZER-29
+  3-7-roles-confirmacion-admin: ZER-30
   4-1-plantel-list-and-filters: ZER-32
+  4-2-detalle-de-miembro: ZER-33
+  4-3-editar-habilidades: ZER-34
+  4-4-mis-aportes: ZER-35
+  5-1-projects-schema-and-rls: ZER-41
 
 development_status:
   epic-1: done
@@ -79,39 +92,46 @@ development_status:
   1-4-tabbar-icons-and-active-pill: done
   epic-1-retrospective: optional
 
-  epic-2: in-progress
+  epic-2: done
   2-1-login-and-signup-brand-layout-1-1: done
-  2-2-check-email-screen-1-2: ready-for-dev
-  2-3-recovery-and-reset-password-1-3-1-4: backlog
+  2-2-check-email-screen-1-2: done
+  2-3-recovery-and-reset-password-1-3-1-4: done
   epic-2-retrospective: optional
 
-  epic-3: in-progress
+  epic-3: done
   3-1-avatar-storage-and-upload-pipeline: done
-  3-2-onboarding-step-1-ui-and-photo-1-5: review
-  3-3-onboarding-step-2-ui-1-6: backlog
-  3-4-tourist-profile-shell-2-7: ready-for-dev
-  3-5-serrano-profile-shell-2-6: backlog
-  3-6-edit-profile-ui-and-avatar-change-3-2: backlog
+  3-2-onboarding-step-1-ui-and-photo-1-5: done
+  3-3-onboarding-step-2-ui-1-6: done
+  3-4-tourist-profile-shell-2-7: done
+  3-5-serrano-profile-shell-2-6: done
+  3-6-edit-profile-ui-and-avatar-change-3-2: done
   epic-3-retrospective: optional
 
-  epic-4: in-progress
+  epic-4: done
   4-1-taskcard-component: done
   4-2-empty-tasks-state-7-2: done
-  4-3-nodo-tasks-hub-2-3: backlog
-  4-4-task-detail-4-1: review
+  4-3-nodo-tasks-hub-2-3: done
+  4-4-task-detail-4-1: done
   4-5-create-task-4-2: done
   epic-4-retrospective: optional
 
   epic-3-membresia: in-progress
   3-1-modelo-de-datos-rls-seed-admin: done
-  3-2-formulario-de-solicitud: review
-  3-3-confirmacion-de-envio: backlog
-  3-4-pantalla-post-solicitud: review
+  3-2-formulario-de-solicitud: done
+  3-3-confirmacion-de-envio: review
+  3-4-pantalla-post-solicitud: done
   3-5-panel-admin-membresias: done
-  3-6-roles-autoasignacion: review
-  3-7-roles-confirmacion-admin: backlog
+  3-6-roles-autoasignacion: done
+  3-7-roles-confirmacion-admin: done
   epic-3-membresia-retrospective: optional
 
   epic-4-plantel: in-progress
-  4-1-plantel-list-and-filters: review
+  4-1-plantel-list-and-filters: done
+  4-2-detalle-de-miembro: done
+  4-3-editar-habilidades: review
+  4-4-mis-aportes: review
   epic-4-plantel-retrospective: optional
+
+  epic-5-proyectos: in-progress
+  5-1-projects-schema-and-rls: ready-for-dev
+  epic-5-proyectos-retrospective: optional
