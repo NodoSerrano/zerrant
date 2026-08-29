@@ -43,8 +43,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: "2026-07-23T18:20:22-03:00"
-last_updated: "2026-08-07T14:00:00-03:00"
-last_updated: "2026-07-29T00:00:00-03:00"
+last_updated: "2026-08-28T00:00:00-03:00"
 project: nodo
 project_key: NOKEY
 tracking_system: linear
@@ -70,6 +69,12 @@ linear_ids:
   4-4-task-detail-4-1: ZER-22
   4-5-create-task-4-2: ZER-21
   4-1-plantel-list-and-filters: ZER-32
+  3-2-formulario-de-solicitud: ZER-25
+  3-3-confirmacion-de-envio: ZER-26
+  3-4-pantalla-post-solicitud: ZER-27
+  3-5-panel-admin-membresias: ZER-28
+  3-6-roles-autoasignacion: ZER-29
+  3-7-roles-confirmacion-admin: ZER-30
 
 development_status:
   epic-1: done
@@ -104,12 +109,12 @@ development_status:
 
   epic-3-membresia: in-progress
   3-1-modelo-de-datos-rls-seed-admin: done
-  3-2-formulario-de-solicitud: review
-  3-3-confirmacion-de-envio: backlog
-  3-4-pantalla-post-solicitud: review
+  3-2-formulario-de-solicitud: done
+  3-3-confirmacion-de-envio: review
+  3-4-pantalla-post-solicitud: done
   3-5-panel-admin-membresias: done
-  3-6-roles-autoasignacion: review
-  3-7-roles-confirmacion-admin: backlog
+  3-6-roles-autoasignacion: done
+  3-7-roles-confirmacion-admin: done
   epic-3-membresia-retrospective: optional
 
   epic-4-plantel: in-progress
