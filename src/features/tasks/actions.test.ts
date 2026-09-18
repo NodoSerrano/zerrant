@@ -151,6 +151,7 @@ describe("takeTask", () => {
     });
     expect(mocks.chainCalls).toContainEqual(["eq", "id", "task-001"]);
     expect(mocks.chainCalls).toContainEqual(["eq", "estado", "abierta"]);
+    expect(mocks.chainCalls).toContainEqual(["select", "id"]);
   });
 
   it("blocks tourist-tier users from taking tasks", async () => {
@@ -163,14 +164,26 @@ describe("takeTask", () => {
     expect(mocks.tasksUpdate).not.toHaveBeenCalled();
   });
 
-  it("returns error when task update fails", async () => {
+  it("does not leak the raw Postgres message when the update fails", async () => {
     setupAuth();
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
     updateFailed("Task already taken");
 
     const result = await takeTask(null, makeFormData());
 
-    expect(result).toEqual({ error: "Task already taken" });
+    expect(result).toEqual({ error: "No pudimos tomar la tarea. Probá de nuevo." });
+  });
+
+  // Race: second "Tomar" matches 0 rows (already tomada). PostgREST returns
+  // error: null — without checking data, the action would redirect as success.
+  it("reports a rejection when the filters match no row", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    updateMatchedNothing();
+
+    const result = await takeTask(null, makeFormData());
+
+    expect(result).toEqual({ error: "No pudimos tomar esta tarea." });
   });
 });
 
@@ -194,15 +207,28 @@ describe("markTaskDone", () => {
     expect(mocks.tasksUpdate).toHaveBeenCalledWith({ estado: "hecha" });
     expect(mocks.chainCalls).toContainEqual(["eq", "id", "task-001"]);
     expect(mocks.chainCalls).toContainEqual(["eq", "tomada_por", "taker-user-id"]);
+    expect(mocks.chainCalls).toContainEqual(["eq", "estado", "tomada"]);
+    expect(mocks.chainCalls).toContainEqual(["select", "id"]);
   });
 
-  it("returns error when update fails", async () => {
+  it("does not leak the raw Postgres message when the update fails", async () => {
     setupAuth();
     updateFailed("Task not found");
 
     const result = await markTaskDone(null, makeFormData());
 
-    expect(result).toEqual({ error: "Task not found" });
+    expect(result).toEqual({
+      error: "No pudimos marcar la tarea como hecha. Probá de nuevo.",
+    });
+  });
+
+  it("reports a rejection when the filters match no row", async () => {
+    setupAuth("taker-user-id");
+    updateMatchedNothing();
+
+    const result = await markTaskDone(null, makeFormData());
+
+    expect(result).toEqual({ error: "No pudimos marcar la tarea como hecha." });
   });
 });
 
@@ -229,6 +255,7 @@ describe("verifyTask", () => {
     expect(mocks.tasksUpdate).toHaveBeenCalledWith({ estado: "verificada" });
     expect(mocks.chainCalls).toContainEqual(["eq", "id", "task-001"]);
     expect(mocks.chainCalls).toContainEqual(["eq", "estado", "hecha"]);
+    expect(mocks.chainCalls).toContainEqual(["select", "id"]);
   });
 
   it("blocks non-admin users from verifying tasks", async () => {
@@ -239,6 +266,26 @@ describe("verifyTask", () => {
 
     expect(result).toEqual({ error: "Solo un admin puede verificar tareas" });
     expect(mocks.tasksUpdate).not.toHaveBeenCalled();
+  });
+
+  it("does not leak the raw Postgres message when the update fails", async () => {
+    setupAuth("admin-user-id");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { is_platform_admin: true } });
+    updateFailed('permission denied for column "estado"');
+
+    const result = await verifyTask(null, makeFormData());
+
+    expect(result).toEqual({ error: "No pudimos verificar la tarea. Probá de nuevo." });
+  });
+
+  it("reports a rejection when the filters match no row", async () => {
+    setupAuth("admin-user-id");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { is_platform_admin: true } });
+    updateMatchedNothing();
+
+    const result = await verifyTask(null, makeFormData());
+
+    expect(result).toEqual({ error: "No pudimos verificar esta tarea." });
   });
 });
 
