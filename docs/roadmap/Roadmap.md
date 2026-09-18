@@ -7,7 +7,8 @@ status: in-progress
 
 > Este es el **mapa central** (MOC) del roadmap de implementación. Abrí la carpeta `docs/` como **vault de Obsidian** para navegar los enlaces `[[...]]`.
 
-Fuente de verdad del producto: [[2026-07-20-nodo-serrano-backoffice-design|PRD]] · Diseño: `design/nodo-serrano.pen` (37 pantallas).
+Fuente de verdad del producto: [[2026-07-20-nodo-serrano-backoffice-design|PRD]] · Diseño: `design/nodo-serrano.pen` (38 pantallas).  
+Estado operativo (qué hay en `main`, residuales por milestone, deuda, plan de reanudación): **[[STATUS]]**.
 
 ## Visión
 
@@ -21,16 +22,16 @@ PWA mobile-first, backoffice de la comunidad Nodo Serrano. Un serrano se define 
 
 ## Milestones
 
-| # | Milestone | Foco | Estado |
-|---|-----------|------|--------|
-| M0 | [[M0 · Fundación]] | Scaffold, tokens, Supabase, deploy | 🔲 todo |
-| M1 | [[M1 · Cuenta y perfil]] | Auth + profiles + onboarding | 🔲 todo |
-| M2 | [[M2 · Nodo — Tasks]] | Cargar/tomar tareas (primer feature a validar) | 🔲 todo |
-| M3 | [[M3 · Membresía y roles]] | Solicitud, tiers, roles, admin | 🔲 todo |
-| M4 | [[M4 · Plantel y directorio]] | Plantel, detalle, filtros | 🔲 todo |
-| M5 | [[M5 · Proyectos]] | Crear, ingreso, admins de proyecto | 🔲 todo |
-| M6 | [[M6 · Aportes y eventos]] | Registrar aportes, agenda, RSVP | 🔲 todo |
-| M7 | [[M7 · Cumpleaños, PWA y pulido]] | Cumples, offline, install, dark mode | 🔲 todo |
+| #   | Milestone                         | Foco                                           | Estado  |
+| --- | --------------------------------- | ---------------------------------------------- | ------- |
+| M0  | [[M0 · Fundación]]                | Scaffold, tokens, Supabase, deploy             | ✅ done |
+| M1  | [[M1 · Cuenta y perfil]]          | Auth + profiles + onboarding                   | ✅ done |
+| M2  | [[M2 · Nodo — Tasks]]             | Cargar/tomar tareas (primer feature a validar) | ✅ done |
+| M3  | [[M3 · Membresía y roles]]        | Solicitud, tiers, roles, admin                 | ✅ done |
+| M4  | [[M4 · Plantel y directorio]]     | Plantel, detalle, filtros                      | ✅ done |
+| M5  | [[M5 · Proyectos]]                | Crear, ingreso, admins de proyecto             | 🔲 todo |
+| M6  | [[M6 · Aportes y eventos]]        | Registrar aportes, agenda, RSVP                | 🔲 todo |
+| M7  | [[M7 · Cumpleaños, PWA y pulido]] | Cumples, offline, install, dark mode           | 🔲 todo |
 
 ## Dependencias
 

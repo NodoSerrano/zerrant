@@ -4,13 +4,15 @@ PWA mobile-first para gestionar la comunidad Nodo Serrano. Un serrano se define 
 
 ## Estado
 
+> **Reanudación / estado operativo:** [docs/roadmap/STATUS.md](docs/roadmap/STATUS.md) — fuente viva (código real vs docs, PRs, deuda técnica, plan F0–F4). La tabla de abajo está reconciliada con `main`; STATUS tiene el detalle y los residuales abiertos de cada milestone.
+
 | Milestone                                                                                | Estado  |
 | ---------------------------------------------------------------------------------------- | ------- |
 | [M0 · Fundacion](docs/roadmap/M0%20·%20Fundación.md)                                     | ✅ Done |
 | [M1 · Cuenta y perfil](docs/roadmap/M1%20·%20Cuenta%20y%20perfil.md)                     | ✅ Done |
 | [M2 · Nodo — Tasks](docs/roadmap/M2%20·%20Nodo%20—%20Tasks.md)                           | ✅ Done |
-| [M3 · Membresia y roles](docs/roadmap/M3%20·%20Membresía%20y%20roles.md)                 | ⬜ Todo |
-| [M4 · Plantel y directorio](docs/roadmap/M4%20·%20Plantel%20y%20directorio.md)           | ⬜ Todo |
+| [M3 · Membresia y roles](docs/roadmap/M3%20·%20Membresía%20y%20roles.md)                 | ✅ Done |
+| [M4 · Plantel y directorio](docs/roadmap/M4%20·%20Plantel%20y%20directorio.md)           | ✅ Done |
 | [M5 · Proyectos](docs/roadmap/M5%20·%20Proyectos.md)                                     | ⬜ Todo |
 | [M6 · Aportes y eventos](docs/roadmap/M6%20·%20Aportes%20y%20eventos.md)                 | ⬜ Todo |
 | [M7 · Cumpleanos, PWA y pulido](docs/roadmap/M7%20·%20Cumpleaños,%20PWA%20y%20pulido.md) | ⬜ Todo |
