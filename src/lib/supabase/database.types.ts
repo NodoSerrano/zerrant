@@ -310,6 +310,15 @@ export type Database = {
           success?: boolean;
         };
       };
+      sync_profile_skills: {
+        Args: {
+          p_skill_ids: string[];
+        };
+        Returns: {
+          error?: string;
+          success?: boolean;
+        };
+      };
     };
     Enums: {
       disponibilidad: "disponible" | "ocupado" | "solo_eventos";

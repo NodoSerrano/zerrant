@@ -89,6 +89,13 @@ describe("ProfilePage (serrano)", () => {
     expect(screen.getByText("Visibilidad de tarifa")).toBeInTheDocument();
   });
 
+  it("links Mis habilidades to /profile/habilidades", async () => {
+    render(await ProfilePage());
+
+    const link = screen.getByRole("link", { name: "Mis habilidades" });
+    expect(link).toHaveAttribute("href", "/profile/habilidades");
+  });
+
   it("renders action group rows", async () => {
     render(await ProfilePage());
 

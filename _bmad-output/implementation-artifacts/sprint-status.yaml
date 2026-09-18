@@ -75,6 +75,7 @@ linear_ids:
   3-5-panel-admin-membresias: ZER-28
   3-6-roles-autoasignacion: ZER-29
   3-7-roles-confirmacion-admin: ZER-30
+  4-3-editar-habilidades: ZER-34
 
 development_status:
   epic-1: done
@@ -119,4 +120,5 @@ development_status:
 
   epic-4-plantel: in-progress
   4-1-plantel-list-and-filters: review
+  4-3-editar-habilidades: review
   epic-4-plantel-retrospective: optional
