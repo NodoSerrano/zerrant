@@ -40,6 +40,17 @@ pnpm dev
 | `pnpm format`    | Formateo (oxfmt)                 |
 | `pnpm typecheck` | Chequeo de tipos                 |
 
+## CI
+
+Cada PR contra `main` corre el workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+
+1. `pnpm install --frozen-lockfile` (con cache de pnpm)
+2. `pnpm typecheck`
+3. `pnpm lint`
+4. `pnpm test`
+
+Si falla cualquiera de esos pasos, el check de CI falla. Marcar el job como **required check** en la branch protection de `main` es opcional y lo decide quien administre el repo.
+
 ## Documentacion
 
 Toda la documentacion del proyecto esta en `docs/roadmap/`. Se recomienda abrir la carpeta como vault de Obsidian para navegar los links `[[...]]`.
