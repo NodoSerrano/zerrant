@@ -172,6 +172,22 @@ describe("takeTask", () => {
 
     expect(result).toEqual({ error: "Task already taken" });
   });
+
+  // PostgREST doesn't consider an UPDATE that matches no rows an error: it
+  // returns `error: null`. Without checking the affected rows, the action
+  // redirects as if it worked and the user believes they took the task.
+  it("reports the race it lost when the filters match no row", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    updateMatchedNothing();
+
+    const result = await takeTask(null, makeFormData());
+
+    expect(mocks.chainCalls).toContainEqual(["select", "id"]);
+    expect(result).toEqual({
+      error: "Alguien tomó esta tarea antes que vos. Buscá otra en el listado.",
+    });
+  });
 });
 
 describe("markTaskDone", () => {
@@ -194,6 +210,8 @@ describe("markTaskDone", () => {
     expect(mocks.tasksUpdate).toHaveBeenCalledWith({ estado: "hecha" });
     expect(mocks.chainCalls).toContainEqual(["eq", "id", "task-001"]);
     expect(mocks.chainCalls).toContainEqual(["eq", "tomada_por", "taker-user-id"]);
+    expect(mocks.chainCalls).toContainEqual(["eq", "estado", "tomada"]);
+    expect(mocks.chainCalls).toContainEqual(["select", "id"]);
   });
 
   it("returns error when update fails", async () => {
@@ -203,6 +221,36 @@ describe("markTaskDone", () => {
     const result = await markTaskDone(null, makeFormData());
 
     expect(result).toEqual({ error: "Task not found" });
+  });
+
+  // Without this filter, a task that's already `cancelada`, `hecha` or
+  // `verificada` but still carries this user's `tomada_por` (cancelTask keeps
+  // it on purpose) could be marked `hecha` again over its real state.
+  it("rejects a task that isn't currently tomada, even if this user took it before", async () => {
+    setupAuth("taker-user-id");
+    updateMatchedNothing();
+
+    const result = await markTaskDone(null, makeFormData());
+
+    expect(mocks.chainCalls).toContainEqual(["eq", "estado", "tomada"]);
+    expect(result).toEqual({
+      error: "No pudimos marcarla como hecha. Puede que ya no la tengas tomada.",
+    });
+  });
+
+  // PostgREST doesn't consider an UPDATE that matches no rows an error: it
+  // returns `error: null`. Without checking the affected rows, the action
+  // redirects as if it worked and the user believes they marked the task as done.
+  it("reports a rejection when the filters match no row", async () => {
+    setupAuth("taker-user-id");
+    updateMatchedNothing();
+
+    const result = await markTaskDone(null, makeFormData());
+
+    expect(mocks.chainCalls).toContainEqual(["select", "id"]);
+    expect(result).toEqual({
+      error: "No pudimos marcarla como hecha. Puede que ya no la tengas tomada.",
+    });
   });
 });
 
@@ -239,6 +287,22 @@ describe("verifyTask", () => {
 
     expect(result).toEqual({ error: "Solo un admin puede verificar tareas" });
     expect(mocks.tasksUpdate).not.toHaveBeenCalled();
+  });
+
+  // PostgREST doesn't consider an UPDATE that matches no rows an error: it
+  // returns `error: null`. Without checking the affected rows, the action
+  // redirects as if it worked and the user believes they verified the task.
+  it("reports a rejection when the filters match no row", async () => {
+    setupAuth("admin-user-id");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { is_platform_admin: true } });
+    updateMatchedNothing();
+
+    const result = await verifyTask(null, makeFormData());
+
+    expect(mocks.chainCalls).toContainEqual(["select", "id"]);
+    expect(result).toEqual({
+      error: "No pudimos verificar esta tarea. Puede que ya no esté en estado hecha.",
+    });
   });
 });
 

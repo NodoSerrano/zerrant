@@ -12,6 +12,9 @@ const UPDATE_ERROR = "No pudimos guardar los cambios. Probá de nuevo.";
 // redirects as if it had worked.
 const CANCEL_REJECTED = "No pudimos cancelar esta tarea.";
 const UPDATE_REJECTED = "No pudimos guardar los cambios.";
+const TAKE_RACE_LOST = "Alguien tomó esta tarea antes que vos. Buscá otra en el listado.";
+const DONE_REJECTED = "No pudimos marcarla como hecha. Puede que ya no la tengas tomada.";
+const VERIFY_REJECTED = "No pudimos verificar esta tarea. Puede que ya no esté en estado hecha.";
 const INVALID_INPUT = "Revisá los datos de la tarea.";
 
 const CATEGORIAS: TaskCategoria[] = ["reparacion", "limpieza", "compra", "mantenimiento", "otro"];
@@ -90,14 +93,20 @@ export async function takeTask(_prevState: { error: string } | null, formData: F
     return { error: "Solo los serranos pueden tomar tareas" };
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("tasks")
     .update({ estado: "tomada", tomada_por: user.id })
     .eq("id", taskId)
-    .eq("estado", "abierta");
+    .eq("estado", "abierta")
+    .select("id");
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Zero rows = someone else took the task first.
+  if (!data || data.length === 0) {
+    return { error: TAKE_RACE_LOST };
   }
 
   revalidatePath("/nodo", "layout");
@@ -117,14 +126,24 @@ export async function markTaskDone(_prevState: { error: string } | null, formDat
 
   const taskId = formData.get("taskId") as string;
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("tasks")
     .update({ estado: "hecha" })
     .eq("id", taskId)
-    .eq("tomada_por", user.id);
+    .eq("tomada_por", user.id)
+    // Without this, a task that's already cancelada/hecha/verificada but
+    // still carries this user's tomada_por (cancelTask keeps it on purpose)
+    // could be marked hecha again, overwriting its real state.
+    .eq("estado", "tomada")
+    .select("id");
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Zero rows = the task is no longer taken by this user.
+  if (!data || data.length === 0) {
+    return { error: DONE_REJECTED };
   }
 
   revalidatePath("/nodo", "layout");
@@ -154,14 +173,20 @@ export async function verifyTask(_prevState: { error: string } | null, formData:
     return { error: "Solo un admin puede verificar tareas" };
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("tasks")
     .update({ estado: "verificada" })
     .eq("id", taskId)
-    .eq("estado", "hecha");
+    .eq("estado", "hecha")
+    .select("id");
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Zero rows = the task is no longer in "hecha" state.
+  if (!data || data.length === 0) {
+    return { error: VERIFY_REJECTED };
   }
 
   revalidatePath("/nodo", "layout");
