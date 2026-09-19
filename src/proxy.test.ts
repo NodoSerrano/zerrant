@@ -2,12 +2,13 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
 const mockGetUser = vi.hoisted(() => vi.fn());
+const mockFrom = vi.hoisted(() => vi.fn());
 const mockProfileSingle = vi.hoisted(() => vi.fn());
 
 vi.mock("@supabase/ssr", () => ({
   createServerClient: vi.fn(() => ({
     auth: { getUser: mockGetUser },
-    from: vi.fn(() => ({
+    from: mockFrom.mockImplementation(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({ single: mockProfileSingle })),
       })),
@@ -16,6 +17,12 @@ vi.mock("@supabase/ssr", () => ({
 }));
 
 const mockNextCookiesSet = vi.fn();
+const mockNext = vi.hoisted(() =>
+  vi.fn((_init?: { request?: { headers?: Headers } }) => ({
+    status: 200,
+    cookies: { set: mockNextCookiesSet },
+  })),
+);
 
 vi.mock("next/server", async (importOriginal) => {
   const actual = await importOriginal<typeof import("next/server")>();
@@ -24,10 +31,7 @@ vi.mock("next/server", async (importOriginal) => {
     return new actual.NextResponse(body, init);
   }
 
-  MockNextResponse.next = vi.fn(() => ({
-    status: 200,
-    cookies: { set: mockNextCookiesSet },
-  }));
+  MockNextResponse.next = mockNext;
   MockNextResponse.redirect = vi.fn((url: URL) => ({
     status: 307,
     headers: new Headers({ location: url.toString() }),
@@ -45,33 +49,15 @@ import proxy from "./proxy";
 
 beforeEach(() => {
   vi.clearAllMocks();
-  onboardingDone();
+  mockNext.mockImplementation(() => ({
+    status: 200,
+    cookies: { set: mockNextCookiesSet },
+  }));
+  mockProfileSingle.mockResolvedValue({
+    data: { onboarding_completado_en: null },
+    error: null,
+  });
 });
-
-function onboardingDone() {
-  mockProfileSingle.mockResolvedValue({
-    data: {
-      nombre: "Juan",
-      apellido: "Pérez",
-      fecha_nacimiento: "1990-01-15",
-      onboarding_completado_en: "2026-07-25T00:00:00Z",
-    },
-    error: null,
-  });
-}
-
-function onboardingPending(overrides: Record<string, string | null> = {}) {
-  mockProfileSingle.mockResolvedValue({
-    data: {
-      nombre: null,
-      apellido: null,
-      fecha_nacimiento: null,
-      onboarding_completado_en: null,
-      ...overrides,
-    },
-    error: null,
-  });
-}
 
 function makeRequest(
   path: string,
@@ -141,7 +127,7 @@ describe("proxy", () => {
     expect(result.headers.get("location")).toBe("https://example.com/auth/login?next=%2F");
   });
 
-  it("passes through protected route with authenticated user", async () => {
+  it("passes through protected GET with authenticated user without querying profiles", async () => {
     authAs();
     const request = makeRequest("/profile");
 
@@ -149,6 +135,7 @@ describe("proxy", () => {
 
     expect(result.status).toBe(200);
     expect(result.cookies).toBeDefined();
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 
   it("redirects unauthenticated user from /nodo/tasks to login", async () => {
@@ -162,83 +149,6 @@ describe("proxy", () => {
     );
   });
 
-  it("sends an authenticated user with unfinished onboarding back to step 1", async () => {
-    authAs();
-    onboardingPending();
-
-    const result = await proxy(makeRequest("/nodo/tasks"));
-
-    expect(result.status).toBe(307);
-    expect(result.headers.get("location")).toBe("https://example.com/onboarding/step1");
-  });
-
-  it("does not bounce inside /onboarding while it is unfinished", async () => {
-    authAs();
-    onboardingPending();
-
-    const result = await proxy(makeRequest("/onboarding/step1"));
-
-    expect(result.status).toBe(200);
-  });
-
-  it("keeps the user in the onboarding until step 2 is submitted", async () => {
-    authAs();
-    // Step 1 saved, step 2 not yet: the flag is still empty.
-    onboardingPending({ nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" });
-
-    const result = await proxy(makeRequest("/nodo/tasks"));
-
-    expect(result.status).toBe(307);
-    expect(result.headers.get("location")).toBe("https://example.com/onboarding/step2");
-  });
-
-  it("resumes at step 2 when only step 1 was saved", async () => {
-    authAs();
-    onboardingPending({ nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" });
-
-    const result = await proxy(makeRequest("/onboarding/step2"));
-
-    expect(result.status).toBe(200);
-  });
-
-  it("treats a missing profile row as unfinished onboarding", async () => {
-    authAs();
-    mockProfileSingle.mockResolvedValue({
-      data: null,
-      error: { code: "PGRST116", message: "no rows" },
-    });
-
-    const result = await proxy(makeRequest("/profile"));
-
-    expect(result.status).toBe(307);
-    expect(result.headers.get("location")).toBe("https://example.com/onboarding/step1");
-  });
-
-  it("lets the request through when the profile query itself fails", async () => {
-    authAs();
-    // An infra failure (timeout, permissions, 5xx) cannot lock the whole app
-    // into onboarding: letting users through beats trapping those who already
-    // finished it.
-    mockProfileSingle.mockResolvedValue({
-      data: null,
-      error: { code: "57014", message: "canceling statement due to statement timeout" },
-    });
-
-    const result = await proxy(makeRequest("/nodo/tasks"));
-
-    expect(result.status).toBe(200);
-  });
-
-  it("sends the user back to step 1 when step 2 is opened without step 1 saved", async () => {
-    authAs();
-    onboardingPending();
-
-    const result = await proxy(makeRequest("/onboarding/step2"));
-
-    expect(result.status).toBe(307);
-    expect(result.headers.get("location")).toBe("https://example.com/onboarding/step1");
-  });
-
   it("does not protect routes that merely share a prefix", async () => {
     noAuth();
 
@@ -247,17 +157,47 @@ describe("proxy", () => {
     expect(result.status).toBe(200);
   });
 
-  it("sends a user who already finished onboarding out of /onboarding", async () => {
+  it("does not query the profile when there is no session", async () => {
+    noAuth();
+
+    await proxy(makeRequest("/auth/login"));
+
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it("does not query the profile on auth routes", async () => {
     authAs();
 
-    const result = await proxy(makeRequest("/onboarding/step1"));
+    await proxy(makeRequest("/auth/login"));
 
-    expect(result.status).toBe(307);
-    expect(result.headers.get("location")).toBe("https://example.com/");
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it("does not query profiles on protected GET (gate is RSC)", async () => {
+    authAs();
+
+    await proxy(makeRequest("/nodo/tasks"));
+    await proxy(makeRequest("/onboarding/step1"));
+
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it("forwards x-pathname on the request for RSC gate", async () => {
+    authAs();
+
+    await proxy(makeRequest("/nodo/tasks"));
+
+    expect(mockNext).toHaveBeenCalled();
+    const args = mockNext.mock.calls.at(-1)?.[0] as { request?: { headers?: Headers } } | undefined;
+    expect(args?.request?.headers?.get("x-pathname")).toBe("/nodo/tasks");
   });
 
   it("explains a stale onboarding POST instead of redirecting with 307", async () => {
     authAs();
+    mockProfileSingle.mockResolvedValue({
+      data: { onboarding_completado_en: "2026-07-25T00:00:00Z" },
+      error: null,
+    });
 
     const result = await proxy(makeRequest("/onboarding/step2", { method: "POST" }));
 
@@ -267,22 +207,19 @@ describe("proxy", () => {
     const body = await result.text();
     expect(body).toMatch(/ya completaste el onboarding/i);
     expect(body).toMatch(/href="\/"/);
+    expect(mockFrom).toHaveBeenCalled();
   });
 
-  it("does not query the profile when there is no session", async () => {
-    noAuth();
-
-    await proxy(makeRequest("/auth/login"));
-
-    expect(mockProfileSingle).not.toHaveBeenCalled();
-  });
-
-  it("does not query the profile on auth routes", async () => {
+  it("lets unfinished onboarding POST through without 409", async () => {
     authAs();
+    mockProfileSingle.mockResolvedValue({
+      data: { onboarding_completado_en: null },
+      error: null,
+    });
 
-    await proxy(makeRequest("/auth/login"));
+    const result = await proxy(makeRequest("/onboarding/step2", { method: "POST" }));
 
-    expect(mockProfileSingle).not.toHaveBeenCalled();
+    expect(result.status).toBe(200);
   });
 
   it("passes through unrestricted route /auth/callback regardless of auth state", async () => {
