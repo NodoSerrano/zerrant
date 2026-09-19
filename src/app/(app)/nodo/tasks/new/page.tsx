@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isTasksBlockedTier } from "@/features/tasks/tier-guards";
 import { NewTaskForm } from "./NewTaskForm";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +35,7 @@ export default async function NewTaskPage() {
     // Bouncing a legitimate serrano without explanation is worse than letting
     // them in, because the insert is still protected by the `createTask` guard.
     console.warn("[tasks/new] no se pudo leer el perfil para la guarda de tier");
-  } else if (!profile || profile.tier === "tourist") {
+  } else if (!profile || isTasksBlockedTier(profile.tier)) {
     redirect("/nodo/tasks");
   }
 

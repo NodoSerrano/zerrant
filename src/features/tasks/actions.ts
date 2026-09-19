@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isTasksBlockedTier } from "./tier-guards";
 import type { TaskCategoria, TaskUpdate, TaskUrgencia } from "./types";
 
 const CANCEL_ERROR = "No pudimos cancelar la tarea. Probá de nuevo.";
@@ -54,7 +55,7 @@ export async function createTask(_prevState: { error: string } | null, formData:
     .eq("id", user.id)
     .single();
 
-  if (!profile || profile.tier === "tourist") {
+  if (!profile || isTasksBlockedTier(profile.tier)) {
     return { error: "Solo los serranos pueden crear tareas" };
   }
 
@@ -108,7 +109,7 @@ export async function takeTask(_prevState: { error: string } | null, formData: F
     .eq("id", user.id)
     .single();
 
-  if (!profile || profile.tier === "tourist") {
+  if (!profile || isTasksBlockedTier(profile.tier)) {
     return { error: "Solo los serranos pueden tomar tareas" };
   }
 
