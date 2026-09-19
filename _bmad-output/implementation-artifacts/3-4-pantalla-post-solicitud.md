@@ -4,7 +4,7 @@ baseline_commit: 9cac749
 
 # Story 3.4: Pantalla post-solicitud (1.8)
 
-Status: review
+Status: done
 
 <!-- Story context engine — from Linear ZER-27, Pencil frame `bWMOv` (verified via Pencil MCP),
 epics.md epic-3-membresia story 3.4, and the existing /solicitar flow delivered by ZER-25. -->

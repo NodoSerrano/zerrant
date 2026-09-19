@@ -1,6 +1,6 @@
 # Story 4.3: Editar habilidades (3.3)
 
-Status: review
+Status: done
 
 Linear: ZER-34 · Branch: `estudionomade2025/zer-34-m43-editar-habilidades`
 

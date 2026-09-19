@@ -4,7 +4,7 @@ baseline_commit: 47d25f5
 
 # Story 4.4: Task detail (4.1)
 
-Status: review
+Status: done
 
 <!-- Story context engine — from epics.md Story 4.4, SPEC.md CAP-9, screen-inventory.md, Pencil frames dyDLm + H3BY0u, and Linear ZER-22. -->
 
@@ -16,45 +16,45 @@ so that I can take or complete work with clear hierarchy.
 
 ## Scope Decisions (taken with the user, 2026-07-28)
 
-| # | Decision | Consequence |
-| - | -------- | ----------- |
-| D1 | Branch `agumarchetti/zer-22-44-task-detail-41`, rebased onto `main` at `47d25f5` | Picks up ZER-20 (hub), ZER-21 (create task) and the new Pencil frame |
-| D2 | Frame `dyDLm` only designs `estado = abierta`. Other estados derive badge + CTA label from the design system (`TaskCard` `estadoConfig`), **not** invented layout | Layout is state-invariant; only badge colours and CTA label change |
-| D3 | The `···` header menu gets real owner actions: **Editar** and **Cancelar tarea** | Requires a `cancelada` enum value. Story grows from 3 to ~8 points |
-| D4 | Category icon derives per enum value from the `TaskCard` lucide map | `wrench` is the frame's example for `reparacion`, not a literal for all categories |
-| D5 | The edit screen is designed in Pencil before coding | **Resolved by the team**: frame `4.7 · Editar tarea` (`H3BY0u`) was pushed in `ef65ace`. No `.pen` edit is needed in this story |
-| D6 | The `···` on the **edit** screen offers a single item, "Cancelar tarea" | "Editar" there would be a no-op. Cancelling stays reachable without navigating back to detail |
-| D7 | The estado/urgency lookups are hardened before the migration lands | Adding `cancelada` to the enum would otherwise crash the hub. Fixed at the component (fallback) and at the map (exhaustive `Record<TaskEstado>`), so a future enum value fails the build instead of production |
+| #   | Decision                                                                                                                                                          | Consequence                                                                                                                                                                                                    |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Branch `agumarchetti/zer-22-44-task-detail-41`, rebased onto `main` at `47d25f5`                                                                                  | Picks up ZER-20 (hub), ZER-21 (create task) and the new Pencil frame                                                                                                                                           |
+| D2  | Frame `dyDLm` only designs `estado = abierta`. Other estados derive badge + CTA label from the design system (`TaskCard` `estadoConfig`), **not** invented layout | Layout is state-invariant; only badge colours and CTA label change                                                                                                                                             |
+| D3  | The `···` header menu gets real owner actions: **Editar** and **Cancelar tarea**                                                                                  | Requires a `cancelada` enum value. Story grows from 3 to ~8 points                                                                                                                                             |
+| D4  | Category icon derives per enum value from the `TaskCard` lucide map                                                                                               | `wrench` is the frame's example for `reparacion`, not a literal for all categories                                                                                                                             |
+| D5  | The edit screen is designed in Pencil before coding                                                                                                               | **Resolved by the team**: frame `4.7 · Editar tarea` (`H3BY0u`) was pushed in `ef65ace`. No `.pen` edit is needed in this story                                                                                |
+| D6  | The `···` on the **edit** screen offers a single item, "Cancelar tarea"                                                                                           | "Editar" there would be a no-op. Cancelling stays reachable without navigating back to detail                                                                                                                  |
+| D7  | The estado/urgency lookups are hardened before the migration lands                                                                                                | Adding `cancelada` to the enum would otherwise crash the hub. Fixed at the component (fallback) and at the map (exhaustive `Record<TaskEstado>`), so a future enum value fails the build instead of production |
 
-**Known SPEC deviation (accepted):** `SPEC.md` — *"Behavior preserve: change backend only if a fidelity gap is blocked without it"*. D3 adds an enum value that no fidelity gap requires.
+**Known SPEC deviation (accepted):** `SPEC.md` — _"Behavior preserve: change backend only if a fidelity gap is blocked without it"_. D3 adds an enum value that no fidelity gap requires.
 
 ## Baseline: what exists on `main` now
 
 Read this before writing anything — several things this story would have built already exist.
 
-| Asset | Location | Use it for |
-| ----- | -------- | ---------- |
-| `relativeTime(date)` | `src/lib/time.ts` (tested) | the "hace 2 días" meta string. **Do not write another one** |
-| `estadoConfig`, `urgenciaConfig`, `categoryIcons` | `src/components/TaskCard.tsx` | badge/urgency/icon token source (AC 3, AC 4) |
-| `NewTaskForm` | `src/app/(app)/nodo/tasks/new/NewTaskForm.tsx` | the edit form is this form with different defaults, action and labels — **generalise, do not copy** |
-| `PrimaryButton` | `src/components/PrimaryButton.tsx` | `h-[54px] rounded-pill` gradient CTA, matches `cdt` exactly |
-| `takeTask` / `markTaskDone` / `verifyTask` | `src/features/tasks/actions.ts` (tested) | extend only, never rewrite |
+| Asset                                             | Location                                       | Use it for                                                                                          |
+| ------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `relativeTime(date)`                              | `src/lib/time.ts` (tested)                     | the "hace 2 días" meta string. **Do not write another one**                                         |
+| `estadoConfig`, `urgenciaConfig`, `categoryIcons` | `src/components/TaskCard.tsx`                  | badge/urgency/icon token source (AC 3, AC 4)                                                        |
+| `NewTaskForm`                                     | `src/app/(app)/nodo/tasks/new/NewTaskForm.tsx` | the edit form is this form with different defaults, action and labels — **generalise, do not copy** |
+| `PrimaryButton`                                   | `src/components/PrimaryButton.tsx`             | `h-[54px] rounded-pill` gradient CTA, matches `cdt` exactly                                         |
+| `takeTask` / `markTaskDone` / `verifyTask`        | `src/features/tasks/actions.ts` (tested)       | extend only, never rewrite                                                                          |
 
 `src/app/(app)/nodo/tasks/[id]/page.tsx` is **placeholder code** — pre-design generation: inline `<svg>`, generic `rounded-md`/`text-xs`, invented copy, no sibling test file. It persists correctly; its layout is invented. This story replaces the presentation and preserves the behaviour.
 
 **Current behaviour that MUST survive** (a requirement whether or not an AC restates it):
 
-| Behaviour | Where |
-| --------- | ----- |
-| Unauthenticated → `redirect("/auth/login")` | page.tsx:30 |
-| Missing task → `notFound()` | page.tsx:38 |
-| `abierta` + serrano + not owner → Take | page.tsx:105 |
-| `tomada` + is taker → Mark done | page.tsx:107 |
-| `hecha` + platform admin → Verify | page.tsx:109 |
-| `tomada` + not taker → "ya fue tomada" message | page.tsx:111 |
-| `verificada` → completion message | page.tsx:117 |
-| Join `creador:creado_por(*)`, `tomador:tomada_por(*)` | page.tsx:34 |
-| `displayName(profile)` for people names | page.tsx:98 |
+| Behaviour                                             | Where        |
+| ----------------------------------------------------- | ------------ |
+| Unauthenticated → `redirect("/auth/login")`           | page.tsx:30  |
+| Missing task → `notFound()`                           | page.tsx:38  |
+| `abierta` + serrano + not owner → Take                | page.tsx:105 |
+| `tomada` + is taker → Mark done                       | page.tsx:107 |
+| `hecha` + platform admin → Verify                     | page.tsx:109 |
+| `tomada` + not taker → "ya fue tomada" message        | page.tsx:111 |
+| `verificada` → completion message                     | page.tsx:117 |
+| Join `creador:creado_por(*)`, `tomador:tomada_por(*)` | page.tsx:34  |
+| `displayName(profile)` for people names               | page.tsx:98  |
 
 ## 🚨 Blast radius: `cancelada` breaks the hub unless handled
 
@@ -62,7 +62,10 @@ Read this before writing anything — several things this story would have built
 
 ```ts
 const ESTADO_MAP: Record<string, "abierta" | "tomada" | "hecha"> = {
-  abierta: "abierta", tomada: "tomada", hecha: "hecha", verificada: "hecha",
+  abierta: "abierta",
+  tomada: "tomada",
+  hecha: "hecha",
+  verificada: "hecha",
 };
 ```
 
@@ -93,14 +96,14 @@ Still pending in this story: give `cancelada` a real entry in `ESTADO_MAP` / `ES
 **And** the icon container is `size-12 rounded-[14px] bg-warm-yellow/[0.09] flex items-center justify-center shrink-0`
 **And** it renders a lucide icon at `size-[22px] text-warm-orange`, mapped from `task.categoria`:
 
-| `categoria` (enum) | lucide icon |
-| ------------------ | ----------- |
-| `reparacion` | `Wrench` |
-| `limpieza` | `SprayCan` |
-| `compra` | `ShoppingCart` |
-| `mantenimiento` | `Settings` |
-| `otro` | `MoreHorizontal` |
-| unmatched | `MoreHorizontal` (no throw) |
+| `categoria` (enum) | lucide icon                 |
+| ------------------ | --------------------------- |
+| `reparacion`       | `Wrench`                    |
+| `limpieza`         | `SprayCan`                  |
+| `compra`           | `ShoppingCart`              |
+| `mantenimiento`    | `Settings`                  |
+| `otro`             | `MoreHorizontal`            |
+| unmatched          | `MoreHorizontal` (no throw) |
 
 > `TaskCard.categoryIcons` is keyed by **Spanish display label** ("Reparación"), while the DB column is the **enum** (`reparacion`). Extract a shared, enum-keyed map into `src/features/tasks/` and have both surfaces use it rather than duplicating a second lookup. Keep `TaskCard`'s public props unchanged.
 
@@ -110,17 +113,17 @@ Still pending in this story: give `cancelada` a real entry in `ESTADO_MAP` / `ES
 
 ### 3. Estado badge — designed state and derived states (FR23, D2)
 
-| `estado` | bg class | text class | label | source |
-| -------- | -------- | ---------- | ----- | ------ |
-| `abierta` | `bg-blue-raw/20` | `text-brand-blue` | "Abierta" | Pencil `dyDLm` (exact) |
-| `tomada` | `bg-coral/20` | `text-coral` | "Tomada" | `TaskCard.estadoConfig` |
-| `hecha` | `bg-mint-raw/20` | `text-brand-mint` | "Hecha" | `TaskCard.estadoConfig` |
+| `estado`     | bg class            | text class         | label        | source                                                           |
+| ------------ | ------------------- | ------------------ | ------------ | ---------------------------------------------------------------- |
+| `abierta`    | `bg-blue-raw/20`    | `text-brand-blue`  | "Abierta"    | Pencil `dyDLm` (exact)                                           |
+| `tomada`     | `bg-coral/20`       | `text-coral`       | "Tomada"     | `TaskCard.estadoConfig`                                          |
+| `hecha`      | `bg-mint-raw/20`    | `text-brand-mint`  | "Hecha"      | `TaskCard.estadoConfig`                                          |
 | `verificada` | `bg-brand-green/20` | `text-brand-green` | "Verificada" | derived — `hecha` confirmed; green is the DS success/primary hue |
-| `cancelada` | `bg-surface-inset` | `text-text-muted` | "Cancelada" | derived — DS neutral/inactive pair |
+| `cancelada`  | `bg-surface-inset`  | `text-text-muted`  | "Cancelada"  | derived — DS neutral/inactive pair                               |
 
 **And** no other visual property changes between estados.
 
-> The hub currently collapses `verificada` into "Hecha" *on the card* (documented at `page.tsx:21`). The detail screen has room to be precise, so it shows the real estado. That divergence is deliberate; do not "fix" the hub to match.
+> The hub currently collapses `verificada` into "Hecha" _on the card_ (documented at `page.tsx:21`). The detail screen has room to be precise, so it shows the real estado. That divergence is deliberate; do not "fix" the hub to match.
 
 ### 4. Meta card `mdt` (FR23)
 
@@ -128,11 +131,11 @@ Still pending in this story: give `cancelada` a real entry in `ESTADO_MAP` / `ES
 **And** it holds exactly three rows, each `flex flex-row items-center gap-2`
 **And** every row icon is `size-[15px]`, every row text is `font-body text-[13px] font-normal text-text-secondary`
 
-| row | icon | icon colour | text |
-| --- | ---- | ----------- | ---- |
-| 1 | `Tag` | `text-text-muted` | category label in Spanish: "Reparación", "Limpieza", "Compra", "Mantenimiento", "Otro" |
-| 2 | `Flame` | per urgency | "Urgencia alta" / "Urgencia media" / "Urgencia baja" |
-| 3 | `User` | `text-text-muted` | `Publicó {displayName(creador)} · {relativeTime(task.created_at)}` |
+| row | icon    | icon colour       | text                                                                                   |
+| --- | ------- | ----------------- | -------------------------------------------------------------------------------------- |
+| 1   | `Tag`   | `text-text-muted` | category label in Spanish: "Reparación", "Limpieza", "Compra", "Mantenimiento", "Otro" |
+| 2   | `Flame` | per urgency       | "Urgencia alta" / "Urgencia media" / "Urgencia baja"                                   |
+| 3   | `User`  | `text-text-muted` | `Publicó {displayName(creador)} · {relativeTime(task.created_at)}`                     |
 
 **And** flame colour follows `TaskCard.urgenciaConfig`: `alta` → `text-warm-orange`, `media` → `text-warm-yellow`, `baja` → `text-text-muted`
 **And** the relative time comes from `relativeTime` in `src/lib/time.ts` — **not** `toLocaleDateString`, which is what the placeholder used
@@ -147,15 +150,15 @@ Still pending in this story: give `cancelada` a real entry in `ESTADO_MAP` / `ES
 **And** the primary CTA is `PrimaryButton` at `w-full`, a **direct sibling** of the other wrapper children — never nested inside a container that would override the `18px` gap
 **And** the CTA label follows estado + viewer, preserving today's authorisation exactly:
 
-| estado | viewer | CTA / message |
-| ------ | ------ | ------------- |
-| `abierta` | serrano, not owner | `PrimaryButton` "Tomar esta tarea" (Pencil copy — **not** today's "Tomar tarea") |
-| `abierta` | tourist, or owner | no CTA |
-| `tomada` | is taker | `PrimaryButton` "Marcar como hecha" |
-| `tomada` | not taker | message "Esta tarea ya fue tomada por otro serrano." |
-| `hecha` | platform admin | `PrimaryButton` "Verificar tarea" |
-| `verificada` | any | message "Tarea verificada y completada." (drop the `✔` glyph — not in the frame) |
-| `cancelada` | any | message "Esta tarea fue cancelada." |
+| estado       | viewer             | CTA / message                                                                    |
+| ------------ | ------------------ | -------------------------------------------------------------------------------- |
+| `abierta`    | serrano, not owner | `PrimaryButton` "Tomar esta tarea" (Pencil copy — **not** today's "Tomar tarea") |
+| `abierta`    | tourist, or owner  | no CTA                                                                           |
+| `tomada`     | is taker           | `PrimaryButton` "Marcar como hecha"                                              |
+| `tomada`     | not taker          | message "Esta tarea ya fue tomada por otro serrano."                             |
+| `hecha`      | platform admin     | `PrimaryButton` "Verificar tarea"                                                |
+| `verificada` | any                | message "Tarea verificada y completada." (drop the `✔` glyph — not in the frame) |
+| `cancelada`  | any                | message "Esta tarea fue cancelada."                                              |
 
 ### 6. Header `···` menu — owner actions (D3)
 
@@ -177,7 +180,7 @@ Still pending in this story: give `cancelada` a real entry in `ESTADO_MAP` / `ES
 **And** the hub's `ESTADO_MAP` / `ESTADO_LABELS` gain `cancelada` so the list keeps rendering (see blast-radius section)
 **And** `src/lib/supabase/database.types.ts` is regenerated so the new value types through
 
-> **Security note the dev must not miss:** RLS policy `"Serranos can update tasks they took"` lets `creado_por` **OR** `tomada_por` update every granted column, including `titulo` and `descripcion` — so today the *taker* can rewrite a task's text. The edit action (AC 8) must therefore enforce `creado_por` in the action **and** in the `.eq()` filter. Widening the RLS policy is out of scope; record it in `deferred-work.md`.
+> **Security note the dev must not miss:** RLS policy `"Serranos can update tasks they took"` lets `creado_por` **OR** `tomada_por` update every granted column, including `titulo` and `descripcion` — so today the _taker_ can rewrite a task's text. The edit action (AC 8) must therefore enforce `creado_por` in the action **and** in the `.eq()` filter. Widening the RLS policy is out of scope; record it in `deferred-work.md`.
 
 ### 8. Edit screen — frame `4.7 · Editar tarea` (`H3BY0u`) (D3, D5)
 
@@ -217,32 +220,32 @@ Still pending in this story: give `cancelada` a real entry in `ESTADO_MAP` / `ES
 
 Source: `dyDLm` / wrapper `KG95R`. Reminder: Pencil padding pairs read `[horizontal, vertical]`, the reverse of the schema text.
 
-| Pencil node | property | Pencil value | Tailwind |
-| ----------- | -------- | ------------ | -------- |
-| `KG95R` wrapper | gap | 18 | `gap-[18px]` |
-| `KG95R` wrapper | padding | `[6,20,24,20]` | deferred — layout applies `p-5` |
-| `tdt` | layout | row, space-between, center | `flex flex-row items-center justify-between w-full` |
-| `tdt` chevron | size / fill | 24×24, `#1a1614` | `size-6 text-text-primary` |
-| `tdt` title | 16 / 500 / display | `#1a1614` | `font-display text-base font-medium text-text-primary` |
-| `tdt` ellipsis | size | 22×22 | `size-[22px] text-text-primary` |
-| `hdt` | gap | 12, items-center | `flex items-center gap-3 w-full` |
-| `hdic` | box | 48×48, radius 14, `#ff972818` | `size-12 rounded-[14px] bg-warm-yellow/[0.09]` |
-| `hdic` icon | size / fill | 22×22, `#ff4d21` | `size-[22px] text-warm-orange` |
-| `hdtc` | gap | 4, flex-1 | `flex-1 flex flex-col gap-1` |
-| title text | 20 / 700 / display | `#1a1614` | `font-display text-xl font-bold text-text-primary` |
-| `hdtb` badge | padding | `[11,4]` | `px-[11px] py-1` |
-| `hdtb` badge | radius / fill / text | 999 / `#2e9bff20` / `#1158b0` | `rounded-pill bg-blue-raw/20 text-brand-blue` |
-| `hdtb` label | 12 / 600 / display | — | `font-display text-xs font-semibold` |
-| `mdt` card | radius / fill / stroke | 18 / `$surface` / `$border` | `rounded-md bg-surface border border-border` |
-| `mdt` card | padding / gap | 16 / 10 | `p-4 gap-[10px]` |
-| `mdtr*` row | gap | 8, items-center | `flex items-center gap-2` |
-| row icon | size | 15×15 | `size-[15px]` |
-| row text | 13 / normal / body | `#5a5550` | `font-body text-[13px] text-text-secondary` |
-| `tag` / `user` icon | fill | `#8a847c` | `text-text-muted` |
-| `flame` icon | fill | `#ff4d21` (alta) | `text-warm-orange` |
-| description | 14 / 21 lh / body | `#5a5550` | `font-body text-sm leading-[21px] text-text-secondary` |
-| `cdt` CTA | height / radius | 54 / 999 | `PrimaryButton` size `md` |
-| `cdt` label | 16 / 500 / display | `#f8f4ed` | `PrimaryButton` default |
+| Pencil node         | property               | Pencil value                  | Tailwind                                               |
+| ------------------- | ---------------------- | ----------------------------- | ------------------------------------------------------ |
+| `KG95R` wrapper     | gap                    | 18                            | `gap-[18px]`                                           |
+| `KG95R` wrapper     | padding                | `[6,20,24,20]`                | deferred — layout applies `p-5`                        |
+| `tdt`               | layout                 | row, space-between, center    | `flex flex-row items-center justify-between w-full`    |
+| `tdt` chevron       | size / fill            | 24×24, `#1a1614`              | `size-6 text-text-primary`                             |
+| `tdt` title         | 16 / 500 / display     | `#1a1614`                     | `font-display text-base font-medium text-text-primary` |
+| `tdt` ellipsis      | size                   | 22×22                         | `size-[22px] text-text-primary`                        |
+| `hdt`               | gap                    | 12, items-center              | `flex items-center gap-3 w-full`                       |
+| `hdic`              | box                    | 48×48, radius 14, `#ff972818` | `size-12 rounded-[14px] bg-warm-yellow/[0.09]`         |
+| `hdic` icon         | size / fill            | 22×22, `#ff4d21`              | `size-[22px] text-warm-orange`                         |
+| `hdtc`              | gap                    | 4, flex-1                     | `flex-1 flex flex-col gap-1`                           |
+| title text          | 20 / 700 / display     | `#1a1614`                     | `font-display text-xl font-bold text-text-primary`     |
+| `hdtb` badge        | padding                | `[11,4]`                      | `px-[11px] py-1`                                       |
+| `hdtb` badge        | radius / fill / text   | 999 / `#2e9bff20` / `#1158b0` | `rounded-pill bg-blue-raw/20 text-brand-blue`          |
+| `hdtb` label        | 12 / 600 / display     | —                             | `font-display text-xs font-semibold`                   |
+| `mdt` card          | radius / fill / stroke | 18 / `$surface` / `$border`   | `rounded-md bg-surface border border-border`           |
+| `mdt` card          | padding / gap          | 16 / 10                       | `p-4 gap-[10px]`                                       |
+| `mdtr*` row         | gap                    | 8, items-center               | `flex items-center gap-2`                              |
+| row icon            | size                   | 15×15                         | `size-[15px]`                                          |
+| row text            | 13 / normal / body     | `#5a5550`                     | `font-body text-[13px] text-text-secondary`            |
+| `tag` / `user` icon | fill                   | `#8a847c`                     | `text-text-muted`                                      |
+| `flame` icon        | fill                   | `#ff4d21` (alta)              | `text-warm-orange`                                     |
+| description         | 14 / 21 lh / body      | `#5a5550`                     | `font-body text-sm leading-[21px] text-text-secondary` |
+| `cdt` CTA           | height / radius        | 54 / 999                      | `PrimaryButton` size `md`                              |
+| `cdt` label         | 16 / 500 / display     | `#f8f4ed`                     | `PrimaryButton` default                                |
 
 Edit screen `H3BY0u` / wrapper `vPUkG`: identical wrapper `gap: 18`, `padding: [6,20,24,20]`; form `PpIBo` `gap: 16`; description field 84px, `cornerRadius: 16`; category pills `padding: [14,8]`, `cornerRadius: 999`, selected = `$primary` fill + `$on-primary` text and no stroke; urgency segment `useg` `cornerRadius: 16`, `padding: 4`, `gap: 4`, items 38px tall, `cornerRadius: 12`, selected = `$primary`/`$on-primary`, unselected text `$text-muted`. All of this already exists in `NewTaskForm`.
 
@@ -299,7 +302,7 @@ Three adversarial layers (Blind Hunter, Edge Case Hunter, Acceptance Auditor) on
 
 - [x] [Review][Decision] **The taker's identity is no longer reachable anywhere in the UI** — the detail page still joins `tomador:tomada_por(*)` but nothing consumes it; the placeholder's `Tomada por` field was removed and the three-row meta card has no replacement. **Resuelto:** cuarta fila en la meta-card con ícono `user-check`, reusando el patrón de fila existente en vez de inventar una sección. [`src/app/(app)/nodo/tasks/[id]/page.tsx:19`]
 - [x] [Review][Decision] **A `hecha` task shows no CTA and no message to anyone but an admin** — the taker who just finished it, and the creator, fall through every branch and the screen ends after the description. `ESTADO_MESSAGES` covers only `verificada` and `cancelada`. **Resuelto:** `ESTADO_MESSAGES` suma `hecha` → "Trabajo terminado. Falta que un admin lo verifique."; el admin sigue viendo su CTA en vez del mensaje. [`src/features/tasks/TaskDetailView.tsx:125`]
-- [x] [Review][Decision] **An unknown estado degrades to `abierta`, i.e. to *actionable*** — the fallback avoids the crash but "Abierta" is the one state that renders a take affordance. A future enum value would ship as open and green. **Resuelto:** el gris de `TaskCard` pasa a decidirse por accionabilidad (`estado === "abierta"`) en vez de por el literal `cancelada`, así el fallback deja de importar. [`src/app/(app)/nodo/tasks/page.tsx:38`, `src/features/tasks/taskDisplay.ts:56`]
+- [x] [Review][Decision] **An unknown estado degrades to `abierta`, i.e. to _actionable_** — the fallback avoids the crash but "Abierta" is the one state that renders a take affordance. A future enum value would ship as open and green. **Resuelto:** el gris de `TaskCard` pasa a decidirse por accionabilidad (`estado === "abierta"`) en vez de por el literal `cancelada`, así el fallback deja de importar. [`src/app/(app)/nodo/tasks/page.tsx:38`, `src/features/tasks/taskDisplay.ts:56`]
 - [x] [Review][Decision] **Cancelling silently orphans the taker** — `tomada_por` is nulled with no notification and no record of who held it, que contradecía el comentario de la migración. **Resuelto:** `cancelTask` ya no toca `tomada_por`. [`src/features/tasks/actions.ts:179`]
 - [x] [Review][Decision] **Editing a `tomada` task changes the deal under the taker** — the menu deliberately stays open while `tomada`, **Resuelto:** editar queda restringido a `abierta`, en el ítem del menú, en la guarda de la ruta y en el filtro de `updateTask`. Cancelar sigue disponible en `abierta` y `tomada`. [`src/features/tasks/actions.ts:217`]
 
@@ -328,22 +331,22 @@ Three adversarial layers (Blind Hunter, Edge Case Hunter, Acceptance Auditor) on
 
 ## Files to Touch
 
-| Action | File |
-| ------ | ---- |
-| NEW | `supabase/migrations/<ts>_task_estado_cancelada.sql` |
-| UPDATE | `src/features/tasks/actions.ts` (`cancelTask`, `updateTask`) |
-| UPDATE | `src/features/tasks/actions.test.ts` |
-| UPDATE | `src/features/tasks/task-actions.tsx` (CTA copy + new buttons) |
-| NEW | `src/features/tasks/taskDisplay.ts` + `.test.ts` |
-| NEW | `src/features/tasks/TaskMenu.tsx` + `.test.tsx` |
-| UPDATE | `src/components/TaskCard.tsx` (consume the shared map; no visual change) |
-| UPDATE | `src/app/(app)/nodo/tasks/[id]/page.tsx` |
-| NEW | `src/app/(app)/nodo/tasks/[id]/page.test.tsx` |
-| NEW | `src/app/(app)/nodo/tasks/[id]/edit/page.tsx` + `.test.tsx` |
+| Action | File                                                                              |
+| ------ | --------------------------------------------------------------------------------- |
+| NEW    | `supabase/migrations/<ts>_task_estado_cancelada.sql`                              |
+| UPDATE | `src/features/tasks/actions.ts` (`cancelTask`, `updateTask`)                      |
+| UPDATE | `src/features/tasks/actions.test.ts`                                              |
+| UPDATE | `src/features/tasks/task-actions.tsx` (CTA copy + new buttons)                    |
+| NEW    | `src/features/tasks/taskDisplay.ts` + `.test.ts`                                  |
+| NEW    | `src/features/tasks/TaskMenu.tsx` + `.test.tsx`                                   |
+| UPDATE | `src/components/TaskCard.tsx` (consume the shared map; no visual change)          |
+| UPDATE | `src/app/(app)/nodo/tasks/[id]/page.tsx`                                          |
+| NEW    | `src/app/(app)/nodo/tasks/[id]/page.test.tsx`                                     |
+| NEW    | `src/app/(app)/nodo/tasks/[id]/edit/page.tsx` + `.test.tsx`                       |
 | UPDATE | `src/app/(app)/nodo/tasks/new/NewTaskForm.tsx` (generalised; behaviour unchanged) |
-| UPDATE | `src/app/(app)/nodo/tasks/page.tsx` (two `cancelada` map entries only) |
-| UPDATE | `src/lib/supabase/database.types.ts` (regenerated) |
-| UPDATE | `_bmad-output/implementation-artifacts/deferred-work.md` (RLS finding) |
+| UPDATE | `src/app/(app)/nodo/tasks/page.tsx` (two `cancelada` map entries only)            |
+| UPDATE | `src/lib/supabase/database.types.ts` (regenerated)                                |
+| UPDATE | `_bmad-output/implementation-artifacts/deferred-work.md` (RLS finding)            |
 
 `design/nodo-serrano.pen` is **not** touched — frame `H3BY0u` already landed in `ef65ace`.
 
@@ -360,7 +363,7 @@ Three adversarial layers (Blind Hunter, Edge Case Hunter, Acceptance Auditor) on
 
 ### Lesson carried from ZER-21 — a green test can certify the bug
 
-Class-string assertions verify *intent*; jsdom runs neither Tailwind nor layout. In ZER-21 a test asserting `gap-4` passed while the real gap was 16px where Pencil asked 18 — the CTA had been nested inside the form instead of being its sibling. **Measure in the browser, don't eyeball**; when the browser contradicts a green test, the test is the suspect (take it back to RED first). This is why AC 5 and AC 8 both spell out the CTA's parent, and T4 asserts it.
+Class-string assertions verify _intent_; jsdom runs neither Tailwind nor layout. In ZER-21 a test asserting `gap-4` passed while the real gap was 16px where Pencil asked 18 — the CTA had been nested inside the form instead of being its sibling. **Measure in the browser, don't eyeball**; when the browser contradicts a green test, the test is the suspect (take it back to RED first). This is why AC 5 and AC 8 both spell out the CTA's parent, and T4 asserts it.
 
 ### Do NOT
 
@@ -432,10 +435,10 @@ principal, porque el worktree no tiene `node_modules` propio.
 
 ### Change Log
 
-| Date | Change |
-| ---- | ------ |
-| 2026-07-28 | Story created — ready for dev |
-| 2026-07-29 | Code review: 5 decisiones resueltas, 17 patches aplicados, 4 diferidos |
+| Date       | Change                                                                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-28 | Story created — ready for dev                                                                                                               |
+| 2026-07-29 | Code review: 5 decisiones resueltas, 17 patches aplicados, 4 diferidos                                                                      |
 | 2026-07-28 | Rebased onto `main` `47d25f5`; edit frame `H3BY0u` landed from the team, T1 (Pencil work) dropped; reuse targets and hub blast radius added |
 
 ### File List

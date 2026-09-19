@@ -4,7 +4,7 @@ baseline_commit: TBD
 
 # Story 4.1: TaskCard component
 
-Status: ready-for-dev
+Status: done
 
 <!-- Story context engine — from epics.md Story 4.1, SPEC.md CAP-3, component-parity.md, and Pencil frame cboAZ. -->
 
