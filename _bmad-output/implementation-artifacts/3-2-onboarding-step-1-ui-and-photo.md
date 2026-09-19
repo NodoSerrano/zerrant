@@ -4,7 +4,7 @@ baseline_commit: d734feef9c3462e58974496b325ec8da413c7bfc
 
 # Story 3.2: Onboarding paso 1 — UI y foto
 
-Status: review
+Status: done
 
 <!-- Contexto: Linear ZER-13, frame Pencil bvpj5, epics.md Story 3.2, y las decisiones del owner tomadas en la sesión de planning. -->
 

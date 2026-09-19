@@ -4,7 +4,7 @@ baseline_commit: c232a68b5a791c134614f3fd198757764e15535c
 
 # Story 3.1: Avatar storage and upload pipeline
 
-Status: review
+Status: done
 
 <!-- Story context engine — from epics.md, SPEC.md, Linear ZER-12, and current code. No Pencil frame: infraestructura. -->
 

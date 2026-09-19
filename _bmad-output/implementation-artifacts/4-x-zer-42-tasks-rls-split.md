@@ -1,6 +1,6 @@
 # Story: ZER-42 SEC split RLS tasks (creador vs tomador)
 
-Status: review
+Status: done
 
 ## Goal
 

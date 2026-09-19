@@ -4,7 +4,7 @@ baseline_commit: TBD
 
 # Story 3.4: Tourist profile shell (2.7)
 
-Status: ready-for-dev
+Status: done
 
 <!-- Story context engine — from epics.md Story 3.4, SPEC.md CAP-7, screen-inventory.md, and Pencil frame J0GRm. -->
 

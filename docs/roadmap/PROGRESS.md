@@ -1,7 +1,7 @@
 # Progress
 
 > Estado operativo (código vs docs, PRs, deuda, plan): **[[STATUS]]**.
-> Esta tabla está reconciliada con `main`. `sprint-status.yaml` y los story `Status:` de BMad **siguen desfasados** — para el “dónde estamos” real, STATUS manda.
+> Esta tabla está reconciliada con `main`. `sprint-status.yaml` y los story `Status:` de BMad se reconciliaron en ZER-46 — para el “dónde estamos” real, STATUS manda.
 
 | Milestone                                                                   | Status    |
 | --------------------------------------------------------------------------- | --------- |

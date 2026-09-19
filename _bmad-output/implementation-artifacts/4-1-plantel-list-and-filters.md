@@ -1,6 +1,6 @@
 # Story 4.1: Plantel list + filters (2.2 / 7.1)
 
-Status: review
+Status: done
 
 Linear: [ZER-32](https://linear.app/zerrant/issue/ZER-32/m41-plantel-list-filters-22-71) · Branch: `estudionomade2025/zer-32-m41-plantel-list-filters-22-71`
 

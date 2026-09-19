@@ -4,7 +4,7 @@ baseline_commit: 4409f696ec0937ad4511a9cc6397a6ab5d101fd5
 
 # Story 1.4: TabBar icons and active pill
 
-Status: review
+Status: done
 
 <!-- Story context engine — generated from epics.md, component-parity.md, brownfield.md, Pencil MCP, and current code -->
 

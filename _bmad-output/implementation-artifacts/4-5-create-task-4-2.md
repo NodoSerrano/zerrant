@@ -1,6 +1,6 @@
 # Story 4.5: Create task (4.2)
 
-Status: ready-for-dev
+Status: done
 
 Linear: [ZER-21](https://linear.app/zerrant/issue/ZER-21/45-create-task-42) · Branch: `agumarchetti/zer-21-45-create-task-42`
 
@@ -103,25 +103,25 @@ Code review 2026-07-27 — 3 adversarial layers (Blind Hunter, Edge Case Hunter,
 
 **Dismissed as noise (2):**
 
-- *"No `maxLength` on `titulo`/`descripcion` → insert fails on long input"* — false. Both columns are unbounded `text` in `supabase/migrations/20260721232125_tasks.sql:9-10`. There is no failure mode.
-- *"Forged `categoria`/`urgencia` values persist garbage"* — false. Both are Postgres enums (`task_categoria`, `task_urgencia`), so the database rejects unknown values. The surviving real concern (a raw Postgres message reaching the user) is covered by the deferred validation finding.
-- *"The `pnpm-workspace.yaml` entry in `deferred-work.md` is scope creep"* — rejected. That file is the team's deferred-work ledger, not a story-scoped changelog; its existing entries come from work sessions, not from ACs. The issue was found doing this story and costs the team on every install.
+- _"No `maxLength` on `titulo`/`descripcion` → insert fails on long input"_ — false. Both columns are unbounded `text` in `supabase/migrations/20260721232125_tasks.sql:9-10`. There is no failure mode.
+- _"Forged `categoria`/`urgencia` values persist garbage"_ — false. Both are Postgres enums (`task_categoria`, `task_urgencia`), so the database rejects unknown values. The surviving real concern (a raw Postgres message reaching the user) is covered by the deferred validation finding.
+- _"The `pnpm-workspace.yaml` entry in `deferred-work.md` is scope creep"_ — rejected. That file is the team's deferred-work ledger, not a story-scoped changelog; its existing entries come from work sessions, not from ACs. The issue was found doing this story and costs the team on every install.
 
 ## Verification findings (T4)
 
 Measured in-browser at 375px, not eyeballed:
 
-| Measurement                   | Pencil | Got  |
-| ----------------------------- | ------ | ---- |
-| header → form                 | 18     | 18 ✅ |
-| last field → CTA              | 18     | ~~16~~ → 18 ✅ (fixed) |
-| textarea height               | 84     | 84 ✅ |
-| CTA height                    | 54     | 54 ✅ |
-| urgency track / segment height| 46 / 38| 46 / 38 ✅ |
-| urgency padding / gap         | 4 / 4  | 4 / 4 ✅ |
-| page side padding             | 20     | 20 ✅ |
+| Measurement                    | Pencil  | Got                    |
+| ------------------------------ | ------- | ---------------------- |
+| header → form                  | 18      | 18 ✅                  |
+| last field → CTA               | 18      | ~~16~~ → 18 ✅ (fixed) |
+| textarea height                | 84      | 84 ✅                  |
+| CTA height                     | 54      | 54 ✅                  |
+| urgency track / segment height | 46 / 38 | 46 / 38 ✅             |
+| urgency padding / gap          | 4 / 4   | 4 / 4 ✅               |
+| page side padding              | 20      | 20 ✅                  |
 
-**The 16px bug:** the CTA had been nested inside `<form>` (`gap-4`), but in Pencil `a00tB` is a *sibling* of `MWvoK` under the wrapper's `gap: 18`. The class-level test asserted `gap-4` and passed — it was certifying the wrong structure. Fixed by giving the form `gap-[18px]` with an inner `gap-4` fields container, plus a new test asserting `cta.parentElement === form` so the structure can't silently regress.
+**The 16px bug:** the CTA had been nested inside `<form>` (`gap-4`), but in Pencil `a00tB` is a _sibling_ of `MWvoK` under the wrapper's `gap: 18`. The class-level test asserted `gap-4` and passed — it was certifying the wrong structure. Fixed by giving the form `gap-[18px]` with an inner `gap-4` fields container, plus a new test asserting `cta.parentElement === form` so the structure can't silently regress.
 
 Also confirmed in-browser (not provable in jsdom): the `has-checked:` variants really generate and re-style on click with **no layout shift** (the `border-primary` trick works), and the focus ring is visible on the `sr-only` radios for keyboard users.
 
@@ -137,20 +137,20 @@ Padding pairs in Pencil are **`[horizontal, vertical]`** (confirmed: `Chip.tsx` 
 
 #### `ZqSLW` — wrapper
 
-| Pencil                                | Tailwind                                              |
-| ------------------------------------- | ----------------------------------------------------- |
-| vertical, `gap: 18`                   | `flex flex-col gap-[18px]`                            |
-| `padding: [6, 20, 24, 20]`            | supplied by `(app)/layout.tsx` `p-5` — see deviations |
-| `width/height: fill_container`        | —                                                     |
+| Pencil                         | Tailwind                                              |
+| ------------------------------ | ----------------------------------------------------- |
+| vertical, `gap: 18`            | `flex flex-col gap-[18px]`                            |
+| `padding: [6, 20, 24, 20]`     | supplied by `(app)/layout.tsx` `p-5` — see deviations |
+| `width/height: fill_container` | —                                                     |
 
 #### `U4JBZ` — header row ("tct")
 
-| Element | Pencil                                                       | Tailwind / React                                        |
-| ------- | ------------------------------------------------------------ | ------------------------------------------------------- |
-| Row     | horizontal, `justifyContent: space_between`, `alignItems: center` | `flex items-center justify-between`                 |
-| Close   | `QO7re` — lucide `x`, 24×24, `$text-primary`                 | `<button type="button" aria-label="Cerrar" onClick={() => router.back()}><X className="size-6 text-text-primary" /></button>` |
-| Title   | `F2hMYZ` — "Nueva tarea", `$font-display`, 16, weight 500, `$text-primary` | `<h1 className="font-display text-base font-medium text-text-primary">` |
-| Spacer  | `jSesA` — empty 24×24 frame                                  | `<span aria-hidden className="size-6" />` (keeps the title optically centred) |
+| Element | Pencil                                                                     | Tailwind / React                                                                                                              |
+| ------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Row     | horizontal, `justifyContent: space_between`, `alignItems: center`          | `flex items-center justify-between`                                                                                           |
+| Close   | `QO7re` — lucide `x`, 24×24, `$text-primary`                               | `<button type="button" aria-label="Cerrar" onClick={() => router.back()}><X className="size-6 text-text-primary" /></button>` |
+| Title   | `F2hMYZ` — "Nueva tarea", `$font-display`, 16, weight 500, `$text-primary` | `<h1 className="font-display text-base font-medium text-text-primary">`                                                       |
+| Spacer  | `jSesA` — empty 24×24 frame                                                | `<span aria-hidden className="size-6" />` (keeps the title optically centred)                                                 |
 
 #### `MWvoK` — form (vertical, `gap: 16` → `gap-4`)
 
@@ -162,37 +162,37 @@ Padding pairs in Pencil are **`[horizontal, vertical]`** (confirmed: `Chip.tsx` 
 
 **Descripción** — `z4WI4S` (vertical, `gap: 7` → `gap-[7px]`):
 
-| Element     | Pencil                                                                                       | Tailwind                                                             |
-| ----------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Label       | `dJ9T4` — "Descripción", `$font-body`, 13, weight 500, `$text-secondary`                     | `text-[13px] font-medium text-text-secondary`                        |
+| Element     | Pencil                                                                                                    | Tailwind                                                               |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Label       | `dJ9T4` — "Descripción", `$font-body`, 13, weight 500, `$text-secondary`                                  | `text-[13px] font-medium text-text-secondary`                          |
 | Field box   | `O59irA` — `height: 84`, `cornerRadius: 16`, `fill: $surface`, `stroke: $border` 1px inner, `padding: 16` | `h-[84px] rounded-2xl bg-surface border border-border p-4 resize-none` |
-| Placeholder | `uFG62` — "¿Qué hay que hacer y dónde?", `$font-body`, 15, normal, `$text-muted`, `lineHeight: 1.4` | `text-[15px] leading-[1.4] placeholder:text-text-muted`         |
+| Placeholder | `uFG62` — "¿Qué hay que hacer y dónde?", `$font-body`, 15, normal, `$text-muted`, `lineHeight: 1.4`       | `text-[15px] leading-[1.4] placeholder:text-text-muted`                |
 
 **Categoría** — `mYOkS` (vertical, `gap: 8` → `gap-2`), two rows `zjmnk` / `ncDeX`, each horizontal `gap: 8`:
 
-| Element        | Pencil                                                                    | Tailwind                                                            |
-| -------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Label          | `jHJaz` — "Categoría", `$font-body`, 13, weight 500, `$text-secondary`    | `text-[13px] font-medium text-text-secondary`                       |
-| Pill (base)    | `cornerRadius: 999`, `padding: [14, 8]`                                   | `rounded-pill px-[14px] py-2`                                       |
-| Pill text      | `$font-display`, 13, weight 500                                           | `font-display text-[13px] font-medium`                              |
-| Selected `TvTd8` | `fill: $primary`, text `$on-primary`, **no stroke**                     | `bg-primary text-on-primary`                                        |
-| Unselected     | `fill: $surface`, `stroke: $border` 1px inner, text `$text-secondary`      | `bg-surface border border-border text-text-secondary`               |
-| Row 1          | Reparación (selected) · Limpieza · Compra                                 | —                                                                   |
-| Row 2          | Mantenimiento · Otro                                                      | —                                                                   |
+| Element          | Pencil                                                                 | Tailwind                                              |
+| ---------------- | ---------------------------------------------------------------------- | ----------------------------------------------------- |
+| Label            | `jHJaz` — "Categoría", `$font-body`, 13, weight 500, `$text-secondary` | `text-[13px] font-medium text-text-secondary`         |
+| Pill (base)      | `cornerRadius: 999`, `padding: [14, 8]`                                | `rounded-pill px-[14px] py-2`                         |
+| Pill text        | `$font-display`, 13, weight 500                                        | `font-display text-[13px] font-medium`                |
+| Selected `TvTd8` | `fill: $primary`, text `$on-primary`, **no stroke**                    | `bg-primary text-on-primary`                          |
+| Unselected       | `fill: $surface`, `stroke: $border` 1px inner, text `$text-secondary`  | `bg-surface border border-border text-text-secondary` |
+| Row 1            | Reparación (selected) · Limpieza · Compra                              | —                                                     |
+| Row 2            | Mantenimiento · Otro                                                   | —                                                     |
 
 Pencil lays this out as two explicit rows (Pencil has no wrapping). In CSS, `flex-wrap` naturally produces the same 3+2 split at 375px, and stays correct at other widths — prefer `flex flex-wrap gap-2`.
 
 **Urgencia** — `DDYAm` (vertical, `gap: 8` → `gap-2`), segmented control `jmLgk`:
 
-| Element      | Pencil                                                                  | Tailwind                                             |
-| ------------ | ----------------------------------------------------------------------- | ---------------------------------------------------- |
-| Label        | `ZCfbr` — "Urgencia", same style as the other labels                    | `text-[13px] font-medium text-text-secondary`        |
-| Track        | `cornerRadius: 16`, `fill: $surface-inset`, `gap: 4`, `padding: 4`      | `flex gap-1 rounded-2xl bg-surface-inset p-1`        |
-| Segment      | `width: fill_container`, `height: 38`, `cornerRadius: 12`, centred      | `flex-1 h-[38px] rounded-xl flex items-center justify-center` |
-| Segment text | `$font-display`, 13, weight 500                                         | `font-display text-[13px] font-medium`               |
-| Selected `T0ybLH` | `fill: $primary`, text `$on-primary`                               | `bg-primary text-on-primary`                         |
-| Unselected   | **no fill**, text `$text-muted`                                         | `text-text-muted`                                    |
-| Order        | Baja · **Media** (selected) · Alta                                       | —                                                    |
+| Element           | Pencil                                                             | Tailwind                                                      |
+| ----------------- | ------------------------------------------------------------------ | ------------------------------------------------------------- |
+| Label             | `ZCfbr` — "Urgencia", same style as the other labels               | `text-[13px] font-medium text-text-secondary`                 |
+| Track             | `cornerRadius: 16`, `fill: $surface-inset`, `gap: 4`, `padding: 4` | `flex gap-1 rounded-2xl bg-surface-inset p-1`                 |
+| Segment           | `width: fill_container`, `height: 38`, `cornerRadius: 12`, centred | `flex-1 h-[38px] rounded-xl flex items-center justify-center` |
+| Segment text      | `$font-display`, 13, weight 500                                    | `font-display text-[13px] font-medium`                        |
+| Selected `T0ybLH` | `fill: $primary`, text `$on-primary`                               | `bg-primary text-on-primary`                                  |
+| Unselected        | **no fill**, text `$text-muted`                                    | `text-text-muted`                                             |
+| Order             | Baja · **Media** (selected) · Alta                                 | —                                                             |
 
 **CTA** — `a00tB`, instance of `PrimaryButton` (`qt9Zw`), `width: fill_container`, label override → "Publicar tarea".
 
@@ -207,7 +207,7 @@ The existing page is pre-design placeholder code. These strings/elements **chang
 | Title "Crear tarea"                      | "Nueva tarea"                                |
 | Back-arrow inline `<svg>`                | lucide `x` icon                              |
 | CTA "Crear tarea" / "Creando..."         | "Publicar tarea" / "Publicando..."           |
-| Second `PrimaryButton` "Cancelar"        | *removed* (Pencil has no Cancelar)           |
+| Second `PrimaryButton` "Cancelar"        | _removed_ (Pencil has no Cancelar)           |
 | Título placeholder "¿Qué hay que hacer?" | "Ej: Reparar el caño del baño"               |
 | Descripción placeholder "Más detalles…"  | "¿Qué hay que hacer y dónde?"                |
 | Default categoría `otro`                 | `reparacion`                                 |
@@ -215,12 +215,12 @@ The existing page is pre-design placeholder code. These strings/elements **chang
 
 ### Files to touch
 
-| File                                                    | Action |
-| ------------------------------------------------------- | ------ |
-| `src/app/(app)/nodo/tasks/new/page.tsx`                 | UPDATE — becomes an async server component with the tier guard |
-| `src/app/(app)/nodo/tasks/new/NewTaskForm.tsx`          | NEW — the `"use client"` form |
-| `src/app/(app)/nodo/tasks/new/NewTaskForm.test.tsx`     | NEW |
-| `src/app/(app)/nodo/tasks/new/page.test.tsx`            | NEW |
+| File                                                | Action                                                         |
+| --------------------------------------------------- | -------------------------------------------------------------- |
+| `src/app/(app)/nodo/tasks/new/page.tsx`             | UPDATE — becomes an async server component with the tier guard |
+| `src/app/(app)/nodo/tasks/new/NewTaskForm.tsx`      | NEW — the `"use client"` form                                  |
+| `src/app/(app)/nodo/tasks/new/NewTaskForm.test.tsx` | NEW                                                            |
+| `src/app/(app)/nodo/tasks/new/page.test.tsx`        | NEW                                                            |
 
 Do **not** modify `src/features/tasks/actions.ts` — `createTask` already satisfies AC8. If a change proves necessary, keep `actions.test.ts` green.
 
@@ -229,7 +229,7 @@ Do **not** modify `src/features/tasks/actions.ts` — `createTask` already satis
 > Written before T3, when `page.tsx` was still a single client component. **After T3 the split is: `page.tsx` is an async server component holding only the auth/tier guard, and every item below except `dynamic` lives in `NewTaskForm.tsx`.** Kept for the rationale, not as a map of the current files.
 
 - `export const dynamic = "force-dynamic"` — stays on `page.tsx`; the page reads auth state.
-- `useActionState(createTask, null)` wiring, the `state?.error` banner, and the `pending` disabled state — keep all three, they are the only error surface for the server action. *(Now in `NewTaskForm.tsx`.)*
+- `useActionState(createTask, null)` wiring, the `state?.error` banner, and the `pending` disabled state — keep all three, they are the only error surface for the server action. _(Now in `NewTaskForm.tsx`.)_
 - Field `name` attributes `titulo` / `descripcion` / `categoria` / `urgencia` — `createTask` reads these exact keys from `FormData`. Renaming any of them silently breaks creation.
 - The radio-group semantics (a `name`d group of `<input type="radio">` inside `<label>`) — keep them for accessibility and so `FormData` still carries the values. Style the pills/segments with `has-checked:` variants over a visually-hidden radio rather than switching to `<button>` + state, so the form keeps working without JS and no extra client state is needed.
 
@@ -239,7 +239,9 @@ Follow the pattern already used in `src/app/(app)/profile/page.tsx`:
 
 ```ts
 const supabase = await createClient();
-const { data: { user } } = await supabase.auth.getUser();
+const {
+  data: { user },
+} = await supabase.auth.getUser();
 if (!user) redirect("/auth/login");
 const { data: profile } = await supabase.from("profiles").select("tier").eq("id", user.id).single();
 if (!profile || profile.tier === "tourist") redirect("/nodo/tasks");
@@ -251,26 +253,26 @@ if (!profile || profile.tier === "tourist") redirect("/nodo/tasks");
 
 Vitest + Testing Library, mirroring `src/features/tasks/actions.test.ts` (which uses `vi.hoisted` mocks over `@/lib/supabase/server`) and `src/components/EmptyState.test.tsx` (class-level Pencil assertions).
 
-| Test                        | What it verifies                                                        |
-| --------------------------- | ----------------------------------------------------------------------- |
-| Header                      | title "Nueva tarea", classes; lucide `x` present                        |
-| Header — close              | clicking "Cerrar" calls `router.back()` (mock `useRouter`)              |
-| Título field                | label "Título", placeholder, `name="titulo"`, required                  |
-| Descripción field           | label, placeholder, `name="descripcion"`, `h-[84px] rounded-2xl` classes |
-| Categoría options           | 5 pills with the exact labels, `name="categoria"`, correct values        |
-| Categoría default           | `reparacion` is checked                                                  |
-| Categoría selected style    | checked pill resolves to `bg-primary text-on-primary`                    |
-| Urgencia options            | 3 segments, `name="urgencia"`, values `baja/media/alta`                  |
-| Urgencia default            | `media` is checked                                                       |
-| Urgencia track classes      | `rounded-2xl bg-surface-inset p-1 gap-1`                                 |
-| CTA                         | submit button labelled "Publicar tarea", `w-full`                        |
-| CTA pending                 | disabled + "Publicando..." when the action is pending                    |
-| No Cancelar                 | no button/link labelled "Cancelar"                                       |
-| Error banner                | renders `state.error` when the action returns one                        |
-| Guard — no user             | redirects to `/auth/login`                                               |
-| Guard — tourist             | redirects to `/nodo/tasks`, form never rendered                          |
-| Guard — no profile          | redirects to `/nodo/tasks`                                               |
-| Guard — serrano             | renders the form                                                         |
+| Test                     | What it verifies                                                         |
+| ------------------------ | ------------------------------------------------------------------------ |
+| Header                   | title "Nueva tarea", classes; lucide `x` present                         |
+| Header — close           | clicking "Cerrar" calls `router.back()` (mock `useRouter`)               |
+| Título field             | label "Título", placeholder, `name="titulo"`, required                   |
+| Descripción field        | label, placeholder, `name="descripcion"`, `h-[84px] rounded-2xl` classes |
+| Categoría options        | 5 pills with the exact labels, `name="categoria"`, correct values        |
+| Categoría default        | `reparacion` is checked                                                  |
+| Categoría selected style | checked pill resolves to `bg-primary text-on-primary`                    |
+| Urgencia options         | 3 segments, `name="urgencia"`, values `baja/media/alta`                  |
+| Urgencia default         | `media` is checked                                                       |
+| Urgencia track classes   | `rounded-2xl bg-surface-inset p-1 gap-1`                                 |
+| CTA                      | submit button labelled "Publicar tarea", `w-full`                        |
+| CTA pending              | disabled + "Publicando..." when the action is pending                    |
+| No Cancelar              | no button/link labelled "Cancelar"                                       |
+| Error banner             | renders `state.error` when the action returns one                        |
+| Guard — no user          | redirects to `/auth/login`                                               |
+| Guard — tourist          | redirects to `/nodo/tasks`, form never rendered                          |
+| Guard — no profile       | redirects to `/nodo/tasks`                                               |
+| Guard — serrano          | renders the form                                                         |
 
 ### Known deviations from Pencil (do NOT fix in this story)
 

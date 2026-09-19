@@ -7,7 +7,7 @@ baseline_commit: e2feb153ecb5f38ef4538c50a6261a10ae8bb9cb
 
 # Story 3.3: Confirmación de envío (1.9)
 
-Status: review
+Status: done
 
 <!-- Linear ZER-26. Not epic-3 onboarding 3.3. Do not touch onboarding. -->
 

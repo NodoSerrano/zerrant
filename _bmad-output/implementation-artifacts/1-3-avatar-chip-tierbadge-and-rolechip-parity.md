@@ -4,7 +4,7 @@ baseline_commit: 4409f696ec0937ad4511a9cc6397a6ab5d101fd5
 
 # Story 1.3: Avatar, Chip, TierBadge, and RoleChip parity
 
-Status: review
+Status: done
 
 <!-- Story context engine — generated from epics.md, SPEC.md, component-parity.md, Pencil MCP, and current code -->
 

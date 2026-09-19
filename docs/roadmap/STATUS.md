@@ -14,7 +14,7 @@
 | Linear (UI fidelity)  | https://linear.app/zerrant/project/nodo-serrano-ui-fidelity-m0-m2-38ca59210685 |
 | Diseño SSOT           | `design/nodo-serrano.pen`                                                      |
 | Stories BMad          | `_bmad-output/implementation-artifacts/`                                       |
-| Sprint map (stale)    | `_bmad-output/implementation-artifacts/sprint-status.yaml`                     |
+| Sprint map            | `_bmad-output/implementation-artifacts/sprint-status.yaml` (reconciled ZER-46) |
 | Deuda diferida        | `_bmad-output/implementation-artifacts/deferred-work.md`                       |
 
 ### Convención de status en Pencil (nombres de frame)
@@ -39,7 +39,7 @@ Conteo al corte 2026-09-18: **DONE 23** · **PROGRESS 0** · **TODO 15** (38 pan
 
 ## 1. En una frase
 
-**M0–M4 están en `main`** y la cola de PRs quedó en cero. Los docs de roadmap (`README.md`, `PROGRESS.md`, `Roadmap.md`, frontmatter `M*.md`) ya reflejan eso — se reconciliaron en ZER-45. Lo que **sigue mintiendo** es `sprint-status.yaml` y muchos story `Status:` de BMad (ver §5.1 / §5.2).
+**M0–M4 están en `main`** y la cola de PRs quedó en cero. Los docs de roadmap (`README.md`, `PROGRESS.md`, `Roadmap.md`, frontmatter `M*.md`) se reconciliaron en ZER-45. `sprint-status.yaml`, story `Status:` y stories fantasma se reconciliaron en **ZER-46**.
 
 ---
 
@@ -125,18 +125,17 @@ gh pr list --state merged --limit 15
 
 ## 5. Tracking podrido (hacer antes de spamear tickets nuevos)
 
-### 5.1 `sprint-status.yaml`
+### 5.1 `sprint-status.yaml` — ✅ **resuelto** (ZER-46)
 
-- `last_updated` ~ 2026-08-07 (y claves duplicadas confusas).
-- Ejemplos de desfase vs `main`:
-  - `4-3-nodo-tasks-hub` aparece backlog → **mergeado** (PR #9 / ZER-20)
-  - `4-4-task-detail` review → **mergeado** (PR #13 / ZER-22)
-  - `4-5-create-task` inconsistente story vs yaml → **mergeado** (PR #8 / ZER-21)
-  - Faltan mappings Linear de varias stories M3 membresía / M4 plantel (más allá de ZER-32)
+- `last_updated: 2026-09-18`, sin claves duplicadas.
+- `development_status` de epics M1–M4 / membresía / plantel / ops-security en `done`.
+- Stories que estaban backlog/review con código en `main` pasaron a `done` (hub, detail, create, onboarding, auth residual, plantel, etc.).
+- `linear_ids` ampliado: ZER-33 (detalle miembro), ZER-42 (RLS tasks), y key de onboarding step1 alineada al filename real (`3-2-onboarding-step-1-ui-and-photo`).
+- Stories fantasma restauradas como **closed stubs** (no briefs frescos): check-email, recovery/reset, onboarding step2, serrano shell, edit profile, tasks hub, solicitud, roles, detalle miembro, foundation M3.
 
-### 5.2 Story files BMad
+### 5.2 Story files BMad — ✅ **resuelto** (ZER-46)
 
-Muchos siguen `Status: review` o `ready-for-dev` con código ya en `main` (tokens 1.x, onboarding 3.2, task detail 4.4, plantel 4.1, post-solicitud 3.4, etc.).
+Todos los `Status:` de stories existentes en `_bmad-output/implementation-artifacts/*.md` (excepto `deferred-work.md`) quedaron en `done`, alineados al yaml y a Linear Done en M0–M4.
 
 ### 5.3 PROGRESS / README / Roadmap — ✅ **resuelto** (ZER-45)
 
@@ -147,12 +146,10 @@ Muchos siguen `Status: review` o `ready-for-dev` con código ya en `main` (token
 | Milestone frontmatter `M*.md` | `status: done` en M0–M4, `todo` en M5–M7                |
 | `design/nodo-serrano.pen`     | Sufijos `(DONE)`/`(TODO)` publicados; 0 en `(PROGRESS)` |
 
-**Sigue abierto:** §5.1 (`sprint-status.yaml`) y §5.2 (story `Status:`) — quedaron **fuera** del alcance de ZER-45 y son el próximo lote de ops.
-
 ### 5.4 Linear
 
 Fuente de issues: proyecto UI Fidelity M0–M2 + IDs `ZER-*` en stories y PRs.  
-Al corte **no había `LINEAR_API_KEY` local** en el entorno del agente: el board hay que reconciliarlo a mano o con token.
+Pasada ZER-46: los ZER mapeados en `sprint-status.yaml` (M0–M4 + ZER-42) están **Done** en Linear y coinciden con rutas/PRs en `main`.
 
 **Regla de oro:** no crear epics/features nuevas sin una pasada _Linear ↔ `main` ↔ sprint-status_. Riesgo alto de duplicar trabajo del equipo.
 
@@ -186,7 +183,7 @@ Fuente: `_bmad-output/implementation-artifacts/deferred-work.md` (ampliar ticket
 1. ~~Merge PR #25 y #26~~ — **hecho** (merged 2026-08-27 / 2026-08-29).
 2. ~~Decidir PR #27~~ — **hecho**: cerrado, diferido a M6.
 3. Reconciliar Linear: cerrar/`Done` todo lo que ya está en `main`. ⏳
-4. Actualizar docs de roadmap — **hecho en ZER-45** (`README.md`, `PROGRESS.md`, `Roadmap.md`, frontmatter `M*.md`, `.pen`). **Falta** `sprint-status.yaml` y los story `Status:`. ⏳
+4. Actualizar docs de roadmap — **hecho en ZER-45** (`README.md`, `PROGRESS.md`, `Roadmap.md`, frontmatter `M*.md`, `.pen`). `sprint-status.yaml` + story `Status:` + stubs fantasma — **hecho en ZER-46**.
 5. Bajar `deferred-work.md` a tickets etiquetados (`security`, `tech-debt`, `ux-debt`). ⏳
 
 **DoD Fase 0:** un dev nuevo lee este STATUS + Linear y no se contradicen.
@@ -226,9 +223,9 @@ Usar como checklist al crear en Linear. **No duplicar** si el issue ya existe �
 
 ### Ops / tracking
 
-- [ ] Reconciliar `sprint-status.yaml` + story Status vs `main` ← **próximo lote**
+- [x] Reconciliar `sprint-status.yaml` + story Status vs `main` — ZER-46
 - [x] Actualizar `PROGRESS.md` / `README.md` / `Roadmap.md` milestones — ZER-45
-- [ ] Inventario Linear open vs PRs merged (matriz ZER-*)
+- [x] Inventario Linear open vs PRs merged (matriz ZER-* del sprint map) — ZER-46
 - [ ] Mantener este `STATUS.md` en cada cierre de sprint
 
 ### Merge queue — cerrada
@@ -239,7 +236,7 @@ Usar como checklist al crear en Linear. **No duplicar** si el issue ya existe �
 
 ### Security / correctness
 
-- [ ] SEC: split RLS policies tasks (creador contenido vs tomador transiciones de estado)
+- [x] SEC: split RLS policies tasks (creador contenido vs tomador transiciones de estado) — ZER-42
 - [ ] BUG: take/mark/verify fallan si 0 rows updated
 - [ ] BUG: validate + trim `createTask`; no leak mensajes DB
 - [ ] INFRA: default privileges `authenticated` + check en CI
@@ -317,12 +314,12 @@ Stories y deuda:
 
 ### Sprint actual (editar acá)
 
-| Campo                   | Valor                                                                                                        |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Foco                    | Fase 0 — docs de roadmap reconciliadas (ZER-45); falta `sprint-status.yaml` + story `Status:` + board Linear |
-| Owner                   | Juan Peñalba                                                                                                 |
-| Bloquea features nuevas | Sí, hasta DoD Fase 0                                                                                         |
-| Próxima revisión        | Al cerrar el lote de `sprint-status.yaml`                                                                    |
+| Campo                   | Valor                                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------------------- |
+| Foco                    | Fase 0 casi cerrada (ZER-45 + ZER-46). Queda bajar `deferred-work.md` a tickets etiquetados |
+| Owner                   | Juan Peñalba                                                                                |
+| Bloquea features nuevas | Parcial — tracking ya no miente; falta ticketizar deuda diferida antes de spamear features  |
+| Próxima revisión        | Al ticketizar `deferred-work.md`                                                            |
 
 ---
 
@@ -332,3 +329,4 @@ Stories y deuda:
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-09-17 | Alta inicial: recon post-idle (código, PRs, tracking stale, deferred, plan F0–F4)                                                                                                                                                         |
 | 2026-09-18 | **Publicación** (ZER-45): archivo trackeado + README/PROGRESS/Roadmap/frontmatter/`.pen` reconciliados. Cola de PRs a cero (#25 y #26 merged, #27 cerrado → M6). M0–M4 en Done, con 2 residuales abiertos (QA E2E M3 · `3.4 Mis aportes`) |
+| 2026-09-18 | **Tracking** (ZER-46): `sprint-status.yaml` + story `Status:` + stubs fantasma reconciliados con Linear Done y `main`.                                                                                                                    |

@@ -4,7 +4,7 @@ baseline_commit: 4409f696ec0937ad4511a9cc6397a6ab5d101fd5
 
 # Story 2.1: Login and signup brand layout (1.1)
 
-Status: review
+Status: done
 
 <!-- Story context engine — from epics.md, SPEC.md, screen-inventory.md, brownfield.md, Pencil MCP, and current code -->
 
