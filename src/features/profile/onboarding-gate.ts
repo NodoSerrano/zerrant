@@ -5,6 +5,9 @@ export type OnboardingGateProfile = {
   onboarding_completado_en: string | null;
   apodo?: string | null;
   avatar_url?: string | null;
+  bio?: string | null;
+  contacto_telegram?: string | null;
+  sitio_url?: string | null;
 };
 
 export const NO_ROWS = "PGRST116";

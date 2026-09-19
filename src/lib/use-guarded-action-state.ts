@@ -22,6 +22,12 @@ export function useGuardedActionState<State>(
     async (prev: Awaited<State>, formData: FormData) => {
       try {
         return await action(prev, formData);
+      } catch {
+        // Transport/network rejects must not escape useActionState: map them to
+        // the same { error } contract DB failures already use so forms keep typed values.
+        return {
+          error: "No pudimos conectar. Revisá tu conexión e intentá de nuevo.",
+        } as Awaited<State>;
       } finally {
         lockedRef.current = false;
         setLocked(false);

@@ -74,4 +74,32 @@ describe("useGuardedActionState", () => {
       expect(action).toHaveBeenCalledTimes(2);
     });
   });
+
+  it("maps a rejected transport failure to { error }, unlocks, and does not throw", async () => {
+    const action = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
+
+    function Probe() {
+      const [state, formAction, pending] = useGuardedActionState(action, null);
+      return (
+        <form action={formAction}>
+          <button type="submit" disabled={pending}>
+            {pending ? "Working..." : "Submit"}
+          </button>
+          {state?.error ? <p role="alert">{state.error}</p> : null}
+        </form>
+      );
+    }
+
+    render(<Probe />);
+    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "No pudimos conectar. Revisá tu conexión e intentá de nuevo.",
+      );
+    });
+
+    expect(screen.getByRole("button", { name: "Submit" })).toBeEnabled();
+    expect(action).toHaveBeenCalledTimes(1);
+  });
 });

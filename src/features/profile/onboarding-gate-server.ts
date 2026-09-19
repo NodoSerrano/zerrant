@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NO_ROWS, resolveOnboardingRedirect, type OnboardingGateProfile } from "./onboarding-gate";
 
 const GATE_SELECT =
-  "nombre, apellido, fecha_nacimiento, onboarding_completado_en, apodo, avatar_url";
+  "nombre, apellido, fecha_nacimiento, onboarding_completado_en, apodo, avatar_url, bio, contacto_telegram, sitio_url";
 
 export type OnboardingGateResult = {
   profile: OnboardingGateProfile | null;
@@ -50,14 +50,14 @@ export async function fetchOnboardingGateProfile(): Promise<OnboardingGateResult
 }
 
 /**
- * Per-request cached profile read for the onboarding gate + step1 prefill.
+ * Per-request cached profile read for the onboarding gate + step prefill.
  * React.cache dedupes within a single RSC request tree (layout ↔ page).
  * It does NOT share with the proxy/middleware runtime.
  */
 export const getOnboardingGateProfile = cache(fetchOnboardingGateProfile);
 
 /**
- * Enforce onboarding gate for protected RSC trees ((app) + (modal)).
+ * Enforce onboarding gate for protected RSC trees ((app) + (modal) + (onboarding)).
  * Soft-allows on infra profile errors (same semantics as the former proxy gate).
  */
 export async function enforceOnboardingGate(pathname?: string): Promise<void> {
