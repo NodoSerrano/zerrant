@@ -74,25 +74,55 @@ function setupAuth(userId = "test-user-id") {
 }
 
 describe("createTask", () => {
-  it("creates a task and redirects on success", async () => {
-    setupAuth();
-    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
-    mocks.tasksInsert.mockResolvedValue({ error: null });
-
+  const makeFormData = (overrides: Record<string, string> = {}) => {
     const fd = new FormData();
     fd.set("titulo", "Fix the roof");
     fd.set("descripcion", "The roof needs urgent repair");
     fd.set("categoria", "mantenimiento");
     fd.set("urgencia", "alta");
+    for (const [k, v] of Object.entries(overrides)) fd.set(k, v);
+    return fd;
+  };
+
+  it("creates a task and redirects on success", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.tasksInsert.mockResolvedValue({ error: null });
 
     try {
-      await createTask(null, fd);
+      await createTask(null, makeFormData());
     } catch {
       // redirect throws
     }
 
     expect(mocks.profilesSelect).toHaveBeenCalledWith("tier");
     expect(mocks.profilesSelectEq).toHaveBeenCalledWith("id", "test-user-id");
+    expect(mocks.tasksInsert).toHaveBeenCalledWith({
+      titulo: "Fix the roof",
+      descripcion: "The roof needs urgent repair",
+      categoria: "mantenimiento",
+      urgencia: "alta",
+      creado_por: "test-user-id",
+    });
+  });
+
+  it("trims the title and description before saving", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.tasksInsert.mockResolvedValue({ error: null });
+
+    try {
+      await createTask(
+        null,
+        makeFormData({
+          titulo: "   Fix the roof   ",
+          descripcion: "  The roof needs urgent repair  ",
+        }),
+      );
+    } catch {
+      // redirect throws
+    }
+
     expect(mocks.tasksInsert).toHaveBeenCalledWith({
       titulo: "Fix the roof",
       descripcion: "The roof needs urgent repair",
@@ -112,16 +142,81 @@ describe("createTask", () => {
     expect(mocks.tasksInsert).not.toHaveBeenCalled();
   });
 
-  it("returns error when task insert fails", async () => {
+  it("rejects a blank title without touching the table", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+
+    const result = await createTask(null, makeFormData({ titulo: "   " }));
+
+    expect(result).toEqual({ error: "El título no puede estar vacío" });
+    expect(mocks.tasksInsert).not.toHaveBeenCalled();
+  });
+
+  it("rejects a missing title without touching the table", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    const fd = makeFormData();
+    fd.delete("titulo");
+
+    const result = await createTask(null, fd);
+
+    expect(result).toEqual({ error: "El título no puede estar vacío" });
+    expect(mocks.tasksInsert).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["categoria", "teletransportacion"],
+    ["urgencia", "critica"],
+  ])("rejects an out-of-range %s instead of casting it blindly", async (field, value) => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+
+    const result = await createTask(null, makeFormData({ [field]: value }));
+
+    expect(result).toEqual({ error: "Revisá los datos de la tarea." });
+    expect(mocks.tasksInsert).not.toHaveBeenCalled();
+  });
+
+  it.each(["", "   "])("stores an empty description %j as null", async (descripcion) => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.tasksInsert.mockResolvedValue({ error: null });
+
+    try {
+      await createTask(null, makeFormData({ descripcion }));
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.tasksInsert).toHaveBeenCalledWith(expect.objectContaining({ descripcion: null }));
+  });
+
+  it("stores a missing description as null", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.tasksInsert.mockResolvedValue({ error: null });
+    const fd = makeFormData();
+    fd.delete("descripcion");
+
+    try {
+      await createTask(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.tasksInsert).toHaveBeenCalledWith(expect.objectContaining({ descripcion: null }));
+  });
+
+  it("does not leak the raw Postgres message when the insert fails", async () => {
     setupAuth();
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
     mocks.tasksInsert.mockResolvedValue({
-      error: { message: "DB insert error" },
+      error: { message: 'null value in column "titulo" violates not-null' },
     });
 
-    const result = await createTask(null, new FormData());
+    const result = await createTask(null, makeFormData());
 
-    expect(result).toEqual({ error: "DB insert error" });
+    expect(result).toEqual({ error: "No pudimos publicar la tarea. Probá de nuevo." });
   });
 });
 
