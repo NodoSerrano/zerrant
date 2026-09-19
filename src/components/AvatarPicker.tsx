@@ -47,6 +47,8 @@ export function AvatarPicker({
   }, [pending, onUploadingChange]);
 
   // next/image throws on absolute hosts outside remotePatterns — never block onboarding.
+  // Guard stays here (not only in Avatar) because this picker still renders next/image
+  // directly with a camera placeholder instead of the shared Avatar component.
   const displayUrl = url && isServableAvatarImageUrl(url) ? url : null;
   const label = pending ? "Subiendo..." : displayUrl ? "Cambiar foto" : "Agregar foto";
 

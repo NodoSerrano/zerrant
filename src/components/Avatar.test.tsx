@@ -1,6 +1,10 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Avatar } from "./Avatar";
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 describe("Avatar", () => {
   it("renders initials when no src is provided", () => {
@@ -19,6 +23,48 @@ describe("Avatar", () => {
     const img = screen.getByRole("img", { name: "Juan Pérez" });
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute("src");
+  });
+
+  it("renders the image when src is a servable remote avatar URL", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://abc.supabase.co");
+    render(
+      <Avatar
+        name="Juan Pérez"
+        src="https://abc.supabase.co/storage/v1/object/public/avatars/u/a.jpg"
+      />,
+    );
+
+    expect(screen.getByRole("img", { name: "Juan Pérez" })).toBeInTheDocument();
+    expect(screen.queryByText("JP")).toBeNull();
+  });
+
+  it("renders initials when src host is outside remotePatterns", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://abc.supabase.co");
+    render(
+      <Avatar
+        name="Juan Pérez"
+        src="https://other.supabase.co/storage/v1/object/public/avatars/u/a.jpg"
+      />,
+    );
+
+    expect(screen.getByText("JP")).toBeInTheDocument();
+    expect(screen.queryByRole("img")).toBeNull();
+  });
+
+  it("degrades to initials when the image request fails after render", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://abc.supabase.co");
+    render(
+      <Avatar
+        name="Juan Pérez"
+        src="https://abc.supabase.co/storage/v1/object/public/avatars/u/a.jpg"
+      />,
+    );
+
+    const img = screen.getByRole("img", { name: "Juan Pérez" });
+    fireEvent.error(img);
+
+    expect(screen.getByText("JP")).toBeInTheDocument();
+    expect(screen.queryByRole("img")).toBeNull();
   });
 
   it('applies sm size class when size="sm"', () => {

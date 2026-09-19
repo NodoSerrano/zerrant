@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["*"],
   reactCompiler: false,
   images: {
-    // Keep in lockstep with isServableAvatarImageUrl (AvatarPicker graceful fallback).
+    // Keep in lockstep with isServableAvatarImageUrl (Avatar + AvatarPicker fallback).
     remotePatterns: getSupabaseAvatarRemotePatterns(),
   },
   experimental: {
