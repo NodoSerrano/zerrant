@@ -9,6 +9,8 @@ vi.mock("@/components/TabBarClient", () => ({
   TabBarClient: () => <nav data-testid="tab-bar" aria-label="TabBar" />,
 }));
 
+// TabBarPin is a client component; keep real implementation so portal contract is tested.
+
 import AppLayout from "./layout";
 
 describe("App shell layout (navigation destinations)", () => {
@@ -48,13 +50,39 @@ describe("App shell layout (navigation destinations)", () => {
     const shell = container.firstElementChild as HTMLElement;
     expect(shell.className).toMatch(/min-h-(full|dvh|screen)/);
 
-    const pin = screen.getByTestId("tab-bar").parentElement as HTMLElement;
+    const pin = screen.getByTestId("tab-bar-pin");
     expect(pin.className).toMatch(/fixed/);
     expect(pin.className).toMatch(/bottom-0/);
+    expect(pin).toContainElement(screen.getByTestId("tab-bar"));
 
     // Pencil TabBar outer frame: pt 21 + pill 62 + pb 21 = 104px.
     const spacer = container.querySelector('[data-testid="tab-bar-spacer"]');
     expect(spacer).toBeInTheDocument();
     expect(spacer?.className).toContain("h-[104px]");
+  });
+
+  it("portals the TabBar pin to document.body so fixed anchors to the viewport (ZER-70)", () => {
+    // A transformed ancestor would make position:fixed behave like absolute
+    // against that box — the failure mode on /nodo/tasks where the bar sat
+    // at the top while body-level fixed (Next dev badge) still worked.
+    const trap = document.createElement("div");
+    trap.style.transform = "translateX(0)";
+    document.body.appendChild(trap);
+
+    const { unmount } = render(
+      <AppLayout>
+        <div>hub content</div>
+      </AppLayout>,
+      { container: trap },
+    );
+
+    const pin = screen.getByTestId("tab-bar-pin");
+    expect(pin.parentElement).toBe(document.body);
+    expect(trap.contains(pin)).toBe(false);
+    expect(pin.className).toMatch(/fixed/);
+    expect(pin.className).toMatch(/bottom-0/);
+
+    unmount();
+    trap.remove();
   });
 });
