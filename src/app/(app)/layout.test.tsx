@@ -31,7 +31,7 @@ describe("App shell layout (navigation destinations)", () => {
     expect(screen.queryByText("9:41")).not.toBeInTheDocument();
   });
 
-  it("uses Pencil hub wrapper padding [8,20,20,20] (NgZiI / k8Odh / v9SljB)", () => {
+  it("uses post-StatusBar hub padding [20,20,20,20] (sides/bottom match Pencil; top raised after ZER-66)", () => {
     const { container } = render(
       <AppLayout>
         <div>hub content</div>
@@ -39,10 +39,12 @@ describe("App shell layout (navigation destinations)", () => {
     );
 
     const content = container.querySelector(".max-w-lg");
-    expect(content?.className).toContain("pt-2");
+    // Pencil hub wrappers still encode top 8 under a fake StatusBar; without it
+    // the shell uses 20 top so content is not flush with the viewport edge.
+    expect(content?.className).toContain("pt-5");
     expect(content?.className).toContain("px-5");
     expect(content?.className).toContain("pb-5");
-    expect(content?.className).not.toContain("p-5");
+    expect(content?.className).not.toContain("pt-2");
   });
 
   it("pins TabBar to the viewport bottom and reserves its height so lists do not sit under it", () => {
