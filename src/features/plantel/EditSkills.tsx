@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, Plus, X } from "lucide-react";
 import { saveProfileSkills } from "./skills-actions";
 import { suggestSkills } from "./skills";
+import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 
 interface EditSkillsProps {
   initialSkills: string[];
@@ -12,7 +13,7 @@ interface EditSkillsProps {
 }
 
 export function EditSkills({ initialSkills, catalog }: EditSkillsProps) {
-  const [state, formAction, pending] = useActionState(saveProfileSkills, null);
+  const [state, formAction, pending] = useGuardedActionState(saveProfileSkills, null);
   const [selected, setSelected] = useState<string[]>(initialSkills);
   const [query, setQuery] = useState("");
 

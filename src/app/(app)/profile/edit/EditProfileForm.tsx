@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { updateProfile, uploadAvatar } from "@/features/profile/actions";
+import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 
 const NOMBRE_VISIBLE_OPTIONS = [
   { value: "apodo", label: "Apodo" },
@@ -44,7 +45,7 @@ interface EditProfileFormProps {
 
 export function EditProfileForm({ defaults }: EditProfileFormProps) {
   const router = useRouter();
-  const [state, action, pending] = useActionState(updateProfile, null);
+  const [state, action, pending] = useGuardedActionState(updateProfile, null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   return (

@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { cn } from "@/lib/utils";
 
 // Create and edit share the same form: Pencil frames `V0ODk` and `H3BY0u`
@@ -57,7 +57,7 @@ export function TaskForm({
   defaults,
   hiddenFields,
 }: TaskFormProps) {
-  const [state, formAction, pending] = useActionState<TaskFormState, FormData>(action, null);
+  const [state, formAction, pending] = useGuardedActionState(action, null);
 
   const categoria = defaults?.categoria ?? "reparacion";
   const urgencia = defaults?.urgencia ?? "media";

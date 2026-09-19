@@ -1,15 +1,15 @@
 "use client";
 
 import { ChevronLeft } from "lucide-react";
-import { useActionState } from "react";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { saveOnboardingStep2 } from "@/features/profile/actions";
+import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 
 export const dynamic = "force-dynamic";
 
 export default function OnboardingStep2() {
-  const [state, action, pending] = useActionState(saveOnboardingStep2, null);
+  const [state, action, pending] = useGuardedActionState(saveOnboardingStep2, null);
 
   return (
     <div className="flex flex-col gap-[22px]">

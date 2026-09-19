@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
 import { Check } from "lucide-react";
 import { approveRequest, rejectRequest } from "@/features/admin/actions";
+import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { Avatar } from "./Avatar";
 import { type Profile } from "@/features/profile/types";
 
@@ -23,18 +23,14 @@ export interface RequestCardData {
 }
 
 function timeAgo(date: string): string {
-  const seconds = Math.floor(
-    (Date.now() - new Date(date).getTime()) / 1000,
-  );
+  const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
   if (seconds < 60) return "ahora";
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `hace ${minutes} min`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24)
-    return `hace ${hours} ${hours === 1 ? "hora" : "horas"}`;
+  if (hours < 24) return `hace ${hours} ${hours === 1 ? "hora" : "horas"}`;
   const days = Math.floor(hours / 24);
-  if (days < 7)
-    return `hace ${days} ${days === 1 ? "día" : "días"}`;
+  if (days < 7) return `hace ${days} ${days === 1 ? "día" : "días"}`;
   const weeks = Math.floor(days / 7);
   return `hace ${weeks} ${weeks === 1 ? "semana" : "semanas"}`;
 }
@@ -43,29 +39,24 @@ function displayName(profile: RequestProfileData): string {
   switch (profile.nombre_visible) {
     case "apodo":
       if (profile.apodo) return profile.apodo;
-      return [profile.nombre, profile.apellido]
-        .filter(Boolean)
-        .join(" ");
+      return [profile.nombre, profile.apellido].filter(Boolean).join(" ");
     case "apellido_nombre":
-      return [profile.apellido, profile.nombre]
-        .filter(Boolean)
-        .join(" ");
+      return [profile.apellido, profile.nombre].filter(Boolean).join(" ");
     case "nombre_apellido":
     default:
-      return [profile.nombre, profile.apellido]
-        .filter(Boolean)
-        .join(" ");
+      return [profile.nombre, profile.apellido].filter(Boolean).join(" ");
   }
 }
 
 type ActionState = { error?: string } | null;
 
 function RequestCardActions({ requestId }: { requestId: string }) {
-  const [approveState, approveAction] = useActionState(approveRequest, null);
-  const [rejectState, rejectAction] = useActionState(rejectRequest, null);
+  const [approveState, approveAction, approvePending] = useGuardedActionState(approveRequest, null);
+  const [rejectState, rejectAction, rejectPending] = useGuardedActionState(rejectRequest, null);
 
   const approveError = (approveState as ActionState)?.error;
   const rejectError = (rejectState as ActionState)?.error;
+  const busy = approvePending || rejectPending;
 
   return (
     <div className="flex flex-col gap-2">
@@ -74,11 +65,12 @@ function RequestCardActions({ requestId }: { requestId: string }) {
           <input type="hidden" name="requestId" value={requestId} />
           <button
             type="submit"
-            className="rounded-pill bg-primary h-[44px] flex items-center justify-center gap-1.5 w-full"
+            disabled={busy}
+            className="rounded-pill bg-primary h-[44px] flex items-center justify-center gap-1.5 w-full disabled:opacity-50"
           >
             <Check className="size-[17px] text-on-primary" />
             <span className="font-display text-[15px] font-medium text-on-primary">
-              Aprobar
+              {approvePending ? "Aprobando..." : "Aprobar"}
             </span>
           </button>
         </form>
@@ -86,18 +78,17 @@ function RequestCardActions({ requestId }: { requestId: string }) {
           <input type="hidden" name="requestId" value={requestId} />
           <button
             type="submit"
-            className="rounded-pill bg-surface border border-border h-[44px] flex items-center justify-center w-full"
+            disabled={busy}
+            className="rounded-pill bg-surface border border-border h-[44px] flex items-center justify-center w-full disabled:opacity-50"
           >
             <span className="font-display text-[15px] font-medium text-text-secondary">
-              Rechazar
+              {rejectPending ? "Rechazando..." : "Rechazar"}
             </span>
           </button>
         </form>
       </div>
       {(approveError || rejectError) && (
-        <p className="font-body text-xs text-coral text-center">
-          {approveError || rejectError}
-        </p>
+        <p className="font-body text-xs text-coral text-center">{approveError || rejectError}</p>
       )}
     </div>
   );

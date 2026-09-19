@@ -2,16 +2,16 @@
 
 export const dynamic = "force-dynamic";
 
-import { useActionState } from "react";
 import Link from "next/link";
 import { Mountain } from "lucide-react";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { SecondaryButton } from "@/components/SecondaryButton";
 import { signUpWithPassword, signInWithGoogle } from "@/features/auth/actions";
+import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 
 export default function SignupPage() {
-  const [state, action, pending] = useActionState(signUpWithPassword, null);
+  const [state, action, pending] = useGuardedActionState(signUpWithPassword, null);
 
   return (
     <div className="px-[26px] py-6 flex flex-col justify-center gap-[22px] min-h-full">

@@ -1,14 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Info, UserPlus } from "lucide-react";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { createMembershipRequest } from "@/features/membership/actions";
+import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { cn } from "@/lib/utils";
 
 export function SolicitarForm() {
-  const [state, action, pending] = useActionState(createMembershipRequest, null);
+  const [state, action, pending] = useGuardedActionState(createMembershipRequest, null);
   const router = useRouter();
 
   return (
