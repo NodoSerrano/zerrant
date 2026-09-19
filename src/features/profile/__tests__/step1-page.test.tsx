@@ -85,6 +85,38 @@ describe("OnboardingStep1 page", () => {
     expect(screen.getByText("Agregar foto")).toBeInTheDocument();
   });
 
+  it("still renders an empty form when the profile row is genuinely missing (PGRST116)", async () => {
+    mocks.profileSingle.mockResolvedValue({
+      data: null,
+      error: { code: "PGRST116", message: "The result contains 0 rows" },
+    });
+
+    render(await OnboardingStep1());
+
+    expect(screen.getByLabelText("Nombre")).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Guardar y continuar" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("shows a clear error with retry when the profile read fails, not a silent empty form", async () => {
+    mocks.profileSingle.mockResolvedValue({
+      data: null,
+      error: { code: "57014", message: "canceling statement due to statement timeout" },
+    });
+
+    render(await OnboardingStep1());
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "No pudimos cargar tu perfil. Probá de nuevo.",
+    );
+    expect(screen.getByRole("link", { name: "Reintentar" })).toHaveAttribute(
+      "href",
+      "/onboarding/step1",
+    );
+    expect(screen.queryByLabelText("Nombre")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Guardar y continuar" })).not.toBeInTheDocument();
+  });
+
   it("still renders the form when there is no session (the proxy owns the redirect)", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: null } });
 
