@@ -7,11 +7,17 @@ import type { TaskCategoria, TaskUpdate, TaskUrgencia } from "./types";
 
 const CANCEL_ERROR = "No pudimos cancelar la tarea. Probá de nuevo.";
 const UPDATE_ERROR = "No pudimos guardar los cambios. Probá de nuevo.";
+const TAKE_ERROR = "No pudimos tomar la tarea. Probá de nuevo.";
+const MARK_DONE_ERROR = "No pudimos marcar la tarea como hecha. Probá de nuevo.";
+const VERIFY_ERROR = "No pudimos verificar la tarea. Probá de nuevo.";
 // When the filters match no rows, PostgREST doesn't return an error: the
 // update simply touches nothing. Without telling that case apart, the action
 // redirects as if it had worked.
 const CANCEL_REJECTED = "No pudimos cancelar esta tarea.";
 const UPDATE_REJECTED = "No pudimos guardar los cambios.";
+const TAKE_REJECTED = "No pudimos tomar esta tarea.";
+const MARK_DONE_REJECTED = "No pudimos marcar la tarea como hecha.";
+const VERIFY_REJECTED = "No pudimos verificar esta tarea.";
 const INVALID_INPUT = "Revisá los datos de la tarea.";
 
 const CATEGORIAS: TaskCategoria[] = ["reparacion", "limpieza", "compra", "mantenimiento", "otro"];
@@ -90,14 +96,19 @@ export async function takeTask(_prevState: { error: string } | null, formData: F
     return { error: "Solo los serranos pueden tomar tareas" };
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("tasks")
     .update({ estado: "tomada", tomada_por: user.id })
     .eq("id", taskId)
-    .eq("estado", "abierta");
+    .eq("estado", "abierta")
+    .select("id");
 
   if (error) {
-    return { error: error.message };
+    return { error: TAKE_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: TAKE_REJECTED };
   }
 
   revalidatePath("/nodo", "layout");
@@ -117,14 +128,20 @@ export async function markTaskDone(_prevState: { error: string } | null, formDat
 
   const taskId = formData.get("taskId") as string;
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("tasks")
     .update({ estado: "hecha" })
     .eq("id", taskId)
-    .eq("tomada_por", user.id);
+    .eq("tomada_por", user.id)
+    .eq("estado", "tomada")
+    .select("id");
 
   if (error) {
-    return { error: error.message };
+    return { error: MARK_DONE_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: MARK_DONE_REJECTED };
   }
 
   revalidatePath("/nodo", "layout");
@@ -154,14 +171,19 @@ export async function verifyTask(_prevState: { error: string } | null, formData:
     return { error: "Solo un admin puede verificar tareas" };
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("tasks")
     .update({ estado: "verificada" })
     .eq("id", taskId)
-    .eq("estado", "hecha");
+    .eq("estado", "hecha")
+    .select("id");
 
   if (error) {
-    return { error: error.message };
+    return { error: VERIFY_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: VERIFY_REJECTED };
   }
 
   revalidatePath("/nodo", "layout");
