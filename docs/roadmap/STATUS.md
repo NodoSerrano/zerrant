@@ -171,7 +171,7 @@ Fuente: `_bmad-output/implementation-artifacts/deferred-work.md` (ampliar ticket
 5. ~~TabBar con `<button onClick>` → sin JS no se navega.~~ **Done in ZER-50**.
 6. Gate de onboarding: doble query de perfil + costo en prefetch de `<Link>`.
 7. Grants: falta `alter default privileges` / chequeo CI para tablas nuevas (`42501`).
-8. `pnpm-workspace.yaml` stub `allowBuilds` ensucia installs y empuja a `--no-verify`.
+8. ~~`pnpm-workspace.yaml` stub `allowBuilds` ensucia installs y empuja a `--no-verify`.~~ **Done in ZER-57** (`allowBuilds` resuelto en `main`; paper trail cerrado).
 9. Hub de tasks incluye canceladas en “Todas” (decisión de producto).
 
 ---
@@ -240,7 +240,7 @@ Usar como checklist al crear en Linear. **No duplicar** si el issue ya existe �
 - [ ] BUG: take/mark/verify fallan si 0 rows updated
 - [ ] BUG: validate + trim `createTask`; no leak mensajes DB
 - [ ] INFRA: default privileges `authenticated` + check en CI
-- [ ] INFRA: resolver `pnpm approve-builds` / `allowBuilds`
+- [x] INFRA: resolver `pnpm approve-builds` / `allowBuilds` — ZER-57
 
 ### Fidelity / UX residual
 
