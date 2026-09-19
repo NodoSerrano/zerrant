@@ -1,21 +1,22 @@
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { NO_ROWS, resolveOnboardingRedirect } from "@/features/profile/onboarding-gate";
+import { getOnboardingGateProfile } from "@/features/profile/onboarding-gate-server";
 
 export default async function Home() {
-  const supabase = await createClient();
+  const { profile, error, userId } = await getOnboardingGateProfile();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!userId) {
     redirect("/auth/login");
   }
 
-  const { data: profile } = await supabase.from("profiles").select("id").eq("id", user.id).single();
+  // Soft-allow on infra errors — fall through to profile hub.
+  if (error && error.code !== NO_ROWS) {
+    redirect("/profile");
+  }
 
-  if (!profile) {
-    redirect("/onboarding/step1");
+  const onboardingTarget = resolveOnboardingRedirect(profile, "/");
+  if (onboardingTarget) {
+    redirect(onboardingTarget);
   }
 
   redirect("/profile");

@@ -2,20 +2,11 @@ import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  getUser: vi.fn(),
-  profileSingle: vi.fn(),
-  select: vi.fn(),
+  getOnboardingGateProfile: vi.fn(),
 }));
 
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn().mockResolvedValue({
-    auth: { getUser: mocks.getUser },
-    from: vi.fn(() => ({
-      select: mocks.select.mockImplementation(() => ({
-        eq: vi.fn(() => ({ single: mocks.profileSingle })),
-      })),
-    })),
-  }),
+vi.mock("@/features/profile/onboarding-gate-server", () => ({
+  getOnboardingGateProfile: mocks.getOnboardingGateProfile,
 }));
 
 vi.mock("@/features/profile/actions", () => ({
@@ -31,21 +22,22 @@ afterEach(() => {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
 });
 
 describe("OnboardingStep1 page", () => {
   it("prefills the form with what the profile already has", async () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
-    mocks.profileSingle.mockResolvedValue({
-      data: {
+    mocks.getOnboardingGateProfile.mockResolvedValue({
+      profile: {
         nombre: "Juan",
         apellido: "Pérez",
         apodo: "juancito",
         fecha_nacimiento: "1990-01-15",
         avatar_url: "https://sb.test/storage/v1/object/public/avatars/u/a.jpg",
+        onboarding_completado_en: null,
       },
       error: null,
+      userId: "test-user-id",
     });
 
     render(await OnboardingStep1());
@@ -57,26 +49,30 @@ describe("OnboardingStep1 page", () => {
     expect(screen.getByRole("img", { name: "Foto de perfil" })).toBeInTheDocument();
   });
 
-  it("only reads the profile of the authenticated user", async () => {
-    mocks.profileSingle.mockResolvedValue({ data: null, error: null });
+  it("reads profile via the cached onboarding gate helper", async () => {
+    mocks.getOnboardingGateProfile.mockResolvedValue({
+      profile: null,
+      error: null,
+      userId: "test-user-id",
+    });
 
     render(await OnboardingStep1());
 
-    expect(mocks.select).toHaveBeenCalledWith(
-      "nombre, apellido, apodo, fecha_nacimiento, avatar_url",
-    );
+    expect(mocks.getOnboardingGateProfile).toHaveBeenCalledTimes(1);
   });
 
   it("renders an empty form for a brand new profile", async () => {
-    mocks.profileSingle.mockResolvedValue({
-      data: {
+    mocks.getOnboardingGateProfile.mockResolvedValue({
+      profile: {
         nombre: null,
         apellido: null,
         apodo: null,
         fecha_nacimiento: null,
         avatar_url: null,
+        onboarding_completado_en: null,
       },
       error: null,
+      userId: "test-user-id",
     });
 
     render(await OnboardingStep1());
@@ -86,9 +82,10 @@ describe("OnboardingStep1 page", () => {
   });
 
   it("still renders an empty form when the profile row is genuinely missing (PGRST116)", async () => {
-    mocks.profileSingle.mockResolvedValue({
-      data: null,
+    mocks.getOnboardingGateProfile.mockResolvedValue({
+      profile: null,
       error: { code: "PGRST116", message: "The result contains 0 rows" },
+      userId: "test-user-id",
     });
 
     render(await OnboardingStep1());
@@ -99,9 +96,10 @@ describe("OnboardingStep1 page", () => {
   });
 
   it("shows a clear error with retry when the profile read fails, not a silent empty form", async () => {
-    mocks.profileSingle.mockResolvedValue({
-      data: null,
+    mocks.getOnboardingGateProfile.mockResolvedValue({
+      profile: null,
       error: { code: "57014", message: "canceling statement due to statement timeout" },
+      userId: "test-user-id",
     });
 
     render(await OnboardingStep1());
@@ -117,12 +115,15 @@ describe("OnboardingStep1 page", () => {
     expect(screen.queryByRole("button", { name: "Guardar y continuar" })).not.toBeInTheDocument();
   });
 
-  it("still renders the form when there is no session (the proxy owns the redirect)", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: null } });
+  it("still renders the form when there is no session (auth redirect is proxy-owned)", async () => {
+    mocks.getOnboardingGateProfile.mockResolvedValue({
+      profile: null,
+      error: null,
+      userId: null,
+    });
 
     render(await OnboardingStep1());
 
-    expect(mocks.profileSingle).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Guardar y continuar" })).toBeInTheDocument();
   });
 });

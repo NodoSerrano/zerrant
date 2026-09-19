@@ -2,9 +2,17 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  const requestHeadersWithPath = () => {
+    const headers = new Headers(request.headers);
+    headers.set("x-pathname", pathname);
+    return headers;
+  };
+
   let response = NextResponse.next({
     request: {
-      headers: request.headers,
+      headers: requestHeadersWithPath(),
     },
   });
 
@@ -21,7 +29,9 @@ function updateSession(request: NextRequest) {
             request.cookies.set(name, value);
           }
           response = NextResponse.next({
-            request,
+            request: {
+              headers: requestHeadersWithPath(),
+            },
           });
           for (const { name, value, options } of cookiesToSet) {
             response.cookies.set(name, value, options);
@@ -46,6 +56,22 @@ function underPrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
+const STALE_ONBOARDING_HTML = `<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Onboarding ya completado</title>
+  </head>
+  <body>
+    <main>
+      <h1>Ya completaste el onboarding</h1>
+      <p>Esta pestaña quedó desactualizada. Tus datos de perfil se editan desde el perfil.</p>
+      <p><a href="/">Ir al inicio</a></p>
+    </main>
+  </body>
+</html>`;
+
 export default async function proxy(request: NextRequest) {
   const { response, supabase } = updateSession(request);
 
@@ -68,68 +94,34 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Onboarding is one-shot: the user stays in /onboarding until step 2 is done,
-  // and once finished they never go back in (that data is edited in
-  // /profile/edit).
-  if (user && isProtected) {
+  // Onboarding gate (GET/nav) lives in RSC templates ((app) + (modal)) with
+  // React.cache — no profiles select on every protected request (ZER-54).
+  //
+  // Residual ZER-61: a 307 on POST would re-POST the body to `/`. Mutations
+  // from a stale /onboarding tab still need a clear HTML answer here, before RSC.
+  if (
+    user &&
+    underPrefix(pathname, "/onboarding") &&
+    request.method !== "GET" &&
+    request.method !== "HEAD"
+  ) {
     const { data: profile, error } = await supabase
       .from("profiles")
-      .select("nombre, apellido, fecha_nacimiento, onboarding_completado_en")
+      .select("onboarding_completado_en")
       .eq("id", user.id)
       .single();
 
-    // If the query failed (timeout, permissions, 5xx) we don't know the
-    // onboarding state. Locking the whole app into /onboarding would be worse
-    // than letting users through: only block when the response is trustworthy.
+    // Soft-allow on infra failure — same spirit as the old gate.
     if (error && error.code !== NO_ROWS) {
-      console.error("[proxy] no se pudo leer el perfil para el gate de onboarding", error);
+      console.error("[proxy] no se pudo leer onboarding_completado_en para POST stale", error);
       return response;
     }
 
-    const onboardingDone = Boolean(profile?.onboarding_completado_en);
-    const step1Done = Boolean(profile?.nombre && profile?.apellido && profile?.fecha_nacimiento);
-    const isOnboarding = underPrefix(pathname, "/onboarding");
-
-    if (!onboardingDone && !isOnboarding) {
-      // Resume where the user left off.
-      return NextResponse.redirect(
-        new URL(step1Done ? "/onboarding/step2" : "/onboarding/step1", request.url),
-      );
-    }
-
-    // Step 2 cannot skip step 1: step 1 holds the required data.
-    if (!onboardingDone && !step1Done && !underPrefix(pathname, "/onboarding/step1")) {
-      return NextResponse.redirect(new URL("/onboarding/step1", request.url));
-    }
-
-    if (onboardingDone && isOnboarding) {
-      // A 307 would re-POST the body to `/` (server actions from a stale tab).
-      // Mutations get a clear HTML answer; GETs keep the normal bounce home.
-      if (request.method !== "GET" && request.method !== "HEAD") {
-        return new NextResponse(
-          `<!DOCTYPE html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Onboarding ya completado</title>
-  </head>
-  <body>
-    <main>
-      <h1>Ya completaste el onboarding</h1>
-      <p>Esta pestaña quedó desactualizada. Tus datos de perfil se editan desde el perfil.</p>
-      <p><a href="/">Ir al inicio</a></p>
-    </main>
-  </body>
-</html>`,
-          {
-            status: 409,
-            headers: { "content-type": "text/html; charset=utf-8" },
-          },
-        );
-      }
-
-      return NextResponse.redirect(new URL("/", request.url));
+    if (profile?.onboarding_completado_en) {
+      return new NextResponse(STALE_ONBOARDING_HTML, {
+        status: 409,
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
     }
   }
 

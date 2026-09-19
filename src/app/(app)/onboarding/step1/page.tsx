@@ -1,12 +1,9 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getOnboardingGateProfile } from "@/features/profile/onboarding-gate-server";
+import { NO_ROWS } from "@/features/profile/onboarding-gate";
 import { Step1Form } from "./Step1Form";
 
 export const dynamic = "force-dynamic";
-
-// PostgREST returns this code when `.single()` finds no row; all other codes
-// are real failures and must not collapse into an empty prefill form.
-const NO_ROWS = "PGRST116";
 
 const LOAD_ERROR = "No pudimos cargar tu perfil. Probá de nuevo.";
 
@@ -37,23 +34,11 @@ function PrefillLoadError() {
 }
 
 export default async function OnboardingStep1() {
-  const supabase = await createClient();
+  // Shares React.cache hit with the (app) template gate — one profiles select per RSC request.
+  const { profile, error } = await getOnboardingGateProfile();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // The proxy gate already guarantees a session; this is only for prefilling.
-  if (!user) {
-    return <Step1Form />;
-  }
-
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select("nombre, apellido, apodo, fecha_nacimiento, avatar_url")
-    .eq("id", user.id)
-    .single();
-
+  // Real read failures must not collapse into a silent empty prefill (ZER-56).
+  // PGRST116 / missing row still shows the empty form.
   if (error && error.code !== NO_ROWS) {
     console.warn("[onboarding/step1] no se pudo leer el perfil para el prefill");
     return <PrefillLoadError />;
