@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { getOnboardingGateProfile } from "@/features/profile/onboarding-gate-server";
 import { NO_ROWS } from "@/features/profile/onboarding-gate";
 import { Step2Form } from "./Step2Form";
@@ -10,7 +11,14 @@ const LOAD_ERROR = "No pudimos cargar tu perfil. Probá de nuevo.";
 function PrefillLoadError() {
   return (
     <div className="flex flex-col gap-[22px]">
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center">
+        <Link
+          href="/onboarding/step1"
+          aria-label="Volver al paso 1"
+          className="inline-flex text-text-primary"
+        >
+          <ChevronLeft className="w-6 h-6" aria-hidden />
+        </Link>
         <p className="text-[13px] font-medium text-text-muted">Paso 2 de 2</p>
       </div>
 

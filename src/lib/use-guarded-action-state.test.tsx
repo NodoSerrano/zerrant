@@ -1,8 +1,56 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { useGuardedActionState } from "@/lib/use-guarded-action-state";
+import {
+  resolveGuardedActionRejection,
+  TRANSPORT_ERROR,
+  useGuardedActionState,
+} from "@/lib/use-guarded-action-state";
 
 type State = { error?: string } | null;
+
+function redirectError(url = "/onboarding/step2"): Error {
+  const error = new Error("NEXT_REDIRECT") as Error & { digest: string };
+  error.digest = `NEXT_REDIRECT;push;${url};307;`;
+  return error;
+}
+
+function notFoundError(): Error {
+  const error = new Error("NEXT_HTTP_ERROR_FALLBACK") as Error & { digest: string };
+  error.digest = "NEXT_HTTP_ERROR_FALLBACK;404";
+  return error;
+}
+
+describe("resolveGuardedActionRejection", () => {
+  it("rethrows Next redirect control-flow errors", () => {
+    const err = redirectError();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    expect(resolveGuardedActionRejection(err)).toEqual({ kind: "rethrow", error: err });
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it("rethrows Next notFound / HTTP access fallback control-flow errors", () => {
+    const err = notFoundError();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    expect(resolveGuardedActionRejection(err)).toEqual({ kind: "rethrow", error: err });
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it("maps unexpected rejects to the transport { error } state and logs them", () => {
+    const err = new TypeError("Failed to fetch");
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    expect(resolveGuardedActionRejection(err)).toEqual({
+      kind: "state",
+      state: { error: TRANSPORT_ERROR },
+    });
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+});
 
 describe("useGuardedActionState", () => {
   it("invokes the action only once when two submits fire before the first settles", async () => {
@@ -77,6 +125,7 @@ describe("useGuardedActionState", () => {
 
   it("maps a rejected transport failure to { error }, unlocks, and does not throw", async () => {
     const action = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
     function Probe() {
       const [state, formAction, pending] = useGuardedActionState(action, null);
@@ -94,12 +143,12 @@ describe("useGuardedActionState", () => {
     fireEvent.click(screen.getByRole("button", { name: "Submit" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "No pudimos conectar. Revisá tu conexión e intentá de nuevo.",
-      );
+      expect(screen.getByRole("alert")).toHaveTextContent(TRANSPORT_ERROR);
     });
 
     expect(screen.getByRole("button", { name: "Submit" })).toBeEnabled();
     expect(action).toHaveBeenCalledTimes(1);
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 });

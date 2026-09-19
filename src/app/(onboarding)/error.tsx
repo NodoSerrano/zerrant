@@ -1,12 +1,18 @@
 "use client";
 
+import { useEffect } from "react";
+
 export default function OnboardingError({
-  error: _error,
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    console.error("[onboarding/error]", error.digest ?? error.message, error);
+  }, [error]);
+
   return (
     <div className="flex flex-col gap-4">
       <p role="alert" className="text-sm text-coral bg-coral/10 rounded-md px-3 py-2">

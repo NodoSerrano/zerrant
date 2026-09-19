@@ -94,6 +94,10 @@ describe("OnboardingStep2 page", () => {
       "href",
       "/onboarding/step2",
     );
+    expect(screen.getByRole("link", { name: "Volver al paso 1" })).toHaveAttribute(
+      "href",
+      "/onboarding/step1",
+    );
     expect(screen.queryByLabelText("Bio")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Finalizar" })).not.toBeInTheDocument();
   });
