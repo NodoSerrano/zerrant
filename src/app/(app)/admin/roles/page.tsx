@@ -64,7 +64,7 @@ export default async function AdminRolesPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-bg">
-      <div className="flex flex-col gap-[18px] px-5 pt-6 pb-6">
+      <div className="flex flex-col gap-[18px]">
         <div className="flex items-center gap-3">
           <Link href="/profile" aria-label="Volver al perfil">
             <ChevronLeft className="size-6 text-text-primary" />

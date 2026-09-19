@@ -48,7 +48,7 @@ export function EditProfileForm({ defaults }: EditProfileFormProps) {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   return (
-    <div className="flex flex-col gap-[18px] pt-[6px] px-5 pb-6">
+    <div className="flex flex-col gap-[18px]">
       <div className="flex justify-between items-center">
         <button
           type="button"

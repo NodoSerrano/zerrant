@@ -19,18 +19,25 @@ const mockNextCookiesSet = vi.fn();
 
 vi.mock("next/server", async (importOriginal) => {
   const actual = await importOriginal<typeof import("next/server")>();
+
+  function MockNextResponse(body?: BodyInit | null, init?: ResponseInit) {
+    return new actual.NextResponse(body, init);
+  }
+
+  MockNextResponse.next = vi.fn(() => ({
+    status: 200,
+    cookies: { set: mockNextCookiesSet },
+  }));
+  MockNextResponse.redirect = vi.fn((url: URL) => ({
+    status: 307,
+    headers: new Headers({ location: url.toString() }),
+  }));
+  MockNextResponse.json = actual.NextResponse.json.bind(actual.NextResponse);
+  MockNextResponse.rewrite = actual.NextResponse.rewrite.bind(actual.NextResponse);
+
   return {
     ...actual,
-    NextResponse: {
-      next: vi.fn(() => ({
-        status: 200,
-        cookies: { set: mockNextCookiesSet },
-      })),
-      redirect: vi.fn((url: URL) => ({
-        status: 307,
-        headers: new Headers({ location: url.toString() }),
-      })),
-    },
+    NextResponse: MockNextResponse,
   };
 });
 
@@ -66,8 +73,11 @@ function onboardingPending(overrides: Record<string, string | null> = {}) {
   });
 }
 
-function makeRequest(path: string): NextRequest {
-  return new NextRequest(new URL(`https://example.com${path}`));
+function makeRequest(
+  path: string,
+  init?: ConstructorParameters<typeof NextRequest>[1],
+): NextRequest {
+  return new NextRequest(new URL(`https://example.com${path}`), init);
 }
 
 function authAs(userId = "test-user-id") {
@@ -244,6 +254,19 @@ describe("proxy", () => {
 
     expect(result.status).toBe(307);
     expect(result.headers.get("location")).toBe("https://example.com/");
+  });
+
+  it("explains a stale onboarding POST instead of redirecting with 307", async () => {
+    authAs();
+
+    const result = await proxy(makeRequest("/onboarding/step2", { method: "POST" }));
+
+    expect(result.status).not.toBe(307);
+    expect(result.headers.get("location")).toBeNull();
+    expect(result.headers.get("content-type") ?? "").toMatch(/text\/html/);
+    const body = await result.text();
+    expect(body).toMatch(/ya completaste el onboarding/i);
+    expect(body).toMatch(/href="\/"/);
   });
 
   it("does not query the profile when there is no session", async () => {

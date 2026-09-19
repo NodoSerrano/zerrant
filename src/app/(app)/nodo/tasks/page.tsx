@@ -49,7 +49,7 @@ export default async function TasksPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return <p className="text-text-secondary p-5">Iniciá sesión para ver las tareas.</p>;
+  if (!user) return <p className="text-text-secondary">Iniciá sesión para ver las tareas.</p>;
 
   const { estado } = await searchParams;
   const filter = !estado || estado === "todas" ? "todas" : estado;

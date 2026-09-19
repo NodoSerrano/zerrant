@@ -24,4 +24,18 @@ describe("Modal shell layout (task create/detail/edit)", () => {
     expect(screen.getByTestId("status-bar")).toBeInTheDocument();
     expect(screen.getByText("task modal content")).toBeInTheDocument();
   });
+
+  it("uses Pencil focused wrapper padding [6,20,24,20] (ZqSLW / KG95R / vPUkG)", () => {
+    const { container } = render(
+      <ModalLayout>
+        <div>task modal content</div>
+      </ModalLayout>,
+    );
+
+    const content = container.querySelector(".max-w-lg");
+    expect(content?.className).toContain("pt-1.5");
+    expect(content?.className).toContain("px-5");
+    expect(content?.className).toContain("pb-6");
+    expect(content?.className).not.toContain("p-5");
+  });
 });

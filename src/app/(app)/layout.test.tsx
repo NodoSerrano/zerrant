@@ -23,4 +23,18 @@ describe("App shell layout (navigation destinations)", () => {
     expect(screen.getByTestId("status-bar")).toBeInTheDocument();
     expect(screen.getByText("hub content")).toBeInTheDocument();
   });
+
+  it("uses Pencil hub wrapper padding [8,20,20,20] (NgZiI / k8Odh / v9SljB)", () => {
+    const { container } = render(
+      <AppLayout>
+        <div>hub content</div>
+      </AppLayout>,
+    );
+
+    const content = container.querySelector(".max-w-lg");
+    expect(content?.className).toContain("pt-2");
+    expect(content?.className).toContain("px-5");
+    expect(content?.className).toContain("pb-5");
+    expect(content?.className).not.toContain("p-5");
+  });
 });

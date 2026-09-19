@@ -103,6 +103,32 @@ export default async function proxy(request: NextRequest) {
     }
 
     if (onboardingDone && isOnboarding) {
+      // A 307 would re-POST the body to `/` (server actions from a stale tab).
+      // Mutations get a clear HTML answer; GETs keep the normal bounce home.
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        return new NextResponse(
+          `<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Onboarding ya completado</title>
+  </head>
+  <body>
+    <main>
+      <h1>Ya completaste el onboarding</h1>
+      <p>Esta pestaña quedó desactualizada. Tus datos de perfil se editan desde el perfil.</p>
+      <p><a href="/">Ir al inicio</a></p>
+    </main>
+  </body>
+</html>`,
+          {
+            status: 409,
+            headers: { "content-type": "text/html; charset=utf-8" },
+          },
+        );
+      }
+
       return NextResponse.redirect(new URL("/", request.url));
     }
   }

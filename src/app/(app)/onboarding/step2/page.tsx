@@ -12,7 +12,7 @@ export default function OnboardingStep2() {
   const [state, action, pending] = useActionState(saveOnboardingStep2, null);
 
   return (
-    <div className="flex flex-col gap-[22px] pt-[6px] px-6 pb-6">
+    <div className="flex flex-col gap-[22px]">
       <div className="flex justify-between items-center">
         <ChevronLeft className="w-6 h-6 text-text-primary" />
         <p className="text-[13px] font-medium text-text-muted">Paso 2 de 2</p>
