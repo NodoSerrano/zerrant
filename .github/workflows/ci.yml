@@ -40,3 +40,47 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+  # ZER-49: public tables must expose authenticated DML (or column grants) and
+  # the postgres role must carry default privileges so new tables inherit them.
+  db-grants:
+    name: db grants (authenticated)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start Supabase
+        run: pnpm exec supabase start
+
+      - name: Reset database (apply migrations)
+        run: pnpm exec supabase db reset --yes
+
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Check public table grants for authenticated
+        run: |
+          DB_URL=$(pnpm exec supabase status -o env | sed -n 's/^DB_URL=//p' | tr -d '"')
+          DATABASE_URL="$DB_URL" pnpm db:check-grants
+
+      - name: Probe new table inherits authenticated DML
+        run: |
+          DB_URL=$(pnpm exec supabase status -o env | sed -n 's/^DB_URL=//p' | tr -d '"')
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f scripts/zer49-probe-new-table.sql

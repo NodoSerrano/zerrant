@@ -170,7 +170,7 @@ Fuente: `_bmad-output/implementation-artifacts/deferred-work.md` (ampliar ticket
 4. ~~Layout global `p-5` vs padding Pencil; TabBar en pantallas “modales” (create/detail task).~~ **ZER-51** TabBar/modal shells; **ZER-52** padding por grupo (`[8,20,20,20]` app / `[6,20,24,20]` modal).
 5. ~~TabBar con `<button onClick>` → sin JS no se navega.~~ **Done in ZER-50**.
 6. Gate de onboarding: doble query de perfil + costo en prefetch de `<Link>`.
-7. Grants: falta `alter default privileges` / chequeo CI para tablas nuevas (`42501`).
+7. ~~Grants: falta `alter default privileges` / chequeo CI para tablas nuevas (`42501`).~~ **Done in ZER-49**.
 8. ~~`pnpm-workspace.yaml` stub `allowBuilds` ensucia installs y empuja a `--no-verify`.~~ **Done in ZER-57** (`allowBuilds` resuelto en `main`; paper trail cerrado).
 9. Hub de tasks incluye canceladas en “Todas” (decisión de producto).
 
@@ -239,7 +239,7 @@ Usar como checklist al crear en Linear. **No duplicar** si el issue ya existe �
 - [x] SEC: split RLS policies tasks (creador contenido vs tomador transiciones de estado) — ZER-42
 - [ ] BUG: take/mark/verify fallan si 0 rows updated
 - [ ] BUG: validate + trim `createTask`; no leak mensajes DB
-- [ ] INFRA: default privileges `authenticated` + check en CI
+- [x] INFRA: default privileges `authenticated` + check en CI — ZER-49
 - [x] INFRA: resolver `pnpm approve-builds` / `allowBuilds` — ZER-57
 
 ### Fidelity / UX residual
