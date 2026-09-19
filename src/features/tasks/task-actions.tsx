@@ -1,11 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { takeTask, markTaskDone, verifyTask } from "@/features/tasks/actions";
+import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 
 export function TakeTaskButton({ taskId }: { taskId: string }) {
-  const [state, action, pending] = useActionState(takeTask, null);
+  const [state, action, pending] = useGuardedActionState(takeTask, null);
 
   return (
     <form action={action}>
@@ -19,7 +19,7 @@ export function TakeTaskButton({ taskId }: { taskId: string }) {
 }
 
 export function MarkDoneButton({ taskId }: { taskId: string }) {
-  const [state, action, pending] = useActionState(markTaskDone, null);
+  const [state, action, pending] = useGuardedActionState(markTaskDone, null);
 
   return (
     <form action={action}>
@@ -33,7 +33,7 @@ export function MarkDoneButton({ taskId }: { taskId: string }) {
 }
 
 export function VerifyTaskButton({ taskId }: { taskId: string }) {
-  const [state, action, pending] = useActionState(verifyTask, null);
+  const [state, action, pending] = useGuardedActionState(verifyTask, null);
 
   return (
     <form action={action}>

@@ -2,15 +2,9 @@
 
 import Image from "next/image";
 import { Camera } from "lucide-react";
-import {
-  startTransition,
-  useActionState,
-  useEffect,
-  useRef,
-  useState,
-  type ChangeEvent,
-} from "react";
+import { startTransition, useEffect, useRef, useState, type ChangeEvent } from "react";
 import type { AvatarUploadState } from "@/features/profile/actions";
+import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { cn } from "@/lib/utils";
 
 // HEIC/HEIF get in here even though the bucket doesn't accept them: the server
@@ -34,7 +28,7 @@ export function AvatarPicker({
   onUploadingChange,
   className,
 }: AvatarPickerProps) {
-  const [state, dispatch, pending] = useActionState(action, null);
+  const [state, dispatch, pending] = useGuardedActionState(action, null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // The photo lives here, not in the action state: a later error replaces the

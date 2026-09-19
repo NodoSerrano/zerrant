@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { saveOnboardingStep1, uploadAvatar } from "@/features/profile/actions";
+import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 
 export interface Step1Defaults {
   nombre?: string | null;
@@ -19,7 +20,7 @@ interface Step1FormProps {
 }
 
 export function Step1Form({ defaults, avatarUrl }: Step1FormProps) {
-  const [state, action, pending] = useActionState(saveOnboardingStep1, null);
+  const [state, action, pending] = useGuardedActionState(saveOnboardingStep1, null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   return (

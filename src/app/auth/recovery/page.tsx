@@ -2,15 +2,15 @@
 
 export const dynamic = "force-dynamic";
 
-import { useActionState } from "react";
 import Link from "next/link";
 import { ChevronLeft, Mail, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { sendPasswordReset } from "@/features/auth/actions";
+import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 
 export default function RecoveryPage() {
-  const [state, action, pending] = useActionState(sendPasswordReset, null);
+  const [state, action, pending] = useGuardedActionState(sendPasswordReset, null);
 
   return (
     <div className="px-6 py-6 flex flex-col justify-center gap-[22px] min-h-full">

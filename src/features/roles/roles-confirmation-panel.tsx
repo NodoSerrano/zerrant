@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
 import { RoleChip } from "@/components/RoleChip";
 import { ShieldCheck, CircleCheck } from "lucide-react";
 import { confirmProfileRole } from "@/features/roles/actions";
+import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 
 interface UnconfirmedRole {
   roleId: string;
@@ -78,7 +78,7 @@ function ConfirmRoleChip({
   roleId: string;
   roleName: string;
 }) {
-  const [state, action, pending] = useActionState(confirmProfileRole, null);
+  const [state, action, pending] = useGuardedActionState(confirmProfileRole, null);
 
   return (
     <form action={action} className="inline-flex flex-col gap-1">

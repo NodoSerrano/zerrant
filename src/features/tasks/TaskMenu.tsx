@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { Ellipsis } from "lucide-react";
 import { cancelTask } from "./actions";
+import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { cn } from "@/lib/utils";
 
 // Each action lives in its own window of states. Cancelling still makes sense
@@ -28,7 +29,7 @@ interface TaskMenuProps {
 export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskMenuProps) {
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [state, action, pending] = useActionState(cancelTask, null);
+  const [state, action, pending] = useGuardedActionState(cancelTask, null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const firstItemRef = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
