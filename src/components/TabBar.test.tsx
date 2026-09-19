@@ -1,20 +1,18 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { TabBar, type Tab } from "./TabBar";
+import { TabBar } from "./TabBar";
 
 vi.mock("next/link", () => ({
   default: ({
     href,
     className,
     children,
-    onClick,
   }: {
     href: string;
     className?: string;
     children: React.ReactNode;
-    onClick?: () => void;
   }) => (
-    <a href={href} className={className} onClick={onClick}>
+    <a href={href} className={className}>
       {children}
     </a>
   ),
@@ -39,23 +37,18 @@ describe("TabBar", () => {
     expect(plantel).not.toHaveTextContent("👥");
   });
 
-  it("renders PLANTEL as a link to /plantel", () => {
-    render(<TabBar />);
-    const plantel = screen.getByRole("link", { name: /PLANTEL/i });
-    expect(plantel).toHaveAttribute("href", "/plantel");
-  });
-
-  it("renders the other built routes as links", () => {
+  it("renders all five destinations as real links with href", () => {
     render(<TabBar />);
     expect(screen.getByRole("link", { name: /INICIO/i })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: /PLANTEL/i })).toHaveAttribute("href", "/plantel");
     expect(screen.getByRole("link", { name: /NODO/i })).toHaveAttribute("href", "/nodo/tasks");
+    expect(screen.getByRole("link", { name: /AGENDA/i })).toHaveAttribute("href", "/agenda");
     expect(screen.getByRole("link", { name: /PERFIL/i })).toHaveAttribute("href", "/profile");
   });
 
-  it("keeps AGENDA as a button (no route yet)", () => {
+  it("does not render any tab as a button", () => {
     render(<TabBar />);
-    expect(screen.getByRole("button", { name: /AGENDA/i })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /AGENDA/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("active tab has bg-primary pill and text-on-primary", () => {
@@ -92,12 +85,5 @@ describe("TabBar", () => {
     expect(nav).toHaveClass("pr-[12px]");
     expect(nav).toHaveClass("pb-[21px]");
     expect(nav).toHaveClass("pl-[21px]");
-  });
-
-  it("calls onTabChange for the non-link agenda tab", () => {
-    const onTabChange = vi.fn();
-    render(<TabBar onTabChange={onTabChange} />);
-    fireEvent.click(screen.getByRole("button", { name: /AGENDA/i }));
-    expect(onTabChange).toHaveBeenCalledWith("agenda" as Tab);
   });
 });
