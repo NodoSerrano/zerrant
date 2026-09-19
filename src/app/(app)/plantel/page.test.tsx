@@ -9,6 +9,10 @@ const mocks = vi.hoisted(() => ({
   profileRolesSelect: vi.fn(),
   profileRolesEq: vi.fn(),
   profileSkillsSelect: vi.fn(),
+  rolesSelect: vi.fn(),
+  rolesOrder: vi.fn(),
+  skillsSelect: vi.fn(),
+  skillsOrder: vi.fn(),
   redirect: vi.fn(),
 }));
 
@@ -35,6 +39,20 @@ vi.mock("@/lib/supabase/server", () => ({
       if (table === "profile_skills") {
         return { select: mocks.profileSkillsSelect };
       }
+      if (table === "roles") {
+        return {
+          select: mocks.rolesSelect.mockImplementation(() => ({
+            order: mocks.rolesOrder,
+          })),
+        };
+      }
+      if (table === "skills") {
+        return {
+          select: mocks.skillsSelect.mockImplementation(() => ({
+            order: mocks.skillsOrder,
+          })),
+        };
+      }
       return {};
     }),
   }),
@@ -48,11 +66,21 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/features/plantel/PlantelList", () => ({
-  PlantelList: ({ members }: { members: { id: string; name: string }[] }) => (
+  PlantelList: ({
+    members,
+    roleOptions,
+    skillOptions,
+  }: {
+    members: { id: string; name: string }[];
+    roleOptions?: string[];
+    skillOptions?: string[];
+  }) => (
     <div data-testid="plantel-list">
       {members.map((member) => (
         <span key={member.id}>{member.name}</span>
       ))}
+      <span data-testid="role-options">{(roleOptions ?? []).join(",")}</span>
+      <span data-testid="skill-options">{(skillOptions ?? []).join(",")}</span>
     </div>
   ),
 }));
@@ -78,6 +106,8 @@ beforeEach(() => {
   mocks.profilesOrder.mockResolvedValue({ data: serranoProfiles });
   mocks.profileRolesEq.mockResolvedValue({ data: [] });
   mocks.profileSkillsSelect.mockResolvedValue({ data: [] });
+  mocks.rolesOrder.mockResolvedValue({ data: [{ nombre: "Infra" }, { nombre: "Charlas" }] });
+  mocks.skillsOrder.mockResolvedValue({ data: [{ nombre: "Solidity" }] });
 });
 
 describe("PlantelPage", () => {
@@ -114,5 +144,15 @@ describe("PlantelPage", () => {
     expect(mocks.profileRolesSelect).toHaveBeenCalledWith("profile_id, roles(nombre)");
     expect(mocks.profileRolesEq).toHaveBeenCalledWith("confirmado", true);
     expect(mocks.profileSkillsSelect).toHaveBeenCalledWith("profile_id, skills(nombre)");
+  });
+
+  it("passes role and skill catalogs to PlantelList", async () => {
+    const element = await PlantelPage();
+    render(element);
+
+    expect(mocks.rolesSelect).toHaveBeenCalledWith("nombre");
+    expect(mocks.skillsSelect).toHaveBeenCalledWith("nombre");
+    expect(screen.getByTestId("role-options")).toHaveTextContent("Infra,Charlas");
+    expect(screen.getByTestId("skill-options")).toHaveTextContent("Solidity");
   });
 });

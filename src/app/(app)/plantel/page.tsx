@@ -15,16 +15,23 @@ export default async function PlantelPage() {
 
   if (!user) redirect("/auth/login");
 
-  const [{ data: profiles }, { data: roleAssignments }, { data: skillAssignments }] =
-    await Promise.all([
-      supabase
-        .from("profiles")
-        .select(PLANTEL_PROFILE_COLUMNS)
-        .neq("tier", "tourist")
-        .order("nombre", { ascending: true }),
-      supabase.from("profile_roles").select("profile_id, roles(nombre)").eq("confirmado", true),
-      supabase.from("profile_skills").select("profile_id, skills(nombre)"),
-    ]);
+  const [
+    { data: profiles },
+    { data: roleAssignments },
+    { data: skillAssignments },
+    { data: roleCatalog },
+    { data: skillCatalog },
+  ] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select(PLANTEL_PROFILE_COLUMNS)
+      .neq("tier", "tourist")
+      .order("nombre", { ascending: true }),
+    supabase.from("profile_roles").select("profile_id, roles(nombre)").eq("confirmado", true),
+    supabase.from("profile_skills").select("profile_id, skills(nombre)"),
+    supabase.from("roles").select("nombre").order("nombre", { ascending: true }),
+    supabase.from("skills").select("nombre").order("nombre", { ascending: true }),
+  ]);
 
   const members = buildSerranoMembers(
     profiles ?? [],
@@ -32,5 +39,12 @@ export default async function PlantelPage() {
     skillAssignments ?? [],
   );
 
-  return <PlantelList members={members} />;
+  const roleOptions = (roleCatalog ?? [])
+    .map((row) => row.nombre)
+    .filter((nombre): nombre is string => Boolean(nombre));
+  const skillOptions = (skillCatalog ?? [])
+    .map((row) => row.nombre)
+    .filter((nombre): nombre is string => Boolean(nombre));
+
+  return <PlantelList members={members} roleOptions={roleOptions} skillOptions={skillOptions} />;
 }

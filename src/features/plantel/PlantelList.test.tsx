@@ -124,12 +124,79 @@ describe("PlantelList", () => {
     expect(screen.queryByText("Nóbel Dam")).not.toBeInTheDocument();
   });
 
+  it("shows the active role on the chip after selecting", () => {
+    render(<PlantelList members={members} />);
+    fireEvent.click(screen.getByRole("button", { name: "Por rol" }));
+    fireEvent.click(screen.getByRole("button", { name: "Tesorería" }));
+    expect(screen.getByRole("button", { name: "Rol: Tesorería" })).toHaveClass("bg-primary");
+  });
+
+  it("clears the role filter when the active option is clicked again", () => {
+    render(<PlantelList members={members} />);
+    fireEvent.click(screen.getByRole("button", { name: "Por rol" }));
+    fireEvent.click(screen.getByRole("button", { name: "Tesorería" }));
+    expect(screen.getByRole("button", { name: "Rol: Tesorería" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Tesorería" }));
+    expect(screen.getByText("Nóbel Dam")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Por rol" })).toBeInTheDocument();
+  });
+
+  it("clears the role filter when the active chip is clicked", () => {
+    render(<PlantelList members={members} />);
+    fireEvent.click(screen.getByRole("button", { name: "Por rol" }));
+    fireEvent.click(screen.getByRole("button", { name: "Tesorería" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rol: Tesorería" }));
+    expect(screen.getByText("Nóbel Dam")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Por rol" })).toBeInTheDocument();
+  });
+
   it("Por skill opens a picker and selecting a skill filters the list", () => {
     render(<PlantelList members={members} />);
     fireEvent.click(screen.getByRole("button", { name: "Por skill" }));
     fireEvent.click(screen.getByRole("button", { name: "Diseño" }));
     expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
     expect(screen.queryByText("Nóbel Dam")).not.toBeInTheDocument();
+  });
+
+  it("shows the active skill on the chip after selecting", () => {
+    render(<PlantelList members={members} />);
+    fireEvent.click(screen.getByRole("button", { name: "Por skill" }));
+    fireEvent.click(screen.getByRole("button", { name: "Diseño" }));
+    expect(screen.getByRole("button", { name: "Skill: Diseño" })).toHaveClass("bg-primary");
+  });
+
+  it("shows an empty state inside the role picker when there are no options", () => {
+    render(<PlantelList members={[member({ roles: [], skills: [] })]} roleOptions={[]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Por rol" }));
+    expect(screen.getByText("Todavía no hay roles cargados")).toBeInTheDocument();
+  });
+
+  it("shows an empty state inside the skill picker when there are no options", () => {
+    render(<PlantelList members={[member({ roles: [], skills: [] })]} skillOptions={[]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Por skill" }));
+    expect(screen.getByText("Todavía no hay skills cargadas")).toBeInTheDocument();
+  });
+
+  it("lists catalog role options even when no member has that role", () => {
+    render(
+      <PlantelList
+        members={[member({ roles: ["Infra"], skills: [] })]}
+        roleOptions={["Charlas", "Infra", "RRSS"]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Por rol" }));
+    expect(screen.getByRole("button", { name: "Charlas" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "RRSS" })).toBeInTheDocument();
+  });
+
+  it("shows Limpiar filtros while results remain and clears the active role", () => {
+    render(<PlantelList members={members} />);
+    fireEvent.click(screen.getByRole("button", { name: "Por rol" }));
+    fireEvent.click(screen.getByRole("button", { name: "Tesorería" }));
+    expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Limpiar filtros" }));
+    expect(screen.getByText("Nóbel Dam")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Por rol" })).toBeInTheDocument();
   });
 
   it("shows the empty state with copy and clears everything on Limpiar filtros", () => {
