@@ -167,7 +167,7 @@ Fuente: `_bmad-output/implementation-artifacts/deferred-work.md` (ampliar ticket
 
 ### P1 — Producto / UX / infra
 
-4. ~~Layout global `p-5` vs padding Pencil; TabBar en pantallas “modales” (create/detail task).~~ **ZER-51** TabBar/modal shells; **ZER-52** padding por grupo (`[8,20,20,20]` app / `[6,20,24,20]` modal).
+4. ~~Layout global `p-5` vs padding Pencil; TabBar en pantallas “modales” (create/detail task).~~ **ZER-51** TabBar/modal shells; **ZER-52** padding por grupo; **ZER-73** hub `(app)` top post-StatusBar `[20,20,20,20]` (`[6,20,24,20]` modal sin cambio).
 5. ~~TabBar con `<button onClick>` → sin JS no se navega.~~ **Done in ZER-50**.
 6. ~~Gate de onboarding: doble query de perfil + costo en prefetch de `<Link>`.~~ **Done in ZER-54** (templates RSC + `React.cache`; proxy GET sin profiles).
 7. ~~Grants: falta `alter default privileges` / chequeo CI para tablas nuevas (`42501`).~~ **Done in ZER-49**.
@@ -245,7 +245,7 @@ Usar como checklist al crear en Linear. **No duplicar** si el issue ya existe �
 ### Fidelity / UX residual
 
 - [x] UX: route group modal sin TabBar para create/edit task — ZER-51
-- [x] UX: padding layout vs Pencil — ZER-52 (`(app)` hub `[8,20,20,20]`, `(modal)` focused `[6,20,24,20]`)
+- [x] UX: padding layout vs Pencil — ZER-52 + ZER-73 (`(app)` hub `[20,20,20,20]` post-StatusBar, `(modal)` focused `[6,20,24,20]`)
 - [ ] DS: asterisco `required` en Input vs frames Pencil
 - [x] PERF: cachear profile gate por request — ZER-54
 - [x] A11y: TabBar con links reales (progressive enhancement) — ZER-50
