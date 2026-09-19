@@ -10,9 +10,11 @@ export function TabBarClient() {
     ? "nodo"
     : pathname.startsWith("/plantel")
       ? "plantel"
-      : pathname.startsWith("/profile") || pathname.startsWith("/onboarding")
-        ? "perfil"
-        : "inicio";
+      : pathname.startsWith("/agenda")
+        ? "agenda"
+        : pathname.startsWith("/profile") || pathname.startsWith("/onboarding")
+          ? "perfil"
+          : "inicio";
 
   return <TabBar active={active} />;
 }

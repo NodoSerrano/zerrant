@@ -36,4 +36,10 @@ describe("TabBarClient", () => {
     render(<TabBarClient />);
     expect(screen.getByRole("link", { name: /NODO/i })).toHaveClass("bg-primary");
   });
+
+  it("marks agenda active when pathname starts with /agenda", () => {
+    (usePathname as ReturnType<typeof vi.fn>).mockReturnValue("/agenda");
+    render(<TabBarClient />);
+    expect(screen.getByRole("link", { name: /AGENDA/i })).toHaveClass("bg-primary");
+  });
 });
