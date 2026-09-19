@@ -7,6 +7,7 @@ import type { TaskCategoria, TaskUpdate, TaskUrgencia } from "./types";
 
 const CANCEL_ERROR = "No pudimos cancelar la tarea. Probá de nuevo.";
 const UPDATE_ERROR = "No pudimos guardar los cambios. Probá de nuevo.";
+const CREATE_ERROR = "No pudimos publicar la tarea. Probá de nuevo.";
 const TAKE_ERROR = "No pudimos tomar la tarea. Probá de nuevo.";
 const MARK_DONE_ERROR = "No pudimos marcar la tarea como hecha. Probá de nuevo.";
 const VERIFY_ERROR = "No pudimos verificar la tarea. Probá de nuevo.";
@@ -57,16 +58,31 @@ export async function createTask(_prevState: { error: string } | null, formData:
     return { error: "Solo los serranos pueden crear tareas" };
   }
 
+  const titulo = trimmed(formData.get("titulo"));
+
+  if (!titulo) {
+    return { error: "El título no puede estar vacío" };
+  }
+
+  const categoria = oneOf(formData.get("categoria"), CATEGORIAS);
+  const urgencia = oneOf(formData.get("urgencia"), URGENCIAS);
+
+  if (!categoria || !urgencia) {
+    return { error: INVALID_INPUT };
+  }
+
+  const descripcion = formData.has("descripcion") ? trimmed(formData.get("descripcion")) : null;
+
   const { error } = await supabase.from("tasks").insert({
-    titulo: formData.get("titulo") as string,
-    descripcion: formData.get("descripcion") as string,
-    categoria: formData.get("categoria") as TaskCategoria,
-    urgencia: formData.get("urgencia") as TaskUrgencia,
+    titulo,
+    descripcion,
+    categoria,
+    urgencia,
     creado_por: user.id,
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: CREATE_ERROR };
   }
 
   revalidatePath("/nodo", "layout");
