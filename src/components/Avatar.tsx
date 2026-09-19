@@ -1,4 +1,8 @@
+"use client";
+
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import { isServableAvatarImageUrl } from "@/lib/avatar-image-url";
 import { cn } from "@/lib/utils";
 
 interface AvatarProps {
@@ -30,19 +34,15 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
-export function Avatar({ name, src, size = "md", className }: AvatarProps) {
-  if (src) {
-    return (
-      <Image
-        src={src}
-        alt={name}
-        width={sizePx[size]}
-        height={sizePx[size]}
-        className={cn("rounded-full object-cover", sizeClasses[size], className)}
-      />
-    );
-  }
-
+function InitialsFallback({
+  name,
+  size,
+  className,
+}: {
+  name: string;
+  size: "sm" | "md" | "lg";
+  className?: string;
+}) {
   return (
     <div
       className={cn(
@@ -53,5 +53,30 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
     >
       {getInitials(name)}
     </div>
+  );
+}
+
+export function Avatar({ name, src, size = "md", className }: AvatarProps) {
+  const servableSrc = src && isServableAvatarImageUrl(src) ? src : null;
+  const [failed, setFailed] = useState(false);
+
+  // Reset runtime failure when the caller swaps to a new URL.
+  useEffect(() => {
+    setFailed(false);
+  }, [servableSrc]);
+
+  if (!servableSrc || failed) {
+    return <InitialsFallback name={name} size={size} className={className} />;
+  }
+
+  return (
+    <Image
+      src={servableSrc}
+      alt={name}
+      width={sizePx[size]}
+      height={sizePx[size]}
+      onError={() => setFailed(true)}
+      className={cn("rounded-full object-cover", sizeClasses[size], className)}
+    />
   );
 }
