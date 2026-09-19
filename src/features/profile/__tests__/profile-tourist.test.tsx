@@ -67,10 +67,12 @@ beforeEach(() => {
 });
 
 describe("ProfilePage (tourist)", () => {
-  it("renders Mi perfil header with pencil icon", async () => {
-    render(await ProfilePage());
+  it("renders Mi perfil header without a non-interactive pencil icon", async () => {
+    const { container } = render(await ProfilePage());
 
     expect(screen.getByRole("heading", { name: "Mi perfil" })).toBeInTheDocument();
+    // Dead pencil was a bare lucide icon in the header — must not reappear.
+    expect(container.querySelector("svg.lucide-pencil")).toBeNull();
   });
 
   it("renders no 'Modo lectura' badge from old design", async () => {
