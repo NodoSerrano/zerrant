@@ -9,19 +9,39 @@ import type { SerranoMember } from "./types";
 
 type ChipId = "todos" | "disponibles" | "rol" | "skill";
 
-export function PlantelList({ members }: { members: SerranoMember[] }) {
+type PlantelListProps = {
+  members: SerranoMember[];
+  roleOptions?: string[];
+  skillOptions?: string[];
+};
+
+function uniqueSorted(values: string[]): string[] {
+  return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b));
+}
+
+export function PlantelList({ members, roleOptions, skillOptions }: PlantelListProps) {
   const [q, setQ] = useState("");
   const [soloDisponibles, setSoloDisponibles] = useState(false);
   const [rol, setRol] = useState<string | null>(null);
   const [skill, setSkill] = useState<string | null>(null);
   const [picker, setPicker] = useState<"rol" | "skill" | null>(null);
 
-  const roles = useMemo(() => availableRoles(members), [members]);
-  const skills = useMemo(() => availableSkills(members), [members]);
+  const roles = useMemo(() => {
+    if (roleOptions !== undefined) return uniqueSorted(roleOptions);
+    return availableRoles(members);
+  }, [members, roleOptions]);
+
+  const skills = useMemo(() => {
+    if (skillOptions !== undefined) return uniqueSorted(skillOptions);
+    return availableSkills(members);
+  }, [members, skillOptions]);
+
   const filtered = useMemo(
     () => filterSerranos(members, { q, soloDisponibles, rol, skill }),
     [members, q, soloDisponibles, rol, skill],
   );
+
+  const hasActiveFilters = Boolean(q || soloDisponibles || rol || skill);
 
   function clearFilters() {
     setQ("");
@@ -29,6 +49,32 @@ export function PlantelList({ members }: { members: SerranoMember[] }) {
     setRol(null);
     setSkill(null);
     setPicker(null);
+  }
+
+  function toggleRolePicker() {
+    if (rol !== null) {
+      setRol(null);
+      setPicker(null);
+      return;
+    }
+    setPicker((current) => (current === "rol" ? null : "rol"));
+  }
+
+  function toggleSkillPicker() {
+    if (skill !== null) {
+      setSkill(null);
+      setPicker(null);
+      return;
+    }
+    setPicker((current) => (current === "skill" ? null : "skill"));
+  }
+
+  function selectRole(role: string) {
+    setRol((current) => (current === role ? null : role));
+  }
+
+  function selectSkill(item: string) {
+    setSkill((current) => (current === item ? null : item));
   }
 
   function chip(id: ChipId, label: string, active: boolean, onClick: () => void) {
@@ -62,6 +108,22 @@ export function PlantelList({ members }: { members: SerranoMember[] }) {
       >
         {label}
       </button>
+    );
+  }
+
+  function pickerPanel(kind: "rol" | "skill", options: string[], emptyCopy: string) {
+    return (
+      <div className="flex gap-2 flex-wrap rounded-2xl bg-surface border border-border p-3">
+        {options.length === 0 ? (
+          <p className="font-body text-sm text-text-secondary">{emptyCopy}</p>
+        ) : (
+          options.map((item) =>
+            option(item, kind === "rol" ? rol === item : skill === item, () =>
+              kind === "rol" ? selectRole(item) : selectSkill(item),
+            ),
+          )
+        )}
+      </div>
     );
   }
 
@@ -99,33 +161,22 @@ export function PlantelList({ members }: { members: SerranoMember[] }) {
           setPicker(null);
         })}
         {chip("disponibles", "Disponibles", soloDisponibles, () => setSoloDisponibles((v) => !v))}
-        {chip("rol", "Por rol", rol !== null, () =>
-          setPicker((current) => (current === "rol" ? null : "rol")),
-        )}
-        {chip("skill", "Por skill", skill !== null, () =>
-          setPicker((current) => (current === "skill" ? null : "skill")),
-        )}
+        {chip("rol", rol ? `Rol: ${rol}` : "Por rol", rol !== null, toggleRolePicker)}
+        {chip("skill", skill ? `Skill: ${skill}` : "Por skill", skill !== null, toggleSkillPicker)}
       </div>
 
-      {picker === "rol" && (
-        <div className="flex gap-2 flex-wrap rounded-2xl bg-surface border border-border p-3">
-          {roles.map((role) =>
-            option(role, rol === role, () => {
-              setRol(role);
-              setPicker(null);
-            }),
-          )}
-        </div>
-      )}
+      {picker === "rol" && pickerPanel("rol", roles, "Todavía no hay roles cargados")}
+      {picker === "skill" && pickerPanel("skill", skills, "Todavía no hay skills cargadas")}
 
-      {picker === "skill" && (
-        <div className="flex gap-2 flex-wrap rounded-2xl bg-surface border border-border p-3">
-          {skills.map((item) =>
-            option(item, skill === item, () => {
-              setSkill(item);
-              setPicker(null);
-            }),
-          )}
+      {hasActiveFilters && filtered.length > 0 && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="h-9 rounded-pill bg-surface border border-border px-4 font-display text-[13px] font-medium text-text-primary"
+          >
+            Limpiar filtros
+          </button>
         </div>
       )}
 
