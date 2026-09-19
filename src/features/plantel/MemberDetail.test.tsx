@@ -46,6 +46,23 @@ describe("MemberDetail", () => {
     expect(screen.getByText("Perfil")).toBeInTheDocument();
   });
 
+  it("does not render a non-interactive ellipsis icon in the header", () => {
+    const { container } = render(<MemberDetail member={member} />);
+    // Dead three-dot was a bare lucide icon — must not reappear.
+    expect(container.querySelector("svg.lucide-ellipsis")).toBeNull();
+  });
+
+  it("keeps a spacer so the title stays centred without the ellipsis", () => {
+    render(<MemberDetail member={member} />);
+    const header = screen.getByText("Perfil").parentElement!;
+    expect(header.className).toContain("justify-between");
+    expect(header.children).toHaveLength(3);
+    const spacer = header.children[2] as HTMLElement;
+    expect(spacer.tagName).toBe("SPAN");
+    expect(spacer).toHaveAttribute("aria-hidden", "true");
+    expect(spacer.className).toMatch(/size-(6|\[22px\])/);
+  });
+
   it("renders the member name with Pencil classes", () => {
     render(<MemberDetail member={member} />);
     const name = screen.getByText("Nóbel Dam");

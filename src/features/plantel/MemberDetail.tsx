@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Briefcase, ChevronLeft, Ellipsis, Eye } from "lucide-react";
+import { Briefcase, ChevronLeft, Eye } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { TierBadge } from "@/components/TierBadge";
 import { RoleChip } from "@/components/RoleChip";
@@ -37,7 +37,8 @@ export function MemberDetail({ member }: { member: SerranoMemberDetail }) {
           <ChevronLeft size={24} className="text-text-primary" />
         </Link>
         <span className="font-display text-base font-medium text-text-primary">Perfil</span>
-        <Ellipsis size={22} className="text-text-primary" aria-hidden />
+        {/* Icon counterweight: keeps the title optically centered after dropping the dead ellipsis. */}
+        <span aria-hidden="true" className="size-6" />
       </div>
 
       <div className="flex flex-col items-center gap-3">
