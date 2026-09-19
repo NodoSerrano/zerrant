@@ -31,23 +31,32 @@ pnpm dev
 
 ## Comandos
 
-| Comando          | Que hace                         |
-| ---------------- | -------------------------------- |
-| `pnpm dev`       | Servidor de desarrollo           |
-| `pnpm build`     | Build de produccion              |
-| `pnpm test`      | Tests (Vitest + Testing Library) |
-| `pnpm lint`      | Lint (oxlint)                    |
-| `pnpm format`    | Formateo (oxfmt)                 |
-| `pnpm typecheck` | Chequeo de tipos                 |
+| Comando                | Que hace                                                                                                   |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`             | Servidor de desarrollo                                                                                     |
+| `pnpm build`           | Build de produccion                                                                                        |
+| `pnpm test`            | Tests (Vitest + Testing Library)                                                                           |
+| `pnpm lint`            | Lint (oxlint)                                                                                              |
+| `pnpm format`          | Formateo (oxfmt)                                                                                           |
+| `pnpm typecheck`       | Chequeo de tipos                                                                                           |
+| `pnpm db:check-grants` | Falla si tablas `public` sin DML para `authenticated` o sin default privileges (ZER-49; requiere DB local) |
 
 ## CI
 
 Cada PR contra `main` corre el workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
 
+**Job `quality`**
+
 1. `pnpm install --frozen-lockfile` (con cache de pnpm)
 2. `pnpm typecheck`
 3. `pnpm lint`
 4. `pnpm test`
+
+**Job `db grants (authenticated)` (ZER-49)**
+
+1. `supabase start` + `supabase db reset` (aplica migraciones en DB limpia)
+2. `pnpm db:check-grants` — toda tabla base en `public` debe tener DML (o grants por columna) para `authenticated`, y el rol `postgres` debe tener default privileges que hereden DML
+3. `scripts/zer49-probe-new-table.sql` — crea una tabla de prueba sin GRANT explícito y exige que `authenticated` pueda operarla
 
 Si falla cualquiera de esos pasos, el check de CI falla. Marcar el job como **required check** en la branch protection de `main` es opcional y lo decide quien administre el repo.
 

@@ -13,6 +13,7 @@
     "doctor": "react-doctor",
     "test": "vitest run",
     "test:watch": "vitest",
+    "db:check-grants": "pnpm exec vitest run --config vitest.db-grants.config.ts",
     "prepare": "lefthook install"
   },
   "dependencies": {

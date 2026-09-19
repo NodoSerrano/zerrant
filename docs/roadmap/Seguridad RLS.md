@@ -18,6 +18,14 @@ Las reglas de acceso viven en **Row Level Security de Postgres**, no solo en el 
 - `events`: lee autenticado; escribe serrano; edita/borra creador o admin.
 - `tasks` UPDATE: policies separadas (creador / tomador / claim abierta / admin) + trigger `enforce_task_update_guard` (ZER-42). El tomador no puede setear `verificada` ni editar contenido vía PostgREST; solo admin verifica `hecha→verificada`.
 
+## Grants vs RLS (PostgREST)
+
+RLS only runs **after** table privileges. If `authenticated` has no GRANT on a table, PostgREST returns `42501 permission denied` and never evaluates policies.
+
+- **Existing tables:** explicit GRANTs in migrations (often column-level; see ZER-43 on `profiles.tarifa_hora`).
+- **New tables:** `ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public` so objects created by migrations inherit DML for `anon` / `authenticated` / `service_role` without a per-table GRANT (ZER-49, `20260919011500_zer49_default_privileges_for_role.sql`). Still enable RLS + policies on every exposed table.
+- **Automated check:** `pnpm db:check-grants` (CI job `db grants (authenticated)`) fails if any public **base** table lacks authenticated DML (table- or column-level) or if `postgres` is missing default privileges that grant authenticated table DML. Local probe: `scripts/zer49-probe-new-table.sql`.
+
 ## Dónde se implementa
 
 - Migraciones SQL con policies, versionadas (ver [[Stack técnico]]).
