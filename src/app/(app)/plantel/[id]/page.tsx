@@ -16,13 +16,16 @@ export default async function PlantelMemberPage({ params }: { params: Promise<{ 
 
   if (!user) redirect("/auth/login");
 
+  // ZER-43: rate-bearing reads use profiles_with_rate (DB-masked tarifa_hora).
   const { data: profile } = await supabase
-    .from("profiles")
+    .from("profiles_with_rate")
     .select(DETAIL_PROFILE_COLUMNS)
     .eq("id", id)
     .maybeSingle();
 
-  if (!profile) notFound();
+  if (!profile?.id || !profile.tier || !profile.nombre_visible || !profile.visibilidad_tarifa) {
+    notFound();
+  }
 
   if (profile.tier === "tourist") redirect("/plantel");
 
@@ -34,7 +37,7 @@ export default async function PlantelMemberPage({ params }: { params: Promise<{ 
         .eq("profile_id", id)
         .eq("confirmado", true),
       supabase.from("profile_skills").select("skills(nombre)").eq("profile_id", id),
-      supabase.from("profiles").select("id, is_platform_admin").eq("id", user.id).single(),
+      supabase.from("profiles").select("id, is_platform_admin, tier").eq("id", user.id).single(),
     ]);
 
   const roles = (roleAssignments ?? [])
@@ -45,10 +48,29 @@ export default async function PlantelMemberPage({ params }: { params: Promise<{ 
     .map((assignment) => assignment.skills?.nombre)
     .filter((name): name is string => Boolean(name));
 
-  const member = buildSerranoMemberDetail(profile, roles, skills, {
-    isSelf: user.id === id,
-    isAdmin: viewerProfile?.is_platform_admin ?? false,
-  });
+  const member = buildSerranoMemberDetail(
+    {
+      id: profile.id,
+      nombre: profile.nombre,
+      apellido: profile.apellido,
+      apodo: profile.apodo,
+      nombre_visible: profile.nombre_visible,
+      avatar_url: profile.avatar_url,
+      tier: profile.tier,
+      disponibilidad: profile.disponibilidad,
+      bio: profile.bio,
+      contacto_telegram: profile.contacto_telegram,
+      tarifa_hora: profile.tarifa_hora,
+      visibilidad_tarifa: profile.visibilidad_tarifa,
+    },
+    roles,
+    skills,
+    {
+      isSelf: user.id === id,
+      isAdmin: viewerProfile?.is_platform_admin ?? false,
+      isTourist: viewerProfile?.tier === "tourist",
+    },
+  );
 
   return <MemberDetail member={member} />;
 }

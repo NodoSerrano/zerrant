@@ -1,20 +1,53 @@
 type RateVisibility = "publica" | "privada";
 
-interface CanSeeRateArgs {
+interface RateViewer {
   isSelf: boolean;
   isAdmin: boolean;
+  isTourist: boolean;
+}
+
+interface CanSeeRateArgs extends RateViewer {
   visibilidadTarifa: RateVisibility;
   hasTarifa: boolean;
 }
 
+/** Whether the viewer may learn that a non-null rate exists / its value. */
 export function canSeeRate({
   isSelf,
   isAdmin,
+  isTourist,
   visibilidadTarifa,
   hasTarifa,
 }: CanSeeRateArgs): boolean {
   if (!hasTarifa) return false;
-  return isSelf || isAdmin || visibilidadTarifa === "publica";
+  if (isSelf || isAdmin) return true;
+  if (isTourist) return false;
+  return visibilidadTarifa === "publica";
+}
+
+/**
+ * ZER-43 — pure contract mirroring the SQL CASE on profiles_with_rate.tarifa_hora.
+ * Returns the numeric rate only when the viewer is allowed to see it.
+ */
+export function resolveTarifaHora({
+  tarifaHora,
+  visibilidadTarifa,
+  viewer,
+}: {
+  tarifaHora: number | null;
+  visibilidadTarifa: RateVisibility;
+  viewer: RateViewer;
+}): number | null {
+  if (
+    !canSeeRate({
+      ...viewer,
+      visibilidadTarifa,
+      hasTarifa: tarifaHora !== null,
+    })
+  ) {
+    return null;
+  }
+  return tarifaHora;
 }
 
 const HANDLE_RE = /^[A-Za-z][A-Za-z0-9_]{4,31}$/;

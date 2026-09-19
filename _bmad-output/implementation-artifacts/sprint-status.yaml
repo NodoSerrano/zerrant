@@ -1,5 +1,5 @@
 # generated: 2026-07-23T18:20:22-03:00
-# last_updated: 2026-09-18T00:00:00-03:00
+# last_updated: 2026-09-18T21:10:00-03:00
 # project: nodo
 # project_key: NOKEY
 # tracking_system: linear
@@ -7,6 +7,7 @@
 # linear_project_url: https://linear.app/zerrant/project/nodo-serrano-ui-fidelity-m0-m2-38ca59210685
 # story_location: {project-root}/_bmad-output/implementation-artifacts
 # reconciled: ZER-46 — Linear Done + main routes/PRs; phantom keys restored as closed stubs
+# story_added: 4-x-zer-43-tarifa-hora-visibility (ZER-43) ready-for-dev
 
 # STATUS DEFINITIONS:
 # ==================
@@ -44,7 +45,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: "2026-07-23T18:20:22-03:00"
-last_updated: "2026-09-18T00:00:00-03:00"
+last_updated: "2026-09-18T21:10:00-03:00"
 project: nodo
 project_key: NOKEY
 tracking_system: linear
@@ -79,6 +80,7 @@ linear_ids:
   4-2-detalle-de-miembro: ZER-33
   4-3-editar-habilidades: ZER-34
   4-x-zer-42-tasks-rls-split: ZER-42
+  4-x-zer-43-tarifa-hora-visibility: ZER-43
 
 development_status:
   epic-1: done
@@ -127,6 +129,7 @@ development_status:
   4-3-editar-habilidades: done
   epic-4-plantel-retrospective: optional
 
-  epic-ops-security: done
+  epic-ops-security: in-progress
   4-x-zer-42-tasks-rls-split: done
+  4-x-zer-43-tarifa-hora-visibility: review
   epic-ops-security-retrospective: optional

@@ -1,4 +1,4 @@
-import { canSeeRate, telegramHref } from "./visibility";
+import { resolveTarifaHora, telegramHref } from "./visibility";
 import type { Disponibilidad, SerranoMember, SerranoMemberDetail, SerranoTier } from "./types";
 
 type ProfileRow = {
@@ -50,13 +50,16 @@ export function buildSerranoMemberDetail(
   profile: DetailProfileRow,
   roles: string[],
   skills: string[],
-  viewer: { isSelf: boolean; isAdmin: boolean },
+  viewer: { isSelf: boolean; isAdmin: boolean; isTourist?: boolean },
 ): SerranoMemberDetail {
-  const visible = canSeeRate({
-    isSelf: viewer.isSelf,
-    isAdmin: viewer.isAdmin,
+  const tarifaHora = resolveTarifaHora({
+    tarifaHora: profile.tarifa_hora,
     visibilidadTarifa: profile.visibilidad_tarifa,
-    hasTarifa: profile.tarifa_hora !== null,
+    viewer: {
+      isSelf: viewer.isSelf,
+      isAdmin: viewer.isAdmin,
+      isTourist: viewer.isTourist ?? false,
+    },
   });
 
   return {
@@ -68,7 +71,7 @@ export function buildSerranoMemberDetail(
     roles,
     skills,
     bio: profile.bio,
-    tarifaHora: visible ? profile.tarifa_hora : null,
+    tarifaHora,
     telegramHref: telegramHref(profile.contacto_telegram),
   };
 }

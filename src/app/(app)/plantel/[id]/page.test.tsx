@@ -16,28 +16,29 @@ const mocks = vi.hoisted(() => ({
   viewerProfilesSingle: vi.fn(),
   redirect: vi.fn(),
   notFound: vi.fn(),
+  from: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mocks.getUser },
-    from: vi.fn((table: string) => {
+    from: mocks.from.mockImplementation((table: string) => {
+      if (table === "profiles_with_rate") {
+        return {
+          select: mocks.profilesSelect.mockImplementation(() => ({
+            eq: mocks.profilesEq.mockImplementation(() => ({
+              maybeSingle: mocks.profileMaybeSingle,
+            })),
+          })),
+        };
+      }
       if (table === "profiles") {
         return {
-          select: mocks.profilesSelect.mockImplementation((columns: string) => {
-            if (columns === "id, is_platform_admin") {
-              return {
-                eq: mocks.viewerProfilesEq.mockImplementation(() => ({
-                  single: mocks.viewerProfilesSingle,
-                })),
-              };
-            }
-            return {
-              eq: mocks.profilesEq.mockImplementation(() => ({
-                maybeSingle: mocks.profileMaybeSingle,
-              })),
-            };
-          }),
+          select: mocks.viewerProfilesSelect.mockImplementation(() => ({
+            eq: mocks.viewerProfilesEq.mockImplementation(() => ({
+              single: mocks.viewerProfilesSingle,
+            })),
+          })),
         };
       }
       if (table === "profile_roles") {
@@ -102,7 +103,7 @@ beforeEach(() => {
   mocks.profileRolesEqConfirmado.mockResolvedValue({ data: [{ roles: { nombre: "Infra" } }] });
   mocks.profileSkillsEq.mockResolvedValue({ data: [{ skills: { nombre: "Solidity" } }] });
   mocks.viewerProfilesSingle.mockResolvedValue({
-    data: { id: "viewer-1", is_platform_admin: false },
+    data: { id: "viewer-1", is_platform_admin: false, tier: "standard" },
   });
 });
 
@@ -131,10 +132,11 @@ describe("PlantelMemberPage", () => {
     expect(mocks.notFound).toHaveBeenCalled();
   });
 
-  it("selects the detail columns and renders MemberDetail", async () => {
+  it("reads detail from profiles_with_rate and renders MemberDetail", async () => {
     const element = await PlantelMemberPage({ params: Promise.resolve({ id: "p1" }) });
     render(element);
 
+    expect(mocks.from).toHaveBeenCalledWith("profiles_with_rate");
     const selected = mocks.profilesSelect.mock.calls[0][0] as string;
     expect(selected).toContain("bio");
     expect(selected).toContain("contacto_telegram");
@@ -155,6 +157,7 @@ describe("PlantelMemberPage", () => {
 
   it("resolves the viewer profile for admin/tarifa visibility", async () => {
     await PlantelMemberPage({ params: Promise.resolve({ id: "p1" }) });
+    expect(mocks.viewerProfilesSelect).toHaveBeenCalledWith("id, is_platform_admin, tier");
     expect(mocks.viewerProfilesEq).toHaveBeenCalledWith("id", "viewer-1");
   });
 });

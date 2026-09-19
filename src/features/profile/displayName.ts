@@ -1,6 +1,8 @@
 import type { Profile } from "./types";
 
-export function displayName(profile: Profile): string {
+export function displayName(
+  profile: Pick<Profile, "nombre" | "apellido" | "apodo" | "nombre_visible">,
+): string {
   switch (profile.nombre_visible) {
     case "apodo":
       if (profile.apodo) return profile.apodo;

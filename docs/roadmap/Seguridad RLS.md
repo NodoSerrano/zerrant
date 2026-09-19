@@ -10,7 +10,7 @@ Las reglas de acceso viven en **Row Level Security de Postgres**, no solo en el 
 
 - Cada uno **edita su propio** `profiles`. Solo un admin (`is_platform_admin`) cambia `tier` e `is_platform_admin`.
 - **Tourists** no aparecen en el plantel (lecturas filtran por tier ≠ tourist). Ver [[M4 · Plantel y directorio]].
-- `tarifa_hora`: visible al dueño, admins, y a otros serranos solo si `visibilidad_tarifa = 'publica'` → resolver con **vista/policy** que oculte la columna. Riesgo abierto.
+- `tarifa_hora`: visible al dueño, admins, y a otros serranos solo si `visibilidad_tarifa = 'publica'`. Enforced in DB via `public.profiles_with_rate` (masked column) + column SELECT revoke of base `profiles.tarifa_hora` for `authenticated` (ZER-43). Base table reads must omit `tarifa_hora` / avoid `select *`.
 - `profile_roles.confirmado`: solo lo cambia un admin. Ver [[M3 · Membresía y roles]].
 - `membership_requests`: el dueño crea/lee la suya; admins ven todas.
 - `projects`/`project_members`: crear = cualquier serrano; editar config y aprobar ingresos = admins **de ese proyecto**; `ingreso=abierto` → entra aprobado, `aprobacion` → pendiente. Ver [[M5 · Proyectos]].
