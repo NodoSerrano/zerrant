@@ -37,4 +37,24 @@ describe("App shell layout (navigation destinations)", () => {
     expect(content?.className).toContain("pb-5");
     expect(content?.className).not.toContain("p-5");
   });
+
+  it("pins TabBar to the viewport bottom and reserves its height so lists do not sit under it", () => {
+    const { container } = render(
+      <AppLayout>
+        <div>hub content</div>
+      </AppLayout>,
+    );
+
+    const shell = container.firstElementChild as HTMLElement;
+    expect(shell.className).toMatch(/min-h-(full|dvh|screen)/);
+
+    const pin = screen.getByTestId("tab-bar").parentElement as HTMLElement;
+    expect(pin.className).toMatch(/fixed/);
+    expect(pin.className).toMatch(/bottom-0/);
+
+    // Pencil TabBar outer frame: pt 21 + pill 62 + pb 21 = 104px.
+    const spacer = container.querySelector('[data-testid="tab-bar-spacer"]');
+    expect(spacer).toBeInTheDocument();
+    expect(spacer?.className).toContain("h-[104px]");
+  });
 });

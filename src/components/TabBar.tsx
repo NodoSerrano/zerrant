@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { House, Users, Layers, Calendar, User, type LucideIcon } from "lucide-react";
+import { Users, Layers, Calendar, User, type LucideIcon } from "lucide-react";
 
-export type Tab = "inicio" | "plantel" | "nodo" | "agenda" | "perfil";
+export type Tab = "plantel" | "nodo" | "agenda" | "perfil";
 
 interface TabBarProps {
   active?: Tab;
@@ -12,7 +12,6 @@ interface TabBarProps {
 }
 
 const tabIcons: Record<Tab, LucideIcon> = {
-  inicio: House,
   plantel: Users,
   nodo: Layers,
   agenda: Calendar,
@@ -20,14 +19,13 @@ const tabIcons: Record<Tab, LucideIcon> = {
 };
 
 const tabs: { id: Tab; label: string; href: string }[] = [
-  { id: "inicio", label: "INICIO", href: "/" },
   { id: "plantel", label: "PLANTEL", href: "/plantel" },
   { id: "nodo", label: "NODO", href: "/nodo/tasks" },
   { id: "agenda", label: "AGENDA", href: "/agenda" },
   { id: "perfil", label: "PERFIL", href: "/profile" },
 ];
 
-export function TabBar({ active = "inicio", className }: TabBarProps) {
+export function TabBar({ active = "perfil", className }: TabBarProps) {
   return (
     <nav className={cn("pt-[21px] pr-[12px] pb-[21px] pl-[21px]", className)}>
       <div
@@ -46,7 +44,7 @@ export function TabBar({ active = "inicio", className }: TabBarProps) {
               key={tab.id}
               href={tab.href}
               className={cn(
-                "flex flex-col items-center justify-center gap-[3px] flex-1 rounded-[26px]",
+                "flex h-full flex-col items-center justify-center gap-[3px] flex-1 self-stretch rounded-[26px]",
                 "font-display text-[10px] font-semibold transition-colors",
                 isActive ? "bg-primary text-on-primary" : "text-text-muted",
                 isNodo ? "tracking-[0.3px]" : "tracking-[0.5px]",

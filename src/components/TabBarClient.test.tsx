@@ -42,4 +42,25 @@ describe("TabBarClient", () => {
     render(<TabBarClient />);
     expect(screen.getByRole("link", { name: /AGENDA/i })).toHaveClass("bg-primary");
   });
+
+  it("marks perfil active for /profile and /onboarding", () => {
+    (usePathname as ReturnType<typeof vi.fn>).mockReturnValue("/profile");
+    const { unmount } = render(<TabBarClient />);
+    expect(screen.getByRole("link", { name: /PERFIL/i })).toHaveClass("bg-primary");
+    unmount();
+
+    (usePathname as ReturnType<typeof vi.fn>).mockReturnValue("/onboarding/step1");
+    render(<TabBarClient />);
+    expect(screen.getByRole("link", { name: /PERFIL/i })).toHaveClass("bg-primary");
+  });
+
+  it("falls back to an existing tab (perfil) instead of removed inicio", () => {
+    (usePathname as ReturnType<typeof vi.fn>).mockReturnValue("/");
+    render(<TabBarClient />);
+    expect(screen.getByRole("link", { name: /PERFIL/i })).toHaveClass("bg-primary");
+    expect(screen.queryByText("INICIO")).not.toBeInTheDocument();
+    // Exactly one active pill — never a bar with zero active tabs.
+    const actives = screen.getAllByRole("link").filter((el) => el.className.includes("bg-primary"));
+    expect(actives).toHaveLength(1);
+  });
 });

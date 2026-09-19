@@ -12,9 +12,7 @@ export function TabBarClient() {
       ? "plantel"
       : pathname.startsWith("/agenda")
         ? "agenda"
-        : pathname.startsWith("/profile") || pathname.startsWith("/onboarding")
-          ? "perfil"
-          : "inicio";
+        : "perfil";
 
   return <TabBar active={active} />;
 }
