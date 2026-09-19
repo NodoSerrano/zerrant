@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockSaveOnboardingStep1 = vi.hoisted(() => vi.fn());
 const mockUploadAvatar = vi.hoisted(() => vi.fn());
@@ -10,6 +10,10 @@ vi.mock("@/features/profile/actions", () => ({
 }));
 
 import { Step1Form } from "@/app/(app)/onboarding/step1/Step1Form";
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 describe("Step1Form", () => {
   it("renders the Pencil chrome copy", () => {
@@ -84,7 +88,8 @@ describe("Step1Form", () => {
   });
 
   it("shows the stored photo when the profile already has one", () => {
-    render(<Step1Form avatarUrl="https://sb.test/avatars/u/a.jpg" />);
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
+    render(<Step1Form avatarUrl="https://sb.test/storage/v1/object/public/avatars/u/a.jpg" />);
 
     expect(screen.getByRole("img", { name: "Foto de perfil" })).toBeInTheDocument();
     expect(screen.getByText("Cambiar foto")).toBeInTheDocument();
