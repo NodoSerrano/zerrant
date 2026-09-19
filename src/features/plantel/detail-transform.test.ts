@@ -100,4 +100,14 @@ describe("buildSerranoMemberDetail", () => {
     });
     expect(result.tarifaHora).toBeNull();
   });
+
+  it("nulls tarifaHora for a tourist viewer even when publica", () => {
+    const result = buildSerranoMemberDetail(
+      { ...profile, visibilidad_tarifa: "publica" },
+      roles,
+      skills,
+      { isSelf: false, isAdmin: false, isTourist: true },
+    );
+    expect(result.tarifaHora).toBeNull();
+  });
 });

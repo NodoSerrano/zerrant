@@ -22,11 +22,14 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mocks.getUser },
-    from: vi.fn(() => ({
-      select: mocks.select.mockImplementation(() => ({
-        eq: vi.fn(() => ({ single: mocks.profilesSelectSingle })),
-      })),
-    })),
+    from: vi.fn((table: string) => {
+      expect(table).toBe("profiles_with_rate");
+      return {
+        select: mocks.select.mockImplementation(() => ({
+          eq: vi.fn(() => ({ single: mocks.profilesSelectSingle })),
+        })),
+      };
+    }),
   }),
 }));
 

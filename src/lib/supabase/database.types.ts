@@ -289,7 +289,30 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      profiles_with_rate: {
+        Row: {
+          apellido: string | null;
+          apodo: string | null;
+          aprobado_en: string | null;
+          avatar_url: string | null;
+          bio: string | null;
+          contacto_telegram: string | null;
+          created_at: string | null;
+          disponibilidad: Database["public"]["Enums"]["disponibilidad"] | null;
+          email: string | null;
+          fecha_nacimiento: string | null;
+          id: string | null;
+          is_platform_admin: boolean | null;
+          nombre: string | null;
+          nombre_visible: Database["public"]["Enums"]["nombre_visible"] | null;
+          onboarding_completado_en: string | null;
+          sitio_url: string | null;
+          tarifa_hora: number | null;
+          tier: Database["public"]["Enums"]["tier"] | null;
+          visibilidad_tarifa: Database["public"]["Enums"]["visibilidad_tarifa"] | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       approve_membership_request: {
@@ -300,6 +323,14 @@ export type Database = {
           error?: string;
           success?: boolean;
         };
+      };
+      is_non_tourist: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      is_platform_admin: {
+        Args: Record<string, never>;
+        Returns: boolean;
       };
       reject_membership_request: {
         Args: {
