@@ -1,6 +1,10 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { AvatarPicker } from "./AvatarPicker";
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 function jpeg(name = "foto.jpg") {
   return new File([new Uint8Array([0xff, 0xd8, 0xff])], name, { type: "image/jpeg" });
@@ -43,10 +47,42 @@ describe("AvatarPicker", () => {
   });
 
   it("shows the current photo and 'Cambiar foto' when initialUrl is set", () => {
-    render(<AvatarPicker action={vi.fn()} initialUrl="https://sb.test/avatars/u/a.jpg" />);
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
+    render(
+      <AvatarPicker
+        action={vi.fn()}
+        initialUrl="https://sb.test/storage/v1/object/public/avatars/u/a.jpg"
+      />,
+    );
 
     expect(screen.getByRole("img", { name: "Foto de perfil" })).toBeInTheDocument();
     expect(screen.getByText("Cambiar foto")).toBeInTheDocument();
+  });
+
+  it("falls back to the camera placeholder when initialUrl host is outside remotePatterns", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://abc.supabase.co");
+    render(
+      <AvatarPicker
+        action={vi.fn()}
+        initialUrl="https://other.supabase.co/storage/v1/object/public/avatars/u/a.jpg"
+      />,
+    );
+
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(screen.getByRole("button", { name: "Agregar foto" })).toBeInTheDocument();
+  });
+
+  it("falls back when NEXT_PUBLIC_SUPABASE_URL is missing and initialUrl is absolute", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    render(
+      <AvatarPicker
+        action={vi.fn()}
+        initialUrl="https://abc.supabase.co/storage/v1/object/public/avatars/u/a.jpg"
+      />,
+    );
+
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(screen.getByRole("button", { name: "Agregar foto" })).toBeInTheDocument();
   });
 
   it("accepts the mime types the upload pipeline supports", () => {
@@ -58,7 +94,10 @@ describe("AvatarPicker", () => {
   });
 
   it("sends the chosen file to the action as FormData under 'avatar'", async () => {
-    const action = vi.fn().mockResolvedValue({ avatarUrl: "https://sb.test/avatars/u/new.jpg" });
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
+    const action = vi.fn().mockResolvedValue({
+      avatarUrl: "https://sb.test/storage/v1/object/public/avatars/u/new.jpg",
+    });
     render(<AvatarPicker action={action} />);
 
     choose(jpeg());
@@ -70,7 +109,10 @@ describe("AvatarPicker", () => {
   });
 
   it("renders the uploaded photo returned by the action", async () => {
-    const action = vi.fn().mockResolvedValue({ avatarUrl: "https://sb.test/avatars/u/new.jpg" });
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
+    const action = vi.fn().mockResolvedValue({
+      avatarUrl: "https://sb.test/storage/v1/object/public/avatars/u/new.jpg",
+    });
     render(<AvatarPicker action={action} />);
 
     choose(jpeg());
@@ -92,9 +134,12 @@ describe("AvatarPicker", () => {
   });
 
   it("keeps the photo already uploaded when a later upload fails", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
     const action = vi
       .fn()
-      .mockResolvedValueOnce({ avatarUrl: "https://sb.test/avatars/u/new.jpg" })
+      .mockResolvedValueOnce({
+        avatarUrl: "https://sb.test/storage/v1/object/public/avatars/u/new.jpg",
+      })
       .mockResolvedValueOnce({ error: "Formato no permitido. Usá JPG, PNG, WebP o HEIC" });
     render(<AvatarPicker action={action} />);
 
@@ -110,6 +155,7 @@ describe("AvatarPicker", () => {
   });
 
   it("blocks the file input while an upload is in flight", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
     let resolve: (state: { avatarUrl: string }) => void = () => {};
     const action = vi.fn().mockReturnValue(
       new Promise((r) => {
@@ -122,13 +168,16 @@ describe("AvatarPicker", () => {
 
     await waitFor(() => expect(fileInput()).toBeDisabled());
 
-    resolve({ avatarUrl: "https://sb.test/avatars/u/new.jpg" });
+    resolve({ avatarUrl: "https://sb.test/storage/v1/object/public/avatars/u/new.jpg" });
     await waitFor(() => expect(fileInput()).not.toBeDisabled());
   });
 
   it("reports the upload state to the parent", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
     const onUploadingChange = vi.fn();
-    const action = vi.fn().mockResolvedValue({ avatarUrl: "https://sb.test/avatars/u/new.jpg" });
+    const action = vi.fn().mockResolvedValue({
+      avatarUrl: "https://sb.test/storage/v1/object/public/avatars/u/new.jpg",
+    });
     render(<AvatarPicker action={action} onUploadingChange={onUploadingChange} />);
 
     choose(jpeg());
@@ -138,6 +187,7 @@ describe("AvatarPicker", () => {
   });
 
   it("shows 'Subiendo...' while the upload is in flight", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
     let resolve: (state: { avatarUrl: string }) => void = () => {};
     const action = vi.fn().mockReturnValue(
       new Promise((r) => {
@@ -150,7 +200,7 @@ describe("AvatarPicker", () => {
 
     expect(await screen.findByText("Subiendo...")).toBeInTheDocument();
 
-    resolve({ avatarUrl: "https://sb.test/avatars/u/new.jpg" });
+    resolve({ avatarUrl: "https://sb.test/storage/v1/object/public/avatars/u/new.jpg" });
     await waitFor(() => expect(screen.queryByText("Subiendo...")).toBeNull());
   });
 });

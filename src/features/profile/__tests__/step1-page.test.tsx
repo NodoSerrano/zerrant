@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
@@ -25,6 +25,10 @@ vi.mock("@/features/profile/actions", () => ({
 
 import OnboardingStep1 from "@/app/(app)/onboarding/step1/page";
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
@@ -32,13 +36,14 @@ beforeEach(() => {
 
 describe("OnboardingStep1 page", () => {
   it("prefills the form with what the profile already has", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
     mocks.profileSingle.mockResolvedValue({
       data: {
         nombre: "Juan",
         apellido: "Pérez",
         apodo: "juancito",
         fecha_nacimiento: "1990-01-15",
-        avatar_url: "https://sb.test/avatars/u/a.jpg",
+        avatar_url: "https://sb.test/storage/v1/object/public/avatars/u/a.jpg",
       },
       error: null,
     });

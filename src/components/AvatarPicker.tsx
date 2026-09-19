@@ -11,6 +11,7 @@ import {
   type ChangeEvent,
 } from "react";
 import type { AvatarUploadState } from "@/features/profile/actions";
+import { isServableAvatarImageUrl } from "@/lib/avatar-image-url";
 import { cn } from "@/lib/utils";
 
 // HEIC/HEIF get in here even though the bucket doesn't accept them: the server
@@ -51,7 +52,9 @@ export function AvatarPicker({
     onUploadingChange?.(pending);
   }, [pending, onUploadingChange]);
 
-  const label = pending ? "Subiendo..." : url ? "Cambiar foto" : "Agregar foto";
+  // next/image throws on absolute hosts outside remotePatterns — never block onboarding.
+  const displayUrl = url && isServableAvatarImageUrl(url) ? url : null;
+  const label = pending ? "Subiendo..." : displayUrl ? "Cambiar foto" : "Agregar foto";
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -74,9 +77,9 @@ export function AvatarPicker({
         className="flex flex-col items-center gap-2.5 disabled:opacity-60"
       >
         <span className="size-25 rounded-pill border border-border bg-surface-inset flex items-center justify-center overflow-hidden">
-          {url ? (
+          {displayUrl ? (
             <Image
-              src={url}
+              src={displayUrl}
               alt="Foto de perfil"
               width={100}
               height={100}
