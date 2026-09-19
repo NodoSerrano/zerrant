@@ -34,7 +34,7 @@ function PrefillLoadError() {
 }
 
 export default async function OnboardingStep1() {
-  // Shares React.cache hit with the (app) template gate — one profiles select per RSC request.
+  // Shares React.cache hit with the (onboarding) template gate — one profiles select per RSC request.
   const { profile, error } = await getOnboardingGateProfile();
 
   // Real read failures must not collapse into a silent empty prefill (ZER-56).

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockSaveOnboardingStep1 = vi.hoisted(() => vi.fn());
 const mockUploadAvatar = vi.hoisted(() => vi.fn());
@@ -9,10 +9,14 @@ vi.mock("@/features/profile/actions", () => ({
   uploadAvatar: mockUploadAvatar,
 }));
 
-import { Step1Form } from "@/app/(app)/onboarding/step1/Step1Form";
+import { Step1Form } from "@/app/(onboarding)/onboarding/step1/Step1Form";
 
 afterEach(() => {
   vi.unstubAllEnvs();
+});
+
+beforeEach(() => {
+  vi.clearAllMocks();
 });
 
 describe("Step1Form", () => {

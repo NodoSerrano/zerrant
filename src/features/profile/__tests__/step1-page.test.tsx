@@ -14,7 +14,7 @@ vi.mock("@/features/profile/actions", () => ({
   uploadAvatar: vi.fn(),
 }));
 
-import OnboardingStep1 from "@/app/(app)/onboarding/step1/page";
+import OnboardingStep1 from "@/app/(onboarding)/onboarding/step1/page";
 
 afterEach(() => {
   vi.unstubAllEnvs();
