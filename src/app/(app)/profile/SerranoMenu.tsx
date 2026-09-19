@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   LogOut,
   ChevronRight,
+  UserRound,
 } from "lucide-react";
 import { useTheme } from "@/lib/useTheme";
 import { signOut } from "@/features/auth/actions";
@@ -39,6 +40,16 @@ export function SerranoMenu({ disponibilidad, visibilidadTarifa }: SerranoMenuPr
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-[20px] bg-surface border border-border overflow-hidden flex flex-col">
+        <Link href="/profile/edit" className="flex items-center gap-3 px-4 py-[15px] w-full">
+          <UserRound size={20} className="text-brand-blue shrink-0" />
+          <span className="font-body text-[15px] text-text-primary text-left flex-1">
+            Editar perfil
+          </span>
+          <ChevronRight size={18} className="text-text-muted shrink-0" />
+        </Link>
+
+        <div className="h-px bg-border w-full" />
+
         <div className="flex items-center gap-3 px-4 py-[15px] w-full text-text-primary/40">
           <Folder size={20} className="text-brand-blue/40 shrink-0" />
           <span className="font-body text-[15px] text-left flex-1">Mis proyectos</span>

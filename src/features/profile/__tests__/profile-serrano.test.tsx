@@ -55,10 +55,19 @@ beforeEach(() => {
 });
 
 describe("ProfilePage (serrano)", () => {
-  it("renders Mi perfil header", async () => {
-    render(await ProfilePage());
+  it("renders Mi perfil header without a non-interactive pencil icon", async () => {
+    const { container } = render(await ProfilePage());
 
     expect(screen.getByRole("heading", { name: "Mi perfil" })).toBeInTheDocument();
+    // Dead pencil was a bare lucide icon in the header — must not reappear.
+    expect(container.querySelector("svg.lucide-pencil")).toBeNull();
+  });
+
+  it("renders Editar perfil menu row linking to /profile/edit", async () => {
+    render(await ProfilePage());
+
+    const editLink = screen.getByRole("link", { name: /Editar perfil/ });
+    expect(editLink).toHaveAttribute("href", "/profile/edit");
   });
 
   it("renders the identity card with Avatar, name, and email", async () => {

@@ -1,4 +1,4 @@
-import { Pencil, Mountain } from "lucide-react";
+import { Mountain } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/Avatar";
@@ -53,10 +53,7 @@ export default async function ProfilePage() {
 
     return (
       <div className="flex flex-col gap-4">
-        <div className="flex justify-between items-center">
-          <h1 className="font-display text-2xl font-bold text-text-primary">Mi perfil</h1>
-          <Pencil size={20} className="text-text-secondary" />
-        </div>
+        <h1 className="font-display text-2xl font-bold text-text-primary">Mi perfil</h1>
 
         <div className="rounded-[24px] bg-surface border border-border p-4 flex items-center gap-3.5">
           <Avatar
@@ -118,10 +115,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-between items-center">
-        <h1 className="font-display text-2xl font-bold text-text-primary">Mi perfil</h1>
-        <Pencil size={20} className="text-text-secondary" />
-      </div>
+      <h1 className="font-display text-2xl font-bold text-text-primary">Mi perfil</h1>
 
       <div className="rounded-[24px] bg-surface border border-border p-4 flex items-center gap-3.5">
         <Avatar
