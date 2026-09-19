@@ -7,7 +7,7 @@ import { SecondaryButton } from "@/components/SecondaryButton";
 
 export function PostRequestScreen() {
   return (
-    <div className="flex flex-col items-center text-center gap-[20px] px-6 pt-6 pb-7">
+    <div className="flex flex-col items-center text-center gap-[20px]">
       <div className="size-[92px] rounded-full bg-[#ff972820] flex items-center justify-center mt-2">
         <Hourglass size={40} className="text-[#ff4d21]" />
       </div>

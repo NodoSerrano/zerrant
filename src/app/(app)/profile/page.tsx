@@ -52,7 +52,7 @@ export default async function ProfilePage() {
     }
 
     return (
-      <div className="flex flex-col gap-4 pt-2 px-5 pb-5">
+      <div className="flex flex-col gap-4">
         <div className="flex justify-between items-center">
           <h1 className="font-display text-2xl font-bold text-text-primary">Mi perfil</h1>
           <Pencil size={20} className="text-text-secondary" />
@@ -117,7 +117,7 @@ export default async function ProfilePage() {
   };
 
   return (
-    <div className="flex flex-col gap-4 pt-2 px-5 pb-5">
+    <div className="flex flex-col gap-4">
       <div className="flex justify-between items-center">
         <h1 className="font-display text-2xl font-bold text-text-primary">Mi perfil</h1>
         <Pencil size={20} className="text-text-secondary" />
