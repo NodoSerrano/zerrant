@@ -167,8 +167,8 @@ Fuente: `_bmad-output/implementation-artifacts/deferred-work.md` (ampliar ticket
 
 ### P1 — Producto / UX / infra
 
-4. Layout global `p-5` vs padding Pencil; TabBar en pantallas “modales” (create/detail task).
-5. TabBar con `<button onClick>` → sin JS no se navega.
+4. ~~Layout global `p-5` vs padding Pencil; TabBar en pantallas “modales” (create/detail task).~~ **ZER-51** TabBar/modal shells; **ZER-52** padding por grupo (`[8,20,20,20]` app / `[6,20,24,20]` modal).
+5. ~~TabBar con `<button onClick>` → sin JS no se navega.~~ **Done in ZER-50**.
 6. Gate de onboarding: doble query de perfil + costo en prefetch de `<Link>`.
 7. Grants: falta `alter default privileges` / chequeo CI para tablas nuevas (`42501`).
 8. `pnpm-workspace.yaml` stub `allowBuilds` ensucia installs y empuja a `--no-verify`.
@@ -244,11 +244,11 @@ Usar como checklist al crear en Linear. **No duplicar** si el issue ya existe �
 
 ### Fidelity / UX residual
 
-- [ ] UX: route group modal sin TabBar para create/edit task
-- [ ] UX: padding layout vs Pencil
+- [x] UX: route group modal sin TabBar para create/edit task — ZER-51
+- [x] UX: padding layout vs Pencil — ZER-52 (`(app)` hub `[8,20,20,20]`, `(modal)` focused `[6,20,24,20]`)
 - [ ] DS: asterisco `required` en Input vs frames Pencil
 - [ ] PERF: cachear profile gate por request
-- [ ] A11y: TabBar con links reales (progressive enhancement)
+- [x] A11y: TabBar con links reales (progressive enhancement) — ZER-50
 
 ### M3 remaining (docs ya en Done — esto es lo que quedó debiendo)
 

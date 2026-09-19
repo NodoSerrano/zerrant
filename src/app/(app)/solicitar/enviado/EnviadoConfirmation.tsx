@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 export function EnviadoConfirmation() {
   return (
-    <div className="flex flex-col items-center justify-center gap-5 pt-2 px-7 pb-7">
+    <div className="flex flex-col items-center justify-center gap-5">
       <div className="flex size-[104px] items-center justify-center rounded-full bg-linear-to-br from-brand-mint to-brand-green">
         <Check className="size-12 text-on-primary" />
       </div>

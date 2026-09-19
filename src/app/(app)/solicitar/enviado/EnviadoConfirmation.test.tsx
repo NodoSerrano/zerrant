@@ -50,15 +50,15 @@ describe("EnviadoConfirmation — Pencil D1hKT", () => {
     expect(cta.tagName).toBe("A");
   });
 
-  it("uses the Pencil wrapper padding and gap", () => {
+  it("uses the Pencil stack alignment and leaves shell padding to the layout", () => {
     const { container } = render(<EnviadoConfirmation />);
     const wrapper = container.firstElementChild;
     expect(wrapper?.className).toContain("flex-col");
     expect(wrapper?.className).toContain("items-center");
     expect(wrapper?.className).toContain("justify-center");
     expect(wrapper?.className).toContain("gap-5");
-    expect(wrapper?.className).toContain("pt-2");
-    expect(wrapper?.className).toContain("px-7");
-    expect(wrapper?.className).toContain("pb-7");
+    expect(wrapper?.className).not.toMatch(/\bpt-/);
+    expect(wrapper?.className).not.toMatch(/\bpx-/);
+    expect(wrapper?.className).not.toMatch(/\bpb-/);
   });
 });

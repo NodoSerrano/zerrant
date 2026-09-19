@@ -229,14 +229,13 @@ describe("SolicitarForm — layout", () => {
     expect(wrapper?.className).toContain("gap-5");
   });
 
-  it("has the Pencil padding of 6/24/24/24", () => {
+  it("leaves shell padding to (app) layout (no local page padding)", () => {
     const { container } = render(<SolicitarForm />);
 
     const wrapper = container.firstElementChild;
-    // pt-1.5 = 6px, px-6 = 24px, pb-6 = 24px
-    expect(wrapper?.className).toContain("pt-1.5");
-    expect(wrapper?.className).toContain("px-6");
-    expect(wrapper?.className).toContain("pb-6");
+    expect(wrapper?.className).not.toMatch(/\bpt-/);
+    expect(wrapper?.className).not.toMatch(/\bpx-/);
+    expect(wrapper?.className).not.toMatch(/\bpb-/);
   });
 });
 

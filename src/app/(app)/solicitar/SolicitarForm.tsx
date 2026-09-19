@@ -12,7 +12,7 @@ export function SolicitarForm() {
   const router = useRouter();
 
   return (
-    <div className="flex flex-col gap-5 pt-1.5 px-6 pb-6">
+    <div className="flex flex-col gap-5">
       <div>
         <button
           type="button"
