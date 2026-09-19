@@ -14,7 +14,7 @@ depends-on: []
 
 - [ ] Scaffold Next.js (App Router) + TypeScript + Tailwind. Ver [[Stack técnico]].
 - [ ] Tokens de Figma → tema Tailwind (`@theme`), claro/oscuro. Ver [[Design system]].
-- [ ] Componentes base (Button, Input, Chip, Avatar, StatusBar/TabBar) como shell reutilizable.
+- [ ] Componentes base (Button, Input, Chip, Avatar, TabBar) como shell reutilizable. StatusBar es chrome de dispositivo del `.pen`, no se implementa en el shell web (ZER-66).
 - [ ] Supabase: proyecto, clientes `@supabase/ssr` (browser/server), middleware de sesión, envs.
 - [ ] Migraciones con Supabase CLI (`supabase/migrations`) — pipeline vacío que corre.
 - [ ] Deploy en Vercel + envs (`vercel env`).

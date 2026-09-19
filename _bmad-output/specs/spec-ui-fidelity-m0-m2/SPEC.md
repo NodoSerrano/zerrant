@@ -79,7 +79,7 @@ sources: []
 
 - Implementing Inicio (`2.1`), Plantel, Agenda, Admin, membership request flow (M3), Projects (M5), Events/Aportes (M6), or other frames outside `screen-inventory.md`.
 - Wiring Tourist membership CTA navigation before M3 (UI only / no-op).
-- Pixel-perfect StatusBar phone chrome in the web app.
+- StatusBar phone chrome in the web app at all — it was shipped, then removed entirely (ZER-66); it's device-frame chrome from the `.pen`, not product UI.
 - Rewriting product requirements, data model, or RLS from scratch.
 - Building MemberCard/EventCard/ProjectCard/AporteItem/RequestCard beyond what in-scope screens require (TaskCard is required; others only if a listed screen needs them).
 - Full dark-mode per-screen pixel QA (token dark parity is required; screen acceptance is light-first).
