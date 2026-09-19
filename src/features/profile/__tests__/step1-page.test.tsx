@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
@@ -25,6 +25,10 @@ vi.mock("@/features/profile/actions", () => ({
 
 import OnboardingStep1 from "@/app/(app)/onboarding/step1/page";
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
@@ -32,13 +36,14 @@ beforeEach(() => {
 
 describe("OnboardingStep1 page", () => {
   it("prefills the form with what the profile already has", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
     mocks.profileSingle.mockResolvedValue({
       data: {
         nombre: "Juan",
         apellido: "Pérez",
         apodo: "juancito",
         fecha_nacimiento: "1990-01-15",
-        avatar_url: "https://sb.test/avatars/u/a.jpg",
+        avatar_url: "https://sb.test/storage/v1/object/public/avatars/u/a.jpg",
       },
       error: null,
     });
@@ -78,6 +83,38 @@ describe("OnboardingStep1 page", () => {
 
     expect(screen.getByLabelText("Nombre")).toHaveValue("");
     expect(screen.getByText("Agregar foto")).toBeInTheDocument();
+  });
+
+  it("still renders an empty form when the profile row is genuinely missing (PGRST116)", async () => {
+    mocks.profileSingle.mockResolvedValue({
+      data: null,
+      error: { code: "PGRST116", message: "The result contains 0 rows" },
+    });
+
+    render(await OnboardingStep1());
+
+    expect(screen.getByLabelText("Nombre")).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Guardar y continuar" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("shows a clear error with retry when the profile read fails, not a silent empty form", async () => {
+    mocks.profileSingle.mockResolvedValue({
+      data: null,
+      error: { code: "57014", message: "canceling statement due to statement timeout" },
+    });
+
+    render(await OnboardingStep1());
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "No pudimos cargar tu perfil. Probá de nuevo.",
+    );
+    expect(screen.getByRole("link", { name: "Reintentar" })).toHaveAttribute(
+      "href",
+      "/onboarding/step1",
+    );
+    expect(screen.queryByLabelText("Nombre")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Guardar y continuar" })).not.toBeInTheDocument();
   });
 
   it("still renders the form when there is no session (the proxy owns the redirect)", async () => {
