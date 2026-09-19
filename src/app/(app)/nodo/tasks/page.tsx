@@ -52,14 +52,17 @@ export default async function TasksPage({
   if (!user) return <p className="text-text-secondary p-5">Iniciá sesión para ver las tareas.</p>;
 
   const { estado } = await searchParams;
+  const filter = !estado || estado === "todas" ? "todas" : estado;
 
   let query = supabase
     .from("tasks")
     .select("*, profiles:creado_por(nombre, apellido, apodo, nombre_visible)")
     .order("created_at", { ascending: false });
 
-  if (estado && estado !== "todas") {
-    query = query.eq("estado", estado as TaskEstado);
+  if (filter === "todas") {
+    query = query.neq("estado", "cancelada");
+  } else {
+    query = query.eq("estado", filter as TaskEstado);
   }
 
   const { data: tasks } = await query;

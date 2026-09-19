@@ -31,17 +31,22 @@ function createTasksChain(tasks: unknown[]) {
     select: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
+    neq: vi.fn().mockReturnThis(),
   };
   return chain;
 }
 
 function mockSupabase(overrides: { tasks?: unknown[]; tier?: string; user?: unknown } = {}) {
   const { tasks = [], tier = "serrano", user = { id: "user-1" } } = overrides;
+  let tasksChain: ReturnType<typeof createTasksChain> | null = null;
 
-  return {
+  const client = {
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user }, error: null }) },
     from: vi.fn().mockImplementation((table: string) => {
-      if (table === "tasks") return createTasksChain(tasks);
+      if (table === "tasks") {
+        tasksChain = createTasksChain(tasks);
+        return tasksChain;
+      }
       if (table === "profiles") {
         return {
           select: vi.fn().mockReturnThis(),
@@ -51,7 +56,9 @@ function mockSupabase(overrides: { tasks?: unknown[]; tier?: string; user?: unkn
       }
       return createTasksChain([]);
     }),
+    getTasksChain: () => tasksChain,
   };
+  return client;
 }
 
 async function renderPage(searchParams: Record<string, string> = {}) {
@@ -187,6 +194,52 @@ describe("TasksPage", () => {
         (a) => a.textContent === "Cancelada",
       );
       expect(pill).toHaveAttribute("href", "/nodo/tasks?estado=cancelada");
+    });
+  });
+
+  describe("estado query filter", () => {
+    it("default (no searchParams) excludes cancelada via neq, not eq", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      const client = mockSupabase();
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
+      await renderPage();
+
+      const chain = client.getTasksChain();
+      expect(chain?.neq).toHaveBeenCalledWith("estado", "cancelada");
+      expect(chain?.eq).not.toHaveBeenCalledWith("estado", expect.anything());
+    });
+
+    it("estado=todas excludes cancelada via neq", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      const client = mockSupabase();
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
+      await renderPage({ estado: "todas" });
+
+      const chain = client.getTasksChain();
+      expect(chain?.neq).toHaveBeenCalledWith("estado", "cancelada");
+      expect(chain?.eq).not.toHaveBeenCalledWith("estado", expect.anything());
+    });
+
+    it("estado=abierta uses eq and does not neq cancelada", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      const client = mockSupabase();
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
+      await renderPage({ estado: "abierta" });
+
+      const chain = client.getTasksChain();
+      expect(chain?.eq).toHaveBeenCalledWith("estado", "abierta");
+      expect(chain?.neq).not.toHaveBeenCalled();
+    });
+
+    it("estado=cancelada uses eq for cancelada", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      const client = mockSupabase();
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
+      await renderPage({ estado: "cancelada" });
+
+      const chain = client.getTasksChain();
+      expect(chain?.eq).toHaveBeenCalledWith("estado", "cancelada");
+      expect(chain?.neq).not.toHaveBeenCalled();
     });
   });
 
