@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
@@ -63,6 +63,10 @@ function setupTourist() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe("createMembershipRequest", () => {
@@ -170,5 +174,54 @@ describe("createMembershipRequest", () => {
 
     expect(result).toEqual({ error: "Ya tenes una solicitud pendiente." });
     expect(mocks.membershipInsert).not.toHaveBeenCalled();
+  });
+
+  it("maps a unique-violation on the one-pending index to the pending message", async () => {
+    // The pre-check races: between `maybeSingle` and the insert another submit
+    // can land. The partial unique index is what actually enforces the rule, so
+    // 23505 means "already pending", not an unknown DB failure.
+    setupTourist();
+    mocks.membershipInsert.mockResolvedValue({
+      error: {
+        code: "23505",
+        message:
+          'duplicate key value violates unique constraint "membership_requests_one_pending_per_profile"',
+      },
+    });
+
+    const result = await createMembershipRequest(null, new FormData());
+
+    expect(result).toEqual({ error: "Ya tenes una solicitud pendiente." });
+  });
+
+  it("logs the supabase error when the insert fails", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    setupTourist();
+    mocks.membershipInsert.mockResolvedValue({
+      error: { code: "42P17", message: "infinite recursion detected in policy" },
+    });
+
+    await createMembershipRequest(null, new FormData());
+
+    expect(spy).toHaveBeenCalledWith(
+      "[createMembershipRequest] insert failed",
+      expect.objectContaining({ code: "42P17" }),
+    );
+  });
+
+  it("logs the supabase error when the profile read fails", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: null,
+      error: { code: "57014", message: "canceling statement due to statement timeout" },
+    });
+
+    await createMembershipRequest(null, new FormData());
+
+    expect(spy).toHaveBeenCalledWith(
+      "[createMembershipRequest] profile read failed",
+      expect.objectContaining({ code: "57014" }),
+    );
   });
 });

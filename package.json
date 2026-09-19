@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:check-grants": "pnpm exec vitest run --config vitest.db-grants.config.ts",
+    "db:check-rls": "pnpm exec vitest run --config vitest.db-rls.config.ts",
     "prepare": "lefthook install"
   },
   "dependencies": {
