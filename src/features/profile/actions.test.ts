@@ -91,9 +91,29 @@ describe("saveOnboardingStep1", () => {
     expect(mocks.profilesUpdate).toHaveBeenCalledWith({
       nombre: "Juan",
       apellido: "Pérez",
-      apodo: null,
       fecha_nacimiento: "1990-01-15",
     });
+  });
+
+  // The form does render the apodo input, so an emptied one arrives as "" and
+  // must clear the column: only a field the form never sends is left alone.
+  it("clears apodo when the form sends it empty", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = new FormData();
+    fd.set("nombre", "Juan");
+    fd.set("apellido", "Pérez");
+    fd.set("apodo", "   ");
+    fd.set("fecha_nacimiento", "1990-01-15");
+
+    try {
+      await saveOnboardingStep1(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith(expect.objectContaining({ apodo: null }));
   });
 
   it.each(["nombre", "apellido", "fecha_nacimiento"])(
@@ -170,6 +190,34 @@ describe("saveOnboardingStep1", () => {
       expect(mocks.profilesUpdate).not.toHaveBeenCalled();
     },
   );
+
+  // Step 1's form has no tarifa, bio or contacto inputs: a handcrafted POST must
+  // not reach columns this step does not own.
+  it.each([
+    ["tarifa_hora", "5000"],
+    ["bio", "inyectada"],
+    ["contacto_telegram", "@intruso"],
+    ["sitio_url", "https://intruso.com"],
+    ["disponibilidad", "ocupado"],
+    ["visibilidad_tarifa", "publica"],
+  ])("ignores %s, which does not belong to step 1", async (field, value) => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = new FormData();
+    fd.set("nombre", "Juan");
+    fd.set("apellido", "Pérez");
+    fd.set("fecha_nacimiento", "1990-01-15");
+    fd.set(field, value);
+
+    try {
+      await saveOnboardingStep1(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty(field);
+  });
 
   it("ignores a nombre_visible that is not one of the enum values", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
@@ -275,6 +323,112 @@ describe("saveOnboardingStep2", () => {
 
     expect(result).toEqual({ error: "No autorizado" });
   });
+
+  it("trims the text fields before persisting", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    step1Saved();
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = new FormData();
+    fd.set("bio", "  Hola  ");
+    fd.set("contacto_telegram", "  @juan  ");
+    fd.set("sitio_url", "  https://example.com  ");
+
+    try {
+      await saveOnboardingStep2(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bio: "Hola",
+        contacto_telegram: "@juan",
+        sitio_url: "https://example.com",
+      }),
+    );
+  });
+
+  it("leaves out the fields the form does not send", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    step1Saved();
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = new FormData();
+    fd.set("bio", "Hola");
+
+    try {
+      await saveOnboardingStep2(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    const update = mocks.profilesUpdate.mock.calls[0][0];
+    expect(update).not.toHaveProperty("contacto_telegram");
+    expect(update).not.toHaveProperty("sitio_url");
+  });
+
+  // Step 2's form only has bio, telegram and sitio: closing the onboarding must
+  // not become a way to rewrite the identity fields step 1 already validated.
+  it.each([
+    ["fecha_nacimiento", "2000-01-01"],
+    ["nombre", "Intruso"],
+    ["apellido", "Intruso"],
+    ["apodo", "intruso"],
+    ["tarifa_hora", "5000"],
+    ["nombre_visible", "apodo"],
+    ["disponibilidad", "ocupado"],
+    ["visibilidad_tarifa", "publica"],
+  ])("ignores %s, which does not belong to step 2", async (field, value) => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    step1Saved();
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = new FormData();
+    fd.set("bio", "Hola");
+    fd.set(field, value);
+
+    try {
+      await saveOnboardingStep2(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty(field);
+  });
+
+  // A field step 2 does not own must not be able to fail the whole step.
+  it("does not fail the step over an invalid tarifa_hora it never asked for", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    step1Saved();
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = new FormData();
+    fd.set("bio", "Hola");
+    fd.set("tarifa_hora", "abc");
+
+    try {
+      await saveOnboardingStep2(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate).toHaveBeenCalled();
+  });
+
+  it("never sends a null nombre_visible to the NOT NULL column", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    step1Saved();
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    try {
+      await saveOnboardingStep2(null, new FormData());
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty("nombre_visible");
+  });
 });
 
 describe("updateProfile", () => {
@@ -288,10 +442,7 @@ describe("updateProfile", () => {
     fd.set("apodo", "juancito");
     fd.set("nombre_visible", "nombre_apellido");
     fd.set("fecha_nacimiento", "1990-01-15");
-    fd.set("bio", "Hello");
-    fd.set("contacto_telegram", "@juan");
-    fd.set("sitio_url", "https://example.com");
-    fd.set("disponibilidad", "full_time");
+    fd.set("disponibilidad", "disponible");
     fd.set("visibilidad_tarifa", "publica");
     fd.set("tarifa_hora", "50");
 
@@ -307,10 +458,7 @@ describe("updateProfile", () => {
       apodo: "juancito",
       nombre_visible: "nombre_apellido",
       fecha_nacimiento: "1990-01-15",
-      bio: "Hello",
-      contacto_telegram: "@juan",
-      sitio_url: "https://example.com",
-      disponibilidad: "full_time",
+      disponibilidad: "disponible",
       visibilidad_tarifa: "publica",
       tarifa_hora: 50,
     });
@@ -327,6 +475,192 @@ describe("updateProfile", () => {
     const result = await updateProfile(null, new FormData());
 
     expect(result).toEqual({ error: "No pudimos guardar tus datos. Probá de nuevo." });
+  });
+
+  it("trims the text fields before persisting", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = new FormData();
+    fd.set("nombre", "  Juan  ");
+    fd.set("apellido", "  Pérez  ");
+    fd.set("apodo", "  juancito  ");
+    fd.set("fecha_nacimiento", "1990-01-15");
+
+    try {
+      await updateProfile(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nombre: "Juan",
+        apellido: "Pérez",
+        apodo: "juancito",
+      }),
+    );
+  });
+
+  // The edit form has no bio / telegram / sitio inputs: writing null for them
+  // would wipe what onboarding step 2 saved.
+  it.each(["bio", "contacto_telegram", "sitio_url"])(
+    "leaves %s untouched when the form does not send it",
+    async (absent) => {
+      mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+      mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+      const fd = new FormData();
+      fd.set("nombre", "Juan");
+      fd.set("apellido", "Pérez");
+      fd.set("fecha_nacimiento", "1990-01-15");
+
+      try {
+        await updateProfile(null, fd);
+      } catch {
+        // redirect throws
+      }
+
+      expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty(absent);
+    },
+  );
+
+  // Both columns are NOT NULL with a default: sending null is a DB failure.
+  it.each(["nombre_visible", "visibilidad_tarifa"])(
+    "omits the NOT NULL enum %s when the form does not send it",
+    async (enumField) => {
+      mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+      mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+      const fd = new FormData();
+      fd.set("nombre", "Juan");
+      fd.set("apellido", "Pérez");
+      fd.set("fecha_nacimiento", "1990-01-15");
+
+      try {
+        await updateProfile(null, fd);
+      } catch {
+        // redirect throws
+      }
+
+      expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty(enumField);
+    },
+  );
+
+  it.each(["nombre_visible", "disponibilidad", "visibilidad_tarifa"])(
+    "ignores a %s that is not one of the enum values",
+    async (enumField) => {
+      mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+      mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+      const fd = new FormData();
+      fd.set("nombre", "Juan");
+      fd.set("apellido", "Pérez");
+      fd.set("fecha_nacimiento", "1990-01-15");
+      fd.set(enumField, "drop table profiles");
+
+      try {
+        await updateProfile(null, fd);
+      } catch {
+        // redirect throws
+      }
+
+      expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty(enumField);
+    },
+  );
+
+  it.each(["nombre", "apellido", "fecha_nacimiento"])(
+    "rejects without touching the DB when %s is blanked out",
+    async (blanked) => {
+      mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+
+      const fd = new FormData();
+      fd.set("nombre", "Juan");
+      fd.set("apellido", "Pérez");
+      fd.set("fecha_nacimiento", "1990-01-15");
+      fd.set(blanked, "   ");
+
+      const result = await updateProfile(null, fd);
+
+      expect(result).toEqual({ error: "Completá nombre, apellido y fecha de nacimiento" });
+      expect(mocks.profilesUpdate).not.toHaveBeenCalled();
+    },
+  );
+
+  it("rejects an invalid fecha de nacimiento without touching the DB", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+
+    const fd = new FormData();
+    fd.set("nombre", "Juan");
+    fd.set("apellido", "Pérez");
+    fd.set("fecha_nacimiento", "1990-13-45");
+
+    const result = await updateProfile(null, fd);
+
+    expect(result).toEqual({ error: "Ingresá una fecha de nacimiento válida" });
+    expect(mocks.profilesUpdate).not.toHaveBeenCalled();
+  });
+
+  // `Number()` would silently turn these into 16, 1000 and 1e21: a tarifa is a
+  // plain decimal, so anything else is rejected instead of transformed.
+  it.each(["abc", "-5", "0x10", "1e3", "Infinity", "1,5"])(
+    "rejects %s as tarifa_hora without touching the DB",
+    async (tarifa) => {
+      mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+
+      const fd = new FormData();
+      fd.set("nombre", "Juan");
+      fd.set("apellido", "Pérez");
+      fd.set("fecha_nacimiento", "1990-01-15");
+      fd.set("tarifa_hora", tarifa);
+
+      const result = await updateProfile(null, fd);
+
+      expect(result).toEqual({ error: "Ingresá una tarifa por hora válida" });
+      expect(mocks.profilesUpdate).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["50", "50.5", "0"])("accepts %s as tarifa_hora", async (tarifa) => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = new FormData();
+    fd.set("nombre", "Juan");
+    fd.set("apellido", "Pérez");
+    fd.set("fecha_nacimiento", "1990-01-15");
+    fd.set("tarifa_hora", tarifa);
+
+    try {
+      await updateProfile(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ tarifa_hora: Number(tarifa) }),
+    );
+  });
+
+  it("clears tarifa_hora when the field is sent empty", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = new FormData();
+    fd.set("nombre", "Juan");
+    fd.set("apellido", "Pérez");
+    fd.set("fecha_nacimiento", "1990-01-15");
+    fd.set("tarifa_hora", "");
+
+    try {
+      await updateProfile(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ tarifa_hora: null }),
+    );
   });
 });
 
