@@ -30,3 +30,18 @@
 - **`takeTask`, `markTaskDone` y `verifyTask` reportan éxito cuando no actualizan ninguna fila.** PostgREST no considera error que un UPDATE no matchee nada, y ninguna de las tres hace `.select()`, así que redirigen como si hubieran funcionado. Se ve, por ejemplo, cuando dos personas tocan "Tomar" a la vez: la segunda recibe la pantalla de éxito y la tarea queda a nombre de la primera. Es preexistente; ZER-22 arregla la forma sólo en las dos acciones que agregó. [`src/features/tasks/actions.ts:60`, `:104`, `:132`]
 - **Una descripción de sólo espacios cambia de forma sola.** `createTask` persiste el textarea crudo, así que `"   "` llega a la base. El detalle la esconde (`descripcion?.trim()`), pero el form de editar la precarga invisible y `updateTask` la normaliza a `null` en el próximo guardado, aunque el usuario nunca haya tocado ese campo. Se arregla en `createTask`, que es donde nace. [`src/features/tasks/actions.ts:41`]
 - **El hub no excluye las tareas canceladas de la lista por defecto.** Se decidió agregar la pill "Cancelada" y dejarlas en "Todas". Con el tiempo la lista por defecto se va a llenar de tareas muertas que ya no se pueden tomar. Excluirlas de "Todas" es una decisión de producto aparte. [`src/app/(app)/nodo/tasks/page.tsx:74`]
+
+## Deferred from: code review of spec-zer-66-remove-fake-statusbar (2026-09-19)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-zer-66-remove-fake-statusbar.md`
+  summary: Los worktrees paralelos `.claude/worktrees/zer-18-4-1-tasks-6c8409/` y `.claude/worktrees/zer-22-4-4-tasks-2c8290/` tienen copias intactas de `StatusBar.tsx`/`.test.tsx` y de los layouts que lo renderizan; van a chocar en merge/rebase contra `(app)/layout.tsx` y `(modal)/layout.tsx` una vez que ZER-66 se mergee.
+  evidence: Confirmado por el Blind Hunter revisando el diff de ZER-66 contra el árbol de trabajo; es coordinación entre stories en curso de otros compañeros, no algo que ZER-66 deba resolver.
+- source_spec: `_bmad-output/implementation-artifacts/spec-zer-66-remove-fake-statusbar.md`
+  summary: Varias story files de otros compañeros (`4-5-create-task-4-2.md:289`, `4-1-plantel-list-and-filters.md:183`, `2-1-login-and-signup-brand-layout-1-1.md:127`) instruyen "no modificar StatusBar", que ahora es un archivo borrado.
+  evidence: Son registros SSOT de stories ya implementadas/en curso de otras personas; corregirlas unilateralmente viola la regla de no tocar archivos de otros issues sin avisar.
+- source_spec: `_bmad-output/implementation-artifacts/spec-zer-66-remove-fake-statusbar.md`
+  summary: `docs/superpowers/specs/2026-07-20-nodo-serrano-backoffice-design.md` (líneas 297, 323) sigue contando `StatusBar` en el inventario de componentes reutilizables y en el total de "37 pantallas + component library".
+  evidence: Es un documento de spec grande y congelado; ajustar el conteo de componentes es una decisión de alcance del documento, no una corrección mecánica de una línea.
+- source_spec: `_bmad-output/implementation-artifacts/spec-zer-66-remove-fake-statusbar.md`
+  summary: El borrado de `StatusBar` no se verificó en vivo contra `design/nodo-serrano.pen` (frames `UFbiI`/`V0ODk` y similares) porque el MCP de Pencil no estaba disponible durante la planificación ni la implementación.
+  evidence: El spec ya marcaba esto como riesgo "Ask First"; el chequeo visual manual a 375px (captura del usuario) confirmó que el padding de los wrappers quedó correcto sin el StatusBar, pero la fuente de verdad del diseño (`.pen`) en sí no se pudo re-consultar.

@@ -1,10 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/components/StatusBar", () => ({
-  StatusBar: () => <div data-testid="status-bar" />,
-}));
-
 vi.mock("@/components/TabBarClient", () => ({
   TabBarClient: () => <nav data-testid="tab-bar" aria-label="TabBar" />,
 }));
@@ -21,8 +17,17 @@ describe("Modal shell layout (task create/detail/edit)", () => {
 
     expect(screen.queryByTestId("tab-bar")).not.toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "TabBar" })).not.toBeInTheDocument();
-    expect(screen.getByTestId("status-bar")).toBeInTheDocument();
     expect(screen.getByText("task modal content")).toBeInTheDocument();
+  });
+
+  it("does not render the fake phone status bar (device chrome, not product UI)", () => {
+    render(
+      <ModalLayout>
+        <div>task modal content</div>
+      </ModalLayout>,
+    );
+
+    expect(screen.queryByText("9:41")).not.toBeInTheDocument();
   });
 
   it("uses Pencil focused wrapper padding [6,20,24,20] (ZqSLW / KG95R / vPUkG)", () => {
