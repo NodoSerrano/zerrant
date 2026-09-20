@@ -113,6 +113,11 @@ export default async function ProfilePage() {
     privada: "Privada",
   };
 
+  const { count: aportesCount } = await supabase
+    .from("aportes")
+    .select("id", { count: "exact", head: true })
+    .eq("profile_id", user.id);
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="font-display text-2xl font-bold text-text-primary">Mi perfil</h1>
@@ -142,6 +147,7 @@ export default async function ProfilePage() {
       <SerranoMenu
         disponibilidad={profile.disponibilidad ? dispMap[profile.disponibilidad] : null}
         visibilidadTarifa={profile.visibilidad_tarifa ? visMap[profile.visibilidad_tarifa] : null}
+        aportesCount={aportesCount ?? 0}
       />
     </div>
   );
