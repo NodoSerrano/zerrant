@@ -13,6 +13,7 @@
 --   project_members.rol: miembro | admin (default miembro)
 --   project_members.estado: pendiente | aprobado (default pendiente)
 --   PK (project_id, profile_id)
+--   Creator is seated as project admin in the same transaction (AFTER INSERT trigger).
 --
 -- RLS:
 --   projects SELECT: any authenticated
@@ -20,7 +21,8 @@
 --   projects UPDATE: project admin only (is_project_admin) — NOT platform admin
 --   projects DELETE: no policy → denied
 --   project_members SELECT: any authenticated
---   project_members INSERT: serrano self-join scaffold (ingreso door tightened in story 5.5)
+--   project_members INSERT (self-join): serrano, own profile only, forced miembro/pendiente
+--     (ingreso door still tightened in story 5.5; rol/estado cannot self-escalate here)
 --   project_members UPDATE/DELETE: project admin only
 --
 -- Admin meaning: project_members.rol='admin' scoped by project_id.
@@ -58,7 +60,7 @@ create index idx_projects_creado_por on public.projects(creado_por);
 create index idx_projects_estado on public.projects(estado);
 create index idx_project_members_profile on public.project_members(profile_id);
 
--- --- 3. Project-admin helper (security definer — avoids 42P17) ---
+-- --- 3. Helpers (security definer — avoids 42P17) ---
 
 create or replace function public.is_project_admin(p_project_id uuid)
 returns boolean
@@ -79,6 +81,27 @@ $$;
 
 revoke execute on function public.is_project_admin(uuid) from public;
 grant execute on function public.is_project_admin(uuid) to authenticated, service_role;
+
+-- Seat creator as admin/aprobado without relying on client INSERT privileges.
+create or replace function public.seat_project_creator_as_admin()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.project_members (project_id, profile_id, rol, estado)
+  values (new.id, new.creado_por, 'admin', 'aprobado');
+  return new;
+end;
+$$;
+
+revoke execute on function public.seat_project_creator_as_admin() from public;
+
+create trigger trg_projects_seat_creator
+  after insert on public.projects
+  for each row
+  execute function public.seat_project_creator_as_admin();
 
 -- --- 4. RLS: projects ---
 
@@ -118,13 +141,16 @@ create policy "Authenticated users can read project members"
   for select
   using (auth.uid() is not null);
 
--- Self-join scaffold for serranos. Story 5.5 pins the ingreso door WITH CHECK.
+-- Self-join scaffold: own row only, cannot self-grant admin/aprobado.
+-- Story 5.5 still owns the ingreso door (abierto → aprobado vs aprobacion → pendiente).
 create policy "Serranos can self-join projects"
   on public.project_members
   for insert
   with check (
     auth.uid() = profile_id
     and public.is_non_tourist()
+    and rol = 'miembro'
+    and estado = 'pendiente'
   );
 
 create policy "Project admins can update project members"
@@ -148,11 +174,13 @@ grant insert (nombre, descripcion, estado, ingreso, creado_por)
 grant update (nombre, descripcion, estado, ingreso)
   on public.projects to authenticated;
 
--- projects DELETE intentionally ungated/denied (no DELETE privilege)
+-- projects DELETE intentionally denied (no DELETE privilege)
 
 grant select on public.project_members to authenticated;
 
-grant insert (project_id, profile_id, rol, estado)
+-- Self-join writes identity only; rol/estado defaults + WITH CHECK lock miembro/pendiente.
+-- Admins change rol/estado via UPDATE grant. Creator bootstrap is the definer trigger.
+grant insert (project_id, profile_id)
   on public.project_members to authenticated;
 
 grant update (rol, estado)

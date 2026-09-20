@@ -27,13 +27,11 @@ export const PROJECTS_INSERT_COLUMNS = [
 /** Columns PostgREST may UPDATE (creado_por immutable via grant). */
 export const PROJECTS_UPDATE_COLUMNS = ["nombre", "descripcion", "estado", "ingreso"] as const;
 
-/** Columns PostgREST may INSERT on public.project_members. */
-export const PROJECT_MEMBERS_INSERT_COLUMNS = [
-  "project_id",
-  "profile_id",
-  "rol",
-  "estado",
-] as const;
+/**
+ * Columns PostgREST may INSERT on public.project_members for self-join.
+ * rol/estado omitted so clients cannot self-grant admin/aprobado; defaults + WITH CHECK lock miembro/pendiente.
+ */
+export const PROJECT_MEMBERS_INSERT_COLUMNS = ["project_id", "profile_id"] as const;
 
 /** Columns PostgREST may UPDATE on public.project_members. */
 export const PROJECT_MEMBERS_UPDATE_COLUMNS = ["rol", "estado"] as const;

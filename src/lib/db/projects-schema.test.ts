@@ -86,7 +86,7 @@ describe("projects / project_members table types", () => {
 });
 
 describe("ZER-78 migration SQL", () => {
-  it("ships versioned migration with enums, tables, definer helper, RLS, grants", () => {
+  it("ships versioned migration with enums, tables, definer helper, bootstrap, RLS, grants", () => {
     const { name, sql } = findProjectsMigration();
     expect(name).toMatch(/^\d{14}_zer78_projects_project_members\.sql$/);
 
@@ -120,17 +120,23 @@ describe("ZER-78 migration SQL", () => {
     expect(sql).toMatch(
       /grant execute on function public\.is_project_admin\([^)]*\) to authenticated, service_role/i,
     );
-    // Project admin helper body must not fold platform admin (comments may mention it).
     const fnMatch = sql.match(
       /create or replace function public\.is_project_admin\s*\([\s\S]*?\$\$[\s\S]*?\$\$;/i,
     );
     expect(fnMatch, "is_project_admin function body").toBeTruthy();
     expect(fnMatch![0].toLowerCase()).not.toContain("is_platform_admin");
 
+    expect(sql).toMatch(/create or replace function public\.seat_project_creator_as_admin/i);
+    expect(sql).toMatch(/create trigger trg_projects_seat_creator/i);
+    expect(sql).toMatch(/after insert on public\.projects/i);
+    expect(sql).toMatch(/values \(new\.id, new\.creado_por, 'admin', 'aprobado'\)/i);
+
     expect(sql).toMatch(/alter table public\.projects enable row level security/i);
     expect(sql).toMatch(/alter table public\.project_members enable row level security/i);
     expect(sql).toMatch(/is_non_tourist\(\)/i);
     expect(sql).toMatch(/is_project_admin\(/i);
+    expect(sql).toMatch(/rol = 'miembro'/);
+    expect(sql).toMatch(/estado = 'pendiente'/);
     expect(sql).not.toMatch(
       /create policy[\s\S]*on public\.project_members[\s\S]*exists\s*\(\s*select 1 from public\.project_members/i,
     );
@@ -145,11 +151,15 @@ describe("ZER-78 migration SQL", () => {
     );
     expect(sql).not.toMatch(/grant update\s*\([\s\S]*creado_por[\s\S]*\)\s*on public\.projects/i);
     expect(sql).toMatch(
-      /grant insert\s*\(\s*project_id\s*,\s*profile_id\s*,\s*rol\s*,\s*estado\s*\)\s*on public\.project_members/i,
+      /grant insert\s*\(\s*project_id\s*,\s*profile_id\s*\)\s*on public\.project_members/i,
     );
+    // INSERT grant must not include rol/estado (UPDATE grant may still list them).
+    const insertGrant = sql.match(/grant insert\s*\(([^)]*)\)\s*on public\.project_members/i);
+    expect(insertGrant, "project_members INSERT grant").toBeTruthy();
+    expect(insertGrant![1].toLowerCase()).not.toMatch(/\brol\b/);
+    expect(insertGrant![1].toLowerCase()).not.toMatch(/\bestado\b/);
     expect(sql).toMatch(/grant update\s*\(\s*rol\s*,\s*estado\s*\)\s*on public\.project_members/i);
     expect(sql).toMatch(/grant delete on public\.project_members to authenticated/i);
-    // No projects DELETE grant/policy — denied by absence.
     expect(sql).not.toMatch(/grant delete on public\.projects/i);
   });
 
@@ -162,12 +172,7 @@ describe("ZER-78 migration SQL", () => {
       "creado_por",
     ]);
     expect([...PROJECTS_UPDATE_COLUMNS]).toEqual(["nombre", "descripcion", "estado", "ingreso"]);
-    expect([...PROJECT_MEMBERS_INSERT_COLUMNS]).toEqual([
-      "project_id",
-      "profile_id",
-      "rol",
-      "estado",
-    ]);
+    expect([...PROJECT_MEMBERS_INSERT_COLUMNS]).toEqual(["project_id", "profile_id"]);
     expect([...PROJECT_MEMBERS_UPDATE_COLUMNS]).toEqual(["rol", "estado"]);
   });
 });

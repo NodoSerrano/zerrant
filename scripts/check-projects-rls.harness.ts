@@ -7,9 +7,9 @@
  * Requires migration *_zer78_projects_project_members.sql applied.
  * Everything runs inside one transaction that ends in ROLLBACK.
  *
- * Proves: serrano insert OK; tourist insert denied; non-admin update denied;
- * project admin update OK; no 42P17 on project_members admin paths.
- * Does NOT fold profiles.is_platform_admin into project-admin authority.
+ * Proves: serrano insert OK + creator auto-admin; tourist insert denied;
+ * non-admin/platform-admin update denied; self-join cannot escalate to admin;
+ * tourist self-join denied; admin membership update/delete without 42P17.
  */
 import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
@@ -29,6 +29,7 @@ const PLATFORM_ADMIN_ID = "e4444444-4444-4444-4444-444444444444";
 const SUCCESS = "00000";
 const RLS_DENIED = "42501";
 const POLICY_RECURSION = "42P17";
+const INSUFFICIENT_PRIVILEGE = "42501";
 
 function run(command: string, args: string[], input: string) {
   const result = spawnSync(command, args, { encoding: "utf8", env: process.env, input });
@@ -101,6 +102,8 @@ declare
   v_project uuid;
   v_rows text[] := '{}';
   v_count int;
+  v_rol text;
+  v_estado text;
 begin
   perform set_config('role', 'authenticated', true);
 
@@ -114,7 +117,7 @@ begin
   end;
   v_rows := v_rows || ('tourist_insert_project=' || v_state);
 
-  -- serrano A creates project
+  -- serrano A creates project (trigger seats A as admin)
   perform set_config('request.jwt.claims', '{"sub":"${SERRANO_A}","role":"authenticated"}', true);
   begin
     insert into public.projects (nombre, descripcion, estado, ingreso, creado_por)
@@ -128,16 +131,19 @@ begin
   v_rows := v_rows || ('serrano_a_insert_project=' || v_state);
 
   if v_project is not null then
-    -- seat A as project admin via bypass (owner role) so we can test is_project_admin paths
-    perform set_config('role', 'postgres', true);
+    -- creator bootstrap: membership exists as admin/aprobado without postgres seed
     begin
-      insert into public.project_members (project_id, profile_id, rol, estado)
-      values (v_project, '${SERRANO_A}', 'admin', 'aprobado');
-      v_state := '${SUCCESS}';
+      select rol::text, estado::text into v_rol, v_estado
+      from public.project_members
+      where project_id = v_project and profile_id = '${SERRANO_A}';
+      if v_rol = 'admin' and v_estado = 'aprobado' then
+        v_state := '${SUCCESS}';
+      else
+        v_state := 'WRONG_BOOTSTRAP';
+      end if;
     exception when others then v_state := SQLSTATE;
     end;
-    v_rows := v_rows || ('seed_admin_membership=' || v_state);
-    perform set_config('role', 'authenticated', true);
+    v_rows := v_rows || ('creator_bootstrap_admin=' || v_state);
 
     -- non-member B cannot update project config
     perform set_config('request.jwt.claims', '{"sub":"${SERRANO_B}","role":"authenticated"}', true);
@@ -181,11 +187,31 @@ begin
     end;
     v_rows := v_rows || ('serrano_a_update_project=' || v_state);
 
-    -- B self-join membership scaffold (no ingreso door yet — story 5.5)
+    -- B cannot self-insert as admin/aprobado (grant omits rol/estado; policy would also deny)
     perform set_config('request.jwt.claims', '{"sub":"${SERRANO_B}","role":"authenticated"}', true);
     begin
       insert into public.project_members (project_id, profile_id, rol, estado)
-      values (v_project, '${SERRANO_B}', 'miembro', 'pendiente');
+      values (v_project, '${SERRANO_B}', 'admin', 'aprobado');
+      v_state := '${SUCCESS}';
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('serrano_b_self_admin_escalation=' || v_state);
+
+    -- tourist cannot self-join
+    perform set_config('request.jwt.claims', '{"sub":"${TOURIST_ID}","role":"authenticated"}', true);
+    begin
+      insert into public.project_members (project_id, profile_id)
+      values (v_project, '${TOURIST_ID}');
+      v_state := '${SUCCESS}';
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('tourist_self_join=' || v_state);
+
+    -- B self-join scaffold (identity only → defaults miembro/pendiente)
+    perform set_config('request.jwt.claims', '{"sub":"${SERRANO_B}","role":"authenticated"}', true);
+    begin
+      insert into public.project_members (project_id, profile_id)
+      values (v_project, '${SERRANO_B}');
       v_state := '${SUCCESS}';
     exception when others then v_state := SQLSTATE;
     end;
@@ -221,6 +247,20 @@ begin
     exception when others then v_state := SQLSTATE;
     end;
     v_rows := v_rows || ('serrano_a_approve_member=' || v_state);
+
+    -- project admin A can delete B membership
+    begin
+      delete from public.project_members
+      where project_id = v_project and profile_id = '${SERRANO_B}';
+      get diagnostics v_count = row_count;
+      if v_count > 0 then
+        v_state := '${SUCCESS}';
+      else
+        v_state := '${RLS_DENIED}';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('serrano_a_delete_member=' || v_state);
 
     -- authenticated SELECT projects ok
     perform set_config('request.jwt.claims', '{"sub":"${TOURIST_ID}","role":"authenticated"}', true);
@@ -265,9 +305,10 @@ describe("projects RLS (live DB)", () => {
     expect(outcomes.tourist_insert_project).toBe(RLS_DENIED);
   });
 
-  it("allows serrano project insert", () => {
+  it("allows serrano project insert and seats creator as admin without postgres bypass", () => {
     expect(outcomes.serrano_a_insert_project).not.toBe(POLICY_RECURSION);
     expect(outcomes.serrano_a_insert_project).toBe(SUCCESS);
+    expect(outcomes.creator_bootstrap_admin).toBe(SUCCESS);
   });
 
   it("denies non-admin and platform-admin-only config updates", () => {
@@ -280,12 +321,20 @@ describe("projects RLS (live DB)", () => {
     expect(outcomes.serrano_a_update_project).toBe(SUCCESS);
   });
 
-  it("allows self-join scaffold and admin membership update without 42P17", () => {
+  it("blocks self-admin escalation and tourist self-join", () => {
+    // grant omission → 42501; policy denial would also be 42501
+    expect(outcomes.serrano_b_self_admin_escalation).toBe(INSUFFICIENT_PRIVILEGE);
+    expect(outcomes.tourist_self_join).toBe(RLS_DENIED);
+  });
+
+  it("allows self-join scaffold, admin membership update/delete without 42P17", () => {
     expect(outcomes.serrano_b_self_join).not.toBe(POLICY_RECURSION);
     expect(outcomes.serrano_b_self_join).toBe(SUCCESS);
     expect(outcomes.serrano_b_self_approve).toBe(RLS_DENIED);
     expect(outcomes.serrano_a_approve_member).not.toBe(POLICY_RECURSION);
     expect(outcomes.serrano_a_approve_member).toBe(SUCCESS);
+    expect(outcomes.serrano_a_delete_member).not.toBe(POLICY_RECURSION);
+    expect(outcomes.serrano_a_delete_member).toBe(SUCCESS);
   });
 
   it("lets any authenticated user read projects", () => {
