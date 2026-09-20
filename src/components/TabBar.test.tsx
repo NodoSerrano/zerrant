@@ -23,28 +23,23 @@ beforeEach(() => {
 });
 
 describe("TabBar", () => {
-  it("renders the four built destinations with uppercase labels", () => {
+  it("renders five destinations with uppercase labels including INICIO", () => {
     render(<TabBar />);
-    for (const label of ["PLANTEL", "NODO", "AGENDA", "PERFIL"]) {
+    for (const label of ["INICIO", "PLANTEL", "NODO", "AGENDA", "PERFIL"]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
   });
 
-  it("does not render the non-functional INICIO tab while / only redirects to profile", () => {
-    render(<TabBar />);
-    expect(screen.queryByText("INICIO")).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /INICIO/i })).not.toBeInTheDocument();
-  });
-
   it("renders lucide icons (no emoji)", () => {
     render(<TabBar />);
-    const plantel = screen.getByRole("link", { name: /PLANTEL/i });
-    expect(plantel.querySelector("svg")).toBeInTheDocument();
-    expect(plantel).not.toHaveTextContent("👥");
+    const inicio = screen.getByRole("link", { name: /INICIO/i });
+    expect(inicio.querySelector("svg")).toBeInTheDocument();
+    expect(inicio).not.toHaveTextContent("🏠");
   });
 
-  it("renders all four destinations as real links with href", () => {
+  it("renders all five destinations as real links with href", () => {
     render(<TabBar />);
+    expect(screen.getByRole("link", { name: /INICIO/i })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: /PLANTEL/i })).toHaveAttribute("href", "/plantel");
     expect(screen.getByRole("link", { name: /NODO/i })).toHaveAttribute("href", "/nodo/tasks");
     expect(screen.getByRole("link", { name: /AGENDA/i })).toHaveAttribute("href", "/agenda");
@@ -57,28 +52,26 @@ describe("TabBar", () => {
   });
 
   it("active tab has bg-primary pill and text-on-primary", () => {
-    render(<TabBar active="plantel" />);
-    const active = screen.getByRole("link", { name: /PLANTEL/i });
+    render(<TabBar active="inicio" />);
+    const active = screen.getByRole("link", { name: /INICIO/i });
     expect(active).toHaveClass("bg-primary");
     expect(active).toHaveClass("text-on-primary");
     expect(active).toHaveClass("rounded-[26px]");
   });
 
   it("active pill is vertically inset by the Pencil pill padding (p-1 / 4px)", () => {
-    render(<TabBar active="plantel" />);
+    render(<TabBar active="inicio" />);
     const nav = screen.getByRole("navigation");
     const pill = nav.firstElementChild as HTMLElement;
-    const active = screen.getByRole("link", { name: /PLANTEL/i });
+    const active = screen.getByRole("link", { name: /INICIO/i });
 
-    // Pencil TabBar pill frame YCyBk: padding 4 on all sides.
     expect(pill).toHaveClass("p-1");
-    // Tabs fill the padded area so the colored shape breathes inside the 62px bar.
     expect(active).toHaveClass("h-full");
     expect(active).toHaveClass("self-stretch");
   });
 
   it("inactive tabs have text-text-muted and no bg-primary", () => {
-    render(<TabBar active="plantel" />);
+    render(<TabBar active="inicio" />);
     const inactive = screen.getByRole("link", { name: /NODO/i });
     expect(inactive).toHaveClass("text-text-muted");
     expect(inactive).not.toHaveClass("bg-primary");

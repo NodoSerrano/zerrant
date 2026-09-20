@@ -1,6 +1,6 @@
 # Story 7.2: Inicio hub + TabBar Inicio (`2.1`)
 
-Status: backlog
+Status: in-progress
 
 ## Linear
 
@@ -53,9 +53,9 @@ so that the fifth TabBar destination is honest and the home dashboard exists.
 
 ## Tasks / Subtasks
 
-- [ ] **T0 — BLOCKING:** resolve Pencil node id for `2.1`
-- [ ] **T1 — Read Next 16 App Router docs** relevant to the root page / route groups
-- [ ] **T2 — RED** then **GREEN:** queries + UI + TabBar
+- [x] **T0 — BLOCKING:** resolve Pencil node id for `2.1` → `zTB9C`
+- [x] **T1 — Read Next 16 App Router docs** relevant to the root page / route groups
+- [x] **T2 — RED** then **GREEN:** queries + UI + TabBar
 - [ ] **T3 — Fidelity** at ~390px vs Pencil
 
 ## Out of scope
