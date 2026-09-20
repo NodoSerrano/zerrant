@@ -170,7 +170,7 @@ development_status:
   5-5-join-project: review
   5-6-join-request-queue: review
   5-7-designate-project-admins: backlog
-  5-8-projects-on-profile-and-member-detail: backlog
+  5-8-projects-on-profile-and-member-detail: review
   5-9-qa-m5-dod-e2e: backlog
   epic-5-proyectos-retrospective: optional
 

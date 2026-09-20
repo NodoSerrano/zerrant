@@ -1,6 +1,6 @@
 # Story 5.8: Projects on profile and member detail
 
-Status: backlog
+Status: review
 
 ## Linear
 
@@ -60,38 +60,38 @@ so that what I work on is part of who I am in the node.
 
 ## Tasks / Subtasks
 
-- [ ] **T0 — Read the framework docs and coordinate with story 6.4** (AC: 7, 8)
-  - [ ] Read the relevant guide in `node_modules/next/dist/docs/` — breaking changes vs. training data (per `AGENTS.md`).
-  - [ ] Read the "The shared test case" note in Dev Notes **before** editing `MemberDetail.test.tsx`. Story 6.4 (ZER-90) edits the same test.
-  - [ ] This story has **no Pencil frame**: `screen-inventory.md` lists both surfaces under "Surfaces touched but not owned by a frame". They keep their M0–M2 layout and only gain real data — no node id to resolve, and no redesign.
+- [x] **T0 — Read the framework docs and coordinate with story 6.4** (AC: 7, 8)
+  - [x] Read the relevant guide in `node_modules/next/dist/docs/` — breaking changes vs. training data (per `AGENTS.md`).
+  - [x] Read the "The shared test case" note in Dev Notes **before** editing `MemberDetail.test.tsx`. Story 6.4 (ZER-90) edits the same test.
+  - [x] This story has **no Pencil frame**: `screen-inventory.md` lists both surfaces under "Surfaces touched but not owned by a frame". They keep their M0–M2 layout and only gain real data — no node id to resolve, and no redesign.
 
-- [ ] **T1 — RED: failing tests first** (AC: 1, 2, 4, 5, 6, 7, 9)
-  - [ ] `SerranoMenu` test: the row is a link, shows a numeric count, and carries none of the `/40` disabled classes.
-  - [ ] `SerranoMenu` test: zero projects renders `0`.
-  - [ ] `MemberDetail` test: a member with approved projects renders them; a member with none renders the empty line; a `pendiente` membership is excluded.
-  - [ ] Split `renders empty aportes and proyectos previews` per the Dev Notes plan.
-  - [ ] Verify RED.
+- [x] **T1 — RED: failing tests first** (AC: 1, 2, 4, 5, 6, 7, 9)
+  - [x] `SerranoMenu` test: the row is a link, shows a numeric count, and carries none of the `/40` disabled classes.
+  - [x] `SerranoMenu` test: zero projects renders `0`.
+  - [x] `MemberDetail` test: a member with approved projects renders them; a member with none renders the empty line; a `pendiente` membership is excluded.
+  - [x] Split `renders empty aportes and proyectos previews` per the Dev Notes plan.
+  - [x] Verify RED.
 
-- [ ] **T2 — GREEN: the data reads** (AC: 1, 2, 3, 4, 6)
-  - [ ] Profile page: count `project_members` where `profile_id = auth.uid()` and `estado='aprobado'`.
-  - [ ] Plantel detail page: read that member's `estado='aprobado'` memberships joined to `projects`.
-  - [ ] Filter `estado='aprobado'` **in the query**, so a later render refactor cannot leak `pendiente` rows.
+- [x] **T2 — GREEN: the data reads** (AC: 1, 2, 3, 4, 6)
+  - [x] Profile page: count `project_members` where `profile_id = auth.uid()` and `estado='aprobado'`.
+  - [x] Plantel detail page: read that member's `estado='aprobado'` memberships joined to `projects`.
+  - [x] Filter `estado='aprobado'` **in the query**, so a later render refactor cannot leak `pendiente` rows.
 
-- [ ] **T3 — GREEN: `SerranoMenu`** (AC: 1, 2, 3)
-  - [ ] Turn the `<div>` at lines 53–58 into a `next/link` in the shape of the "Editar perfil" row above it (lines 43–49): full-opacity icon and text, real count, `ChevronRight`.
-  - [ ] Accept the count as a prop from the server component — `SerranoMenu` is a `"use client"` component and must not fetch.
-  - [ ] Leave the "Mis aportes" row at lines 62–67 untouched; story 6.3 owns it.
+- [x] **T3 — GREEN: `SerranoMenu`** (AC: 1, 2, 3)
+  - [x] Turn the `<div>` at lines 53–58 into a `next/link` in the shape of the "Editar perfil" row above it (lines 43–49): full-opacity icon and text, real count, `ChevronRight`.
+  - [x] Accept the count as a prop from the server component — `SerranoMenu` is a `"use client"` component and must not fetch.
+  - [x] Leave the "Mis aportes" row at lines 62–67 untouched; story 6.3 owns it.
 
-- [ ] **T4 — GREEN: `MemberDetail`** (AC: 4, 5, 6, 8)
-  - [ ] Extend `SerranoMemberDetail` in `src/features/plantel/types.ts` with the member's approved projects.
-  - [ ] Extend `buildSerranoMemberDetail` in `src/features/plantel/transform.ts` accordingly.
-  - [ ] Replace line 78's `<p>Todavía no hay proyectos.</p>` with the real list; keep the `<SectionTitle>Proyectos</SectionTitle>` at line 77 and the section's position in the page order.
-  - [ ] Leave the Aportes section (lines 71–74) exactly as it is; story 6.4 owns it.
+- [x] **T4 — GREEN: `MemberDetail`** (AC: 4, 5, 6, 8)
+  - [x] Extend `SerranoMemberDetail` in `src/features/plantel/types.ts` with the member's approved projects.
+  - [x] Extend `buildSerranoMemberDetail` in `src/features/plantel/transform.ts` accordingly.
+  - [x] Replace line 78's `<p>Todavía no hay proyectos.</p>` with the real list; keep the `<SectionTitle>Proyectos</SectionTitle>` at line 77 and the section's position in the page order.
+  - [x] Leave the Aportes section (lines 71–74) exactly as it is; story 6.4 owns it.
 
-- [ ] **T5 — Verify** (AC: 8, 9)
-  - [ ] `pnpm test && pnpm typecheck && pnpm lint` green.
-  - [ ] Re-read `MemberDetail.test.tsx` and confirm the aportes assertion still pins `"Todavía no hay aportes."` unchanged.
-  - [ ] Visual check at ~390px: the profile row matches its enabled siblings; member detail keeps its section order.
+- [x] **T5 — Verify** (AC: 8, 9)
+  - [x] `pnpm test && pnpm typecheck && pnpm lint` green.
+  - [x] Re-read `MemberDetail.test.tsx` and confirm the aportes assertion still pins `"Todavía no hay aportes."` unchanged.
+  - [x] Visual check at ~390px: the profile row matches its enabled siblings; member detail keeps its section order.
 
 ## Dev Notes
 
@@ -217,10 +217,37 @@ A `pendiente` row is a join request, not a project. It must not appear in the pr
 
 ### Agent Model Used
 
+Gentle AI on Hermes (grok-4.5)
+
 ### Debug Log References
 
 ### Completion Notes List
 
+- Enabled profile "Mis proyectos" as a real link with approved membership count (0 is real).
+- Added personal cut route `/profile/proyectos` listing only the viewer's `estado='aprobado'` projects via ProjectCard.
+- Member detail Proyectos section lists approved projects as links to `/nodo/projects/:id`; empty line retained.
+- Filter `estado='aprobado'` in queries only; pendiente never listed.
+- Shared MemberDetail empty-section tests already split by ZER-90; only proyectos half extended.
+- TDD: RED on menu/detail/transform/plantel page/mis proyectos page, then GREEN. Full suite 1242 green.
+
 ### Change Log
 
+- 2026-09-20: Implemented ZER-85 / story 5.8 projects on profile + member detail.
+
 ### File List
+
+- src/app/(app)/profile/SerranoMenu.tsx
+- src/app/(app)/profile/SerranoMenu.test.tsx
+- src/app/(app)/profile/page.tsx
+- src/app/(app)/profile/proyectos/page.tsx
+- src/app/(app)/profile/proyectos/page.test.tsx
+- src/app/(app)/plantel/[id]/page.tsx
+- src/app/(app)/plantel/[id]/page.test.tsx
+- src/features/plantel/MemberDetail.tsx
+- src/features/plantel/MemberDetail.test.tsx
+- src/features/plantel/types.ts
+- src/features/plantel/transform.ts
+- src/features/plantel/detail-transform.test.ts
+- src/features/profile/**tests**/profile-serrano.test.tsx
+- _bmad-output/implementation-artifacts/5-8-projects-on-profile-and-member-detail.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml

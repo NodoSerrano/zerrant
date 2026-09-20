@@ -16,16 +16,14 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   profilesSelectSingle: vi.fn(),
   select: vi.fn(),
+  from: vi.fn(),
+  countEq: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mocks.getUser },
-    from: vi.fn(() => ({
-      select: mocks.select.mockImplementation(() => ({
-        eq: vi.fn(() => ({ single: mocks.profilesSelectSingle })),
-      })),
-    })),
+    from: mocks.from,
   }),
 }));
 
@@ -51,6 +49,24 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
   mocks.profilesSelectSingle.mockResolvedValue({ data: serranoProfile, error: null });
+  const countResult = Promise.resolve({ count: 0, error: null });
+  const countChain = {
+    eq: vi.fn(function eq() {
+      return Object.assign(countResult, { eq: vi.fn(() => countResult) });
+    }),
+  };
+  mocks.from.mockImplementation((table: string) => {
+    if (table === "profiles") {
+      return {
+        select: mocks.select.mockImplementation(() => ({
+          eq: vi.fn(() => ({ single: mocks.profilesSelectSingle })),
+        })),
+      };
+    }
+    return {
+      select: vi.fn(() => countChain),
+    };
+  });
   vi.mocked(useTheme).mockReturnValue({ dark: false, toggle: mockToggle });
 });
 
@@ -103,6 +119,14 @@ describe("ProfilePage (serrano)", () => {
 
     const link = screen.getByRole("link", { name: "Mis habilidades" });
     expect(link).toHaveAttribute("href", "/profile/habilidades");
+  });
+
+  it("links Mis proyectos to /profile/proyectos with a real count", async () => {
+    render(await ProfilePage());
+
+    const link = screen.getByRole("link", { name: /Mis proyectos/i });
+    expect(link).toHaveAttribute("href", "/profile/proyectos");
+    expect(link).toHaveTextContent("0");
   });
 
   it("renders action group rows", async () => {
