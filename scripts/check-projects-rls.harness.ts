@@ -10,7 +10,8 @@
  *
  * Proves: serrano insert OK + creator auto-admin; tourist insert denied;
  * non-admin/platform-admin update denied; self-join cannot escalate to admin;
- * tourist self-join denied; admin membership update/delete without 42P17.
+ * tourist self-join denied; admin membership update/delete without 42P17;
+ * platform-admin-only and non-member membership writes denied (ZER-83 queue).
  * ZER-82 door: abierto→aprobado; aprobacion→pendiente; aprobacion+aprobado rejected;
  * third-party profile_id rejected; self rol=admin rejected; second join PK; no 42P17.
  */
@@ -271,6 +272,53 @@ begin
     end;
     v_rows := v_rows || ('serrano_b_self_approve=' || v_state);
 
+    -- platform admin who is NOT project admin cannot approve B
+    perform set_config('request.jwt.claims', '{"sub":"${PLATFORM_ADMIN_ID}","role":"authenticated"}', true);
+    begin
+      update public.project_members
+      set estado = 'aprobado'
+      where project_id = v_project and profile_id = '${SERRANO_B}';
+      get diagnostics v_count = row_count;
+      if v_count > 0 then
+        v_state := '${SUCCESS}';
+      else
+        v_state := '${RLS_DENIED}';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('platform_admin_approve_member=' || v_state);
+
+    -- platform admin who is NOT project admin cannot delete B's pendiente row
+    begin
+      delete from public.project_members
+      where project_id = v_project and profile_id = '${SERRANO_B}';
+      get diagnostics v_count = row_count;
+      if v_count > 0 then
+        v_state := '${SUCCESS}';
+      else
+        v_state := '${RLS_DENIED}';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('platform_admin_delete_member=' || v_state);
+
+    -- plain miembro (B) cannot delete another pending row either (self already covered);
+    -- non-member tourist cannot approve B
+    perform set_config('request.jwt.claims', '{"sub":"${TOURIST_ID}","role":"authenticated"}', true);
+    begin
+      update public.project_members
+      set estado = 'aprobado'
+      where project_id = v_project and profile_id = '${SERRANO_B}';
+      get diagnostics v_count = row_count;
+      if v_count > 0 then
+        v_state := '${SUCCESS}';
+      else
+        v_state := '${RLS_DENIED}';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('non_member_approve_member=' || v_state);
+
     -- project admin A can approve B (project_members path must not 42P17)
     perform set_config('request.jwt.claims', '{"sub":"${SERRANO_A}","role":"authenticated"}', true);
     begin
@@ -411,6 +459,9 @@ describe("projects RLS (live DB)", () => {
     expect(outcomes.serrano_b_self_join).not.toBe(POLICY_RECURSION);
     expect(outcomes.serrano_b_self_join).toBe(SUCCESS);
     expect(outcomes.serrano_b_self_approve).toBe(RLS_DENIED);
+    expect(outcomes.platform_admin_approve_member).toBe(RLS_DENIED);
+    expect(outcomes.platform_admin_delete_member).toBe(RLS_DENIED);
+    expect(outcomes.non_member_approve_member).toBe(RLS_DENIED);
     expect(outcomes.serrano_a_approve_member).not.toBe(POLICY_RECURSION);
     expect(outcomes.serrano_a_approve_member).toBe(SUCCESS);
     expect(outcomes.serrano_a_delete_member).not.toBe(POLICY_RECURSION);
