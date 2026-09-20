@@ -17,6 +17,10 @@ const mocks = vi.hoisted(() => ({
   aportesSelect: vi.fn(),
   aportesEq: vi.fn(),
   aportesOrder: vi.fn(),
+  projectMembersSelect: vi.fn(),
+  projectMembersEqProfile: vi.fn(),
+  projectMembersEqEstado: vi.fn(),
+  projectMembersOrder: vi.fn(),
   redirect: vi.fn(),
   notFound: vi.fn(),
   from: vi.fn(),
@@ -65,6 +69,17 @@ vi.mock("@/lib/supabase/server", () => ({
           select: mocks.aportesSelect.mockImplementation(() => ({
             eq: mocks.aportesEq.mockImplementation(() => ({
               order: mocks.aportesOrder,
+            })),
+          })),
+        };
+      }
+      if (table === "project_members") {
+        return {
+          select: mocks.projectMembersSelect.mockImplementation(() => ({
+            eq: mocks.projectMembersEqProfile.mockImplementation(() => ({
+              eq: mocks.projectMembersEqEstado.mockImplementation(() => ({
+                order: mocks.projectMembersOrder,
+              })),
             })),
           })),
         };
@@ -118,6 +133,7 @@ beforeEach(() => {
     data: { id: "viewer-1", is_platform_admin: false, tier: "standard" },
   });
   mocks.aportesOrder.mockResolvedValue({ data: [], error: null });
+  mocks.projectMembersOrder.mockResolvedValue({ data: [], error: null });
 });
 
 describe("PlantelMemberPage", () => {
@@ -198,6 +214,40 @@ describe("PlantelMemberPage", () => {
 
   it("degrades to empty aportes when the read is refused or empty", async () => {
     mocks.aportesOrder.mockResolvedValue({ data: null, error: { message: "permission denied" } });
+
+    const element = await PlantelMemberPage({ params: Promise.resolve({ id: "p1" }) });
+    render(element);
+
+    expect(screen.getByTestId("member-detail")).toBeInTheDocument();
+  });
+
+  it("queries that member's approved project memberships ordered by created_at", async () => {
+    mocks.projectMembersOrder.mockResolvedValue({
+      data: [
+        {
+          project_id: "proj-1",
+          projects: { id: "proj-1", nombre: "Nodo hub" },
+        },
+      ],
+      error: null,
+    });
+
+    await PlantelMemberPage({ params: Promise.resolve({ id: "p1" }) });
+
+    expect(mocks.from).toHaveBeenCalledWith("project_members");
+    expect(mocks.projectMembersSelect).toHaveBeenCalledWith(
+      "project_id, projects:project_id(id, nombre)",
+    );
+    expect(mocks.projectMembersEqProfile).toHaveBeenCalledWith("profile_id", "p1");
+    expect(mocks.projectMembersEqEstado).toHaveBeenCalledWith("estado", "aprobado");
+    expect(mocks.projectMembersOrder).toHaveBeenCalledWith("created_at", { ascending: false });
+  });
+
+  it("degrades to empty proyectos when the membership read is refused or empty", async () => {
+    mocks.projectMembersOrder.mockResolvedValue({
+      data: null,
+      error: { message: "permission denied" },
+    });
 
     const element = await PlantelMemberPage({ params: Promise.resolve({ id: "p1" }) });
     render(element);

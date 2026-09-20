@@ -35,12 +35,14 @@ interface SerranoMenuProps {
   disponibilidad?: string | null;
   visibilidadTarifa?: string | null;
   aportesCount?: number;
+  proyectosCount?: number;
 }
 
 export function SerranoMenu({
   disponibilidad,
   visibilidadTarifa,
   aportesCount = 0,
+  proyectosCount = 0,
 }: SerranoMenuProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -55,12 +57,14 @@ export function SerranoMenu({
 
         <div className="h-px bg-border w-full" />
 
-        <div className="flex items-center gap-3 px-4 py-[15px] w-full text-text-primary/40">
-          <Folder size={20} className="text-brand-blue/40 shrink-0" />
-          <span className="font-body text-[15px] text-left flex-1">Mis proyectos</span>
-          <span className="font-body text-sm text-text-muted/40">—</span>
-          <ChevronRight size={18} className="text-text-muted/40 shrink-0" />
-        </div>
+        <Link href="/profile/proyectos" className="flex items-center gap-3 px-4 py-[15px] w-full">
+          <Folder size={20} className="text-brand-blue shrink-0" />
+          <span className="font-body text-[15px] text-text-primary text-left flex-1">
+            Mis proyectos
+          </span>
+          <span className="font-body text-sm text-text-muted">{proyectosCount}</span>
+          <ChevronRight size={18} className="text-text-muted shrink-0" />
+        </Link>
 
         <div className="h-px bg-border w-full" />
 

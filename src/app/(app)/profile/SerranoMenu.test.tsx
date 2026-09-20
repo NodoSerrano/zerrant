@@ -47,11 +47,27 @@ describe("SerranoMenu Mis aportes row", () => {
     expect(link).toHaveTextContent("0");
     expect(link).not.toHaveTextContent("—");
   });
+});
 
-  it("leaves Mis proyectos disabled (owned by story 5.8)", () => {
-    render(<SerranoMenu aportesCount={1} />);
+describe("SerranoMenu Mis proyectos row", () => {
+  it("links to /profile/proyectos with a numeric count and no disabled /40 classes", () => {
+    render(<SerranoMenu proyectosCount={3} />);
 
-    expect(screen.queryByRole("link", { name: /Mis proyectos/i })).not.toBeInTheDocument();
-    expect(screen.getByText("Mis proyectos")).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /Mis proyectos/i });
+    expect(link).toHaveAttribute("href", "/profile/proyectos");
+    expect(link.className).not.toMatch(/\/40/);
+    expect(link.innerHTML).not.toMatch(/\/40/);
+
+    expect(link).toHaveTextContent("3");
+    expect(link).not.toHaveTextContent("—");
+  });
+
+  it("shows real 0 when the viewer has no approved projects", () => {
+    render(<SerranoMenu proyectosCount={0} />);
+
+    const link = screen.getByRole("link", { name: /Mis proyectos/i });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveTextContent("0");
+    expect(link).not.toHaveTextContent("—");
   });
 });
