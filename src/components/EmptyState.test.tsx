@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { Calendar } from "lucide-react";
 import { EmptyState } from "./EmptyState";
 
 vi.mock("next/link", () => ({
@@ -38,6 +39,24 @@ describe("EmptyState", () => {
     render(<EmptyState subtitle="Nada acá" />);
 
     expect(screen.getByText("No hay tareas")).toBeInTheDocument();
+  });
+
+  it("renders a custom title when provided", () => {
+    render(<EmptyState title="No hay eventos" subtitle="Nada acá" />);
+
+    expect(screen.getByText("No hay eventos")).toBeInTheDocument();
+    expect(screen.queryByText("No hay tareas")).not.toBeInTheDocument();
+  });
+
+  it("renders a custom icon when provided", () => {
+    const { container } = render(
+      <EmptyState title="No hay eventos" subtitle="Nada" icon={Calendar} />,
+    );
+
+    const svg = container.querySelector("svg");
+    expect(svg).toBeTruthy();
+    // lucide Calendar exposes data-lucide="calendar" in some builds; class is enough
+    expect(svg!.parentElement?.className).toContain("size-24");
   });
 
   it("renders the heading with font-display text-[20px] font-bold", () => {

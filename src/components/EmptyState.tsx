@@ -1,26 +1,37 @@
-import { ClipboardList, Plus } from "lucide-react";
+import { ClipboardList, Plus, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface EmptyStateProps {
   subtitle: string;
+  /** Defaults to tasks copy so existing call sites stay unchanged. */
+  title?: string;
+  icon?: LucideIcon;
   href?: string;
   actionLabel?: string;
   onAction?: () => void;
   className?: string;
 }
 
-export function EmptyState({ subtitle, href, actionLabel, onAction, className }: EmptyStateProps) {
+export function EmptyState({
+  subtitle,
+  title = "No hay tareas",
+  icon: Icon = ClipboardList,
+  href,
+  actionLabel,
+  onAction,
+  className,
+}: EmptyStateProps) {
   const defaultLabel = "Publicar tarea";
 
   return (
     <div className={cn("flex flex-col items-center gap-[18px] py-5 px-5 pb-[90px]", className)}>
       <div className="size-24 rounded-full bg-surface-inset flex items-center justify-center">
-        <ClipboardList className="size-10 text-text-muted" />
+        <Icon className="size-10 text-text-muted" />
       </div>
 
       <div className="flex flex-col items-center gap-2 w-full">
-        <h2 className="font-display text-[20px] font-bold text-text-primary">No hay tareas</h2>
+        <h2 className="font-display text-[20px] font-bold text-text-primary">{title}</h2>
         <p className="font-body text-sm text-text-secondary leading-relaxed text-center">
           {subtitle}
         </p>
