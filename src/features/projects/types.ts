@@ -8,6 +8,7 @@ import {
   type ProjectMemberEstado,
   type ProjectMemberRol,
 } from "@/lib/db/projects-schema";
+import type { JoinAffordance } from "./membership";
 
 export {
   PROJECT_ESTADOS,
@@ -43,3 +44,22 @@ export const PROJECT_INGRESO_OPTIONS = [
   label: string;
   description: string;
 }>;
+
+export type ProjectDetailMember = {
+  profileId: string;
+  name: string;
+  avatarUrl: string | null;
+  rol: ProjectMemberRol;
+  isCreator: boolean;
+};
+
+export type ProjectDetailViewModel = {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  estado: ProjectEstado | string;
+  ingreso: ProjectIngreso | string;
+  members: ProjectDetailMember[];
+  affordance: JoinAffordance;
+  showRequestsQueue: boolean;
+};

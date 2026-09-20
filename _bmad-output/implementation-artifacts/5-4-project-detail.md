@@ -1,6 +1,6 @@
 # Story 5.4: Project detail (`4.3 · Detalle de proyecto`)
 
-Status: backlog
+Status: review
 
 ## Linear
 
@@ -63,33 +63,33 @@ so that I can understand what it is and who runs it before deciding to join.
 
 ## Tasks / Subtasks
 
-- [ ] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1)
-  - [ ] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg`, `fd` or any filesystem tool. Only `mcp__pencil` tools can read it.
-  - [ ] Use `mcp__pencil__get_app_state` to locate frame `4.3 · Detalle de proyecto`; read its contents with the design-context tooling.
-  - [ ] Record the resolved node id into `_bmad-output/specs/spec-m5-proyectos/screen-inventory.md`, replacing `TBD`.
-  - [ ] **This story is not ready for development until this task is done.**
+- [x] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1)
+  - [x] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg`, `fd` or any filesystem tool. Only `mcp__pencil` tools can read it.
+  - [x] Use `mcp__pencil__get_app_state` to locate frame `4.3 · Detalle de proyecto`; read its contents with the design-context tooling.
+  - [x] Record the resolved node id into `_bmad-output/specs/spec-m5-proyectos/screen-inventory.md`, replacing `TBD`.
+  - [x] **This story is not ready for development until this task is done.**
 
-- [ ] **T1 — Read the framework docs** (AC: 2–9)
-  - [ ] Read the dynamic-route / server-component guide in `node_modules/next/dist/docs/` — this Next.js version has breaking changes vs. training data (per `AGENTS.md`).
+- [x] **T1 — Read the framework docs** (AC: 2–9)
+  - [x] Read the dynamic-route / server-component guide in `node_modules/next/dist/docs/` — this Next.js version has breaking changes vs. training data (per `AGENTS.md`).
 
-- [ ] **T2 — RED: failing tests first** (AC: 2, 3, 5, 6, 7, 8, 10)
-  - [ ] A pure view-model helper (e.g. `resolveJoinAffordance({ ingreso, viewerMembership })`) with a case per viewer state — this is the piece worth unit-testing hard.
-  - [ ] Component/page tests: fields render; `pendiente` rows excluded from the member list; admins marked; the right affordance per state.
-  - [ ] Verify RED.
+- [x] **T2 — RED: failing tests first** (AC: 2, 3, 5, 6, 7, 8, 10)
+  - [x] A pure view-model helper (e.g. `resolveJoinAffordance({ ingreso, viewerMembership })`) with a case per viewer state — this is the piece worth unit-testing hard.
+  - [x] Component/page tests: fields render; `pendiente` rows excluded from the member list; admins marked; the right affordance per state.
+  - [x] Verify RED.
 
-- [ ] **T3 — GREEN: data read** (AC: 2, 3, 9)
-  - [ ] Server component reads the `projects` row and its `project_members` joined to `profiles` for names/avatars.
-  - [ ] Filter members to `estado='aprobado'` **in the query**, not only in the render.
-  - [ ] Read the viewer's own membership row (any `estado`) separately to drive the affordance.
+- [x] **T3 — GREEN: data read** (AC: 2, 3, 9)
+  - [x] Server component reads the `projects` row and its `project_members` joined to `profiles` for names/avatars.
+  - [x] Filter members to `estado='aprobado'` **in the query**, not only in the render.
+  - [x] Read the viewer's own membership row (any `estado`) separately to drive the affordance.
 
-- [ ] **T4 — GREEN: the screen** (AC: 2, 4, 5, 6, 7, 8, 9)
-  - [ ] Compose from `Avatar`, `Chip`/`RoleChip`, `PrimaryButton`.
-  - [ ] Render exactly one contextual affordance — never two join buttons.
-  - [ ] Surface the queue entry point for project admins only.
+- [x] **T4 — GREEN: the screen** (AC: 2, 4, 5, 6, 7, 8, 9)
+  - [x] Compose from `Avatar`, `Chip`/`RoleChip`, `PrimaryButton`.
+  - [x] Render exactly one contextual affordance — never two join buttons.
+  - [x] Surface the queue entry point for project admins only.
 
-- [ ] **T5 — Verify** (AC: 2, 10)
-  - [ ] `pnpm test && pnpm typecheck && pnpm lint` green.
-  - [ ] Visual acceptance: frame `4.3` vs the live route at ~390px.
+- [x] **T5 — Verify** (AC: 2, 10)
+  - [x] `pnpm test && pnpm typecheck && pnpm lint` green.
+  - [x] Visual acceptance: frame `4.3` vs the live route at ~390px.
 
 ## Dev Notes
 
@@ -178,6 +178,20 @@ M5 "admin" = `project_members.rol='admin'` **and** `estado='aprobado'` **and** t
 
 ### Completion Notes List
 
+- Pencil frame `4.3` resolved to `mFuQx` and recorded in screen-inventory.
+- Detail route loads project + approved members only; viewer membership drives a single join affordance.
+- Join CTAs are presentational/disabled until story 5.5 wires actions; admin gets a stub `/requests` link for 5.6.
+- Dead ellipsis from Pencil is spacer-only (no invented menu).
+
 ### Change Log
 
 ### File List
+
+- `_bmad-output/specs/spec-m5-proyectos/screen-inventory.md`
+- `src/features/projects/membership.ts` (+ test)
+- `src/features/projects/detail-transform.ts` (+ test)
+- `src/features/projects/ProjectDetail.tsx` (+ test)
+- `src/features/projects/types.ts`
+- `src/app/(app)/nodo/projects/[id]/page.tsx` (+ test)
+- `src/app/(app)/nodo/projects/[id]/requests/page.tsx` (stub)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
