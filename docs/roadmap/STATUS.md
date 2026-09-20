@@ -69,7 +69,7 @@ Leyenda: **Done** = feature usable en `main` · **Casi** = falta 1–2 piezas o 
 | **M1 Cuenta y perfil**         | Done                   | **Done**           | Auth, onboarding step1/2, profile edit, recovery/reset/check-email en rutas. Residual: reconciliar fidelity stories en Linear                                       |
 | **M2 Nodo — Tasks**            | Done                   | **Done (feature)** | Hub, create, detail, empty, cancelar/editar. Deuda RLS/actions (ver §6)                                                                                             |
 | **M3 Membresía y roles**       | Done                   | **Done**           | Solicitud, admin membresías, admin roles, post-solicitud 1.8 y confirmación 1.9 (PR #26 merged). **Residual: el QA E2E en staging nunca se corrió** — ver §7 Fase 1 |
-| **M4 Plantel y directorio**    | Done                   | **Done**           | Listado+filtros, detalle miembro y editar habilidades (PR #25 merged) en `main`. **Residual: `3.4 Mis aportes` quedó fuera** — PR #27 cerrado, diferido a M6        |
+| **M4 Plantel y directorio**    | Done                   | **Done**           | Listado+filtros, detalle, habilidades en `main` (PR #25). QA DoD formal **ZER-64** (Juan). Residual producto: `3.4 Mis aportes` diferido a M6 (PR #27)              |
 | **M5 Proyectos**               | Todo                   | **No**             | Sin feature/ruta                                                                                                                                                    |
 | **M6 Aportes y eventos**       | Todo                   | **No**             | Sin tabla `aportes`. El chrome “Mis aportes” (PR #27) se cerró y entra acá                                                                                          |
 | **M7 Cumpleaños, PWA, pulido** | Todo                   | **No**             | —                                                                                                                                                                   |
@@ -200,8 +200,8 @@ Fuente: `_bmad-output/implementation-artifacts/deferred-work.md` (ampliar ticket
 - ~~Merge habilidades (ZER-34)~~ — **merged** (PR #25).
 - ~~Decidir Mis aportes chrome (ZER-35)~~ — **cerrado, diferido a M6**.
 - ⚠️ **RESIDUAL ABIERTO — `3.4 Mis aportes`**: está en el alcance escrito de [[M4 · Plantel y directorio]] pero **no se implementó**. M4 figura Done en los docs con esa pieza afuera; la pantalla vive en el epic M6 (Fase 4).
-- Bugs/fidelity sobre listado + detalle ya en `main`. ⏳
-- DoD M4: solo serranos, tarifa privada según reglas, skills OK — **sin QA formal**. ⏳
+- ~~Bugs/fidelity sobre listado + detalle ya en `main`~~ — follow-ups ya en `main` (p. ej. ZER-75 filtros, ZER-77 avatar).
+- ~~DoD M4: solo serranos, tarifa privada según reglas, skills OK — sin QA formal~~ — **QA formal hecha por Juan (ZER-64)**; sin hallazgos nuevos abiertos. Dependencia SEC tarifa **ZER-43** Done en `main`.
 
 ### Fase 3 — Hardening tasks (corto, en paralelo o justo antes de más comunidad)
 
@@ -260,7 +260,7 @@ Usar como checklist al crear en Linear. **No duplicar** si el issue ya existe �
 ### M4 remaining (docs ya en Done — esto es lo que quedó debiendo)
 
 - [ ] ⚠️ **`3.4 Mis aportes`** — fuera de M4, va con el epic M6
-- [ ] QA plantel (solo serranos, tarifa privada)
+- [x] QA plantel (solo serranos, tarifa privada, skills) — ZER-64 (QA Juan; sin hallazgos nuevos)
 - [x] Cerrar epic M4 en PROGRESS — ZER-45
 - [ ] Decisión producto: canceladas en hub “Todas”
 
@@ -330,3 +330,4 @@ Stories y deuda:
 | 2026-09-17 | Alta inicial: recon post-idle (código, PRs, tracking stale, deferred, plan F0–F4)                                                                                                                                                         |
 | 2026-09-18 | **Publicación** (ZER-45): archivo trackeado + README/PROGRESS/Roadmap/frontmatter/`.pen` reconciliados. Cola de PRs a cero (#25 y #26 merged, #27 cerrado → M6). M0–M4 en Done, con 2 residuales abiertos (QA E2E M3 · `3.4 Mis aportes`) |
 | 2026-09-18 | **Tracking** (ZER-46): `sprint-status.yaml` + story `Status:` + stubs fantasma reconciliados con Linear Done y `main`.                                                                                                                    |
+| 2026-09-20 | **QA M4 DoD** (ZER-64): Juan cerró QA formal del plantel (solo serranos, tarifa, skills). Residual “sin QA formal” cerrado en STATUS; sin issues nuevas. ZER-43 story/sprint drift → done.                                                |
