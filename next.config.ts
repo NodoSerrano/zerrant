@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
-import { getSupabaseAvatarRemotePatterns } from "./src/lib/avatar-image-url";
+import {
+  getSupabaseAvatarRemotePatterns,
+  shouldAllowLocalIPForAvatars,
+} from "./src/lib/avatar-image-url";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["*"],
@@ -7,6 +10,10 @@ const nextConfig: NextConfig = {
   images: {
     // Keep in lockstep with isServableAvatarImageUrl (Avatar + AvatarPicker fallback).
     remotePatterns: getSupabaseAvatarRemotePatterns(),
+    // Local Supabase serves avatars on 127.0.0.1/localhost. Next 16 blocks private
+    // IPs in the image optimizer unless this is true — without it, /_next/image
+    // answers 400 "url parameter is not allowed" while Storage itself is 200.
+    dangerouslyAllowLocalIP: shouldAllowLocalIPForAvatars(),
   },
   experimental: {
     serverActions: {

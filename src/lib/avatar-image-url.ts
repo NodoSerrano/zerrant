@@ -32,6 +32,19 @@ export function getSupabaseAvatarRemotePatterns(): AvatarRemotePattern[] {
   }
 }
 
+/** True when next/image must be allowed to fetch loopback Supabase (local stack). */
+export function shouldAllowLocalIPForAvatars(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) return false;
+
+  try {
+    const { hostname } = new URL(url);
+    return hostname === "127.0.0.1" || hostname === "localhost" || hostname === "::1";
+  } catch {
+    return false;
+  }
+}
+
 /** True when next/image can safely render this src without throwing on remotePatterns. */
 export function isServableAvatarImageUrl(src: string | null | undefined): boolean {
   if (!src) return false;

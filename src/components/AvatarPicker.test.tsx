@@ -121,6 +121,25 @@ describe("AvatarPicker", () => {
     expect(screen.getByText("Cambiar foto")).toBeInTheDocument();
   });
 
+  it("falls back to the camera placeholder when the image request fails after render", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
+    render(
+      <AvatarPicker
+        action={vi.fn()}
+        initialUrl="https://sb.test/storage/v1/object/public/avatars/u/a.jpg"
+      />,
+    );
+
+    const img = screen.getByRole("img", { name: "Foto de perfil" });
+    fireEvent.error(img);
+
+    // Keep "Cambiar foto": a URL is still held; only the paint failed.
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(screen.getByRole("button", { name: "Cambiar foto" })).toBeInTheDocument();
+    const icon = screen.getByRole("button", { name: "Cambiar foto" }).querySelector("svg.lucide");
+    expect(icon).toBeTruthy();
+  });
+
   it("shows the error returned by the action and keeps the placeholder", async () => {
     const action = vi.fn().mockResolvedValue({ error: "La imagen no puede superar los 5 MB" });
     render(<AvatarPicker action={action} />);
