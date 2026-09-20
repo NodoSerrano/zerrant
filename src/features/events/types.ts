@@ -1,3 +1,5 @@
+import type { EventAttendanceEstado } from "@/lib/db/events-schema";
+
 export type AgendaEvent = {
   id: string;
   titulo: string;
@@ -19,4 +21,17 @@ export type EventFormDefaults = {
   inicio?: string;
   /** HH:MM wall clock */
   fin?: string;
+};
+
+export type EventAttendee = {
+  profileId: string;
+  name: string;
+  avatarUrl: string | null;
+  estado: EventAttendanceEstado;
+};
+
+export type EventCreator = {
+  profileId: string;
+  name: string;
+  avatarUrl: string | null;
 };

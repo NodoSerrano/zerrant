@@ -218,7 +218,7 @@ describe("AgendaPage", () => {
     expect(screen.queryByText("Asamblea")).not.toBeInTheDocument();
   });
 
-  it("does not link event cards to a detail route (6.8 owns that)", async () => {
+  it("links event cards to the detail route", async () => {
     const { createClient } = await import("@/lib/supabase/server");
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
       mockSupabase({ events: [EVENT_A] }),
@@ -226,7 +226,8 @@ describe("AgendaPage", () => {
 
     await renderPage({ dia: "2026-09-20" });
 
-    expect(screen.queryByRole("link", { name: /Asamblea/i })).not.toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /Asamblea/i });
+    expect(link).toHaveAttribute("href", "/agenda/evt-a");
   });
 
   it("queries events with ART-stable inicio bounds for the selected day", async () => {
