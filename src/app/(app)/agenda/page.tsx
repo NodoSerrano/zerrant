@@ -75,6 +75,7 @@ export default async function AgendaPage({
           {list.map((event) => (
             <EventCard
               key={event.id}
+              href={`/agenda/${event.id}`}
               title={event.titulo}
               timeLabel={formatEventTimeRange(event.inicio, event.fin)}
               place={event.lugar}
