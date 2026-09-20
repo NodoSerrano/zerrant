@@ -1,13 +1,13 @@
 # Story 6.2: Register aporte (`4.6 · Registrar aporte`)
 
-Status: backlog
+Status: review
 
 ## Linear
 
 - **ZER-88** — Story 6.2: Registrar aporte (4.6)
 - URL: https://linear.app/zerrant/issue/ZER-88
 - Branch: `juantandil123/zer-88-story-62-registrar-aporte-46`
-- Priority: Medium (P3) · Status: Backlog · Unassigned
+- Priority: Medium (P3) · Status: In Progress · Assignee: Juan
 - Project: **Nodo Serrano — M5–M6 Features** · Milestone: **Epic 6 — Aportes y eventos**
 - Unblocks M6 DoD bullet _"Se registra un aporte y aparece en el perfil."_ — the "se registra" half.
 - Depends on story 6.1 (ZER-87). Stories 6.3 and 6.4 display what this one writes.
@@ -64,44 +64,44 @@ so that my aportes are on record and back my tier and rol.
 
 ## Tasks / Subtasks
 
-- [ ] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1)
-  - [ ] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg`, `fd` or any filesystem tool. Only `mcp__pencil` tools can read it.
-  - [ ] Use `mcp__pencil__get_app_state` to locate frame `4.6 · Registrar aporte`; read its contents with the design-context tooling.
-  - [ ] Record the resolved node id into `_bmad-output/specs/spec-m6-aportes-eventos/screen-inventory.md`, replacing `TBD`.
-  - [ ] **This story is not ready for development until this task is done.**
-  - [ ] While reading the frame, confirm it contains no payment affordance. If it appears to, raise it — the SPEC's hard line wins.
+- [x] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1)
+  - [x] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg`, `fd` or any filesystem tool. Only `mcp__pencil` tools can read it.
+  - [x] Use `mcp__pencil__get_app_state` to locate frame `4.6 · Registrar aporte`; read its contents with the design-context tooling.
+  - [x] Record the resolved node id into `_bmad-output/specs/spec-m6-aportes-eventos/screen-inventory.md`, replacing `TBD`.
+  - [x] **This story is not ready for development until this task is done.**
+  - [x] While reading the frame, confirm it contains no payment affordance. If it appears to, raise it — the SPEC's hard line wins.
 
-- [ ] **T1 — Read the framework docs** (AC: 2–9)
-  - [ ] Read the App Router / server-actions guide in `node_modules/next/dist/docs/` — breaking changes vs. training data (per `AGENTS.md`).
+- [x] **T1 — Read the framework docs** (AC: 2–9)
+  - [x] Read the App Router / server-actions guide in `node_modules/next/dist/docs/` — breaking changes vs. training data (per `AGENTS.md`).
 
-- [ ] **T2 — RED: failing tests first** (AC: 3, 4, 6, 9, 10)
-  - [ ] Action test: self-load writes `profile_id === registrado_por === auth.uid()`.
-  - [ ] Action test: empty monto → the insert payload carries `null`, asserted explicitly (`toBeNull()`, not a truthiness check).
-  - [ ] Action test: admin-load writes the target `profile_id` with `registrado_por` = the admin.
-  - [ ] Action test: a `tipo` outside the nine values is rejected by an allow-list, not cast.
-  - [ ] Action tests: blank descripcion, missing fecha, non-numeric monto.
-  - [ ] Page test: the four controls render; the tipo selector offers exactly nine options.
-  - [ ] Page test: no element with payment copy ("pagar", "cobrar", "checkout", a currency CTA) exists.
-  - [ ] Harness cases (real database): third-party write by a non-admin rejected; tourist write rejected.
-  - [ ] Verify RED.
+- [x] **T2 — RED: failing tests first** (AC: 3, 4, 6, 9, 10)
+  - [x] Action test: self-load writes `profile_id === registrado_por === auth.uid()`.
+  - [x] Action test: empty monto → the insert payload carries `null`, asserted explicitly (`toBeNull()`, not a truthiness check).
+  - [x] Action test: admin-load writes the target `profile_id` with `registrado_por` = the admin.
+  - [x] Action test: a `tipo` outside the nine values is rejected by an allow-list, not cast.
+  - [x] Action tests: blank descripcion, missing fecha, non-numeric monto.
+  - [x] Page test: the four controls render; the tipo selector offers exactly nine options.
+  - [x] Page test: no element with payment copy ("pagar", "cobrar", "checkout", a currency CTA) exists.
+  - [x] Harness cases (real database): third-party write by a non-admin rejected; tourist write rejected.
+  - [x] Verify RED.
 
-- [ ] **T3 — GREEN: the server action** (AC: 3, 4, 6, 9)
-  - [ ] `src/features/aportes/actions.ts` with `createAporte`.
-  - [ ] Validate `tipo` against an explicit nine-value allow-list, following `oneOf()` in `src/features/tasks/actions.ts`.
-  - [ ] Parse monto: empty/whitespace → `null`; otherwise a finite number, else an error. Never `Number("") === 0`.
-  - [ ] Self-load: `profile_id = registrado_por = user.id`. Admin-load: `profile_id` from the form, `registrado_por = user.id` — and let RLS be the authority on whether that is allowed.
-  - [ ] Spanish error copy in the style of `src/features/tasks/actions.ts`.
-  - [ ] `revalidatePath` "Mis aportes" and the member-detail route, then redirect.
+- [x] **T3 — GREEN: the server action** (AC: 3, 4, 6, 9)
+  - [x] `src/features/aportes/actions.ts` with `createAporte`.
+  - [x] Validate `tipo` against an explicit nine-value allow-list, following `oneOf()` in `src/features/tasks/actions.ts`.
+  - [x] Parse monto: empty/whitespace → `null`; otherwise a finite number, else an error. Never `Number("") === 0`.
+  - [x] Self-load: `profile_id = registrado_por = user.id`. Admin-load: `profile_id` from the form, `registrado_por = user.id` — and let RLS be the authority on whether that is allowed.
+  - [x] Spanish error copy in the style of `src/features/tasks/actions.ts`.
+  - [x] `revalidatePath` "Mis aportes" and the member-detail route, then redirect.
 
-- [ ] **T4 — GREEN: the form** (AC: 2, 5)
-  - [ ] Route under `src/app/(app)/aportes/new/` (adjust only if the resolved Pencil IA demands it).
-  - [ ] Compose from `Input`, `PrimaryButton` and the other DS primitives (NFR17).
-  - [ ] The "register for someone else" control is offered only to a platform admin — as ergonomics; RLS is the guard.
+- [x] **T4 — GREEN: the form** (AC: 2, 5)
+  - [x] Route under `src/app/(app)/aportes/new/` (adjust only if the resolved Pencil IA demands it).
+  - [x] Compose from `Input`, `PrimaryButton` and the other DS primitives (NFR17).
+  - [x] The "register for someone else" control is offered only to a platform admin — as ergonomics; RLS is the guard.
 
-- [ ] **T5 — Verify** (AC: 2, 5, 7, 10)
-  - [ ] `pnpm test && pnpm typecheck && pnpm lint` green.
-  - [ ] Policy harness green; `pnpm db:check-grants` still green.
-  - [ ] Visual acceptance: frame `4.6` vs the live route at ~390px.
+- [x] **T5 — Verify** (AC: 2, 5, 7, 10)
+  - [x] `pnpm test && pnpm typecheck && pnpm lint` green.
+  - [x] Policy harness green; `pnpm db:check-grants` still green.
+  - [x] Visual acceptance: frame `4.6` vs the live route at ~390px.
 
 ## Dev Notes
 
@@ -199,6 +199,15 @@ This is the hard line of M6 and it is checked at the milestone gate (story 6.11)
 
 ### Completion Notes List
 
+- Pencil frame `4.6` resolved as `h0U2J` via mcp__pencil; inventory updated.
+- `createAporte` + modal route `/aportes/new` with self/admin load; monto empty → null; no payment copy.
+- RLS third-party/tourist denial remains covered by `scripts/check-aportes-rls.harness.ts` (ZER-87).
+- `pnpm test` 1036 green; typecheck/lint/db:check-rls/db:check-grants green.
+
 ### Change Log
 
 ### File List
+
+- `_bmad-output/specs/spec-m6-aportes-eventos/screen-inventory.md`
+- `src/features/aportes/{types,actions,AporteForm}.{ts,tsx}` + tests
+- `src/app/(modal)/aportes/new/{page,NewAporteForm,page.test}.tsx`

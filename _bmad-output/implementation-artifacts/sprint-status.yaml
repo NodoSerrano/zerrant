@@ -175,8 +175,8 @@ development_status:
   epic-5-proyectos-retrospective: optional
 
   epic-6-aportes-eventos: backlog
-  6-1-aportes-schema-and-rls: backlog
-  6-2-register-aporte: backlog
+  6-1-aportes-schema-and-rls: done
+  6-2-register-aporte: review
   6-3-mis-aportes: backlog
   6-4-aportes-in-member-detail: backlog
   6-5-events-schema-and-rls: done
