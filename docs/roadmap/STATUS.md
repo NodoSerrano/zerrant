@@ -217,7 +217,9 @@ Fuente: `_bmad-output/implementation-artifacts/deferred-work.md` (ampliar ticket
 - ✅ **Epic M6** Aportes reales (alimenta 3.4 y detalle miembro) + Agenda/RSVP — ticketizado: ZER-87 → ZER-97.
 - 🔲 **Epic M7** Cumples, PWA, offline, dark polish — **sin ticketizar a propósito**: el grafo del Roadmap le da cuatro aristas de entrada (`M2,M4,M5,M6 → M7`) y su pantalla `2.1 Inicio` necesita la tabla `events` de M6. Se ticketiza cuando M5/M6 estén en `main`.
 
-> ⚠️ **Ticketizado no es empezado.** El dev de M5 no arranca hasta que el residual de QA E2E de M3 (Fase 1, ZER-63) esté verde, más ZER-64 y ZER-71. La ticketización se hizo en paralelo al gate a propósito; el gate sigue en pie.
+> **Gate de features: levantado el 2026-09-20.** La ticketización se hizo en paralelo al gate a propósito, y el gate se cerró entero mientras tanto: ZER-71 (alta rota, PR #59), ZER-63 (QA E2E M3, PR #61) y ZER-64 (QA DoD M4, PR #62) están Done. Queda abierto el punto 5 de Fase 0 — bajar `_bmad-output/implementation-artifacts/deferred-work.md` a tickets.
+>
+> ⚠️ **Ticketizado sigue sin ser implementado.** De las 20 stories solo 6.5 (ZER-91) está en `main`. Las raíces sin bloqueo son ZER-78 (`projects`), ZER-87 (`aportes`) y ZER-91 (`events`, ya hecha): todo lo demás cuelga de ellas. Antes de tomar una story de UI hay que resolver su node id de Pencil vía `mcp__pencil` — los 12 frames de M5/M6 están en `TBD`.
 
 ---
 

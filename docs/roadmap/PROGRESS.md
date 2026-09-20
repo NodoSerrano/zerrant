@@ -1,7 +1,7 @@
 # Progress
 
 > Estado operativo (código vs docs, PRs, deuda, plan): **[[STATUS]]**.
-> Esta tabla está reconciliada con `main`. **Ticketizado ≠ empezado:** M5 y M6 tienen SPEC, epics y stories (ZER-78 → ZER-97, proyecto Linear "Nodo Serrano — M5–M6 Features"), pero cero código en `main`. El dev de M5 espera a que ZER-63 (QA DoD M3) esté verde. `sprint-status.yaml` y los story `Status:` de BMad se reconciliaron en ZER-46 — para el “dónde estamos” real, STATUS manda.
+> Esta tabla está reconciliada con `main`. **Ticketizado ≠ empezado:** M5 y M6 tienen SPEC, epics y stories (ZER-78 → ZER-97, proyecto Linear "Nodo Serrano — M5–M6 Features"). El gate de QA (ZER-71/63/64) se cerró el 2026-09-20; de las 20 stories solo ZER-91 (events) está en `main`. `sprint-status.yaml` y los story `Status:` de BMad se reconciliaron en ZER-46 — para el “dónde estamos” real, STATUS manda.
 
 | Milestone                                                                   | Status         |
 | --------------------------------------------------------------------------- | -------------- |
