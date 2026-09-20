@@ -1,6 +1,6 @@
 # Story 6.10: Edit and delete event (`5.3 · Editar evento`)
 
-Status: backlog
+Status: review
 
 ## Linear
 
@@ -63,45 +63,45 @@ so that wrong details and cancelled plans do not stay on the agenda.
 
 ## Tasks / Subtasks
 
-- [ ] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1)
-  - [ ] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg`, `fd` or any filesystem tool. Only `mcp__pencil` tools can read it.
-  - [ ] Use `mcp__pencil__get_app_state` to locate frame `5.3 · Editar evento`; read its contents with the design-context tooling.
-  - [ ] Record the resolved node id into `_bmad-output/specs/spec-m6-aportes-eventos/screen-inventory.md`, replacing `TBD`.
-  - [ ] **This story is not ready for development until this task is done.**
+- [x] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1)
+  - [x] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg`, `fd` or any filesystem tool. Only `mcp__pencil` tools can read it.
+  - [x] Use `mcp__pencil__get_app_state` to locate frame `5.3 · Editar evento`; read its contents with the design-context tooling.
+  - [x] Record the resolved node id into `_bmad-output/specs/spec-m6-aportes-eventos/screen-inventory.md`, replacing `TBD`.
+  - [x] **This story is not ready for development until this task is done.**
 
-- [ ] **T1 — Read the framework docs** (AC: 2–9)
-  - [ ] Read the server-actions / dynamic-route guide in `node_modules/next/dist/docs/` — breaking changes vs. training data (per `AGENTS.md`).
+- [x] **T1 — Read the framework docs** (AC: 2–9)
+  - [x] Read the server-actions / dynamic-route guide in `node_modules/next/dist/docs/` — breaking changes vs. training data (per `AGENTS.md`).
 
-- [ ] **T2 — RED: failing policy harness first** (AC: 5, 6, 7, 10)
-  - [ ] Extend `scripts/check-events-rls.harness.ts`: creator update OK; creator delete OK; platform admin update/delete OK; other serrano update rejected; other serrano delete rejected; tourist rejected.
-  - [ ] Cascade case: delete an event that **has** attendance rows, assert both the event and the rows are gone.
-  - [ ] Verify RED against the story 6.5 policies (some cases may already pass — the new ones are the update/delete paths exercised through the real write shape).
+- [x] **T2 — RED: failing policy harness first** (AC: 5, 6, 7, 10)
+  - [x] Extend `scripts/check-events-rls.harness.ts`: creator update OK; creator delete OK; platform admin update/delete OK; other serrano update rejected; other serrano delete rejected; tourist rejected.
+  - [x] Cascade case: delete an event that **has** attendance rows, assert both the event and the rows are gone.
+  - [x] Verify RED against the story 6.5 policies (some cases may already pass — the new ones are the update/delete paths exercised through the real write shape).
 
-- [ ] **T3 — RED: failing action/page tests** (AC: 2, 3, 4, 9, 10)
-  - [ ] Page test: the form prefills all five fields from the event row.
-  - [ ] Action test: save updates the row, scoped to that `id`.
-  - [ ] Action test: an invalid range is rejected by `validateEventRange` and no update is issued.
-  - [ ] Action test: a 0-row update is a failure, not a redirect.
-  - [ ] Component test: delete requires confirmation.
-  - [ ] Verify RED.
+- [x] **T3 — RED: failing action/page tests** (AC: 2, 3, 4, 9, 10)
+  - [x] Page test: the form prefills all five fields from the event row.
+  - [x] Action test: save updates the row, scoped to that `id`.
+  - [x] Action test: an invalid range is rejected by `validateEventRange` and no update is issued.
+  - [x] Action test: a 0-row update is a failure, not a redirect.
+  - [x] Component test: delete requires confirmation.
+  - [x] Verify RED.
 
-- [ ] **T4 — GREEN: edit** (AC: 2, 3, 4)
-  - [ ] Route under `src/app/(app)/agenda/[id]/edit/` (adjust only if the resolved Pencil IA demands it).
-  - [ ] Reuse `EventForm` from story 6.7 with prefilled values — not a second form implementation.
-  - [ ] Reuse `validateEventRange` from `src/features/events/validation.ts` — not a second rule.
-  - [ ] `updateEvent` in `src/features/events/actions.ts`; `revalidatePath` the agenda and the detail route.
+- [x] **T4 — GREEN: edit** (AC: 2, 3, 4)
+  - [x] Route under `src/app/(app)/agenda/[id]/edit/` (adjust only if the resolved Pencil IA demands it).
+  - [x] Reuse `EventForm` from story 6.7 with prefilled values — not a second form implementation.
+  - [x] Reuse `validateEventRange` from `src/features/events/validation.ts` — not a second rule.
+  - [x] `updateEvent` in `src/features/events/actions.ts`; `revalidatePath` the agenda and the detail route.
 
-- [ ] **T5 — GREEN: delete** (AC: 5, 8, 9)
-  - [ ] `deleteEvent` in `src/features/events/actions.ts`: a real `delete` scoped to the event id.
-  - [ ] Confirmation step before the destructive action, in Spanish.
-  - [ ] Redirect to `/agenda` afterwards; `revalidatePath` it.
-  - [ ] No soft-delete flag, no `cancelado` state.
+- [x] **T5 — GREEN: delete** (AC: 5, 8, 9)
+  - [x] `deleteEvent` in `src/features/events/actions.ts`: a real `delete` scoped to the event id.
+  - [x] Confirmation step before the destructive action, in Spanish.
+  - [x] Redirect to `/agenda` afterwards; `revalidatePath` it.
+  - [x] No soft-delete flag, no `cancelado` state.
 
-- [ ] **T6 — Verify** (AC: 2, 5, 6, 10)
-  - [ ] `pnpm test && pnpm typecheck && pnpm lint` green.
-  - [ ] Policy harness green; `pnpm db:check-grants` still green.
-  - [ ] Visual acceptance: frame `5.3` vs the live route at ~390px.
-  - [ ] Manual: delete an event with RSVPs; confirm the agenda drops it and `/agenda/[id]` no longer resolves.
+- [x] **T6 — Verify** (AC: 2, 5, 6, 10)
+  - [x] `pnpm test && pnpm typecheck && pnpm lint` green.
+  - [x] Policy harness green; `pnpm db:check-grants` still green.
+  - [x] Visual acceptance: frame `5.3` vs the live route at ~390px.
+  - [x] Manual: delete an event with RSVPs; confirm the agenda drops it and `/agenda/[id]` no longer resolves.
 
 ## Dev Notes
 
@@ -196,10 +196,29 @@ PostgREST does not error when an update or delete matches nothing. `src/features
 
 ### Agent Model Used
 
+Gentle AI on Hermes (grok-4.5)
+
 ### Debug Log References
 
 ### Completion Notes List
 
+- Pencil frame `5.3 · Editar evento` node id `u82g5p` recorded in screen-inventory.
+- Edit route under `(modal)/agenda/[id]/edit` (focused shell, no TabBar) matching create/edit task pattern and Pencil chevron header.
+- Reused `EventForm` + `validateEventRange`; `updateEvent`/`deleteEvent` with 0-row rejection; real DELETE + FK cascade.
+- Detail shows edit entry for creator or `profiles.is_platform_admin` only (UX); RLS remains authority.
+- Harness covers creator/admin update+delete, other serrano/tourist denied, cascade attendance count after creator delete.
+
 ### Change Log
 
+- 2026-09-20: Implement edit/delete event (ZER-96); record Pencil node id `u82g5p`.
+
 ### File List
+
+- `_bmad-output/specs/spec-m6-aportes-eventos/screen-inventory.md`
+- `src/features/events/actions.ts` (+ tests)
+- `src/features/events/day.ts` (+ tests)
+- `src/features/events/EventDetail.tsx` (+ tests)
+- `src/features/events/EventDeleteControl.tsx` (+ tests)
+- `src/app/(modal)/agenda/[id]/edit/page.tsx` (+ test, EditEventForm)
+- `src/app/(app)/agenda/[id]/page.tsx` (+ test)
+- `scripts/check-events-rls.harness.ts`

@@ -14,6 +14,7 @@ const CHIP_VARIANT = {
 } as const;
 
 export type EventDetailProps = {
+  eventId: string;
   titulo: string;
   descripcion: string | null;
   lugar: string | null;
@@ -21,6 +22,8 @@ export type EventDetailProps = {
   fin: string | null;
   creator: EventCreator;
   attendees: EventAttendee[];
+  /** Creator or platform admin — UX only; RLS still guards writes. */
+  canManage?: boolean;
 };
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -28,6 +31,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export function EventDetail({
+  eventId,
   titulo,
   descripcion,
   lugar,
@@ -35,6 +39,7 @@ export function EventDetail({
   fin,
   creator,
   attendees,
+  canManage = false,
 }: EventDetailProps) {
   const groups = groupAttendance(attendees).filter((group) => group.attendees.length > 0);
   const timeLabel = formatEventTimeRange(inicio, fin);
@@ -50,7 +55,17 @@ export function EventDetail({
           <ChevronLeft size={24} className="text-text-primary" />
         </Link>
         <span className="font-display text-base font-medium text-text-primary">Evento</span>
-        <span aria-hidden="true" className="size-6" />
+        {canManage ? (
+          <Link
+            href={`/agenda/${eventId}/edit`}
+            aria-label="Editar evento"
+            className="font-display text-sm font-medium text-primary"
+          >
+            Editar
+          </Link>
+        ) : (
+          <span aria-hidden="true" className="size-6" />
+        )}
       </div>
 
       <div className="flex flex-col gap-2">

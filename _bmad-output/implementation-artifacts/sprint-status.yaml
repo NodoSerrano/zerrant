@@ -53,7 +53,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: "2026-07-23T18:20:22-03:00"
-last_updated: "2026-09-20T14:30:00-03:00"
+last_updated: "2026-09-20T16:50:00-03:00"
 project: nodo
 project_key: NOKEY
 tracking_system: linear
@@ -184,6 +184,6 @@ development_status:
   6-7-create-event: review
   6-8-event-detail-attendees: backlog
   6-9-rsvp: backlog
-  6-10-edit-delete-event: backlog
+  6-10-edit-delete-event: review
   6-11-qa-m6-dod-e2e: backlog
   epic-6-aportes-eventos-retrospective: optional

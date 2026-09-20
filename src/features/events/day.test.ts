@@ -6,6 +6,8 @@ import {
   formatDayKey,
   formatEventTimeRange,
   parseDayKey,
+  wallClockHmFromIso,
+  eventFormDefaultsFromRow,
 } from "./day";
 
 describe("formatDayKey", () => {
@@ -77,10 +79,7 @@ describe("formatEventTimeRange", () => {
   });
 
   it("formats start and end in ART", () => {
-    const label = formatEventTimeRange(
-      "2026-09-20T18:00:00-03:00",
-      "2026-09-20T20:30:00-03:00",
-    );
+    const label = formatEventTimeRange("2026-09-20T18:00:00-03:00", "2026-09-20T20:30:00-03:00");
     expect(label).toMatch(/18:00/);
     expect(label).toMatch(/20:30/);
     expect(label).toContain("–");
@@ -90,5 +89,55 @@ describe("formatEventTimeRange", () => {
     // 01:00Z next day = 22:00 ART previous evening
     const label = formatEventTimeRange("2026-09-21T01:00:00.000Z", null);
     expect(label).toMatch(/22:00/);
+  });
+});
+
+describe("wallClockHmFromIso", () => {
+  it("returns ART wall clock HH:MM from a UTC ISO", () => {
+    expect(wallClockHmFromIso("2026-09-20T22:00:00.000Z")).toBe("19:00");
+  });
+
+  it("returns empty string for invalid ISO", () => {
+    expect(wallClockHmFromIso("nope")).toBe("");
+  });
+});
+
+describe("eventFormDefaultsFromRow", () => {
+  it("maps titulo, descripcion, lugar, fecha and times for the edit form", () => {
+    expect(
+      eventFormDefaultsFromRow({
+        titulo: "Charla",
+        descripcion: "Demo",
+        lugar: "Espacio Nodo",
+        inicio: "2026-09-20T22:00:00.000Z",
+        fin: "2026-09-21T00:00:00.000Z",
+      }),
+    ).toEqual({
+      titulo: "Charla",
+      descripcion: "Demo",
+      lugar: "Espacio Nodo",
+      fecha: "2026-09-20",
+      inicio: "19:00",
+      fin: "21:00",
+    });
+  });
+
+  it("uses empty descripcion and omits fin when null", () => {
+    expect(
+      eventFormDefaultsFromRow({
+        titulo: "Solo inicio",
+        descripcion: null,
+        lugar: null,
+        inicio: "2026-09-20T22:00:00.000Z",
+        fin: null,
+      }),
+    ).toEqual({
+      titulo: "Solo inicio",
+      descripcion: "",
+      lugar: undefined,
+      fecha: "2026-09-20",
+      inicio: "19:00",
+      fin: undefined,
+    });
   });
 });

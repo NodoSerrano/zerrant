@@ -77,9 +77,7 @@ export function addCalendarDays(dayKey: string, delta: number): string {
 function isValidCalendarDay(dayKey: string): boolean {
   const [y, m, d] = dayKey.split("-").map(Number);
   const probe = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
-  return (
-    probe.getUTCFullYear() === y && probe.getUTCMonth() === m - 1 && probe.getUTCDate() === d
-  );
+  return probe.getUTCFullYear() === y && probe.getUTCMonth() === m - 1 && probe.getUTCDate() === d;
 }
 
 function weekdayIndexInAgendaZone(date: Date): number {
@@ -162,4 +160,42 @@ export function formatEventTimeRange(inicio: string, fin: string | null): string
   if (Number.isNaN(end.getTime())) return startLabel;
 
   return `${startLabel} – ${timeFmt.format(end)}`;
+}
+
+/** HH:MM wall clock in the agenda TZ for an ISO timestamp (edit form prefill). */
+export function wallClockHmFromIso(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone: AGENDA_TIME_ZONE,
+    hourCycle: "h23",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const map = Object.fromEntries(
+    dtf
+      .formatToParts(date)
+      .filter((p) => p.type !== "literal")
+      .map((p) => [p.type, p.value]),
+  );
+  return `${map.hour}:${map.minute}`;
+}
+
+/** Prefill bundle for EventForm from an events row. */
+export function eventFormDefaultsFromRow(event: {
+  titulo: string;
+  descripcion: string | null;
+  lugar: string | null;
+  inicio: string;
+  fin: string | null;
+}): import("./types").EventFormDefaults {
+  return {
+    titulo: event.titulo,
+    descripcion: event.descripcion ?? "",
+    lugar: event.lugar ?? undefined,
+    fecha: formatDayKey(new Date(event.inicio)),
+    inicio: wallClockHmFromIso(event.inicio),
+    fin: event.fin ? wallClockHmFromIso(event.fin) : undefined,
+  };
 }

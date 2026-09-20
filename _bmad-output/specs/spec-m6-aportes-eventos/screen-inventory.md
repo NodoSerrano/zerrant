@@ -9,7 +9,7 @@ Pencil SSOT: `design/nodo-serrano.pen`. Mobile frame width **390**.
 | 2.5 · Agenda            | `TBD`    | `/agenda`           | CAP-6        | Day strip; **replaces the existing stub page**              |
 | 5.1 · Detalle de evento | `TBD`    | `/agenda/[id]`      | CAP-8, CAP-9 | Attendee list + RSVP control                                |
 | 5.2 · Crear evento      | `X2mwbR` | `/agenda/new`       | CAP-7        | Any serrano; modal shell (no TabBar); CTA «Publicar evento» |
-| 5.3 · Editar evento     | `TBD`    | `/agenda/[id]/edit` | CAP-10       | Creator or platform admin; delete lives here                |
+| 5.3 · Editar evento     | `u82g5p` | `/agenda/[id]/edit` | CAP-10       | Creator or platform admin; delete lives here; modal shell   |
 | 7.4 · Vacío Agenda      | `TBD`    | `/agenda` (empty)   | CAP-6        | Zero-event state                                            |
 
 Routes above are the **expected** shape and may be adjusted to match the Pencil IA once node ids are resolved; the frame column is the binding part.
