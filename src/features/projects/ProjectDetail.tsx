@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft, Lock } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
-import { PrimaryButton } from "@/components/PrimaryButton";
+import { ProjectJoinButton } from "@/features/projects/ProjectJoinButton";
 import {
   getProjectEstadoBadge,
   getProjectIngresoLabel,
@@ -104,9 +104,7 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
       ) : null}
 
       {project.affordance.kind === "join" ? (
-        <PrimaryButton type="button" className="w-full" disabled>
-          {project.affordance.label}
-        </PrimaryButton>
+        <ProjectJoinButton projectId={project.id} label={project.affordance.label} />
       ) : null}
 
       {project.affordance.kind === "pending" ? (

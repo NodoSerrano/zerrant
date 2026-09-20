@@ -1,15 +1,18 @@
 /**
- * Live harness for ZER-78 projects + project_members RLS.
+ * Live harness for ZER-78 projects + project_members RLS and ZER-82 ingreso door.
  * Invoked only via:
  *   pnpm db:check-rls
  * (vitest.db-rls.config.ts). Not part of the default `pnpm test` suite.
  *
- * Requires migration *_zer78_projects_project_members.sql applied.
+ * Requires migrations *_zer78_projects_project_members.sql and
+ * *_zer82_project_members_ingreso_door.sql applied.
  * Everything runs inside one transaction that ends in ROLLBACK.
  *
  * Proves: serrano insert OK + creator auto-admin; tourist insert denied;
  * non-admin/platform-admin update denied; self-join cannot escalate to admin;
  * tourist self-join denied; admin membership update/delete without 42P17.
+ * ZER-82 door: abierto→aprobado; aprobacion→pendiente; aprobacion+aprobado rejected;
+ * third-party profile_id rejected; self rol=admin rejected; second join PK; no 42P17.
  */
 import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
@@ -29,6 +32,7 @@ const PLATFORM_ADMIN_ID = "e4444444-4444-4444-4444-444444444444";
 const SUCCESS = "00000";
 const RLS_DENIED = "42501";
 const POLICY_RECURSION = "42P17";
+const UNIQUE_VIOLATION = "23505";
 const INSUFFICIENT_PRIVILEGE = "42501";
 
 function run(command: string, args: string[], input: string) {
@@ -100,6 +104,7 @@ do $$
 declare
   v_state text;
   v_project uuid;
+  v_open_project uuid;
   v_rows text[] := '{}';
   v_count int;
   v_rol text;
@@ -117,7 +122,7 @@ begin
   end;
   v_rows := v_rows || ('tourist_insert_project=' || v_state);
 
-  -- serrano A creates project (trigger seats A as admin)
+  -- serrano A creates aprobacion project (trigger seats A as admin)
   perform set_config('request.jwt.claims', '{"sub":"${SERRANO_A}","role":"authenticated"}', true);
   begin
     insert into public.projects (nombre, descripcion, estado, ingreso, creado_por)
@@ -187,35 +192,69 @@ begin
     end;
     v_rows := v_rows || ('serrano_a_update_project=' || v_state);
 
-    -- B cannot self-insert as admin/aprobado (grant omits rol/estado; policy would also deny)
+    -- B cannot self-insert as admin (grant omits rol; policy would also deny)
     perform set_config('request.jwt.claims', '{"sub":"${SERRANO_B}","role":"authenticated"}', true);
     begin
       insert into public.project_members (project_id, profile_id, rol, estado)
-      values (v_project, '${SERRANO_B}', 'admin', 'aprobado');
+      values (v_project, '${SERRANO_B}', 'admin', 'pendiente');
       v_state := '${SUCCESS}';
     exception when others then v_state := SQLSTATE;
     end;
     v_rows := v_rows || ('serrano_b_self_admin_escalation=' || v_state);
 
+    -- Bypass: aprobacion + self-inserted aprobado must be rejected by WITH CHECK (not only action)
+    begin
+      insert into public.project_members (project_id, profile_id, estado)
+      values (v_project, '${SERRANO_B}', 'aprobado');
+      v_state := '${SUCCESS}';
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('bypass_aprobacion_aprobado=' || v_state);
+
+    -- Third-party profile_id rejected
+    begin
+      insert into public.project_members (project_id, profile_id, estado)
+      values (v_project, '${SERRANO_A}', 'pendiente');
+      v_state := '${SUCCESS}';
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('third_party_profile_id=' || v_state);
+
     -- tourist cannot self-join
     perform set_config('request.jwt.claims', '{"sub":"${TOURIST_ID}","role":"authenticated"}', true);
     begin
-      insert into public.project_members (project_id, profile_id)
-      values (v_project, '${TOURIST_ID}');
+      insert into public.project_members (project_id, profile_id, estado)
+      values (v_project, '${TOURIST_ID}', 'pendiente');
       v_state := '${SUCCESS}';
     exception when others then v_state := SQLSTATE;
     end;
     v_rows := v_rows || ('tourist_self_join=' || v_state);
 
-    -- B self-join scaffold (identity only → defaults miembro/pendiente)
+    -- B self-join on aprobacion → pendiente allowed
     perform set_config('request.jwt.claims', '{"sub":"${SERRANO_B}","role":"authenticated"}', true);
     begin
-      insert into public.project_members (project_id, profile_id)
-      values (v_project, '${SERRANO_B}');
+      insert into public.project_members (project_id, profile_id, estado)
+      values (v_project, '${SERRANO_B}', 'pendiente')
+      returning estado::text into v_estado;
+      if v_estado = 'pendiente' then
+        v_state := '${SUCCESS}';
+      else
+        v_state := 'WRONG_ESTADO';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('serrano_b_self_join_aprobacion=' || v_state);
+    -- Keep legacy key used by older assertions / admin path below
+    v_rows := v_rows || ('serrano_b_self_join=' || v_state);
+
+    -- Second join collides on composite PK
+    begin
+      insert into public.project_members (project_id, profile_id, estado)
+      values (v_project, '${SERRANO_B}', 'pendiente');
       v_state := '${SUCCESS}';
     exception when others then v_state := SQLSTATE;
     end;
-    v_rows := v_rows || ('serrano_b_self_join=' || v_state);
+    v_rows := v_rows || ('serrano_b_second_join_pk=' || v_state);
 
     -- B (non-admin) cannot approve themselves via update
     begin
@@ -261,6 +300,35 @@ begin
     exception when others then v_state := SQLSTATE;
     end;
     v_rows := v_rows || ('serrano_a_delete_member=' || v_state);
+
+    -- Open door: A creates abierto project; B self-joins as aprobado
+    perform set_config('request.jwt.claims', '{"sub":"${SERRANO_A}","role":"authenticated"}', true);
+    begin
+      insert into public.projects (nombre, descripcion, estado, ingreso, creado_por)
+      values ('Huerta abierta', 'open door', 'idea', 'abierto', '${SERRANO_A}')
+      returning id into v_open_project;
+      v_state := '${SUCCESS}';
+    exception when others then
+      v_state := SQLSTATE;
+      v_open_project := null;
+    end;
+    v_rows := v_rows || ('serrano_a_insert_open_project=' || v_state);
+
+    if v_open_project is not null then
+      perform set_config('request.jwt.claims', '{"sub":"${SERRANO_B}","role":"authenticated"}', true);
+      begin
+        insert into public.project_members (project_id, profile_id, estado)
+        values (v_open_project, '${SERRANO_B}', 'aprobado')
+        returning estado::text into v_estado;
+        if v_estado = 'aprobado' then
+          v_state := '${SUCCESS}';
+        else
+          v_state := 'WRONG_ESTADO';
+        end if;
+      exception when others then v_state := SQLSTATE;
+      end;
+      v_rows := v_rows || ('serrano_b_self_join_abierto=' || v_state);
+    end if;
 
     -- authenticated SELECT projects ok
     perform set_config('request.jwt.claims', '{"sub":"${TOURIST_ID}","role":"authenticated"}', true);
@@ -325,6 +393,18 @@ describe("projects RLS (live DB)", () => {
     // grant omission → 42501; policy denial would also be 42501
     expect(outcomes.serrano_b_self_admin_escalation).toBe(INSUFFICIENT_PRIVILEGE);
     expect(outcomes.tourist_self_join).toBe(RLS_DENIED);
+  });
+
+  it("enforces the ingreso door on direct inserts without 42P17", () => {
+    expect(outcomes.bypass_aprobacion_aprobado).not.toBe(POLICY_RECURSION);
+    expect(outcomes.bypass_aprobacion_aprobado).toBe(RLS_DENIED);
+    expect(outcomes.third_party_profile_id).toBe(RLS_DENIED);
+    expect(outcomes.serrano_b_self_join_aprobacion).not.toBe(POLICY_RECURSION);
+    expect(outcomes.serrano_b_self_join_aprobacion).toBe(SUCCESS);
+    expect(outcomes.serrano_b_second_join_pk).toBe(UNIQUE_VIOLATION);
+    expect(outcomes.serrano_a_insert_open_project).toBe(SUCCESS);
+    expect(outcomes.serrano_b_self_join_abierto).not.toBe(POLICY_RECURSION);
+    expect(outcomes.serrano_b_self_join_abierto).toBe(SUCCESS);
   });
 
   it("allows self-join scaffold, admin membership update/delete without 42P17", () => {

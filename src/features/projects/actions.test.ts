@@ -6,8 +6,14 @@ const mocks = vi.hoisted(() => ({
   profilesSelectEq: vi.fn(),
   profilesSelectSingle: vi.fn(),
   projectsInsert: vi.fn(),
-  projectsSelect: vi.fn(),
+  projectsInsertSelect: vi.fn(),
   projectsInsertPayload: null as unknown,
+  projectsReadSelect: vi.fn(),
+  projectsEq: vi.fn(),
+  projectsMaybeSingle: vi.fn(),
+  membersInsert: vi.fn(),
+  membersSelect: vi.fn(),
+  membersInsertPayload: null as unknown,
   revalidatePath: vi.fn(),
   redirect: vi.fn((url: string) => {
     throw new Error(`NEXT_REDIRECT:${url}`);
@@ -32,7 +38,22 @@ vi.mock("@/lib/supabase/server", () => ({
           insert: mocks.projectsInsert.mockImplementation((payload: unknown) => {
             mocks.projectsInsertPayload = payload;
             return {
-              select: mocks.projectsSelect,
+              select: mocks.projectsInsertSelect,
+            };
+          }),
+          select: mocks.projectsReadSelect.mockImplementation(() => ({
+            eq: mocks.projectsEq.mockImplementation(() => ({
+              maybeSingle: mocks.projectsMaybeSingle,
+            })),
+          })),
+        };
+      }
+      if (table === "project_members") {
+        return {
+          insert: mocks.membersInsert.mockImplementation((payload: unknown) => {
+            mocks.membersInsertPayload = payload;
+            return {
+              select: mocks.membersSelect,
             };
           }),
         };
@@ -50,11 +71,12 @@ vi.mock("next/navigation", () => ({
   redirect: (url: string) => mocks.redirect(url),
 }));
 
-import { createProject } from "./actions";
+import { createProject, joinProject } from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.projectsInsertPayload = null;
+  mocks.membersInsertPayload = null;
 });
 
 function setupAuth(userId = "serrano-1") {
@@ -77,7 +99,7 @@ describe("createProject", () => {
   it("inserts the project with creado_por and redirects to the list on success", async () => {
     setupAuth("serrano-1");
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
-    mocks.projectsSelect.mockResolvedValue({ error: null, data: [{ id: "proj-1" }] });
+    mocks.projectsInsertSelect.mockResolvedValue({ error: null, data: [{ id: "proj-1" }] });
 
     await expect(createProject(null, makeFormData())).rejects.toThrow(
       "NEXT_REDIRECT:/nodo/projects",
@@ -97,7 +119,7 @@ describe("createProject", () => {
   it("trims nombre and descripcion before writing", async () => {
     setupAuth();
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
-    mocks.projectsSelect.mockResolvedValue({ error: null, data: [{ id: "proj-1" }] });
+    mocks.projectsInsertSelect.mockResolvedValue({ error: null, data: [{ id: "proj-1" }] });
 
     await expect(
       createProject(
@@ -120,7 +142,7 @@ describe("createProject", () => {
   it("stores blank descripcion as null", async () => {
     setupAuth();
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
-    mocks.projectsSelect.mockResolvedValue({ error: null, data: [{ id: "proj-1" }] });
+    mocks.projectsInsertSelect.mockResolvedValue({ error: null, data: [{ id: "proj-1" }] });
 
     await expect(createProject(null, makeFormData({ descripcion: "   " }))).rejects.toThrow(
       "NEXT_REDIRECT",
@@ -181,7 +203,7 @@ describe("createProject", () => {
   it("surfaces a Spanish error when the insert fails", async () => {
     setupAuth();
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
-    mocks.projectsSelect.mockResolvedValue({ error: { message: "rls" }, data: null });
+    mocks.projectsInsertSelect.mockResolvedValue({ error: { message: "rls" }, data: null });
 
     const result = await createProject(null, makeFormData());
 
@@ -191,10 +213,124 @@ describe("createProject", () => {
   it("treats a zero-row insert as failure", async () => {
     setupAuth();
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
-    mocks.projectsSelect.mockResolvedValue({ error: null, data: [] });
+    mocks.projectsInsertSelect.mockResolvedValue({ error: null, data: [] });
 
     const result = await createProject(null, makeFormData());
 
     expect(result).toEqual({ error: "No pudimos crear el proyecto." });
+  });
+});
+
+function makeJoinForm(projectId = "proj-1") {
+  const fd = new FormData();
+  fd.set("projectId", projectId);
+  return fd;
+}
+
+describe("joinProject", () => {
+  it("inserts aprobado for an abierto project and revalidates the detail route", async () => {
+    setupAuth("serrano-1");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.projectsMaybeSingle.mockResolvedValue({
+      data: { id: "proj-1", ingreso: "abierto" },
+      error: null,
+    });
+    mocks.membersSelect.mockResolvedValue({ error: null, data: [{ project_id: "proj-1" }] });
+
+    const result = await joinProject(null, makeJoinForm());
+
+    expect(result).toBeNull();
+    expect(mocks.membersInsertPayload).toEqual({
+      project_id: "proj-1",
+      profile_id: "serrano-1",
+      estado: "aprobado",
+    });
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects/proj-1");
+  });
+
+  it("inserts pendiente for an aprobacion project", async () => {
+    setupAuth("serrano-1");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.projectsMaybeSingle.mockResolvedValue({
+      data: { id: "proj-2", ingreso: "aprobacion" },
+      error: null,
+    });
+    mocks.membersSelect.mockResolvedValue({ error: null, data: [{ project_id: "proj-2" }] });
+
+    const result = await joinProject(null, makeJoinForm("proj-2"));
+
+    expect(result).toBeNull();
+    expect(mocks.membersInsertPayload).toEqual({
+      project_id: "proj-2",
+      profile_id: "serrano-1",
+      estado: "pendiente",
+    });
+  });
+
+  it("maps 23505 on abierto to Ya sos parte de este proyecto", async () => {
+    setupAuth("serrano-1");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.projectsMaybeSingle.mockResolvedValue({
+      data: { id: "proj-1", ingreso: "abierto" },
+      error: null,
+    });
+    mocks.membersSelect.mockResolvedValue({
+      error: { code: "23505", message: "duplicate" },
+      data: null,
+    });
+
+    const result = await joinProject(null, makeJoinForm());
+
+    expect(result).toEqual({ error: "Ya sos parte de este proyecto." });
+  });
+
+  it("maps 23505 on aprobacion to Ya enviaste una solicitud", async () => {
+    setupAuth("serrano-1");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.projectsMaybeSingle.mockResolvedValue({
+      data: { id: "proj-2", ingreso: "aprobacion" },
+      error: null,
+    });
+    mocks.membersSelect.mockResolvedValue({
+      error: { code: "23505", message: "duplicate" },
+      data: null,
+    });
+
+    const result = await joinProject(null, makeJoinForm("proj-2"));
+
+    expect(result).toEqual({ error: "Ya enviaste una solicitud." });
+  });
+
+  it("treats a zero-row insert as failure", async () => {
+    setupAuth("serrano-1");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.projectsMaybeSingle.mockResolvedValue({
+      data: { id: "proj-1", ingreso: "abierto" },
+      error: null,
+    });
+    mocks.membersSelect.mockResolvedValue({ error: null, data: [] });
+
+    const result = await joinProject(null, makeJoinForm());
+
+    expect(result).toEqual({ error: "No pudimos unirte al proyecto." });
+  });
+
+  it("blocks tourists before any insert", async () => {
+    setupAuth("tourist-1");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "tourist" } });
+
+    const result = await joinProject(null, makeJoinForm());
+
+    expect(result).toEqual({ error: "Solo los serranos pueden unirse a proyectos" });
+    expect(mocks.membersInsert).not.toHaveBeenCalled();
+  });
+
+  it("returns unauthorized when there is no session", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+
+    const result = await joinProject(null, makeJoinForm());
+
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.membersInsert).not.toHaveBeenCalled();
   });
 });

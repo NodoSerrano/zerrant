@@ -25,6 +25,14 @@ vi.mock("@/components/Avatar", () => ({
   Avatar: ({ name }: { name: string }) => <div data-testid={`avatar-${name}`}>{name}</div>,
 }));
 
+vi.mock("@/features/projects/ProjectJoinButton", () => ({
+  ProjectJoinButton: ({ projectId, label }: { projectId: string; label: string }) => (
+    <button type="submit" data-project-id={projectId}>
+      {label}
+    </button>
+  ),
+}));
+
 const baseProject: ProjectDetailViewModel = {
   id: "proj-1",
   nombre: "Sitio web de Nodo",
@@ -84,7 +92,10 @@ describe("ProjectDetail", () => {
         }}
       />,
     );
-    expect(screen.getByRole("button", { name: "Unirse" })).toBeInTheDocument();
+    const join = screen.getByRole("button", { name: "Unirse" });
+    expect(join).toBeInTheDocument();
+    expect(join).not.toBeDisabled();
+    expect(join).toHaveAttribute("data-project-id", "proj-1");
     expect(screen.queryByRole("button", { name: "Solicitar ingreso" })).not.toBeInTheDocument();
   });
 
