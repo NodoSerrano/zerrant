@@ -37,7 +37,7 @@ export async function signUpWithPassword(_prevState: { error: string } | null, f
     password: formData.get("password") as string,
   };
 
-  const { error } = await supabase.auth.signUp({
+  const { data: signUpData, error } = await supabase.auth.signUp({
     ...data,
     options: {
       emailRedirectTo: `${getSiteUrl()}/auth/callback`,
@@ -48,7 +48,40 @@ export async function signUpWithPassword(_prevState: { error: string } | null, f
     return { error: error.message };
   }
 
+  // Confirmations off → live session. Confirmations on (or obfuscated existing
+  // email) → no session; send the user to check-email.
+  if (signUpData.session) {
+    revalidatePath("/", "layout");
+    redirect("/");
+  }
+
   redirect(`/auth/check-email?email=${encodeURIComponent(data.email)}&flow=signup`);
+}
+
+export async function resendSignupEmail(
+  _prevState: { error?: string; success?: boolean } | null,
+  formData: FormData,
+) {
+  const email = String(formData.get("email") ?? "").trim();
+
+  if (!email) {
+    return { error: "Necesitamos tu email para reenviar el enlace." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: {
+      emailRedirectTo: `${getSiteUrl()}/auth/callback`,
+    },
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true };
 }
 
 export async function signInWithGoogle(_formData: FormData) {

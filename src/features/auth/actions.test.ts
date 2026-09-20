@@ -8,10 +8,26 @@ const authMock = vi.hoisted(() => ({
   updateUser: vi.fn(),
   signOut: vi.fn(),
   getUser: vi.fn(),
+  resend: vi.fn(),
+}));
+
+const navigationMocks = vi.hoisted(() => ({
+  redirect: vi.fn((url: string) => {
+    throw new Error(`NEXT_REDIRECT:${url}`);
+  }),
+  revalidatePath: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({ auth: authMock }),
+}));
+
+vi.mock("next/cache", () => ({
+  revalidatePath: (...args: unknown[]) => navigationMocks.revalidatePath(...args),
+}));
+
+vi.mock("next/navigation", () => ({
+  redirect: (url: string) => navigationMocks.redirect(url),
 }));
 
 import {
@@ -21,10 +37,14 @@ import {
   sendPasswordReset,
   resetPassword,
   signOut,
+  resendSignupEmail,
 } from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  navigationMocks.redirect.mockImplementation((url: string) => {
+    throw new Error(`NEXT_REDIRECT:${url}`);
+  });
 });
 
 describe("signInWithPassword", () => {
@@ -38,16 +58,13 @@ describe("signInWithPassword", () => {
   it("calls supabase.auth.signInWithPassword with form data and redirects on success", async () => {
     authMock.signInWithPassword.mockResolvedValue({ error: null });
 
-    try {
-      await signInWithPassword(null, makeFormData());
-    } catch {
-      // redirect throws
-    }
+    await expect(signInWithPassword(null, makeFormData())).rejects.toThrow("NEXT_REDIRECT:/");
 
     expect(authMock.signInWithPassword).toHaveBeenCalledWith({
       email: "test@example.com",
       password: "secret123",
     });
+    expect(navigationMocks.redirect).toHaveBeenCalledWith("/");
   });
 
   it("returns error message when supabase returns an error", async () => {
@@ -73,14 +90,12 @@ describe("signUpWithPassword", () => {
     return fd;
   };
 
-  it("calls supabase.auth.signUp with credentials and redirectTo option on success", async () => {
-    authMock.signUp.mockResolvedValue({ error: null });
+  it("calls supabase.auth.signUp with credentials and emailRedirectTo", async () => {
+    authMock.signUp.mockResolvedValue({ data: { session: null, user: { id: "u1" } }, error: null });
 
-    try {
-      await signUpWithPassword(null, makeFormData());
-    } catch {
-      // redirect throws
-    }
+    await expect(signUpWithPassword(null, makeFormData())).rejects.toThrow(
+      "NEXT_REDIRECT:/auth/check-email?email=newuser%40example.com&flow=signup",
+    );
 
     expect(authMock.signUp).toHaveBeenCalledWith({
       email: "newuser@example.com",
@@ -91,14 +106,82 @@ describe("signUpWithPassword", () => {
     });
   });
 
+  it("redirects to check-email when signup returns no session (confirmations on)", async () => {
+    authMock.signUp.mockResolvedValue({ data: { session: null, user: { id: "u1" } }, error: null });
+
+    await expect(signUpWithPassword(null, makeFormData())).rejects.toThrow(
+      "NEXT_REDIRECT:/auth/check-email?email=newuser%40example.com&flow=signup",
+    );
+
+    expect(navigationMocks.redirect).toHaveBeenCalledWith(
+      "/auth/check-email?email=newuser%40example.com&flow=signup",
+    );
+    expect(navigationMocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("enters the app when signup returns a live session (confirmations off)", async () => {
+    authMock.signUp.mockResolvedValue({
+      data: { session: { access_token: "tok" }, user: { id: "u1" } },
+      error: null,
+    });
+
+    await expect(signUpWithPassword(null, makeFormData())).rejects.toThrow("NEXT_REDIRECT:/");
+
+    expect(navigationMocks.revalidatePath).toHaveBeenCalledWith("/", "layout");
+    expect(navigationMocks.redirect).toHaveBeenCalledWith("/");
+  });
+
   it("returns error message when supabase returns an error", async () => {
     authMock.signUp.mockResolvedValue({
+      data: { session: null, user: null },
       error: { message: "Email already registered" },
     });
 
     const result = await signUpWithPassword(null, makeFormData());
 
     expect(result).toEqual({ error: "Email already registered" });
+    expect(navigationMocks.redirect).not.toHaveBeenCalled();
+  });
+});
+
+describe("resendSignupEmail", () => {
+  const makeFormData = (email = "newuser@example.com") => {
+    const fd = new FormData();
+    fd.set("email", email);
+    return fd;
+  };
+
+  it("calls supabase.auth.resend with signup type and emailRedirectTo", async () => {
+    authMock.resend.mockResolvedValue({ data: {}, error: null });
+
+    const result = await resendSignupEmail(null, makeFormData());
+
+    expect(authMock.resend).toHaveBeenCalledWith({
+      type: "signup",
+      email: "newuser@example.com",
+      options: {
+        emailRedirectTo: "http://localhost:3000/auth/callback",
+      },
+    });
+    expect(result).toEqual({ success: true });
+  });
+
+  it("returns the supabase error message (including rate limits)", async () => {
+    authMock.resend.mockResolvedValue({
+      data: {},
+      error: { message: "email rate limit exceeded" },
+    });
+
+    const result = await resendSignupEmail(null, makeFormData());
+
+    expect(result).toEqual({ error: "email rate limit exceeded" });
+  });
+
+  it("returns a validation error when email is missing", async () => {
+    const result = await resendSignupEmail(null, new FormData());
+
+    expect(result).toEqual({ error: "Necesitamos tu email para reenviar el enlace." });
+    expect(authMock.resend).not.toHaveBeenCalled();
   });
 });
 
@@ -109,11 +192,9 @@ describe("signInWithGoogle", () => {
       error: null,
     });
 
-    try {
-      await signInWithGoogle(new FormData());
-    } catch {
-      // redirect throws
-    }
+    await expect(signInWithGoogle(new FormData())).rejects.toThrow(
+      "NEXT_REDIRECT:https://accounts.google.com/o/oauth2/auth",
+    );
 
     expect(authMock.signInWithOAuth).toHaveBeenCalledWith({
       provider: "google",
@@ -129,11 +210,9 @@ describe("signInWithGoogle", () => {
       error: { message: "Provider not enabled" },
     });
 
-    try {
-      await signInWithGoogle(new FormData());
-    } catch {
-      // redirect throws
-    }
+    await expect(signInWithGoogle(new FormData())).rejects.toThrow(
+      "NEXT_REDIRECT:/auth/login?error=Provider%20not%20enabled",
+    );
 
     expect(authMock.signInWithOAuth).toHaveBeenCalledWith({
       provider: "google",
@@ -154,11 +233,9 @@ describe("sendPasswordReset", () => {
   it("calls supabase.auth.resetPasswordForEmail with email and redirectTo", async () => {
     authMock.resetPasswordForEmail.mockResolvedValue({ error: null });
 
-    try {
-      await sendPasswordReset(null, makeFormData());
-    } catch {
-      // redirect throws
-    }
+    await expect(sendPasswordReset(null, makeFormData())).rejects.toThrow(
+      "NEXT_REDIRECT:/auth/check-email?email=forgot%40example.com&flow=recovery",
+    );
 
     expect(authMock.resetPasswordForEmail).toHaveBeenCalledWith("forgot@example.com", {
       redirectTo: "http://localhost:3000/auth/reset-password",
@@ -187,11 +264,7 @@ describe("resetPassword", () => {
   it("calls supabase.auth.updateUser with new password and redirects on success", async () => {
     authMock.updateUser.mockResolvedValue({ error: null });
 
-    try {
-      await resetPassword(null, makeFormData());
-    } catch {
-      // redirect throws
-    }
+    await expect(resetPassword(null, makeFormData())).rejects.toThrow("NEXT_REDIRECT:/");
 
     expect(authMock.updateUser).toHaveBeenCalledWith({
       password: "newsecurepass",
@@ -231,11 +304,7 @@ describe("signOut", () => {
   it("calls supabase.auth.signOut and redirects to login", async () => {
     authMock.signOut.mockResolvedValue({ error: null });
 
-    try {
-      await signOut();
-    } catch {
-      // redirect throws
-    }
+    await expect(signOut()).rejects.toThrow("NEXT_REDIRECT:/auth/login");
 
     expect(authMock.signOut).toHaveBeenCalled();
   });

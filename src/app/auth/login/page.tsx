@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Mountain } from "lucide-react";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -10,8 +11,21 @@ import { SecondaryButton } from "@/components/SecondaryButton";
 import { signInWithPassword, signInWithGoogle } from "@/features/auth/actions";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 
+const LOGIN_ERROR_COPY: Record<string, string> = {
+  auth_callback_failed: "No pudimos confirmar el enlace. Pedí uno nuevo o intentá de nuevo.",
+  otp_expired: "El enlace expiró o ya se usó. Pedí uno nuevo desde el registro.",
+};
+
+function loginErrorMessage(raw: string | null): string | null {
+  if (!raw) return null;
+  return LOGIN_ERROR_COPY[raw] ?? raw;
+}
+
 export default function LoginPage() {
   const [state, action, pending] = useGuardedActionState(signInWithPassword, null);
+  const searchParams = useSearchParams();
+  const urlError = loginErrorMessage(searchParams.get("error"));
+  const error = state?.error ?? urlError;
 
   return (
     <div className="px-[26px] py-6 flex flex-col justify-center gap-[22px] min-h-full">
@@ -46,8 +60,10 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        {state?.error && (
-          <p className="text-sm text-coral bg-coral/10 rounded-md px-3 py-2">{state.error}</p>
+        {error && (
+          <p className="text-sm text-coral bg-coral/10 rounded-md px-3 py-2" role="alert">
+            {error}
+          </p>
         )}
 
         <PrimaryButton type="submit" disabled={pending}>

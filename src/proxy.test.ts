@@ -231,4 +231,23 @@ describe("proxy", () => {
     expect(result.status).toBe(200);
     expect(result.cookies).toBeDefined();
   });
+
+  it("redirects authenticated user from /auth/check-email to /", async () => {
+    authAs();
+    const request = makeRequest("/auth/check-email?email=a%40b.com&flow=signup");
+
+    const result = await proxy(request);
+
+    expect(result.status).toBe(307);
+    expect(result.headers.get("location")).toBe("https://example.com/");
+  });
+
+  it("passes through /auth/check-email without authenticated user", async () => {
+    noAuth();
+    const request = makeRequest("/auth/check-email?email=a%40b.com&flow=signup");
+
+    const result = await proxy(request);
+
+    expect(result.status).toBe(200);
+  });
 });

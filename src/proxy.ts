@@ -45,7 +45,13 @@ function updateSession(request: NextRequest) {
 }
 
 const PROTECTED_PREFIXES = ["/onboarding", "/profile", "/nodo"];
-const AUTH_PREFIXES = ["/auth/login", "/auth/signup", "/auth/recovery", "/auth/reset-password"];
+const AUTH_PREFIXES = [
+  "/auth/login",
+  "/auth/signup",
+  "/auth/recovery",
+  "/auth/reset-password",
+  "/auth/check-email",
+];
 
 // PostgREST returns this code when `.single()` finds no row; all other codes
 // are real failures and are handled differently.
