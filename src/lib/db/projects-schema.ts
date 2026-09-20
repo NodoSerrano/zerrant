@@ -29,9 +29,10 @@ export const PROJECTS_UPDATE_COLUMNS = ["nombre", "descripcion", "estado", "ingr
 
 /**
  * Columns PostgREST may INSERT on public.project_members for self-join.
- * rol/estado omitted so clients cannot self-grant admin/aprobado; defaults + WITH CHECK lock miembro/pendiente.
+ * rol omitted so clients cannot self-grant admin (defaults + WITH CHECK lock miembro).
+ * estado is allowed so the action can set aprobado/pendiente; RLS WITH CHECK enforces the ingreso door.
  */
-export const PROJECT_MEMBERS_INSERT_COLUMNS = ["project_id", "profile_id"] as const;
+export const PROJECT_MEMBERS_INSERT_COLUMNS = ["project_id", "profile_id", "estado"] as const;
 
 /** Columns PostgREST may UPDATE on public.project_members. */
 export const PROJECT_MEMBERS_UPDATE_COLUMNS = ["rol", "estado"] as const;

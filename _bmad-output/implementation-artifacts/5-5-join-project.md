@@ -1,6 +1,6 @@
 # Story 5.5: Join a project — `abierto` immediate vs `aprobacion` pending
 
-Status: backlog
+Status: review
 
 ## Linear
 
@@ -59,36 +59,36 @@ so that the project's chosen door actually governs who gets in.
 
 ## Tasks / Subtasks
 
-- [ ] **T0 — Read the framework docs and the data model** (AC: 1–8)
-  - [ ] Read the server-actions guide in `node_modules/next/dist/docs/` — this Next.js version has breaking changes vs. training data (per `AGENTS.md`).
-  - [ ] Re-read the "The `ingreso` door must be enforced in the database" section of `_bmad-output/specs/spec-m5-proyectos/data-model.md`. It is the single most important policy in this milestone.
+- [x] **T0 — Read the framework docs and the data model** (AC: 1–8)
+  - [x] Read the server-actions guide in `node_modules/next/dist/docs/` — this Next.js version has breaking changes vs. training data (per `AGENTS.md`).
+  - [x] Re-read the "The `ingreso` door must be enforced in the database" section of `_bmad-output/specs/spec-m5-proyectos/data-model.md`. It is the single most important policy in this milestone.
 
-- [ ] **T1 — RED: failing policy harness first** (AC: 1, 2, 3, 4, 5, 6, 7, 8, 9)
-  - [ ] Extend `scripts/check-projects-rls.harness.ts` (from story 5.1) with: `abierto` → `aprobado` allowed; `aprobacion` → `pendiente` allowed; `aprobacion` + self-inserted `aprobado` **rejected**; third-party `profile_id` rejected; self-inserted `rol='admin'` rejected; second join hits the PK; tourist rejected; no `42P17` on any path.
-  - [ ] Verify RED against the story 5.1 policy scaffold.
+- [x] **T1 — RED: failing policy harness first** (AC: 1, 2, 3, 4, 5, 6, 7, 8, 9)
+  - [x] Extend `scripts/check-projects-rls.harness.ts` (from story 5.1) with: `abierto` → `aprobado` allowed; `aprobacion` → `pendiente` allowed; `aprobacion` + self-inserted `aprobado` **rejected**; third-party `profile_id` rejected; self-inserted `rol='admin'` rejected; second join hits the PK; tourist rejected; no `42P17` on any path.
+  - [x] Verify RED against the story 5.1 policy scaffold.
 
-- [ ] **T2 — RED: failing action tests** (AC: 1, 2, 6, 9)
-  - [ ] Action test: `abierto` project → insert payload carries `estado='aprobado'`.
-  - [ ] Action test: `aprobacion` project → insert payload carries `estado='pendiente'`.
-  - [ ] Action test: `23505` from the PK collision → Spanish message, no crash.
-  - [ ] Verify RED.
+- [x] **T2 — RED: failing action tests** (AC: 1, 2, 6, 9)
+  - [x] Action test: `abierto` project → insert payload carries `estado='aprobado'`.
+  - [x] Action test: `aprobacion` project → insert payload carries `estado='pendiente'`.
+  - [x] Action test: `23505` from the PK collision → Spanish message, no crash.
+  - [x] Verify RED.
 
-- [ ] **T3 — GREEN: the migration that pins the door** (AC: 3, 4, 5, 7, 8)
-  - [ ] New migration, timestamped after story 5.1's, replacing the `project_members` INSERT policy with the door-enforcing version.
-  - [ ] `WITH CHECK` asserts all of: `profile_id = auth.uid()`; `public.is_non_tourist()`; `rol = 'miembro'`; and `estado` constrained by the parent project's `ingreso` — `abierto` permits `aprobado`, `aprobacion` permits only `pendiente`.
-  - [ ] The parent lookup reads `public.projects`, not `public.project_members`, so the plain subquery is safe there; anything that must read `project_members` goes through the `security definer` helper from story 5.1.
-  - [ ] Header comment stating why: _a server action that "sets the right estado" is ergonomics, not a guard._
+- [x] **T3 — GREEN: the migration that pins the door** (AC: 3, 4, 5, 7, 8)
+  - [x] New migration, timestamped after story 5.1's, replacing the `project_members` INSERT policy with the door-enforcing version.
+  - [x] `WITH CHECK` asserts all of: `profile_id = auth.uid()`; `public.is_non_tourist()`; `rol = 'miembro'`; and `estado` constrained by the parent project's `ingreso` — `abierto` permits `aprobado`, `aprobacion` permits only `pendiente`.
+  - [x] The parent lookup reads `public.projects`, not `public.project_members`, so the plain subquery is safe there; anything that must read `project_members` goes through the `security definer` helper from story 5.1.
+  - [x] Header comment stating why: _a server action that "sets the right estado" is ergonomics, not a guard._
 
-- [ ] **T4 — GREEN: the join actions** (AC: 1, 2, 6)
-  - [ ] `joinProject(projectId)` in `src/features/projects/actions.ts`: read the project's `ingreso`, insert the corresponding `estado`, `revalidatePath` the detail route.
-  - [ ] Map `23505` to a Spanish message ("Ya sos parte de este proyecto." / "Ya enviaste una solicitud.") following the `createMembershipRequest` precedent.
-  - [ ] Handle the PostgREST 0-row trap: a write that touched nothing is not a success.
-  - [ ] Wire both CTAs from the story 5.4 detail screen.
+- [x] **T4 — GREEN: the join actions** (AC: 1, 2, 6)
+  - [x] `joinProject(projectId)` in `src/features/projects/actions.ts`: read the project's `ingreso`, insert the corresponding `estado`, `revalidatePath` the detail route.
+  - [x] Map `23505` to a Spanish message ("Ya sos parte de este proyecto." / "Ya enviaste una solicitud.") following the `createMembershipRequest` precedent.
+  - [x] Handle the PostgREST 0-row trap: a write that touched nothing is not a success.
+  - [x] Wire both CTAs from the story 5.4 detail screen.
 
-- [ ] **T5 — Verify** (AC: 1, 2, 3, 9)
-  - [ ] `pnpm test && pnpm typecheck && pnpm lint` green.
-  - [ ] Policy harness green against a real database.
-  - [ ] `pnpm db:check-grants` still green.
+- [x] **T5 — Verify** (AC: 1, 2, 3, 9)
+  - [x] `pnpm test && pnpm typecheck && pnpm lint` green.
+  - [x] Policy harness green against a real database.
+  - [x] `pnpm db:check-grants` still green.
 
 ## Dev Notes
 
@@ -175,6 +175,18 @@ The `WITH CHECK` clause reads `public.projects` — a **different** table from t
 
 ### Completion Notes List
 
+- ZER-82 join door: RLS WITH CHECK pins projects.ingreso → project_members.estado; grant allows estado (not rol); joinProject action + ProjectJoinButton on detail CTAs; harness covers bypass/third-party/admin claim/PK/tourist/abierto.
+
 ### Change Log
 
 ### File List
+
+- supabase/migrations/20260920203000_zer82_project_members_ingreso_door.sql
+- scripts/check-projects-rls.harness.ts
+- src/features/projects/actions.ts
+- src/features/projects/actions.test.ts
+- src/features/projects/ProjectJoinButton.tsx
+- src/features/projects/ProjectDetail.tsx
+- src/features/projects/ProjectDetail.test.tsx
+- src/lib/db/projects-schema.ts
+- src/lib/db/projects-schema.test.ts

@@ -98,3 +98,87 @@ export async function createProject(
   revalidatePath("/nodo", "layout");
   redirect("/nodo/projects");
 }
+
+const JOIN_ERROR = "No pudimos unirte al proyecto. Probá de nuevo.";
+const JOIN_REJECTED = "No pudimos unirte al proyecto.";
+const JOIN_UNAUTHORIZED = "No autorizado";
+const JOIN_TOURIST = "Solo los serranos pueden unirse a proyectos";
+const JOIN_NOT_FOUND = "No encontramos ese proyecto.";
+const JOIN_INVALID = "Revisá el proyecto e intentá de nuevo.";
+const ALREADY_MEMBER = "Ya sos parte de este proyecto.";
+const ALREADY_REQUESTED = "Ya enviaste una solicitud.";
+/** Composite PK (project_id, profile_id). */
+const UNIQUE_VIOLATION = "23505";
+
+/**
+ * Self-join a project. Reads projects.ingreso and inserts the matching estado.
+ * The RLS WITH CHECK is the real door; this action is ergonomics on top of it.
+ */
+export async function joinProject(
+  _prevState: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: JOIN_UNAUTHORIZED };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tier")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || isTasksBlockedTier(profile.tier)) {
+    return { error: JOIN_TOURIST };
+  }
+
+  const projectId = trimmed(formData.get("projectId"));
+  if (!projectId) {
+    return { error: JOIN_INVALID };
+  }
+
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id, ingreso")
+    .eq("id", projectId)
+    .maybeSingle();
+
+  if (projectError || !project) {
+    return { error: JOIN_NOT_FOUND };
+  }
+
+  const estado = project.ingreso === "abierto" ? "aprobado" : "pendiente";
+
+  const { data, error } = await supabase
+    .from("project_members")
+    .insert({
+      project_id: project.id,
+      profile_id: user.id,
+      estado,
+    })
+    .select("project_id");
+
+  if (error) {
+    if (error.code === UNIQUE_VIOLATION) {
+      return {
+        error: project.ingreso === "abierto" ? ALREADY_MEMBER : ALREADY_REQUESTED,
+      };
+    }
+    return { error: JOIN_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: JOIN_REJECTED };
+  }
+
+  revalidatePath(`/nodo/projects/${project.id}`);
+  revalidatePath("/nodo/projects");
+  revalidatePath("/nodo", "layout");
+  return null;
+}

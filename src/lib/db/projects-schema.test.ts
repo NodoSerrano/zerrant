@@ -172,7 +172,36 @@ describe("ZER-78 migration SQL", () => {
       "creado_por",
     ]);
     expect([...PROJECTS_UPDATE_COLUMNS]).toEqual(["nombre", "descripcion", "estado", "ingreso"]);
-    expect([...PROJECT_MEMBERS_INSERT_COLUMNS]).toEqual(["project_id", "profile_id"]);
+    expect([...PROJECT_MEMBERS_INSERT_COLUMNS]).toEqual(["project_id", "profile_id", "estado"]);
     expect([...PROJECT_MEMBERS_UPDATE_COLUMNS]).toEqual(["rol", "estado"]);
+  });
+});
+
+describe("ZER-82 ingreso door migration SQL", () => {
+  it("replaces self-join WITH CHECK with the projects.ingreso door and grants estado", () => {
+    const files = readdirSync(MIGRATIONS_DIR).filter((f) =>
+      f.includes("zer82_project_members_ingreso_door"),
+    );
+    expect(files.length, "expected one ZER-82 door migration").toBe(1);
+    const sql = readFileSync(path.join(MIGRATIONS_DIR, files[0]!), "utf8");
+
+    expect(sql).toMatch(/drop policy if exists "Serranos can self-join projects"/i);
+    expect(sql).toMatch(/create policy "Serranos can self-join projects"/i);
+    expect(sql).toMatch(/rol = 'miembro'/);
+    expect(sql).toMatch(/profile_id\s*=\s*auth\.uid\(\)/);
+    expect(sql).toMatch(/is_non_tourist\(\)/);
+    expect(sql).toMatch(/from public\.projects/);
+    expect(sql).toMatch(/ingreso = 'abierto'/);
+    expect(sql).toMatch(/estado = 'aprobado'/);
+    expect(sql).toMatch(/ingreso = 'aprobacion'/);
+    expect(sql).toMatch(/estado = 'pendiente'/);
+    // Must not recurse into project_members inside the insert policy body.
+    expect(sql).not.toMatch(
+      /create policy[\s\S]*on public\.project_members[\s\S]*exists\s*\(\s*select 1 from public\.project_members/i,
+    );
+    const insertGrant = sql.match(/grant insert\s*\(([^)]*)\)\s*on public\.project_members/i);
+    expect(insertGrant, "project_members INSERT grant").toBeTruthy();
+    expect(insertGrant![1].toLowerCase()).toMatch(/\bestado\b/);
+    expect(insertGrant![1].toLowerCase()).not.toMatch(/\brol\b/);
   });
 });
