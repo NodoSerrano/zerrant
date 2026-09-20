@@ -183,7 +183,7 @@ development_status:
   6-6-agenda-day-strip: backlog
   6-7-create-event: review
   6-8-event-detail-attendees: backlog
-  6-9-rsvp: backlog
+  6-9-rsvp: done
   6-10-edit-delete-event: review
   6-11-qa-m6-dod-e2e: backlog
   epic-6-aportes-eventos-retrospective: optional

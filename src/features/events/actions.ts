@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { EVENT_ATTENDANCE_ESTADOS, type EventAttendanceEstado } from "@/lib/db/events-schema";
 import { parseAgendaWallClockIso, validateEventRange } from "./validation";
 
 const CREATE_ERROR = "No pudimos publicar el evento. Probá de nuevo.";
@@ -17,9 +18,24 @@ const UPDATE_REJECTED = "No pudimos guardar los cambios.";
 const DELETE_ERROR = "No pudimos eliminar el evento. Probá de nuevo.";
 const DELETE_REJECTED = "No pudimos eliminar el evento.";
 const MISSING_EVENT = "No encontramos el evento.";
+const RSVP_TOURIST_BLOCKED = "Solo los serranos pueden confirmar asistencia.";
+const RSVP_ERROR = "No pudimos guardar tu respuesta. Probá de nuevo.";
+const RSVP_REJECTED = "No pudimos guardar tu respuesta.";
+const INVALID_EVENT = "Falta el evento.";
+const INVALID_ESTADO = "Revisá tu respuesta.";
 
 function trimmed(value: FormDataEntryValue | null): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+/** Validates against the enum list instead of blindly casting. */
+function oneOf<T extends string>(
+  value: FormDataEntryValue | null,
+  allowed: readonly T[],
+): T | null {
+  return typeof value === "string" && (allowed as readonly string[]).includes(value)
+    ? (value as T)
+    : null;
 }
 
 export async function createEvent(
@@ -224,4 +240,59 @@ export async function deleteEvent(
   revalidatePath("/agenda");
   revalidatePath(`/agenda/${eventId}`);
   redirect("/agenda");
+}
+
+export async function setRsvp(
+  _prevState: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "No autorizado" };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tier")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.tier === "tourist") {
+    return { error: RSVP_TOURIST_BLOCKED };
+  }
+
+  const eventId = trimmed(formData.get("event_id"));
+  if (!eventId) {
+    return { error: INVALID_EVENT };
+  }
+
+  const estado = oneOf<EventAttendanceEstado>(formData.get("estado"), EVENT_ATTENDANCE_ESTADOS);
+  if (!estado) {
+    return { error: INVALID_ESTADO };
+  }
+
+  const { data, error } = await supabase
+    .from("event_attendance")
+    .upsert(
+      { event_id: eventId, profile_id: user.id, estado },
+      { onConflict: "event_id,profile_id" },
+    )
+    .select("event_id");
+
+  if (error) {
+    return { error: RSVP_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: RSVP_REJECTED };
+  }
+
+  revalidatePath(`/agenda/${eventId}`);
+  revalidatePath("/agenda");
+  return null;
 }

@@ -5,7 +5,9 @@ import { Chip } from "@/components/Chip";
 import { EmptyState } from "@/components/EmptyState";
 import { formatEventTimeRange } from "./day";
 import { groupAttendance } from "./attendance";
+import { RsvpControl } from "./RsvpControl";
 import type { EventAttendee, EventCreator } from "./types";
+import type { EventAttendanceEstado } from "@/lib/db/events-schema";
 
 const CHIP_VARIANT = {
   voy: "mint",
@@ -15,6 +17,7 @@ const CHIP_VARIANT = {
 
 export type EventDetailProps = {
   eventId: string;
+  viewerEstado: EventAttendanceEstado | null;
   titulo: string;
   descripcion: string | null;
   lugar: string | null;
@@ -32,6 +35,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 export function EventDetail({
   eventId,
+  viewerEstado,
   titulo,
   descripcion,
   lugar,
@@ -101,8 +105,9 @@ export function EventDetail({
         </div>
       </section>
 
-      {/* Story 6.9 mounts the viewer's RSVP control here. */}
-      <div data-testid="rsvp-control-slot" />
+      <div data-testid="rsvp-control-slot">
+        <RsvpControl eventId={eventId} currentEstado={viewerEstado} />
+      </div>
 
       <section className="flex flex-col gap-3" aria-labelledby="attendees-heading">
         <SectionTitle>
