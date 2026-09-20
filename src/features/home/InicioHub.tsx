@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Cake, Calendar } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { EmptyState } from "@/components/EmptyState";
@@ -79,7 +80,7 @@ export function InicioHub({ events, birthdays }: InicioHubProps) {
           <ul className="flex flex-col gap-3">
             {birthdays.map((row) => (
               <li key={row.profileId}>
-                <a
+                <Link
                   href={`/plantel/${row.profileId}`}
                   className="rounded-[20px] bg-surface border border-border shadow-[0_10px_30px_-12px_rgba(26,22,20,0.15)] p-4 flex items-center gap-3 w-full"
                 >
@@ -92,7 +93,7 @@ export function InicioHub({ events, birthdays }: InicioHubProps) {
                       {birthdaySubtitle(row)}
                     </span>
                   </div>
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

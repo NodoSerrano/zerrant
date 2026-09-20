@@ -6,6 +6,10 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
+vi.mock("@/features/profile/onboarding-gate-server", () => ({
+  getOnboardingGateProfile: vi.fn(),
+}));
+
 vi.mock("next/navigation", () => ({
   redirect: (path: string) => {
     throw new Error(`REDIRECT:${path}`);
@@ -58,12 +62,11 @@ type ProfileRow = {
 
 function mockSupabase(
   opts: {
-    user?: { id: string } | null;
     events?: EventRow[];
     profiles?: ProfileRow[];
   } = {},
 ) {
-  const { user = { id: "user-1" }, events = [], profiles = [] } = opts;
+  const { events = [], profiles = [] } = opts;
 
   const eventsChain: Record<string, unknown> & {
     then: (cb: (v: unknown) => void) => unknown;
@@ -85,7 +88,7 @@ function mockSupabase(
 
   return {
     auth: {
-      getUser: vi.fn().mockResolvedValue({ data: { user }, error: null }),
+      getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1" } }, error: null }),
     },
     from: vi.fn().mockImplementation((table: string) => {
       if (table === "events") return eventsChain;
@@ -96,6 +99,13 @@ function mockSupabase(
     profilesChain,
   };
 }
+
+const completeProfile = {
+  nombre: "Juan",
+  apellido: "Pérez",
+  fecha_nacimiento: "1990-01-15",
+  onboarding_completado_en: "2026-01-01T00:00:00Z",
+};
 
 describe("InicioPage (/)", () => {
   beforeEach(() => {
@@ -110,21 +120,71 @@ describe("InicioPage (/)", () => {
   });
 
   it("redirects unauthenticated users to login", async () => {
-    const { createClient } = await import("@/lib/supabase/server");
-    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase({ user: null }));
+    const { getOnboardingGateProfile } = await import("@/features/profile/onboarding-gate-server");
+    (getOnboardingGateProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      profile: null,
+      error: null,
+      userId: null,
+    });
+
     await expect(InicioPage()).rejects.toThrow("REDIRECT:/auth/login");
   });
 
+  it("redirects incomplete onboarding away from Inicio (AC2 / NFR27)", async () => {
+    const { getOnboardingGateProfile } = await import("@/features/profile/onboarding-gate-server");
+    (getOnboardingGateProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      profile: {
+        nombre: "Juan",
+        apellido: "Pérez",
+        fecha_nacimiento: "1990-01-15",
+        onboarding_completado_en: null,
+      },
+      error: null,
+      userId: "user-1",
+    });
+
+    await expect(InicioPage()).rejects.toThrow("REDIRECT:/onboarding/step2");
+  });
+
+  it("redirects missing step1 data to step1", async () => {
+    const { getOnboardingGateProfile } = await import("@/features/profile/onboarding-gate-server");
+    (getOnboardingGateProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      profile: {
+        nombre: null,
+        apellido: null,
+        fecha_nacimiento: null,
+        onboarding_completado_en: null,
+      },
+      error: null,
+      userId: "user-1",
+    });
+
+    await expect(InicioPage()).rejects.toThrow("REDIRECT:/onboarding/step1");
+  });
+
   it("renders Inicio hub instead of bouncing to /profile when onboarded", async () => {
+    const { getOnboardingGateProfile } = await import("@/features/profile/onboarding-gate-server");
     const { createClient } = await import("@/lib/supabase/server");
+    (getOnboardingGateProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      profile: completeProfile,
+      error: null,
+      userId: "user-1",
+    });
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+
     const element = await InicioPage();
     render(element);
     expect(screen.getByRole("heading", { name: "Inicio" })).toBeInTheDocument();
   });
 
   it("lists upcoming events from the events table", async () => {
+    const { getOnboardingGateProfile } = await import("@/features/profile/onboarding-gate-server");
     const { createClient } = await import("@/lib/supabase/server");
+    (getOnboardingGateProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      profile: completeProfile,
+      error: null,
+      userId: "user-1",
+    });
     const client = mockSupabase({
       events: [
         {
@@ -139,6 +199,7 @@ describe("InicioPage (/)", () => {
       ],
     });
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
+
     render(await InicioPage());
     expect(screen.getByText("Asamblea")).toBeInTheDocument();
     expect(client.from).toHaveBeenCalledWith("events");
@@ -146,7 +207,13 @@ describe("InicioPage (/)", () => {
   });
 
   it("lists plantel-class birthdays only (neq tourist query) via helpers", async () => {
+    const { getOnboardingGateProfile } = await import("@/features/profile/onboarding-gate-server");
     const { createClient } = await import("@/lib/supabase/server");
+    (getOnboardingGateProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      profile: completeProfile,
+      error: null,
+      userId: "user-1",
+    });
     const client = mockSupabase({
       profiles: [
         {
@@ -172,6 +239,7 @@ describe("InicioPage (/)", () => {
       ],
     });
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
+
     render(await InicioPage());
     expect(screen.getByText("Ana García")).toBeInTheDocument();
     expect(screen.queryByText("Lejos X")).not.toBeInTheDocument();
@@ -180,8 +248,15 @@ describe("InicioPage (/)", () => {
   });
 
   it("shows honest empty sections when there are no rows", async () => {
+    const { getOnboardingGateProfile } = await import("@/features/profile/onboarding-gate-server");
     const { createClient } = await import("@/lib/supabase/server");
+    (getOnboardingGateProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      profile: completeProfile,
+      error: null,
+      userId: "user-1",
+    });
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+
     render(await InicioPage());
     expect(screen.getByText("No hay eventos próximos")).toBeInTheDocument();
     expect(screen.getByText("No hay cumpleaños próximos")).toBeInTheDocument();
