@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getSupabaseAvatarRemotePatterns, isServableAvatarImageUrl } from "./avatar-image-url";
+import {
+  getSupabaseAvatarRemotePatterns,
+  isServableAvatarImageUrl,
+  shouldAllowLocalIPForAvatars,
+} from "./avatar-image-url";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -21,6 +25,40 @@ describe("getSupabaseAvatarRemotePatterns", () => {
         pathname: "/storage/v1/object/public/avatars/**",
       },
     ]);
+  });
+
+  it("preserves the local Supabase port in the pattern", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
+    expect(getSupabaseAvatarRemotePatterns()).toEqual([
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+        port: "54321",
+        pathname: "/storage/v1/object/public/avatars/**",
+      },
+    ]);
+  });
+});
+
+describe("shouldAllowLocalIPForAvatars", () => {
+  it("is false when Supabase URL is missing", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    expect(shouldAllowLocalIPForAvatars()).toBe(false);
+  });
+
+  it("is false for public Supabase hosts", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://abc.supabase.co");
+    expect(shouldAllowLocalIPForAvatars()).toBe(false);
+  });
+
+  it("is true for loopback Supabase (local stack)", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
+    expect(shouldAllowLocalIPForAvatars()).toBe(true);
+  });
+
+  it("is true for localhost Supabase", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://localhost:54321");
+    expect(shouldAllowLocalIPForAvatars()).toBe(true);
   });
 });
 

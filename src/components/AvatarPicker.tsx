@@ -35,12 +35,19 @@ export function AvatarPicker({
   // The photo lives here, not in the action state: a later error replaces the
   // whole state and would wipe from the UI a photo that did get saved.
   const [url, setUrl] = useState<string | null>(initialUrl ?? null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (state?.avatarUrl) {
       setUrl(state.avatarUrl);
     }
   }, [state?.avatarUrl]);
+
+  // next/image can still 400/404 after a URL is held (local IP blocked, missing object).
+  // Reset when the URL changes so a successful re-upload can paint again.
+  useEffect(() => {
+    setFailed(false);
+  }, [url]);
 
   useEffect(() => {
     onUploadingChange?.(pending);
@@ -49,8 +56,10 @@ export function AvatarPicker({
   // next/image throws on absolute hosts outside remotePatterns — never block onboarding.
   // Guard stays here (not only in Avatar) because this picker still renders next/image
   // directly with a camera placeholder instead of the shared Avatar component.
-  const displayUrl = url && isServableAvatarImageUrl(url) ? url : null;
-  const label = pending ? "Subiendo..." : displayUrl ? "Cambiar foto" : "Agregar foto";
+  const servableUrl = url && isServableAvatarImageUrl(url) ? url : null;
+  // Label follows whether we hold a servable URL (user can change it), not whether paint succeeded.
+  const label = pending ? "Subiendo..." : servableUrl ? "Cambiar foto" : "Agregar foto";
+  const displayUrl = servableUrl && !failed ? servableUrl : null;
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -79,6 +88,7 @@ export function AvatarPicker({
               alt="Foto de perfil"
               width={100}
               height={100}
+              onError={() => setFailed(true)}
               className="size-full object-cover"
             />
           ) : (
