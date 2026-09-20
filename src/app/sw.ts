@@ -34,7 +34,8 @@ const shellAwareRuntimeCaching: RuntimeCaching[] = [
 ];
 
 const serwist = new Serwist({
-  precacheEntries: self.__SW_MANIFEST,
+  // Serwist injects the precache list at this injection point (self.__SW_MANIFEST).
+  precacheEntries: self["__SW_MANIFEST"],
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,

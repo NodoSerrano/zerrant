@@ -1,7 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { OFFLINE_FALLBACK_PATH } from "./offlineShellPolicy";
 import { buildWebAppManifest } from "./manifestConfig";
 
 const repoRoot = resolve(__dirname, "../../..");
