@@ -15,7 +15,8 @@ Las reglas de acceso viven en **Row Level Security de Postgres**, no solo en el 
 - `membership_requests`: el dueño crea/lee la suya; admins ven todas.
 - `projects`/`project_members`: crear = cualquier serrano; editar config y aprobar ingresos = admins **de ese proyecto**; `ingreso=abierto` → entra aprobado, `aprobacion` → pendiente. Ver [[M5 · Proyectos]].
 - `aportes`: lee serranos; inserta dueño o admin (económicos → Tesorería).
-- `events`: lee autenticado; escribe serrano; edita/borra creador o admin.
+- `events`: lee autenticado; escribe serrano; edita/borra creador o **platform admin** (`profiles.is_platform_admin`). `creado_por` es inmutable (grant + policy). Sin columna `estado` en `events` (ZER-91).
+- `event_attendance`: lee autenticado (lista de asistentes en detalle); insert/update/delete solo de la fila propia (`profile_id = auth.uid()`). Insert restringido a serranos (tourist no RSVP). Borrado de evento cascadea filas de asistencia (`ON DELETE CASCADE`). Admin de plataforma no necesita mutar RSVPs ajenos en MVP (ZER-91).
 - `tasks` UPDATE: policies separadas (creador / tomador / claim abierta / admin) + trigger `enforce_task_update_guard` (ZER-42). El tomador no puede setear `verificada` ni editar contenido vía PostgREST; solo admin verifica `hecha→verificada`.
 
 ## Grants vs RLS (PostgREST)

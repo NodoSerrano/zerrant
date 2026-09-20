@@ -287,6 +287,80 @@ export type Database = {
           },
         ];
       };
+      events: {
+        Row: {
+          id: string;
+          titulo: string;
+          descripcion: string | null;
+          lugar: string | null;
+          inicio: string;
+          fin: string | null;
+          creado_por: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          titulo: string;
+          descripcion?: string | null;
+          lugar?: string | null;
+          inicio: string;
+          fin?: string | null;
+          creado_por: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          titulo?: string;
+          descripcion?: string | null;
+          lugar?: string | null;
+          inicio?: string;
+          fin?: string | null;
+          creado_por?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "events_creado_por_fkey";
+            columns: ["creado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      event_attendance: {
+        Row: {
+          event_id: string;
+          profile_id: string;
+          estado: Database["public"]["Enums"]["event_attendance_estado"];
+        };
+        Insert: {
+          event_id: string;
+          profile_id: string;
+          estado: Database["public"]["Enums"]["event_attendance_estado"];
+        };
+        Update: {
+          event_id?: string;
+          profile_id?: string;
+          estado?: Database["public"]["Enums"]["event_attendance_estado"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "event_attendance_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "event_attendance_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       profiles_with_rate: {
@@ -353,6 +427,7 @@ export type Database = {
     };
     Enums: {
       disponibilidad: "disponible" | "ocupado" | "solo_eventos";
+      event_attendance_estado: "voy" | "quizas" | "no";
       membership_request_estado: "pendiente" | "aprobada" | "rechazada";
       nombre_visible: "apodo" | "nombre_apellido" | "apellido_nombre";
       task_categoria: "reparacion" | "limpieza" | "compra" | "mantenimiento" | "otro";
@@ -486,6 +561,7 @@ export const Constants = {
   public: {
     Enums: {
       disponibilidad: ["disponible", "ocupado", "solo_eventos"],
+      event_attendance_estado: ["voy", "quizas", "no"],
       membership_request_estado: ["pendiente", "aprobada", "rechazada"],
       nombre_visible: ["apodo", "nombre_apellido", "apellido_nombre"],
       task_categoria: ["reparacion", "limpieza", "compra", "mantenimiento", "otro"],
