@@ -110,4 +110,30 @@ describe("buildSerranoMemberDetail", () => {
     );
     expect(result.tarifaHora).toBeNull();
   });
+
+  it("includes member aportes when provided", () => {
+    const aportes = [
+      {
+        id: "a1",
+        tipo: "donacion",
+        descripcion: "Donó un proyector",
+        monto: null,
+        fecha: "2026-07-12",
+      },
+    ];
+    const result = buildSerranoMemberDetail(profile, roles, skills, {
+      isSelf: false,
+      isAdmin: false,
+      aportes,
+    });
+    expect(result.aportes).toEqual(aportes);
+  });
+
+  it("defaults aportes to an empty list when omitted", () => {
+    const result = buildSerranoMemberDetail(profile, roles, skills, {
+      isSelf: false,
+      isAdmin: false,
+    });
+    expect(result.aportes).toEqual([]);
+  });
 });

@@ -1,3 +1,5 @@
+import type { AporteListItem } from "@/features/aportes/types";
+
 export type SerranoTier = "scholar" | "standard" | "founder";
 
 export type Disponibilidad = "disponible" | "ocupado" | "solo_eventos";
@@ -33,4 +35,5 @@ export type SerranoMemberDetail = {
   bio: string | null;
   tarifaHora: number | null;
   telegramHref: string | null;
+  aportes: AporteListItem[];
 };

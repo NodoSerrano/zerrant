@@ -1,4 +1,5 @@
 import { resolveTarifaHora, telegramHref } from "./visibility";
+import type { AporteListItem } from "@/features/aportes/types";
 import type { Disponibilidad, SerranoMember, SerranoMemberDetail, SerranoTier } from "./types";
 
 type ProfileRow = {
@@ -50,7 +51,12 @@ export function buildSerranoMemberDetail(
   profile: DetailProfileRow,
   roles: string[],
   skills: string[],
-  viewer: { isSelf: boolean; isAdmin: boolean; isTourist?: boolean },
+  viewer: {
+    isSelf: boolean;
+    isAdmin: boolean;
+    isTourist?: boolean;
+    aportes?: AporteListItem[];
+  },
 ): SerranoMemberDetail {
   const tarifaHora = resolveTarifaHora({
     tarifaHora: profile.tarifa_hora,
@@ -73,6 +79,7 @@ export function buildSerranoMemberDetail(
     bio: profile.bio,
     tarifaHora,
     telegramHref: telegramHref(profile.contacto_telegram),
+    aportes: viewer.aportes ?? [],
   };
 }
 
