@@ -1,6 +1,6 @@
 # Story 5.6: Join-request queue (`4.5 · Solicitudes de ingreso`)
 
-Status: backlog
+Status: review
 
 ## Linear
 
@@ -59,41 +59,41 @@ so that I can approve or reject each request.
 
 ## Tasks / Subtasks
 
-- [ ] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1)
-  - [ ] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg`, `fd` or any filesystem tool. Only `mcp__pencil` tools can read it.
-  - [ ] Use `mcp__pencil__get_app_state` to locate frame `4.5 · Solicitudes de ingreso`; read its contents with the design-context tooling.
-  - [ ] Record the resolved node id into `_bmad-output/specs/spec-m5-proyectos/screen-inventory.md`, replacing `TBD`.
-  - [ ] **This story is not ready for development until this task is done.**
+- [x] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1)
+  - [x] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg`, `fd` or any filesystem tool. Only `mcp__pencil` tools can read it.
+  - [x] Use `mcp__pencil__get_app_state` to locate frame `4.5 · Solicitudes de ingreso`; read its contents with the design-context tooling.
+  - [x] Record the resolved node id into `_bmad-output/specs/spec-m5-proyectos/screen-inventory.md`, replacing `TBD`.
+  - [x] **This story is not ready for development until this task is done.**
 
-- [ ] **T1 — Read the framework docs** (AC: 2–8)
-  - [ ] Read the server-actions / dynamic-route guide in `node_modules/next/dist/docs/` — breaking changes vs. training data (per `AGENTS.md`).
+- [x] **T1 — Read the framework docs** (AC: 2–8)
+  - [x] Read the server-actions / dynamic-route guide in `node_modules/next/dist/docs/` — breaking changes vs. training data (per `AGENTS.md`).
 
-- [ ] **T2 — RED: failing policy harness first** (AC: 3, 4, 5, 6, 7, 9)
-  - [ ] Extend `scripts/check-projects-rls.harness.ts`: project admin can update `pendiente` → `aprobado`; project admin can delete a `pendiente` row; a plain `miembro` cannot; a non-member cannot; a `pendiente` requester cannot self-approve; a **platform admin who is not a project admin** cannot.
-  - [ ] Verify RED.
+- [x] **T2 — RED: failing policy harness first** (AC: 3, 4, 5, 6, 7, 9)
+  - [x] Extend `scripts/check-projects-rls.harness.ts`: project admin can update `pendiente` → `aprobado`; project admin can delete a `pendiente` row; a plain `miembro` cannot; a non-member cannot; a `pendiente` requester cannot self-approve; a **platform admin who is not a project admin** cannot.
+  - [x] Verify RED.
 
-- [ ] **T3 — RED: failing page/action tests** (AC: 2, 3, 4, 7, 8, 9)
-  - [ ] Queue page test: renders one row per `pendiente` request, with both affordances.
-  - [ ] Queue page test: empty state.
-  - [ ] Action tests: approve updates `estado` only; reject deletes; 0-row result → error, not redirect.
-  - [ ] Verify RED.
+- [x] **T3 — RED: failing page/action tests** (AC: 2, 3, 4, 7, 8, 9)
+  - [x] Queue page test: renders one row per `pendiente` request, with both affordances.
+  - [x] Queue page test: empty state.
+  - [x] Action tests: approve updates `estado` only; reject deletes; 0-row result → error, not redirect.
+  - [x] Verify RED.
 
-- [ ] **T4 — GREEN: the queue route** (AC: 2, 8)
-  - [ ] Route under `src/app/(app)/nodo/projects/[id]/requests/` (adjust only if the resolved Pencil IA demands it).
-  - [ ] Read `project_members` where `estado='pendiente'` for this project, joined to `profiles` for names and avatars.
-  - [ ] Compose rows from DS primitives (`Avatar`, `PrimaryButton`, `SecondaryButton`) — `src/components/RequestCard.tsx` is the closest prior art for an approve/reject row and is worth reading, but it is bound to `membership_requests`; do not repurpose it blind (NFR17).
+- [x] **T4 — GREEN: the queue route** (AC: 2, 8)
+  - [x] Route under `src/app/(app)/nodo/projects/[id]/requests/` (adjust only if the resolved Pencil IA demands it).
+  - [x] Read `project_members` where `estado='pendiente'` for this project, joined to `profiles` for names and avatars.
+  - [x] Compose rows from DS primitives (`Avatar`, `PrimaryButton`, `SecondaryButton`) — `src/components/RequestCard.tsx` is the closest prior art for an approve/reject row and is worth reading, but it is bound to `membership_requests`; do not repurpose it blind (NFR17).
 
-- [ ] **T5 — GREEN: approve / reject actions** (AC: 3, 4, 7)
-  - [ ] `approveProjectJoin` / `rejectProjectJoin` in `src/features/projects/actions.ts`.
-  - [ ] Approve: `update … set estado='aprobado' where project_id = … and profile_id = … and estado='pendiente'`, then check the row count.
-  - [ ] Reject: delete the row. No third enum value, no soft-delete flag.
-  - [ ] `revalidatePath` the queue and the detail route.
-  - [ ] Spanish error copy following `src/features/tasks/actions.ts`.
+- [x] **T5 — GREEN: approve / reject actions** (AC: 3, 4, 7)
+  - [x] `approveProjectJoin` / `rejectProjectJoin` in `src/features/projects/actions.ts`.
+  - [x] Approve: `update … set estado='aprobado' where project_id = … and profile_id = … and estado='pendiente'`, then check the row count.
+  - [x] Reject: delete the row. No third enum value, no soft-delete flag.
+  - [x] `revalidatePath` the queue and the detail route.
+  - [x] Spanish error copy following `src/features/tasks/actions.ts`.
 
-- [ ] **T6 — Verify** (AC: 2, 5, 9)
-  - [ ] `pnpm test && pnpm typecheck && pnpm lint` green.
-  - [ ] Policy harness green; `pnpm db:check-grants` still green.
-  - [ ] Visual acceptance: frame `4.5` vs the live route at ~390px.
+- [x] **T6 — Verify** (AC: 2, 5, 9)
+  - [x] `pnpm test && pnpm typecheck && pnpm lint` green.
+  - [x] Policy harness green; `pnpm db:check-grants` still green.
+  - [x] Visual acceptance: frame `4.5` vs the live route at ~390px.
 
 ## Dev Notes
 
@@ -176,6 +176,24 @@ PostgREST does not error when an update's filters match nothing — the update s
 
 ### Completion Notes List
 
+- Resolved Pencil frame `4.5` node id `c8G0S` into screen-inventory.
+- Queue route `/nodo/projects/[id]/requests` with empty state + JoinRequestRow approve/reject.
+- `approveProjectJoin` / `rejectProjectJoin` with 0-row failure handling; RLS harness covers platform-admin and non-member denies.
+- Visual IA matches frame c8G0S (back + title, project name, count, card with Aprobar/Rechazar).
+
 ### Change Log
 
 ### File List
+
+- `_bmad-output/specs/spec-m5-proyectos/screen-inventory.md`
+- `src/app/(app)/nodo/projects/[id]/requests/page.tsx`
+- `src/app/(app)/nodo/projects/[id]/requests/page.test.tsx`
+- `src/features/projects/JoinRequestQueue.tsx`
+- `src/features/projects/JoinRequestQueue.test.tsx`
+- `src/features/projects/JoinRequestRow.tsx`
+- `src/features/projects/JoinRequestRow.test.tsx`
+- `src/features/projects/join-request-transform.ts`
+- `src/features/projects/join-request-transform.test.ts`
+- `src/features/projects/actions.ts`
+- `src/features/projects/actions.test.ts`
+- `scripts/check-projects-rls.harness.ts`

@@ -182,3 +182,105 @@ export async function joinProject(
   revalidatePath("/nodo", "layout");
   return null;
 }
+
+const APPROVE_ERROR = "No pudimos aprobar la solicitud. Probá de nuevo.";
+const APPROVE_REJECTED = "No pudimos aprobar esta solicitud.";
+const REJECT_ERROR = "No pudimos rechazar la solicitud. Probá de nuevo.";
+const REJECT_REJECTED = "No pudimos rechazar esta solicitud.";
+const QUEUE_UNAUTHORIZED = "No autorizado";
+const QUEUE_INVALID = "Revisá la solicitud e intentá de nuevo.";
+
+/**
+ * Approve a pending project join request (pendiente → aprobado).
+ * Only estado is updated; rol and other projects are never touched.
+ * 0-row updates are failures — PostgREST does not error on empty matches.
+ */
+export async function approveProjectJoin(
+  _prevState: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: QUEUE_UNAUTHORIZED };
+  }
+
+  const projectId = trimmed(formData.get("projectId"));
+  const profileId = trimmed(formData.get("profileId"));
+  if (!projectId || !profileId) {
+    return { error: QUEUE_INVALID };
+  }
+
+  const { data, error } = await supabase
+    .from("project_members")
+    .update({ estado: "aprobado" })
+    .eq("project_id", projectId)
+    .eq("profile_id", profileId)
+    .eq("estado", "pendiente")
+    .select("profile_id");
+
+  if (error) {
+    return { error: APPROVE_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: APPROVE_REJECTED };
+  }
+
+  revalidatePath(`/nodo/projects/${projectId}/requests`);
+  revalidatePath(`/nodo/projects/${projectId}`);
+  revalidatePath("/nodo/projects");
+  revalidatePath("/nodo", "layout");
+  return null;
+}
+
+/**
+ * Reject a pending project join request by deleting the pendiente row.
+ * No third enum value — the person may request again.
+ */
+export async function rejectProjectJoin(
+  _prevState: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: QUEUE_UNAUTHORIZED };
+  }
+
+  const projectId = trimmed(formData.get("projectId"));
+  const profileId = trimmed(formData.get("profileId"));
+  if (!projectId || !profileId) {
+    return { error: QUEUE_INVALID };
+  }
+
+  const { data, error } = await supabase
+    .from("project_members")
+    .delete()
+    .eq("project_id", projectId)
+    .eq("profile_id", profileId)
+    .eq("estado", "pendiente")
+    .select("profile_id");
+
+  if (error) {
+    return { error: REJECT_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: REJECT_REJECTED };
+  }
+
+  revalidatePath(`/nodo/projects/${projectId}/requests`);
+  revalidatePath(`/nodo/projects/${projectId}`);
+  revalidatePath("/nodo/projects");
+  revalidatePath("/nodo", "layout");
+  return null;
+}
