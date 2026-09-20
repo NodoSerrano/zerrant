@@ -15,6 +15,10 @@ const mocks = vi.hoisted(() => ({
   eventsDeleteEq: vi.fn(),
   eventsDeleteSelect: vi.fn(),
   eventsInsertPayload: null as unknown,
+  attendanceUpsert: vi.fn(),
+  attendanceSelect: vi.fn(),
+  attendanceUpsertPayload: null as unknown,
+  attendanceUpsertOptions: null as unknown,
   revalidatePath: vi.fn(),
   redirect: vi.fn((url: string) => {
     throw new Error(`NEXT_REDIRECT:${url}`);
@@ -57,6 +61,19 @@ vi.mock("@/lib/supabase/server", () => ({
           })),
         };
       }
+      if (table === "event_attendance") {
+        return {
+          upsert: mocks.attendanceUpsert.mockImplementation(
+            (payload: unknown, options: unknown) => {
+              mocks.attendanceUpsertPayload = payload;
+              mocks.attendanceUpsertOptions = options;
+              return {
+                select: mocks.attendanceSelect,
+              };
+            },
+          ),
+        };
+      }
       return {};
     }),
   }),
@@ -70,12 +87,14 @@ vi.mock("next/navigation", () => ({
   redirect: (url: string) => mocks.redirect(url),
 }));
 
-import { createEvent, updateEvent, deleteEvent } from "./actions";
+import { createEvent, updateEvent, deleteEvent, setRsvp } from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.eventsInsertPayload = null;
   mocks.eventsUpdatePayload = null;
+  mocks.attendanceUpsertPayload = null;
+  mocks.attendanceUpsertOptions = null;
 });
 
 function setupAuth(userId = "serrano-1") {
@@ -329,5 +348,102 @@ describe("deleteEvent", () => {
     const result = await deleteEvent(null, makeDeleteForm());
     expect(result).toEqual({ error: "No autorizado" });
     expect(mocks.eventsDelete).not.toHaveBeenCalled();
+  });
+});
+
+function makeRsvpFormData(overrides: Record<string, string> = {}) {
+  const fd = new FormData();
+  fd.set("event_id", "evt-1");
+  fd.set("estado", "voy");
+  for (const [k, v] of Object.entries(overrides)) {
+    fd.set(k, v);
+  }
+  return fd;
+}
+
+describe("setRsvp", () => {
+  it("upserts on (event_id, profile_id) using the session user, not a form profile_id", async () => {
+    setupAuth("serrano-1");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.attendanceSelect.mockResolvedValue({ error: null, data: [{ event_id: "evt-1" }] });
+
+    const result = await setRsvp(
+      null,
+      makeRsvpFormData({ profile_id: "attacker-id", estado: "quizas" }),
+    );
+
+    expect(result).toBeNull();
+    expect(mocks.attendanceUpsertPayload).toEqual({
+      event_id: "evt-1",
+      profile_id: "serrano-1",
+      estado: "quizas",
+    });
+    expect(mocks.attendanceUpsertOptions).toEqual({ onConflict: "event_id,profile_id" });
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/agenda/evt-1");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/agenda");
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("rejects a bogus estado before writing", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+
+    const result = await setRsvp(null, makeRsvpFormData({ estado: "quizás" }));
+
+    expect(result).toEqual({ error: "Revisá tu respuesta." });
+    expect(mocks.attendanceUpsert).not.toHaveBeenCalled();
+  });
+
+  it("rejects a missing event_id before writing", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    const fd = makeRsvpFormData();
+    fd.delete("event_id");
+
+    const result = await setRsvp(null, fd);
+
+    expect(result).toEqual({ error: "Falta el evento." });
+    expect(mocks.attendanceUpsert).not.toHaveBeenCalled();
+  });
+
+  it("returns unauthorized when there is no session", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+
+    const result = await setRsvp(null, makeRsvpFormData());
+
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.attendanceUpsert).not.toHaveBeenCalled();
+  });
+
+  it("blocks tourists before upsert (UX); RLS remains the authority", async () => {
+    setupAuth("tourist-1");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "tourist" } });
+
+    const result = await setRsvp(null, makeRsvpFormData());
+
+    expect(result).toEqual({ error: "Solo los serranos pueden confirmar asistencia." });
+    expect(mocks.attendanceUpsert).not.toHaveBeenCalled();
+  });
+
+  it("treats a zero-row upsert as failure", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.attendanceSelect.mockResolvedValue({ error: null, data: [] });
+
+    const result = await setRsvp(null, makeRsvpFormData());
+
+    expect(result).toEqual({ error: "No pudimos guardar tu respuesta." });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a Spanish error when the upsert fails", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.attendanceSelect.mockResolvedValue({ error: { message: "rls" }, data: null });
+
+    const result = await setRsvp(null, makeRsvpFormData());
+
+    expect(result).toEqual({ error: "No pudimos guardar tu respuesta. Probá de nuevo." });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 });

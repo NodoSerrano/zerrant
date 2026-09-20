@@ -174,6 +174,66 @@ begin
     end;
     v_rows := v_rows || ('serrano_b_rsvp_as_a=' || v_state);
 
+
+    perform set_config('request.jwt.claims', '{"sub":"${SERRANO_B}","role":"authenticated"}', true);
+    begin
+      update public.event_attendance
+        set estado = 'quizas'
+        where event_id = v_event and profile_id = '${SERRANO_B}';
+      get diagnostics v_count = row_count;
+      if v_count > 0 then
+        v_state := '${SUCCESS}';
+      else
+        v_state := '${RLS_DENIED}';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('serrano_b_rsvp_update=' || v_state);
+
+    perform set_config('request.jwt.claims', '{"sub":"${SERRANO_B}","role":"authenticated"}', true);
+    begin
+      insert into public.event_attendance (event_id, profile_id, estado)
+      values (v_event, '${SERRANO_B}', 'no')
+      on conflict (event_id, profile_id) do update set estado = excluded.estado;
+      v_state := '${SUCCESS}';
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('serrano_b_rsvp_upsert=' || v_state);
+
+    select count(*) into v_count
+      from public.event_attendance
+      where event_id = v_event and profile_id = '${SERRANO_B}';
+    v_rows := v_rows || ('serrano_b_rsvp_row_count=' || v_count::text);
+
+    perform set_config('request.jwt.claims', '{"sub":"${SERRANO_A}","role":"authenticated"}', true);
+    begin
+      update public.event_attendance
+        set estado = 'no'
+        where event_id = v_event and profile_id = '${SERRANO_B}';
+      get diagnostics v_count = row_count;
+      if v_count > 0 then
+        v_state := '${SUCCESS}';
+      else
+        v_state := '${RLS_DENIED}';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('serrano_a_rsvp_update_b=' || v_state);
+
+    perform set_config('request.jwt.claims', '{"sub":"${SERRANO_A}","role":"authenticated"}', true);
+    begin
+      delete from public.event_attendance
+        where event_id = v_event and profile_id = '${SERRANO_B}';
+      get diagnostics v_count = row_count;
+      if v_count > 0 then
+        v_state := '${SUCCESS}';
+      else
+        v_state := '${RLS_DENIED}';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('serrano_a_rsvp_delete_b=' || v_state);
+
     perform set_config('request.jwt.claims', '{"sub":"${SERRANO_B}","role":"authenticated"}', true);
     begin
       delete from public.events where id = v_event;
@@ -317,6 +377,17 @@ describe("events + event_attendance RLS (live DB)", () => {
     expect(outcomes.serrano_b_rsvp).toBe(SUCCESS);
     expect(outcomes.tourist_rsvp).toBe(RLS_DENIED);
     expect(outcomes.serrano_b_rsvp_as_a).toBe(RLS_DENIED);
+  });
+
+  it("allows own-row RSVP update and keeps a single row after a second answer", () => {
+    expect(outcomes.serrano_b_rsvp_update).toBe(SUCCESS);
+    expect(outcomes.serrano_b_rsvp_upsert).toBe(SUCCESS);
+    expect(outcomes.serrano_b_rsvp_row_count).toBe("1");
+  });
+
+  it("denies third-party RSVP update and delete", () => {
+    expect(outcomes.serrano_a_rsvp_update_b).toBe(RLS_DENIED);
+    expect(outcomes.serrano_a_rsvp_delete_b).toBe(RLS_DENIED);
   });
 
   it("denies other serrano delete", () => {

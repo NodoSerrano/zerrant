@@ -76,8 +76,12 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const profiles = new Map((profileRows ?? []).map((row) => [row.id, row as ProfileLite]));
 
   const attendees: EventAttendee[] = [];
+  let viewerEstado: EventAttendee["estado"] | null = null;
   for (const row of attendance) {
     if (!isEventAttendanceEstado(row.estado)) continue;
+    if (row.profile_id === user.id) {
+      viewerEstado = row.estado;
+    }
     const profile = profiles.get(row.profile_id);
     if (!profile) continue;
     attendees.push({
@@ -99,6 +103,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   return (
     <EventDetail
       eventId={event.id}
+      viewerEstado={viewerEstado}
       titulo={event.titulo}
       descripcion={event.descripcion}
       lugar={event.lugar}
