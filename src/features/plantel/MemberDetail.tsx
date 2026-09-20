@@ -91,7 +91,22 @@ export function MemberDetail({ member }: { member: SerranoMemberDetail }) {
 
       <section className="flex flex-col gap-3">
         <SectionTitle>Proyectos</SectionTitle>
-        <p className="font-body text-sm text-text-secondary">Todavía no hay proyectos.</p>
+        {member.proyectos.length === 0 ? (
+          <p className="font-body text-sm text-text-secondary">Todavía no hay proyectos.</p>
+        ) : (
+          <ul className="flex flex-col gap-2 list-none p-0 m-0">
+            {member.proyectos.map((proyecto) => (
+              <li key={proyecto.id}>
+                <Link
+                  href={`/nodo/projects/${proyecto.id}`}
+                  className="font-body text-sm text-brand-blue"
+                >
+                  {proyecto.nombre}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {member.skills.length > 0 && (

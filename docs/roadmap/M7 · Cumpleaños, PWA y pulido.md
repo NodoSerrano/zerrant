@@ -1,7 +1,11 @@
 ---
 tags: [roadmap, milestone]
-status: todo
-depends-on: "[[M4 · Plantel y directorio]]"
+status: ticketized
+depends-on:
+  - "[[M2 · Nodo — Tasks]]"
+  - "[[M4 · Plantel y directorio]]"
+  - "[[M5 · Proyectos]]"
+  - "[[M6 · Aportes y eventos]]"
 ---
 
 # M7 · Cumpleaños, PWA y pulido
@@ -11,12 +15,15 @@ depends-on: "[[M4 · Plantel y directorio]]"
 **Entregable:** app instalable, con dashboard de Inicio completo y estados finos.
 
 ## Pantallas (diseño)
+
 `2.1 Inicio` (eventos + cumpleaños) · `7.5 Offline / error` · `7.6 404` · pulido de dark mode en todas.
 
 ## Datos
+
 Deriva de `profiles.fecha_nacimiento` (edad + próximos cumples). Ver [[Modelo de datos]].
 
 ## Alcance
+
 - [ ] Inicio: próximos eventos + próximos cumpleaños (cálculo de edad).
 - [ ] PWA: manifest + íconos + service worker (offline shell). Ver [[Stack técnico]].
 - [ ] Estados: offline/error, 404, loading/skeletons.
@@ -24,6 +31,7 @@ Deriva de `profiles.fecha_nacimiento` (edad + próximos cumples). Ver [[Modelo d
 - [ ] Pasada de accesibilidad y performance (Core Web Vitals).
 
 ## Done (DoD)
+
 - La app se instala como PWA y abre offline el shell.
 - Inicio muestra próximos cumpleaños correctamente.
 

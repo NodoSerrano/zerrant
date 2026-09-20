@@ -48,6 +48,12 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("@/features/events/RsvpControl", () => ({
+  RsvpControl: ({ eventId, currentEstado }: { eventId: string; currentEstado: string | null }) => (
+    <div data-testid="rsvp-control" data-event-id={eventId} data-estado={currentEstado ?? ""} />
+  ),
+}));
+
 import EventDetailPage from "./page";
 
 const EVENT_ID = "evt-1";
@@ -223,6 +229,21 @@ describe("EventDetailPage", () => {
     const ids = mocks.profilesIn.mock.calls[0]?.[1] as string[];
     expect(mocks.profilesIn.mock.calls[0]?.[0]).toBe("id");
     expect(ids).toEqual(expect.arrayContaining(["creator-1", "a1", "a2"]));
+  });
+
+  it("passes the viewer's current RSVP and event id to the control", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "a1" } }, error: null });
+    await renderPage();
+
+    const control = screen.getByTestId("rsvp-control");
+    expect(control).toHaveAttribute("data-event-id", EVENT_ID);
+    expect(control).toHaveAttribute("data-estado", "voy");
+  });
+
+  it("passes a null RSVP when the viewer has not answered", async () => {
+    await renderPage();
+
+    expect(screen.getByTestId("rsvp-control")).toHaveAttribute("data-estado", "");
   });
 });
 

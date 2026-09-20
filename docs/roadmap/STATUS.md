@@ -215,7 +215,7 @@ Fuente: `_bmad-output/implementation-artifacts/deferred-work.md` (ampliar ticket
 
 - ✅ **Epic M5** Proyectos (tabla + RLS + hub Nodo + CRUD + join/aprobación) — ticketizado: ZER-78 → ZER-86.
 - ✅ **Epic M6** Aportes reales (alimenta 3.4 y detalle miembro) + Agenda/RSVP — ticketizado: ZER-87 → ZER-97.
-- 🔲 **Epic M7** Cumples, PWA, offline, dark polish — **sin ticketizar a propósito**: el grafo del Roadmap le da cuatro aristas de entrada (`M2,M4,M5,M6 → M7`) y su pantalla `2.1 Inicio` necesita la tabla `events` de M6. Se ticketiza cuando M5/M6 estén en `main`.
+- ✅ **Epic M7** Cumples, PWA, offline, dark polish — ticketizado 2026-09-20: ZER-98 → ZER-105, proyecto **Nodo Serrano — M7 Cumpleaños, PWA y pulido**. SPEC `_bmad-output/specs/spec-m7-cumpleanos-pwa-pulido/`, epics `epics-m7.md`. **Implementación de Inicio (ZER-99) sigue bloqueada hasta `events` legible en el branch/staging** (grafo M6 → M7).
 
 > **Gate de features: levantado el 2026-09-20.** La ticketización se hizo en paralelo al gate a propósito, y el gate se cerró entero mientras tanto: ZER-71 (alta rota, PR #59), ZER-63 (QA E2E M3, PR #61) y ZER-64 (QA DoD M4, PR #62) están Done. Queda abierto el punto 5 de Fase 0 — bajar `_bmad-output/implementation-artifacts/deferred-work.md` a tickets.
 >
@@ -275,7 +275,7 @@ Usar como checklist al crear en Linear. **No duplicar** si el issue ya existe �
 - [ ] Epic M5 — Proyectos
 - [ ] Epic M6 — Aportes
 - [ ] Epic M6 — Eventos + RSVP
-- [ ] Epic M7 — PWA / cumples / pulido
+- [x] Epic M7 — PWA / cumples / pulido — ticketizado ZER-98 → ZER-105 (implementación pendiente)
 
 ---
 
@@ -338,3 +338,4 @@ Stories y deuda:
 | 2026-09-18 | **Tracking** (ZER-46): `sprint-status.yaml` + story `Status:` + stubs fantasma reconciliados con Linear Done y `main`.                                                                                                                    |
 | 2026-09-20 | **QA M3** (ZER-63): DoD E2E verificado en app; residual QA M3 cerrado en §3/§7/§8; hallazgos de QA ya corregidos antes del cierre.                                                                                                        |
 | 2026-09-20 | **QA M4 DoD** (ZER-64): Juan cerró QA formal del plantel (solo serranos, tarifa, skills). Residual “sin QA formal” cerrado en STATUS; sin issues nuevas. ZER-43 story/sprint drift → done.                                                |
+| 2026-09-20 | **Ticketización M7** (ZER-98→ZER-105): proyecto Linear M7 + SPEC/epics/stories + sprint-status. Inicio sigue dependiente de events M6 en runtime.                                                                                         |

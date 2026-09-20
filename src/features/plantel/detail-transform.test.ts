@@ -136,4 +136,25 @@ describe("buildSerranoMemberDetail", () => {
     });
     expect(result.aportes).toEqual([]);
   });
+
+  it("includes member proyectos when provided", () => {
+    const proyectos = [
+      { id: "proj-1", nombre: "Nodo hub" },
+      { id: "proj-2", nombre: "Taller ZK" },
+    ];
+    const result = buildSerranoMemberDetail(profile, roles, skills, {
+      isSelf: false,
+      isAdmin: false,
+      proyectos,
+    });
+    expect(result.proyectos).toEqual(proyectos);
+  });
+
+  it("defaults proyectos to an empty list when omitted", () => {
+    const result = buildSerranoMemberDetail(profile, roles, skills, {
+      isSelf: false,
+      isAdmin: false,
+    });
+    expect(result.proyectos).toEqual([]);
+  });
 });

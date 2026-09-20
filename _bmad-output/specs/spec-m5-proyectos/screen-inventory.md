@@ -7,7 +7,7 @@ Pencil SSOT: `design/nodo-serrano.pen`. Mobile frame width **390**.
 | 2.4 · Nodo — Proyectos       | `K3qRs` | `/nodo/projects`               | CAP-2        | Sub-tab of the Nodo hub; shares the Tareas/Proyectos control      |
 | 4.3 · Detalle de proyecto    | `mFuQx` | `/nodo/projects/[id]`          | CAP-4, CAP-5 | Estado, miembros, admins, join affordance                         |
 | 4.4 · Crear proyecto         | `fyS2B` | `/nodo/projects/new`           | CAP-3        | nombre, descripcion, `estado`, `ingreso` (`4.4 · Crear proyecto`) |
-| 4.5 · Solicitudes de ingreso | `TBD`   | `/nodo/projects/[id]/requests` | CAP-6        | Project-admin only; approve / reject `pendiente` rows             |
+| 4.5 · Solicitudes de ingreso | `c8G0S` | `/nodo/projects/[id]/requests` | CAP-6        | Project-admin only; approve / reject `pendiente` rows             |
 | 7.3 · Vacío Proyectos        | `wzIj2` | `/nodo/projects` (empty)       | CAP-2        | Zero-project state (`7.3 · Vacío — Proyectos`)                    |
 
 Routes above are the **expected** shape and may be adjusted to match the Pencil IA once node ids are resolved; the frame column is the binding part.

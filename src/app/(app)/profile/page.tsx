@@ -113,10 +113,14 @@ export default async function ProfilePage() {
     privada: "Privada",
   };
 
-  const { count: aportesCount } = await supabase
-    .from("aportes")
-    .select("id", { count: "exact", head: true })
-    .eq("profile_id", user.id);
+  const [{ count: aportesCount }, { count: proyectosCount }] = await Promise.all([
+    supabase.from("aportes").select("id", { count: "exact", head: true }).eq("profile_id", user.id),
+    supabase
+      .from("project_members")
+      .select("project_id", { count: "exact", head: true })
+      .eq("profile_id", user.id)
+      .eq("estado", "aprobado"),
+  ]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -148,6 +152,7 @@ export default async function ProfilePage() {
         disponibilidad={profile.disponibilidad ? dispMap[profile.disponibilidad] : null}
         visibilidadTarifa={profile.visibilidad_tarifa ? visMap[profile.visibilidad_tarifa] : null}
         aportesCount={aportesCount ?? 0}
+        proyectosCount={proyectosCount ?? 0}
       />
     </div>
   );

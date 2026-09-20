@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { MemberDetail } from "@/features/plantel/MemberDetail";
 import { buildSerranoMemberDetail } from "@/features/plantel/transform";
 import type { AporteListItem } from "@/features/aportes/types";
+import type { MemberProjectPreview } from "@/features/plantel/types";
 
 const DETAIL_PROFILE_COLUMNS =
   "id, nombre, apellido, apodo, nombre_visible, avatar_url, tier, disponibilidad, bio, contacto_telegram, tarifa_hora, visibilidad_tarifa";
@@ -35,6 +36,7 @@ export default async function PlantelMemberPage({ params }: { params: Promise<{ 
     { data: skillAssignments },
     { data: viewerProfile },
     { data: aporteRows },
+    { data: projectMemberRows },
   ] = await Promise.all([
     supabase
       .from("profile_roles")
@@ -49,9 +51,29 @@ export default async function PlantelMemberPage({ params }: { params: Promise<{ 
       .select("id, tipo, descripcion, monto, fecha")
       .eq("profile_id", id)
       .order("fecha", { ascending: false }),
+    // Only aprobado memberships — pendiente must never leak into the list.
+    supabase
+      .from("project_members")
+      .select("project_id, projects:project_id(id, nombre)")
+      .eq("profile_id", id)
+      .eq("estado", "aprobado")
+      .order("created_at", { ascending: false }),
   ]);
 
   const aportes = (aporteRows ?? []) as AporteListItem[];
+
+  type ProjectMemberJoin = {
+    project_id: string;
+    projects: { id: string; nombre: string } | { id: string; nombre: string }[] | null;
+  };
+
+  const proyectos: MemberProjectPreview[] = ((projectMemberRows ?? []) as ProjectMemberJoin[])
+    .map((row) => {
+      const project = Array.isArray(row.projects) ? row.projects[0] : row.projects;
+      if (!project?.id || !project.nombre) return null;
+      return { id: project.id, nombre: project.nombre };
+    })
+    .filter((row): row is MemberProjectPreview => row !== null);
 
   const roles = (roleAssignments ?? [])
     .map((assignment) => assignment.roles?.nombre)
@@ -83,6 +105,7 @@ export default async function PlantelMemberPage({ params }: { params: Promise<{ 
       isAdmin: viewerProfile?.is_platform_admin ?? false,
       isTourist: viewerProfile?.tier === "tourist",
       aportes,
+      proyectos,
     },
   );
 

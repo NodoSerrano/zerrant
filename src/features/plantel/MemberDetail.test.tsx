@@ -33,6 +33,7 @@ const member: SerranoMemberDetail = {
   tarifaHora: 40,
   telegramHref: "https://t.me/nobeldam",
   aportes: [],
+  proyectos: [],
 };
 
 describe("MemberDetail", () => {
@@ -106,10 +107,32 @@ describe("MemberDetail", () => {
     expect(screen.queryByTestId("aporte-item")).not.toBeInTheDocument();
   });
 
-  it("renders the proyectos section", () => {
+  it("renders the proyectos section empty line when there are none", () => {
     render(<MemberDetail member={member} />);
     expect(screen.getByText("Proyectos")).toBeInTheDocument();
     expect(screen.getByText("Todavía no hay proyectos.")).toBeInTheDocument();
+  });
+
+  it("renders approved member projects as links", () => {
+    render(
+      <MemberDetail
+        member={{
+          ...member,
+          proyectos: [
+            { id: "proj-1", nombre: "Nodo hub" },
+            { id: "proj-2", nombre: "Taller ZK" },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Proyectos")).toBeInTheDocument();
+    expect(screen.queryByText("Todavía no hay proyectos.")).not.toBeInTheDocument();
+
+    const hub = screen.getByRole("link", { name: "Nodo hub" });
+    expect(hub).toHaveAttribute("href", "/nodo/projects/proj-1");
+    const taller = screen.getByRole("link", { name: "Taller ZK" });
+    expect(taller).toHaveAttribute("href", "/nodo/projects/proj-2");
   });
 
   it("renders member aportes via shared AporteItem", () => {

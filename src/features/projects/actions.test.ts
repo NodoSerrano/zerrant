@@ -15,12 +15,12 @@ const mocks = vi.hoisted(() => ({
   membersSelect: vi.fn(),
   membersInsertPayload: null as unknown,
   membersUpdate: vi.fn(),
-  membersUpdateEqProject: vi.fn(),
-  membersUpdateEqProfile: vi.fn(),
-  membersUpdateEqEstado: vi.fn(),
-  membersUpdateEqRol: vi.fn(),
-  membersUpdateSelect: vi.fn(),
   membersUpdatePayload: null as unknown,
+  membersUpdateEq: vi.fn(),
+  membersUpdateSelect: vi.fn(),
+  membersDelete: vi.fn(),
+  membersDeleteEq: vi.fn(),
+  membersDeleteSelect: vi.fn(),
   revalidatePath: vi.fn(),
   redirect: vi.fn((url: string) => {
     throw new Error(`NEXT_REDIRECT:${url}`);
@@ -65,17 +65,18 @@ vi.mock("@/lib/supabase/server", () => ({
           }),
           update: mocks.membersUpdate.mockImplementation((payload: unknown) => {
             mocks.membersUpdatePayload = payload;
-            return {
-              eq: mocks.membersUpdateEqProject.mockImplementation(() => ({
-                eq: mocks.membersUpdateEqProfile.mockImplementation(() => ({
-                  eq: mocks.membersUpdateEqEstado.mockImplementation(() => ({
-                    eq: mocks.membersUpdateEqRol.mockImplementation(() => ({
-                      select: mocks.membersUpdateSelect,
-                    })),
-                  })),
-                })),
-              })),
+            const chain = {
+              eq: mocks.membersUpdateEq.mockImplementation(() => chain),
+              select: mocks.membersUpdateSelect,
             };
+            return chain;
+          }),
+          delete: mocks.membersDelete.mockImplementation(() => {
+            const chain = {
+              eq: mocks.membersDeleteEq.mockImplementation(() => chain),
+              select: mocks.membersDeleteSelect,
+            };
+            return chain;
           }),
         };
       }
@@ -92,7 +93,13 @@ vi.mock("next/navigation", () => ({
   redirect: (url: string) => mocks.redirect(url),
 }));
 
-import { createProject, joinProject, promoteProjectMember } from "./actions";
+import {
+  approveProjectJoin,
+  createProject,
+  joinProject,
+  promoteProjectMember,
+  rejectProjectJoin,
+} from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -357,6 +364,96 @@ describe("joinProject", () => {
   });
 });
 
+function makeQueueForm(projectId = "proj-1", profileId = "u2") {
+  const fd = new FormData();
+  fd.set("projectId", projectId);
+  fd.set("profileId", profileId);
+  return fd;
+}
+
+describe("approveProjectJoin", () => {
+  it("updates only estado to aprobado for the matching pendiente row", async () => {
+    setupAuth("admin-1");
+    mocks.membersUpdateSelect.mockResolvedValue({
+      error: null,
+      data: [{ profile_id: "u2" }],
+    });
+
+    const result = await approveProjectJoin(null, makeQueueForm());
+
+    expect(result).toBeNull();
+    expect(mocks.membersUpdatePayload).toEqual({ estado: "aprobado" });
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("project_id", "proj-1");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("profile_id", "u2");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("estado", "pendiente");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects/proj-1/requests");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects/proj-1");
+  });
+
+  it("treats a zero-row update as failure, not success", async () => {
+    setupAuth("admin-1");
+    mocks.membersUpdateSelect.mockResolvedValue({ error: null, data: [] });
+
+    const result = await approveProjectJoin(null, makeQueueForm());
+
+    expect(result).toEqual({ error: "No pudimos aprobar esta solicitud." });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a Spanish error when the update fails", async () => {
+    setupAuth("admin-1");
+    mocks.membersUpdateSelect.mockResolvedValue({ error: { message: "rls" }, data: null });
+
+    const result = await approveProjectJoin(null, makeQueueForm());
+
+    expect(result).toEqual({ error: "No pudimos aprobar la solicitud. Probá de nuevo." });
+  });
+
+  it("returns unauthorized without a session", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+    const result = await approveProjectJoin(null, makeQueueForm());
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.membersUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe("rejectProjectJoin", () => {
+  it("deletes the matching pendiente row", async () => {
+    setupAuth("admin-1");
+    mocks.membersDeleteSelect.mockResolvedValue({
+      error: null,
+      data: [{ profile_id: "u2" }],
+    });
+
+    const result = await rejectProjectJoin(null, makeQueueForm());
+
+    expect(result).toBeNull();
+    expect(mocks.membersDeleteEq).toHaveBeenCalledWith("project_id", "proj-1");
+    expect(mocks.membersDeleteEq).toHaveBeenCalledWith("profile_id", "u2");
+    expect(mocks.membersDeleteEq).toHaveBeenCalledWith("estado", "pendiente");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects/proj-1/requests");
+  });
+
+  it("treats a zero-row delete as failure", async () => {
+    setupAuth("admin-1");
+    mocks.membersDeleteSelect.mockResolvedValue({ error: null, data: [] });
+
+    const result = await rejectProjectJoin(null, makeQueueForm());
+
+    expect(result).toEqual({ error: "No pudimos rechazar esta solicitud." });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a Spanish error when the delete fails", async () => {
+    setupAuth("admin-1");
+    mocks.membersDeleteSelect.mockResolvedValue({ error: { message: "rls" }, data: null });
+
+    const result = await rejectProjectJoin(null, makeQueueForm());
+
+    expect(result).toEqual({ error: "No pudimos rechazar la solicitud. Probá de nuevo." });
+  });
+});
+
 function makePromoteForm(projectId = "proj-1", profileId = "member-2") {
   const fd = new FormData();
   fd.set("projectId", projectId);
@@ -376,10 +473,10 @@ describe("promoteProjectMember", () => {
 
     expect(result).toBeNull();
     expect(mocks.membersUpdatePayload).toEqual({ rol: "admin" });
-    expect(mocks.membersUpdateEqProject).toHaveBeenCalledWith("project_id", "proj-1");
-    expect(mocks.membersUpdateEqProfile).toHaveBeenCalledWith("profile_id", "member-2");
-    expect(mocks.membersUpdateEqEstado).toHaveBeenCalledWith("estado", "aprobado");
-    expect(mocks.membersUpdateEqRol).toHaveBeenCalledWith("rol", "miembro");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("project_id", "proj-1");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("profile_id", "member-2");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("estado", "aprobado");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("rol", "miembro");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects/proj-1");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects/proj-1/requests");
   });

@@ -3,6 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 import { EventDetail } from "./EventDetail";
 import type { EventAttendee, EventCreator } from "./types";
 
+vi.mock("./RsvpControl", () => ({
+  RsvpControl: ({ eventId, currentEstado }: { eventId: string; currentEstado: string | null }) => (
+    <div data-testid="rsvp-control" data-event-id={eventId} data-estado={currentEstado ?? ""} />
+  ),
+}));
+
 vi.mock("next/link", () => ({
   default: ({
     href,
@@ -36,6 +42,7 @@ const ATTENDEES: EventAttendee[] = [
 
 const BASE_PROPS = {
   eventId: "evt-1",
+  viewerEstado: null as EventAttendee["estado"] | null,
   titulo: "Asamblea de domingo",
   descripcion: "Reunión de coordinación del nodo.",
   lugar: "Salón principal",
@@ -113,9 +120,14 @@ describe("EventDetail", () => {
     expect(back).toHaveAttribute("href", "/agenda");
   });
 
-  it("leaves a mount seam for the story 6.9 RSVP control", () => {
-    render(<EventDetail {...BASE_PROPS} />);
-    expect(screen.getByTestId("rsvp-control-slot")).toBeInTheDocument();
+  it("mounts the RSVP control on the story 6.9 seam", () => {
+    render(<EventDetail {...BASE_PROPS} viewerEstado="quizas" />);
+
+    const slot = screen.getByTestId("rsvp-control-slot");
+    const control = screen.getByTestId("rsvp-control");
+    expect(slot).toContainElement(control);
+    expect(control).toHaveAttribute("data-event-id", "evt-1");
+    expect(control).toHaveAttribute("data-estado", "quizas");
   });
 
   it("hides the edit entry when the viewer cannot manage the event", () => {
