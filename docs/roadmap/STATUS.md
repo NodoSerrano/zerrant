@@ -63,17 +63,17 @@ Docs canónicos del producto: esta carpeta (`docs/roadmap/`), glosario, modelo d
 
 Leyenda: **Done** = feature usable en `main` · **Casi** = falta 1–2 piezas o PRs · **Parcial** = rutas/core OK, fidelity/tracking abiertos · **No** = sin dominio en código.
 
-| Milestone                      | Docs (README/PROGRESS) | Realidad en `main` | Notas                                                                                                                                                               |
-| ------------------------------ | ---------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **M0 Fundación**               | Done                   | **Done**           | Scaffold, tokens, Supabase, deploy                                                                                                                                  |
-| **M1 Cuenta y perfil**         | Done                   | **Done**           | Auth, onboarding step1/2, profile edit, recovery/reset/check-email en rutas. Residual: reconciliar fidelity stories en Linear                                       |
-| **M2 Nodo — Tasks**            | Done                   | **Done (feature)** | Hub, create, detail, empty, cancelar/editar. Deuda RLS/actions (ver §6)                                                                                             |
-| **M3 Membresía y roles**       | Done                   | **Done**           | Solicitud, admin membresías, admin roles, post-solicitud 1.8 y confirmación 1.9 (PR #26 merged). **Residual: el QA E2E en staging nunca se corrió** — ver §7 Fase 1 |
-| **M4 Plantel y directorio**    | Done                   | **Done**           | Listado+filtros, detalle, habilidades en `main` (PR #25). QA DoD formal **ZER-64** (Juan). Residual producto: `3.4 Mis aportes` diferido a M6 (PR #27)              |
-| **M5 Proyectos**               | Todo                   | **No**             | Sin feature/ruta                                                                                                                                                    |
-| **M6 Aportes y eventos**       | Todo                   | **No**             | Sin tabla `aportes`. El chrome “Mis aportes” (PR #27) se cerró y entra acá                                                                                          |
-| **M7 Cumpleaños, PWA, pulido** | Todo                   | **No**             | —                                                                                                                                                                   |
-| **Backlog**                    | Parked                 | Parked             | Puntos Serrano, push, chat, facturación, pagos on-chain — ver `Backlog.md`                                                                                          |
+| Milestone                      | Docs (README/PROGRESS) | Realidad en `main` | Notas                                                                                                                                                                                      |
+| ------------------------------ | ---------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **M0 Fundación**               | Done                   | **Done**           | Scaffold, tokens, Supabase, deploy                                                                                                                                                         |
+| **M1 Cuenta y perfil**         | Done                   | **Done**           | Auth, onboarding step1/2, profile edit, recovery/reset/check-email en rutas. Residual: reconciliar fidelity stories en Linear                                                              |
+| **M2 Nodo — Tasks**            | Done                   | **Done (feature)** | Hub, create, detail, empty, cancelar/editar. Deuda RLS/actions (ver §6)                                                                                                                    |
+| **M3 Membresía y roles**       | Done                   | **Done**           | Solicitud, admin membresías, admin roles, post-solicitud 1.8 y confirmación 1.9 (PR #26 merged). **QA DoD E2E cerrado** (ZER-63, 2026-09-20) — hallazgos de QA corregidos antes del cierre |
+| **M4 Plantel y directorio**    | Done                   | **Done**           | Listado+filtros, detalle, habilidades en `main` (PR #25). QA DoD formal **ZER-64** (Juan). Residual producto: `3.4 Mis aportes` diferido a M6 (PR #27)                                     |
+| **M5 Proyectos**               | Todo                   | **No**             | Sin feature/ruta                                                                                                                                                                           |
+| **M6 Aportes y eventos**       | Todo                   | **No**             | Sin tabla `aportes`. El chrome “Mis aportes” (PR #27) se cerró y entra acá                                                                                                                 |
+| **M7 Cumpleaños, PWA, pulido** | Todo                   | **No**             | —                                                                                                                                                                                          |
+| **Backlog**                    | Parked                 | Parked             | Puntos Serrano, push, chat, facturación, pagos on-chain — ver `Backlog.md`                                                                                                                 |
 
 Al corte anterior (2026-09-17) `Roadmap.md` marcaba **todos** los milestones en 🔲 todo. Corregido en ZER-45: README, PROGRESS, Roadmap y el frontmatter de `M*.md` dicen lo mismo que esta tabla.
 
@@ -193,7 +193,7 @@ Fuente: `_bmad-output/implementation-artifacts/deferred-work.md` (ampliar ticket
 - ~~Aterrizar 1.9 (ZER-26 / PR #26)~~ — **merged**.
 - ~~Marcar M3 Done en PROGRESS~~ — **hecho en ZER-45**.
 - Cerrar gaps de profile shells / edit fidelity si Linear los tiene abiertos (área ZER-15/16/17). ⏳
-- ⚠️ **RESIDUAL ABIERTO — QA E2E en staging**: tourist → `/solicitar` → `/solicitar/enviado` → admin aprueba tier → roles auto + confirm admin. Todo el alcance de M3 está en `main` y los docs lo marcan Done, pero **este DoD nunca se verificó end-to-end**. Correrlo antes de apoyarse en M3 para M5+.
+- ~~⚠️ **RESIDUAL ABIERTO — QA E2E en staging**~~ — **cerrado en ZER-63** (2026-09-20): DoD M3 verificado en app; hallazgos de QA corregidos antes del cierre.
 
 ### Fase 2 — Cerrar M4
 
@@ -253,9 +253,9 @@ Usar como checklist al crear en Linear. **No duplicar** si el issue ya existe �
 ### M3 remaining (docs ya en Done — esto es lo que quedó debiendo)
 
 - [ ] Gaps onboarding step2 / recovery-reset fidelity
-- [ ] ⚠️ **QA DoD M3 end-to-end en staging** — nunca se corrió
+- [x] ⚠️ **QA DoD M3 end-to-end en staging** — ZER-63 (2026-09-20)
 - [x] Cerrar epic M3 en PROGRESS — ZER-45
-- [ ] Cerrar epic M3 en el board de Linear
+- [x] Cerrar epic M3 en el board de Linear — ZER-63
 
 ### M4 remaining (docs ya en Done — esto es lo que quedó debiendo)
 
@@ -276,7 +276,7 @@ Usar como checklist al crear en Linear. **No duplicar** si el issue ya existe �
 ## 9. Riesgos si se retoma mal
 
 1. Duplicar features porque el board y `sprint-status.yaml` todavía no reflejan los merges de agosto.
-2. Leer M3/M4 como ✅ Done y olvidar los dos residuales: el **QA E2E de M3** y **`3.4 Mis aportes`** (ver §7 Fase 1 y Fase 2).
+2. Leer M4 como ✅ Done y olvidar el residual **`3.4 Mis aportes`** (ver §7 Fase 2). El QA E2E de M3 quedó cerrado en ZER-63.
 3. “Validar con la comunidad” tasks con RLS mentiroso.
 4. ~~Onboard de devs con `Roadmap.md` en todo~~ — resuelto en ZER-45.
 
@@ -330,4 +330,5 @@ Stories y deuda:
 | 2026-09-17 | Alta inicial: recon post-idle (código, PRs, tracking stale, deferred, plan F0–F4)                                                                                                                                                         |
 | 2026-09-18 | **Publicación** (ZER-45): archivo trackeado + README/PROGRESS/Roadmap/frontmatter/`.pen` reconciliados. Cola de PRs a cero (#25 y #26 merged, #27 cerrado → M6). M0–M4 en Done, con 2 residuales abiertos (QA E2E M3 · `3.4 Mis aportes`) |
 | 2026-09-18 | **Tracking** (ZER-46): `sprint-status.yaml` + story `Status:` + stubs fantasma reconciliados con Linear Done y `main`.                                                                                                                    |
+| 2026-09-20 | **QA M3** (ZER-63): DoD E2E verificado en app; residual QA M3 cerrado en §3/§7/§8; hallazgos de QA ya corregidos antes del cierre.                                                                                                        |
 | 2026-09-20 | **QA M4 DoD** (ZER-64): Juan cerró QA formal del plantel (solo serranos, tarifa, skills). Residual “sin QA formal” cerrado en STATUS; sin issues nuevas. ZER-43 story/sprint drift → done.                                                |
