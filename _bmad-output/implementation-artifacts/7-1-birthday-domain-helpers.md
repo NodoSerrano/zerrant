@@ -1,13 +1,13 @@
 # Story 7.1: Birthday domain helpers (age + upcoming)
 
-Status: backlog
+Status: review
 
 ## Linear
 
 - **ZER-98** — Story 7.1: Helpers de cumpleaños (edad + próximos)
 - URL: https://linear.app/zerrant/issue/ZER-98/story-71-helpers-de-cumpleanos-edad-proximos
 - Branch: `juantandil123/zer-98-story-71-helpers-de-cumpleanos-edad-proximos`
-- Priority: High (P2) · Status: Backlog · Unassigned
+- Priority: High (P2) · Status: In Progress · Assignee: Juan
 - Project: **Nodo Serrano — M7 Cumpleaños, PWA y pulido** · Milestone: **Epic 7 — Cumpleaños, PWA y pulido**
 
 - Unblocks Inicio birthday section (story 7.2 / ZER-99).
@@ -39,10 +39,18 @@ so that Inicio can list real cumpleaños without a new table.
 
 ## Tasks / Subtasks
 
-- [ ] **T1 — RED:** age + upcoming + leap-day + null exclusion tests
-- [ ] **T2 — GREEN:** implement pure module under `src/features/` (e.g. `home/birthdays.ts` or `profile/birthdays.ts`)
-- [ ] **T3 — Docs:** one short comment on timezone/date-only strategy (prefer date-only UTC or America/Argentina/Buenos_Aires — pick one)
+- [x] **T1 — RED:** age + upcoming + leap-day + null exclusion tests
+- [x] **T2 — GREEN:** implement pure module under `src/features/` (e.g. `home/birthdays.ts` or `profile/birthdays.ts`)
+- [x] **T3 — Docs:** one short comment on timezone/date-only strategy (prefer date-only UTC or America/Argentina/Buenos_Aires — pick one)
 
 ## Out of scope
 
 - UI, queries, RLS, PWA, push reminders.
+
+## Completion Notes
+
+- Pure module: `src/features/home/birthdays.ts` (+ Vitest).
+- Date strategy: civil YYYY-MM-DD only; callers supply "today" (prefer BA via `formatDayKey`).
+- Leap-day policy: Feb 29 → observe Feb 28 in non-leap years.
+- Display name reuses `displayName` from profile.
+- Verify: `pnpm exec vitest run src/features/home/birthdays.test.ts` (19) + full `pnpm test` (1295).
