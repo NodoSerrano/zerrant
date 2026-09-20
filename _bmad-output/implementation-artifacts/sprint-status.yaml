@@ -1,11 +1,13 @@
 # generated: 2026-07-23T18:20:22-03:00
-# last_updated: 2026-09-20
+# last_updated: 2026-09-20T17:40:00-03:00
 # project: nodo
 # project_key: NOKEY
 # tracking_system: linear
 # linear_project: Nodo Serrano — UI Fidelity M0-M2
 # linear_project_url: https://linear.app/zerrant/project/nodo-serrano-ui-fidelity-m0-m2-38ca59210685
 # linear_project_m5_m6: Nodo Serrano — M5–M6 Features
+# linear_project_m7: Nodo Serrano — M7 Cumpleaños, PWA y pulido
+# linear_project_m7_url: https://linear.app/zerrant/project/nodo-serrano-m7-cumpleanos-pwa-y-pulido-970c13ff2a14
 # story_location: {project-root}/_bmad-output/implementation-artifacts
 # reconciled: ZER-46 — Linear Done + main routes/PRs; phantom keys restored as closed stubs
 # story_added: 4-x-zer-43-tarifa-hora-visibility (ZER-43) ready-for-dev
@@ -16,6 +18,9 @@
 #   Every new development_status key has a matching linear_ids entry (20/20) —
 #   the parity bug ZER-46 had to repair is not reproduced. The pre-existing
 #   3-1-modelo-de-datos-rls-seed-admin gap is left as-is (out of scope).
+# epics_added_m7: 2026-09-20 — epic-7-cumpleanos-pwa-pulido (ZER-98→ZER-105, 8 stories)
+#   from _bmad-output/planning-artifacts/epics-m7.md + spec-m7-cumpleanos-pwa-pulido.
+#   All 8 story files created; linear_ids 8/8 parity with development_status.
 
 # STATUS DEFINITIONS:
 # ==================
@@ -53,7 +58,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: "2026-07-23T18:20:22-03:00"
-last_updated: "2026-09-20T16:50:00-03:00"
+last_updated: "2026-09-20T17:40:00-03:00"
 project: nodo
 project_key: NOKEY
 tracking_system: linear
@@ -109,6 +114,14 @@ linear_ids:
   6-9-rsvp: ZER-95
   6-10-edit-delete-event: ZER-96
   6-11-qa-m6-dod-e2e: ZER-97
+  7-1-birthday-domain-helpers: ZER-98
+  7-2-inicio-hub-and-tabbar: ZER-99
+  7-3-pwa-manifest-and-icons: ZER-100
+  7-4-pwa-offline-shell: ZER-101
+  7-5-system-states-404-offline-loading: ZER-102
+  7-6-dark-mode-polish: ZER-103
+  7-7-a11y-performance-pass: ZER-104
+  7-8-qa-m7-dod-e2e: ZER-105
 
 development_status:
   epic-1: done
@@ -187,3 +200,14 @@ development_status:
   6-10-edit-delete-event: review
   6-11-qa-m6-dod-e2e: backlog
   epic-6-aportes-eventos-retrospective: optional
+
+  epic-7-cumpleanos-pwa-pulido: backlog
+  7-1-birthday-domain-helpers: backlog
+  7-2-inicio-hub-and-tabbar: backlog
+  7-3-pwa-manifest-and-icons: backlog
+  7-4-pwa-offline-shell: backlog
+  7-5-system-states-404-offline-loading: backlog
+  7-6-dark-mode-polish: backlog
+  7-7-a11y-performance-pass: backlog
+  7-8-qa-m7-dod-e2e: backlog
+  epic-7-cumpleanos-pwa-pulido-retrospective: optional
