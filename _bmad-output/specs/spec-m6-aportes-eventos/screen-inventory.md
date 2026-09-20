@@ -4,7 +4,7 @@ Pencil SSOT: `design/nodo-serrano.pen`. Mobile frame width **390**.
 
 | Pencil frame            | Node id | App route(s)        | CAP          | Notes                                                      |
 | ----------------------- | ------- | ------------------- | ------------ | ---------------------------------------------------------- |
-| 4.6 · Registrar aporte  | `TBD`   | `/aportes/new`      | CAP-2        | tipo, descripcion, fecha, monto optional; own / admin load |
+| 4.6 · Registrar aporte  | `h0U2J` | `/aportes/new`      | CAP-2        | tipo, descripcion, fecha, monto optional; own / admin load |
 | 3.4 · Mis aportes       | `TBD`   | `/profile/aportes`  | CAP-3        | Clean story from scratch (see note below)                  |
 | 2.5 · Agenda            | `TBD`   | `/agenda`           | CAP-6        | Day strip; **replaces the existing stub page**             |
 | 5.1 · Detalle de evento | `TBD`   | `/agenda/[id]`      | CAP-8, CAP-9 | Attendee list + RSVP control                               |
