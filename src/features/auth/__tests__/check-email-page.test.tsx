@@ -1,5 +1,11 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+
+const mockResendSignupEmail = vi.hoisted(() => vi.fn());
+
+vi.mock("@/features/auth/actions", () => ({
+  resendSignupEmail: mockResendSignupEmail,
+}));
 
 import CheckEmailPage from "@/app/auth/check-email/page";
 
@@ -44,11 +50,35 @@ describe("CheckEmailPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders SecondaryButton 'Reenviar email'", async () => {
+  it("wires Reenviar email to resendSignupEmail with the email from searchParams", async () => {
+    mockResendSignupEmail.mockResolvedValue({ success: true });
     const searchParams = Promise.resolve({ email: "test@test.com", flow: "signup" as const });
     render(await CheckEmailPage({ searchParams }));
 
-    expect(screen.getByRole("button", { name: "Reenviar email" })).toBeInTheDocument();
+    const button = screen.getByRole("button", { name: "Reenviar email" });
+    expect(button).toBeEnabled();
+    const form = button.closest("form");
+    expect(form).toBeTruthy();
+    const hidden = form!.querySelector('input[name="email"]') as HTMLInputElement;
+    expect(hidden.value).toBe("test@test.com");
+    fireEvent.submit(form!);
+    expect(await screen.findByText(/Listo\. Te reenviamos el enlace/)).toBeInTheDocument();
+  });
+
+  it("surfaces resend rate-limit errors from the action", async () => {
+    mockResendSignupEmail.mockResolvedValue({ error: "email rate limit exceeded" });
+    const searchParams = Promise.resolve({ email: "test@test.com", flow: "signup" as const });
+    render(await CheckEmailPage({ searchParams }));
+
+    fireEvent.submit(screen.getByRole("button", { name: "Reenviar email" }).closest("form")!);
+    expect(await screen.findByText("email rate limit exceeded")).toBeInTheDocument();
+  });
+
+  it("does not render resend on recovery flow", async () => {
+    const searchParams = Promise.resolve({ email: "user@mail.com", flow: "recovery" as const });
+    render(await CheckEmailPage({ searchParams }));
+
+    expect(screen.queryByRole("button", { name: "Reenviar email" })).not.toBeInTheDocument();
   });
 
   it("renders back link to /auth/login", async () => {
@@ -66,5 +96,6 @@ describe("CheckEmailPage", () => {
 
     expect(screen.getByText("Revisá tu email")).toBeInTheDocument();
     expect(screen.getByText(/Te enviamos un enlace a tu correo/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reenviar email" })).not.toBeInTheDocument();
   });
 });

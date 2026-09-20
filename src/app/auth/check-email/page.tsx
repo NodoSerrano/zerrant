@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { MailCheck } from "lucide-react";
-import { SecondaryButton } from "@/components/SecondaryButton";
+import { ResendSignupForm } from "./resend-form";
 
 interface CheckEmailPageProps {
   searchParams: Promise<{ email?: string; flow?: string }>;
@@ -13,6 +13,7 @@ export default async function CheckEmailPage({ searchParams }: CheckEmailPagePro
   const recoverySubtitle = `Te enviamos un enlace para restablecer tu contraseña a ${email ?? "tu correo"}. Revisá tu bandeja de entrada y seguí las instrucciones.`;
 
   const subtitle = flow === "recovery" ? recoverySubtitle : signupSubtitle;
+  const showResend = flow !== "recovery";
 
   return (
     <div className="px-[26px] py-6 flex flex-col justify-center gap-[22px] min-h-full text-center">
@@ -27,9 +28,7 @@ export default async function CheckEmailPage({ searchParams }: CheckEmailPagePro
         </p>
       </div>
 
-      <SecondaryButton className="w-full" disabled>
-        Reenviar email
-      </SecondaryButton>
+      {showResend ? <ResendSignupForm email={email} /> : null}
 
       <Link href="/auth/login" className="text-sm text-text-muted hover:underline font-medium">
         Volver al inicio de sesión

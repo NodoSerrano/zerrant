@@ -1,5 +1,11 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+
+const mockGet = vi.hoisted(() => vi.fn((_key?: string) => null as string | null));
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => ({ get: mockGet }),
+}));
 
 const mockSignInWithPassword = vi.hoisted(() => vi.fn());
 const mockSignInWithGoogle = vi.hoisted(() => vi.fn());
@@ -12,6 +18,13 @@ vi.mock("@/features/auth/actions", () => ({
 import LoginPage from "@/app/auth/login/page";
 
 describe("LoginPage", () => {
+  beforeEach(() => {
+    mockGet.mockReset();
+    mockGet.mockImplementation(() => null);
+    mockSignInWithPassword.mockReset();
+    mockSignInWithGoogle.mockReset();
+  });
+
   it("renders brand hero with Mountain icon, title, and subtitle", () => {
     render(<LoginPage />);
     expect(screen.getByText("Nodo Serrano")).toBeInTheDocument();
@@ -64,5 +77,17 @@ describe("LoginPage", () => {
     const form = document.querySelector("form");
     fireEvent.submit(form!);
     expect(await screen.findByText("Credenciales inválidas")).toBeInTheDocument();
+  });
+
+  it("renders callback failure from searchParams.error", () => {
+    mockGet.mockImplementation((key?: string) => (key === "error" ? "auth_callback_failed" : null));
+    render(<LoginPage />);
+    expect(screen.getByText(/No pudimos confirmar el enlace/i)).toBeInTheDocument();
+  });
+
+  it("renders otp_expired from searchParams.error", () => {
+    mockGet.mockImplementation((key?: string) => (key === "error" ? "otp_expired" : null));
+    render(<LoginPage />);
+    expect(screen.getByText(/El enlace expiró o ya se usó/i)).toBeInTheDocument();
   });
 });
