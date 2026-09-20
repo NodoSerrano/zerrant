@@ -211,9 +211,13 @@ Fuente: `_bmad-output/implementation-artifacts/deferred-work.md` (ampliar ticket
 
 ### Fase 4 — Producto nuevo (recién acá “sacar tickets nuevos” de feature)
 
-- **Epic M5** Proyectos (tabla + RLS + hub Nodo + CRUD + join/aprobación).
-- **Epic M6** Aportes reales (alimenta 3.4 y detalle miembro) + Agenda/RSVP.
-- **Epic M7** Cumples, PWA, offline, dark polish.
+**Estado 2026-09-20: M5 y M6 ticketizados.** Cadena BMad completa corrida — `_bmad-output/specs/spec-m5-proyectos/`, `_bmad-output/specs/spec-m6-aportes-eventos/`, `_bmad-output/planning-artifacts/epics-m5-m6.md` (FR27–FR50, NFR11–NFR20, UX-DR15–UX-DR28) y 20 story files registradas en `sprint-status.yaml`. Linear: proyecto **Nodo Serrano — M5–M6 Features**, ZER-78 → ZER-97, sin asignar.
+
+- ✅ **Epic M5** Proyectos (tabla + RLS + hub Nodo + CRUD + join/aprobación) — ticketizado: ZER-78 → ZER-86.
+- ✅ **Epic M6** Aportes reales (alimenta 3.4 y detalle miembro) + Agenda/RSVP — ticketizado: ZER-87 → ZER-97.
+- 🔲 **Epic M7** Cumples, PWA, offline, dark polish — **sin ticketizar a propósito**: el grafo del Roadmap le da cuatro aristas de entrada (`M2,M4,M5,M6 → M7`) y su pantalla `2.1 Inicio` necesita la tabla `events` de M6. Se ticketiza cuando M5/M6 estén en `main`.
+
+> ⚠️ **Ticketizado no es empezado.** El dev de M5 no arranca hasta que el residual de QA E2E de M3 (Fase 1, ZER-63) esté verde, más ZER-64 y ZER-71. La ticketización se hizo en paralelo al gate a propósito; el gate sigue en pie.
 
 ---
 
