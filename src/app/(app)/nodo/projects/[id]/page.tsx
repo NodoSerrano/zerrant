@@ -1,28 +1,84 @@
-import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { ProjectDetail } from "@/features/projects/ProjectDetail";
+import {
+  toApprovedProjectMembers,
+  type RawProjectMember,
+} from "@/features/projects/detail-transform";
+import {
+  isProjectAdmin,
+  resolveJoinAffordance,
+  type ViewerMembership,
+} from "@/features/projects/membership";
+import type { ProjectDetailViewModel } from "@/features/projects/types";
+import type { ProjectMemberEstado, ProjectMemberRol } from "@/lib/db/projects-schema";
 
 type PageProps = {
   params: Promise<{ id: string }>;
 };
 
-/**
- * Minimal detail destination so create → list → card href resolves.
- * Full detail UI is story 5.4 (ZER-81).
- */
-export default async function ProjectDetailPlaceholderPage({ params }: PageProps) {
-  const { id } = await params;
+type ProjectRow = {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  estado: string;
+  ingreso: string;
+  creado_por: string | null;
+  project_members: RawProjectMember[] | null;
+};
 
-  return (
-    <div className="flex flex-col gap-4">
-      <h1 className="font-display text-2xl font-bold text-text-primary">Proyecto</h1>
-      <p className="font-body text-sm text-text-secondary">
-        Detalle completo llega en la story de detalle de proyecto. ID: {id}
-      </p>
-      <Link
-        href="/nodo/projects"
-        className="font-display text-sm font-semibold text-brand-green underline-offset-2 hover:underline"
-      >
-        Volver a proyectos
-      </Link>
-    </div>
-  );
+export default async function ProjectDetailPage({ params }: PageProps) {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/auth/login");
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select(
+      "id, nombre, descripcion, estado, ingreso, creado_por, project_members(profile_id, estado, rol, profiles:profile_id(id, nombre, apellido, apodo, nombre_visible, avatar_url))",
+    )
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!project?.id) notFound();
+
+  const row = project as unknown as ProjectRow;
+
+  const { data: viewerRow } = await supabase
+    .from("project_members")
+    .select("estado, rol")
+    .eq("project_id", id)
+    .eq("profile_id", user.id)
+    .maybeSingle();
+
+  const viewerMembership: ViewerMembership | null = viewerRow
+    ? {
+        estado: viewerRow.estado as ProjectMemberEstado,
+        rol: viewerRow.rol as ProjectMemberRol,
+      }
+    : null;
+
+  const members = toApprovedProjectMembers(row.project_members, row.creado_por);
+  const affordance = resolveJoinAffordance({
+    ingreso: row.ingreso,
+    viewerMembership,
+  });
+
+  const viewModel: ProjectDetailViewModel = {
+    id: row.id,
+    nombre: row.nombre,
+    descripcion: row.descripcion,
+    estado: row.estado,
+    ingreso: row.ingreso,
+    members,
+    affordance,
+    showRequestsQueue: isProjectAdmin({ viewerMembership }),
+  };
+
+  return <ProjectDetail project={viewModel} />;
 }
