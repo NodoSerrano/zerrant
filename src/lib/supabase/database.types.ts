@@ -239,6 +239,54 @@ export type Database = {
           },
         ];
       };
+      aportes: {
+        Row: {
+          created_at: string;
+          descripcion: string | null;
+          fecha: string;
+          id: string;
+          monto: number | null;
+          profile_id: string;
+          registrado_por: string;
+          tipo: Database["public"]["Enums"]["aporte_tipo"];
+        };
+        Insert: {
+          created_at?: string;
+          descripcion?: string | null;
+          fecha: string;
+          id?: string;
+          monto?: number | null;
+          profile_id: string;
+          registrado_por: string;
+          tipo: Database["public"]["Enums"]["aporte_tipo"];
+        };
+        Update: {
+          created_at?: string;
+          descripcion?: string | null;
+          fecha?: string;
+          id?: string;
+          monto?: number | null;
+          profile_id?: string;
+          registrado_por?: string;
+          tipo?: Database["public"]["Enums"]["aporte_tipo"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "aportes_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "aportes_registrado_por_fkey";
+            columns: ["registrado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       membership_requests: {
         Row: {
           actualizado_en: string;
@@ -426,6 +474,16 @@ export type Database = {
       };
     };
     Enums: {
+      aporte_tipo:
+        | "economico"
+        | "donacion"
+        | "prestamo"
+        | "charla"
+        | "actividad"
+        | "mantenimiento"
+        | "administracion"
+        | "yerba"
+        | "otro";
       disponibilidad: "disponible" | "ocupado" | "solo_eventos";
       event_attendance_estado: "voy" | "quizas" | "no";
       membership_request_estado: "pendiente" | "aprobada" | "rechazada";
@@ -560,6 +618,17 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      aporte_tipo: [
+        "economico",
+        "donacion",
+        "prestamo",
+        "charla",
+        "actividad",
+        "mantenimiento",
+        "administracion",
+        "yerba",
+        "otro",
+      ],
       disponibilidad: ["disponible", "ocupado", "solo_eventos"],
       event_attendance_estado: ["voy", "quizas", "no"],
       membership_request_estado: ["pendiente", "aprobada", "rechazada"],
