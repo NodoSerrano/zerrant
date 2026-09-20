@@ -1,6 +1,10 @@
+---
+baseline_commit: 8de86ba205e6c2a5943e7e038f51adeacad60410
+---
+
 # Story 6.3: Mis aportes (`3.4 · Mis aportes`)
 
-Status: backlog
+Status: review
 
 ## Linear
 
@@ -65,43 +69,43 @@ so that I can see my contribution history in one place.
 
 ## Tasks / Subtasks
 
-- [ ] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1)
-  - [ ] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg`, `fd` or any filesystem tool. Only `mcp__pencil` tools can read it.
-  - [ ] Use `mcp__pencil__get_app_state` to locate frame `3.4 · Mis aportes`; read its contents with the design-context tooling.
-  - [ ] Record the resolved node id into `_bmad-output/specs/spec-m6-aportes-eventos/screen-inventory.md`, replacing `TBD`.
-  - [ ] **This story is not ready for development until this task is done.**
+- [x] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1)
+  - [x] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg`, `fd` or any filesystem tool. Only `mcp__pencil` tools can read it.
+  - [x] Use `mcp__pencil__get_app_state` to locate frame `3.4 · Mis aportes`; read its contents with the design-context tooling.
+  - [x] Record the resolved node id into `_bmad-output/specs/spec-m6-aportes-eventos/screen-inventory.md`, replacing `TBD`.
+  - [x] **This story is not ready for development until this task is done.**
 
-- [ ] **T1 — Read the framework docs; do not touch PR #27** (AC: 2)
-  - [ ] Read the App Router guide in `node_modules/next/dist/docs/` — breaking changes vs. training data (per `AGENTS.md`).
-  - [ ] Do **not** `git checkout`, reopen, rebase, or cherry-pick PR #27 / the ZER-35 branch. Reading its diff for UI reference is permitted; importing code from it is not. Build from the resolved Pencil frame and the real `aportes` table.
+- [x] **T1 — Read the framework docs; do not touch PR #27** (AC: 2)
+  - [x] Read the App Router guide in `node_modules/next/dist/docs/` — breaking changes vs. training data (per `AGENTS.md`).
+  - [x] Do **not** `git checkout`, reopen, rebase, or cherry-pick PR #27 / the ZER-35 branch. Reading its diff for UI reference is permitted; importing code from it is not. Build from the resolved Pencil frame and the real `aportes` table.
 
-- [ ] **T2 — RED: failing tests first** (AC: 3, 4, 5, 6, 7, 10)
-  - [ ] Page test: renders the viewer's aportes ordered by `fecha`.
-  - [ ] Page test: only the viewer's rows are requested — the query filters `profile_id = auth.uid()`.
-  - [ ] `AporteItem` test: a row with `monto = null` renders no amount slot; a row with a monto renders it.
-  - [ ] Page test: empty state.
-  - [ ] `SerranoMenu` test: the row is a link, shows a numeric count, has no `/40` classes; zero renders `0`.
-  - [ ] Standing assertion: no payment copy on the screen.
-  - [ ] Verify RED.
+- [x] **T2 — RED: failing tests first** (AC: 3, 4, 5, 6, 7, 10)
+  - [x] Page test: renders the viewer's aportes ordered by `fecha`.
+  - [x] Page test: only the viewer's rows are requested — the query filters `profile_id = auth.uid()`.
+  - [x] `AporteItem` test: a row with `monto = null` renders no amount slot; a row with a monto renders it.
+  - [x] Page test: empty state.
+  - [x] `SerranoMenu` test: the row is a link, shows a numeric count, has no `/40` classes; zero renders `0`.
+  - [x] Standing assertion: no payment copy on the screen.
+  - [x] Verify RED.
 
-- [ ] **T3 — GREEN: the route** (AC: 3, 5)
-  - [ ] Route under `src/app/(app)/profile/aportes/` (adjust only if the resolved Pencil IA demands it).
-  - [ ] Server component: auth guard, then read `aportes` where `profile_id = auth.uid()`, ordered by `fecha`.
-  - [ ] Empty branch per frame `3.4`. `src/components/EmptyState.tsx` hardcodes the `ClipboardList` icon and the heading "No hay tareas" — see Dev Notes before reusing it.
+- [x] **T3 — GREEN: the route** (AC: 3, 5)
+  - [x] Route under `src/app/(app)/profile/aportes/` (adjust only if the resolved Pencil IA demands it).
+  - [x] Server component: auth guard, then read `aportes` where `profile_id = auth.uid()`, ordered by `fecha`.
+  - [x] Empty branch per frame `3.4`. `src/components/EmptyState.tsx` hardcodes the `ClipboardList` icon and the heading "No hay tareas" — see Dev Notes before reusing it.
 
-- [ ] **T4 — GREEN: `AporteItem`** (AC: 4, 8)
-  - [ ] `src/features/aportes/AporteItem.tsx`, composed from DS primitives; export it via `src/components/index.ts` if it is generic enough to be a component-library citizen.
-  - [ ] Accented Spanish label per unaccented enum value, from the `src/features/aportes/types.ts` label map (story 6.2).
-  - [ ] Conditional amount slot driven by `monto !== null` — not by truthiness, since `0` is a legitimate stored amount.
+- [x] **T4 — GREEN: `AporteItem`** (AC: 4, 8)
+  - [x] `src/features/aportes/AporteItem.tsx`, composed from DS primitives; export it via `src/components/index.ts` if it is generic enough to be a component-library citizen.
+  - [x] Accented Spanish label per unaccented enum value, from the `src/features/aportes/types.ts` label map (story 6.2).
+  - [x] Conditional amount slot driven by `monto !== null` — not by truthiness, since `0` is a legitimate stored amount.
 
-- [ ] **T5 — GREEN: the profile row** (AC: 6, 7)
-  - [ ] Turn the `<div>` at `SerranoMenu.tsx:62–67` into a `next/link` in the shape of the "Editar perfil" row (lines 43–49).
-  - [ ] Count comes from the server component as a prop — `SerranoMenu` is `"use client"` and must not fetch.
-  - [ ] Leave the "Mis proyectos" row (lines 53–58) alone; story 5.8 owns it.
+- [x] **T5 — GREEN: the profile row** (AC: 6, 7)
+  - [x] Turn the `<div>` at `SerranoMenu.tsx:62–67` into a `next/link` in the shape of the "Editar perfil" row (lines 43–49).
+  - [x] Count comes from the server component as a prop — `SerranoMenu` is `"use client"` and must not fetch.
+  - [x] Leave the "Mis proyectos" row (lines 53–58) alone; story 5.8 owns it.
 
-- [ ] **T6 — Verify** (AC: 3, 5, 9, 10)
-  - [ ] `pnpm test && pnpm typecheck && pnpm lint` green.
-  - [ ] Visual acceptance: frame `3.4` vs the live route at ~390px, populated and empty.
+- [x] **T6 — Verify** (AC: 3, 5, 9, 10)
+  - [x] `pnpm test && pnpm typecheck && pnpm lint` green.
+  - [x] Visual acceptance: frame `3.4` vs the live route at ~390px, populated and empty.
 
 ## Dev Notes
 
@@ -200,10 +204,38 @@ Concretely: do not reopen the PR, do not rebase its branch onto `main`, do not c
 
 ### Agent Model Used
 
+grok-4.5 (opencode)
+
 ### Debug Log References
+
+- Pencil desktop AppImage headless via `pen interactive --in … --out …` (desktop MCP needed open editor; headless unlocked frame tree).
+- Frame `3.4 · Mis aportes` node id **`WKoCd`**; shared component `AporteItem` = **`OAlmW`**.
 
 ### Completion Notes List
 
+- Clean implementation against real `aportes` (ZER-87). No code from closed PR #27.
+- `/profile/aportes` server page: auth + serrano guard; `profile_id = auth.uid()`; order `fecha` desc.
+- `AporteItem` + label/icon maps; `monto !== null` for amount in meta line.
+- `EmptyState` generalised (`title`/`icon` props, tasks defaults preserved).
+- `SerranoMenu` Mis aportes → Link + `aportesCount` from profile page head count; Mis proyectos untouched.
+- Verify: `pnpm test` 1029 passed; typecheck + lint green.
+
 ### Change Log
 
+- 2026-09-20: ZER-89 Mis aportes list + profile menu row (frame WKoCd).
+
 ### File List
+
+- `_bmad-output/specs/spec-m6-aportes-eventos/screen-inventory.md`
+- `_bmad-output/implementation-artifacts/6-3-mis-aportes.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `src/app/(app)/profile/aportes/page.tsx`
+- `src/app/(app)/profile/aportes/page.test.tsx`
+- `src/app/(app)/profile/page.tsx`
+- `src/app/(app)/profile/SerranoMenu.tsx`
+- `src/app/(app)/profile/SerranoMenu.test.tsx`
+- `src/features/aportes/AporteItem.tsx`
+- `src/features/aportes/AporteItem.test.tsx`
+- `src/features/aportes/types.ts`
+- `src/components/EmptyState.tsx`
+- `src/components/EmptyState.test.tsx`

@@ -133,6 +133,12 @@ describe("EmptyState", () => {
     const container = screen.getByText("No hay tareas").parentElement?.parentElement;
     expect(container?.className).toContain("my-custom");
   });
+
+  it("accepts custom title without changing the tasks default", () => {
+    render(<EmptyState title="No hay aportes" subtitle="Todavía no registraste ninguno." />);
+    expect(screen.getByText("No hay aportes")).toBeInTheDocument();
+    expect(screen.queryByText("No hay tareas")).not.toBeInTheDocument();
+  });
 });
 
 describe("EmptyState href mode", () => {
