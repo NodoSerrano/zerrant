@@ -25,6 +25,14 @@ vi.mock("next/link", () => ({
 import { usePathname } from "next/navigation";
 
 describe("TabBarClient", () => {
+  it("marks inicio active on /", () => {
+    (usePathname as ReturnType<typeof vi.fn>).mockReturnValue("/");
+    render(<TabBarClient />);
+    expect(screen.getByRole("link", { name: /INICIO/i })).toHaveClass("bg-primary");
+    const actives = screen.getAllByRole("link").filter((el) => el.className.includes("bg-primary"));
+    expect(actives).toHaveLength(1);
+  });
+
   it("marks plantel active when pathname starts with /plantel", () => {
     (usePathname as ReturnType<typeof vi.fn>).mockReturnValue("/plantel");
     render(<TabBarClient />);
@@ -52,15 +60,5 @@ describe("TabBarClient", () => {
     (usePathname as ReturnType<typeof vi.fn>).mockReturnValue("/onboarding/step1");
     render(<TabBarClient />);
     expect(screen.getByRole("link", { name: /PERFIL/i })).toHaveClass("bg-primary");
-  });
-
-  it("falls back to an existing tab (perfil) instead of removed inicio", () => {
-    (usePathname as ReturnType<typeof vi.fn>).mockReturnValue("/");
-    render(<TabBarClient />);
-    expect(screen.getByRole("link", { name: /PERFIL/i })).toHaveClass("bg-primary");
-    expect(screen.queryByText("INICIO")).not.toBeInTheDocument();
-    // Exactly one active pill — never a bar with zero active tabs.
-    const actives = screen.getAllByRole("link").filter((el) => el.className.includes("bg-primary"));
-    expect(actives).toHaveLength(1);
   });
 });
