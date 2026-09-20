@@ -1,5 +1,5 @@
 # generated: 2026-07-23T18:20:22-03:00
-# last_updated: 2026-09-18T21:10:00-03:00
+# last_updated: 2026-09-20T13:52:00-03:00
 # project: nodo
 # project_key: NOKEY
 # tracking_system: linear
@@ -45,7 +45,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: "2026-07-23T18:20:22-03:00"
-last_updated: "2026-09-18T21:10:00-03:00"
+last_updated: "2026-09-20T13:52:00-03:00"
 project: nodo
 project_key: NOKEY
 tracking_system: linear
@@ -129,7 +129,7 @@ development_status:
   4-3-editar-habilidades: done
   epic-4-plantel-retrospective: optional
 
-  epic-ops-security: in-progress
+  epic-ops-security: done
   4-x-zer-42-tasks-rls-split: done
-  4-x-zer-43-tarifa-hora-visibility: review
+  4-x-zer-43-tarifa-hora-visibility: done
   epic-ops-security-retrospective: optional
