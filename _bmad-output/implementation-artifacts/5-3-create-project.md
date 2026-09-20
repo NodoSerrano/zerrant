@@ -1,6 +1,6 @@
 # Story 5.3: Create project (`4.4 · Crear proyecto`)
 
-Status: backlog
+Status: in-progress
 
 ## Linear
 
@@ -56,39 +56,39 @@ so that other serranos can find it and join it.
 
 ## Tasks / Subtasks
 
-- [ ] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1)
-  - [ ] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg`, `fd` or any filesystem tool. Only `mcp__pencil` tools can read it.
-  - [ ] Use `mcp__pencil__get_app_state` to locate frame `4.4 · Crear proyecto`; read its contents with the design-context tooling.
-  - [ ] Record the resolved node id into `_bmad-output/specs/spec-m5-proyectos/screen-inventory.md`, replacing `TBD`.
-  - [ ] **This story is not ready for development until this task is done.**
+- [x] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1)
+  - [x] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg`, `fd` or any filesystem tool. Only `mcp__pencil` tools can read it.
+  - [x] Use `mcp__pencil__get_app_state` to locate frame `4.4 · Crear proyecto`; read its contents with the design-context tooling.
+  - [x] Record the resolved node id into `_bmad-output/specs/spec-m5-proyectos/screen-inventory.md`, replacing `TBD` (`fyS2B`).
+  - [x] **This story is not ready for development until this task is done.**
 
-- [ ] **T1 — Read the framework docs** (AC: 2–7)
-  - [ ] Read the App Router / server-actions guide in `node_modules/next/dist/docs/` — this Next.js version has breaking changes vs. training data (per `AGENTS.md`).
+- [x] **T1 — Read the framework docs** (AC: 2–7)
+  - [x] Read the App Router / server-actions guide in `node_modules/next/dist/docs/` — this Next.js version has breaking changes vs. training data (per `AGENTS.md`).
 
-- [ ] **T2 — RED: failing tests first** (AC: 3, 4, 6, 7, 8)
-  - [ ] Action test: valid submit → `projects` insert with `creado_por`, then the creator `project_members` row with `rol='admin'`, `estado='aprobado'`.
-  - [ ] Action test: blank nombre → error returned, no insert.
-  - [ ] Action test: invalid `estado` / `ingreso` value → rejected by the enum allow-list, not cast blindly.
-  - [ ] Page test: the four inputs render with the frame's labels and the enum options.
-  - [ ] Harness case (real database): tourist insert rejected by RLS.
-  - [ ] Verify RED.
+- [x] **T2 — RED: failing tests first** (AC: 3, 4, 6, 7, 8)
+  - [x] Action test: valid submit → `projects` insert with `creado_por`, then the creator `project_members` row with `rol='admin'`, `estado='aprobado'`.
+  - [x] Action test: blank nombre → error returned, no insert.
+  - [x] Action test: invalid `estado` / `ingreso` value → rejected by the enum allow-list, not cast blindly.
+  - [x] Page test: the four inputs render with the frame's labels and the enum options.
+  - [x] Harness case (real database): tourist insert rejected by RLS (already in `scripts/check-projects-rls.harness.ts` from ZER-78).
+  - [x] Verify RED.
 
-- [ ] **T3 — GREEN: server action** (AC: 3, 4, 6)
-  - [ ] `src/features/projects/actions.ts` with `createProject`.
-  - [ ] Validate with an explicit allow-list per enum, following `oneOf()` in `src/features/tasks/actions.ts` — never a blind `as TaskEstado`-style cast.
-  - [ ] Write both rows atomically. Two sequential PostgREST calls are **not** atomic: prefer a `security definer` RPC (`create_project_with_admin`) that inserts both rows in one statement block, or an equivalent single-transaction path. If an RPC is used, `revoke execute … from public` and `grant execute … to authenticated`, and keep the RLS rules mirrored inside it.
-  - [ ] Spanish error copy in the style of `src/features/tasks/actions.ts` (`"No pudimos crear el proyecto. Probá de nuevo."`).
-  - [ ] `revalidatePath` the projects list, then redirect.
+- [x] **T3 — GREEN: server action** (AC: 3, 4, 6)
+  - [x] `src/features/projects/actions.ts` with `createProject`.
+  - [x] Validate with an explicit allow-list per enum, following `oneOf()` in `src/features/tasks/actions.ts` — never a blind `as TaskEstado`-style cast.
+  - [x] Atomic creator seating via existing ZER-78 `AFTER INSERT` trigger `seat_project_creator_as_admin` (same transaction as projects insert; no second client write).
+  - [x] Spanish error copy in the style of `src/features/tasks/actions.ts` (`"No pudimos crear el proyecto. Probá de nuevo."`).
+  - [x] `revalidatePath` the projects list, then redirect.
 
-- [ ] **T4 — GREEN: the form** (AC: 2, 5)
-  - [ ] Route under `src/app/(app)/nodo/projects/new/` (adjust only if the resolved Pencil IA demands it).
-  - [ ] Compose from `Input`, `PrimaryButton` and the other DS primitives — no page-local CSS for controls (NFR17).
-  - [ ] Guard the route for tourists as ergonomics; the real guard is the RLS policy.
+- [x] **T4 — GREEN: the form** (AC: 2, 5)
+  - [x] Route under `src/app/(modal)/nodo/projects/new/` (modal shell, matching create-task / frame 4.4).
+  - [x] Compose from `Input`, `PrimaryButton` and the other DS primitives — no page-local CSS for controls (NFR17).
+  - [x] Guard the route for tourists as ergonomics; the real guard is the RLS policy.
 
-- [ ] **T5 — Verify** (AC: 2, 5, 7, 8)
-  - [ ] `pnpm test && pnpm typecheck && pnpm lint` green.
-  - [ ] Visual acceptance: frame `4.4` vs the live route at ~390px.
-  - [ ] Confirm the new project appears in the list and its detail route resolves.
+- [x] **T5 — Verify** (AC: 2, 5, 7, 8)
+  - [x] `pnpm test && pnpm typecheck && pnpm lint` green.
+  - [x] Visual acceptance: frame `4.4` vs the live route at ~390px.
+  - [x] Confirm the new project appears in the list and its detail route resolves.
 
 ## Dev Notes
 
@@ -168,10 +168,21 @@ Spanish UI labels are presentation; the enum value is data. `aprobacion` has no 
 
 ### Agent Model Used
 
+Gentle AI on Hermes (grok-4.5)
+
 ### Debug Log References
 
 ### Completion Notes List
 
+- Pencil frame `4.4` node id `fyS2B` recorded in screen-inventory.
+- Create form + `createProject` action; creator admin via ZER-78 trigger.
+- Tourist blocked by action + existing RLS harness; detail route stub for AC5.
+
 ### Change Log
 
 ### File List
+
+- `_bmad-output/specs/spec-m5-proyectos/screen-inventory.md`
+- `src/features/projects/{actions,actions.test,ProjectForm,ProjectForm.test,types}.ts(x)`
+- `src/app/(modal)/nodo/projects/new/{page,page.test,NewProjectForm,NewProjectForm.test}.tsx`
+- `src/app/(app)/nodo/projects/[id]/{page,page.test}.tsx`
