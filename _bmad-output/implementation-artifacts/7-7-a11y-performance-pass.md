@@ -36,6 +36,12 @@ so that the MVP close includes a basic quality bar.
    **When** done
    **Then** a short checklist (a11y + perf notes) is attached to Linear/PR — not an unbounded rewrite (FR60, NFR22)
 
+## Tasks / Subtasks
+
+- [ ] **T1 — A11y:** keyboard reachability + accessible names on Inicio and system states
+- [ ] **T2 — Perf:** icon/image sizing; mitigate obvious CLS on late Inicio sections
+- [ ] **T3 — Evidence** short checklist on PR/Linear
+
 ## Out of scope
 
 - Full WCAG certification audit. Rewriting M0–M6 unrelated screens.

@@ -36,6 +36,12 @@ so that dark is first-class for the MVP close.
    **When** a fix is code-level (class/token misuse)
    **Then** lock it with a unit/dom test where practical (NFR21)
 
+## Tasks / Subtasks
+
+- [ ] **T1 — Checklist** primary shells under `.dark` (auth, onboarding, plantel, nodo, agenda, profile, admin, Inicio, system states)
+- [ ] **T2 — Fix** hard-coded light-only colors / contrast breaks found in-scope (tokens only)
+- [ ] **T3 — Evidence** screenshots or clean marks on PR/Linear
+
 ## Out of scope
 
 - Pixel-perfect every historical screen beyond the checklist. Rebuilding the design system.

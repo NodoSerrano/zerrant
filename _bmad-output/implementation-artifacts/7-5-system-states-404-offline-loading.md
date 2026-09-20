@@ -40,6 +40,13 @@ so that failure modes match Pencil instead of raw framework defaults.
    **When** done
    **Then** tests cover not-found render and loading/empty branches as applicable; `pnpm test` green (NFR21)
 
+## Tasks / Subtasks
+
+- [ ] **T0 — BLOCKING:** resolve Pencil node ids for `7.5` and `7.6` into screen-inventory
+- [ ] **T1 — RED:** not-found route test + loading/skeleton branches for Inicio fetches
+- [ ] **T2 — GREEN:** `not-found` UI, offline/error surface, loading treatment
+- [ ] **T3 — Fidelity** ~390px vs Pencil
+
 ## Out of scope
 
 - Redesigning every historical empty state (7.1–7.4 already owned by earlier milestones).

@@ -26,6 +26,8 @@ Complete epic and story breakdown for milestone **M7 · Cumpleaños, PWA y pulid
 
 **Prerequisite:** Pencil node ids for M7 frames start as `TBD`. Each UI story resolves its frame via `mcp__pencil` before implementation. `design/nodo-serrano.pen` is encrypted — never filesystem-read.
 
+**Story file status convention:** like M5/M6, new story files keep `Status: backlog` in the header and `development_status: backlog` even though the BMad glossary also defines `ready-for-dev` as “story file created.” Ticketization parity is backlog until a human starts the story.
+
 **Implementation gate:** Inicio (story 7.2) needs `events` readable (M6). Ticketization can land while last M5/M6 PRs merge; do not start 7.2 against a branch without events.
 
 ## Requirements Inventory

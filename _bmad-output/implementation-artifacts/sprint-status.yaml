@@ -1,5 +1,5 @@
 # generated: 2026-07-23T18:20:22-03:00
-# last_updated: 2026-09-20T17:30:00-03:00
+# last_updated: 2026-09-20T17:40:00-03:00
 # project: nodo
 # project_key: NOKEY
 # tracking_system: linear
@@ -58,7 +58,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: "2026-07-23T18:20:22-03:00"
-last_updated: "2026-09-20T17:30:00-03:00"
+last_updated: "2026-09-20T17:40:00-03:00"
 project: nodo
 project_key: NOKEY
 tracking_system: linear
@@ -200,3 +200,14 @@ development_status:
   6-10-edit-delete-event: review
   6-11-qa-m6-dod-e2e: backlog
   epic-6-aportes-eventos-retrospective: optional
+
+  epic-7-cumpleanos-pwa-pulido: backlog
+  7-1-birthday-domain-helpers: backlog
+  7-2-inicio-hub-and-tabbar: backlog
+  7-3-pwa-manifest-and-icons: backlog
+  7-4-pwa-offline-shell: backlog
+  7-5-system-states-404-offline-loading: backlog
+  7-6-dark-mode-polish: backlog
+  7-7-a11y-performance-pass: backlog
+  7-8-qa-m7-dod-e2e: backlog
+  epic-7-cumpleanos-pwa-pulido-retrospective: optional

@@ -1,7 +1,11 @@
 ---
 tags: [roadmap, milestone]
 status: ticketized
-depends-on: "[[M4 · Plantel y directorio]]"
+depends-on:
+  - "[[M2 · Nodo — Tasks]]"
+  - "[[M4 · Plantel y directorio]]"
+  - "[[M5 · Proyectos]]"
+  - "[[M6 · Aportes y eventos]]"
 ---
 
 # M7 · Cumpleaños, PWA y pulido
