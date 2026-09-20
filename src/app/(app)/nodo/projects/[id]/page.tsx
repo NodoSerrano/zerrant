@@ -69,6 +69,8 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     viewerMembership,
   });
 
+  const viewerIsAdmin = isProjectAdmin({ viewerMembership });
+
   const viewModel: ProjectDetailViewModel = {
     id: row.id,
     nombre: row.nombre,
@@ -77,7 +79,8 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     ingreso: row.ingreso,
     members,
     affordance,
-    showRequestsQueue: isProjectAdmin({ viewerMembership }),
+    showRequestsQueue: viewerIsAdmin,
+    canPromoteMembers: viewerIsAdmin,
   };
 
   return <ProjectDetail project={viewModel} />;

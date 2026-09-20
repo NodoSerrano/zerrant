@@ -193,5 +193,17 @@ describe("ProjectDetailPage", () => {
       "href",
       "/nodo/projects/proj-1/requests",
     );
+    // ZER-84: promote on aprobado miembro only (u3), not admin creator (u1)
+    expect(screen.getByRole("button", { name: "Designar admin" })).toBeInTheDocument();
+  });
+
+  it("does not offer promote to plain miembros", async () => {
+    mockClient({
+      project: sampleProject,
+      viewerMembership: { estado: "aprobado", rol: "miembro" },
+    });
+    const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
+    render(ui);
+    expect(screen.queryByRole("button", { name: "Designar admin" })).not.toBeInTheDocument();
   });
 });

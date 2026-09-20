@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronLeft, Lock } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { ProjectJoinButton } from "@/features/projects/ProjectJoinButton";
+import { PromoteMemberButton } from "@/features/projects/PromoteMemberButton";
 import {
   getProjectEstadoBadge,
   getProjectIngresoLabel,
@@ -88,6 +89,8 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
                 <span className="shrink-0 rounded-pill bg-blue-raw/20 px-2.5 py-1 font-display text-[11px] font-semibold text-brand-blue">
                   Admin
                 </span>
+              ) : project.canPromoteMembers ? (
+                <PromoteMemberButton projectId={project.id} profileId={member.profileId} />
               ) : null}
             </li>
           ))}

@@ -93,7 +93,13 @@ vi.mock("next/navigation", () => ({
   redirect: (url: string) => mocks.redirect(url),
 }));
 
-import { approveProjectJoin, createProject, joinProject, rejectProjectJoin } from "./actions";
+import {
+  approveProjectJoin,
+  createProject,
+  joinProject,
+  promoteProjectMember,
+  rejectProjectJoin,
+} from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -445,5 +451,71 @@ describe("rejectProjectJoin", () => {
     const result = await rejectProjectJoin(null, makeQueueForm());
 
     expect(result).toEqual({ error: "No pudimos rechazar la solicitud. Probá de nuevo." });
+  });
+});
+
+function makePromoteForm(projectId = "proj-1", profileId = "member-2") {
+  const fd = new FormData();
+  fd.set("projectId", projectId);
+  fd.set("profileId", profileId);
+  return fd;
+}
+
+describe("promoteProjectMember", () => {
+  it("updates rol to admin only for aprobado miembro and revalidates detail + queue", async () => {
+    setupAuth("admin-1");
+    mocks.membersUpdateSelect.mockResolvedValue({
+      error: null,
+      data: [{ project_id: "proj-1", profile_id: "member-2", rol: "admin" }],
+    });
+
+    const result = await promoteProjectMember(null, makePromoteForm());
+
+    expect(result).toBeNull();
+    expect(mocks.membersUpdatePayload).toEqual({ rol: "admin" });
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("project_id", "proj-1");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("profile_id", "member-2");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("estado", "aprobado");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("rol", "miembro");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects/proj-1");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects/proj-1/requests");
+  });
+
+  it("treats a zero-row update as failure, not success", async () => {
+    setupAuth("admin-1");
+    mocks.membersUpdateSelect.mockResolvedValue({ error: null, data: [] });
+
+    const result = await promoteProjectMember(null, makePromoteForm());
+
+    expect(result).toEqual({ error: "No pudimos designar admin." });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a Spanish error when the update fails", async () => {
+    setupAuth("admin-1");
+    mocks.membersUpdateSelect.mockResolvedValue({ error: { message: "rls" }, data: null });
+
+    const result = await promoteProjectMember(null, makePromoteForm());
+
+    expect(result).toEqual({ error: "No pudimos designar admin. Probá de nuevo." });
+  });
+
+  it("returns unauthorized when there is no session", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+
+    const result = await promoteProjectMember(null, makePromoteForm());
+
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.membersUpdate).not.toHaveBeenCalled();
+  });
+
+  it("rejects missing projectId or profileId without writing", async () => {
+    setupAuth("admin-1");
+
+    const empty = new FormData();
+    expect(await promoteProjectMember(null, empty)).toEqual({
+      error: "Revisá el miembro e intentá de nuevo.",
+    });
+    expect(mocks.membersUpdate).not.toHaveBeenCalled();
   });
 });

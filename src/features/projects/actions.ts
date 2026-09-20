@@ -284,3 +284,56 @@ export async function rejectProjectJoin(
   revalidatePath("/nodo", "layout");
   return null;
 }
+
+const PROMOTE_ERROR = "No pudimos designar admin. Probá de nuevo.";
+const PROMOTE_REJECTED = "No pudimos designar admin.";
+const PROMOTE_UNAUTHORIZED = "No autorizado";
+const PROMOTE_INVALID = "Revisá el miembro e intentá de nuevo.";
+
+/**
+ * Promote an approved miembro to project admin. RLS enforces the actor is a
+ * project admin; the filter refuses pendiente targets and no-ops on existing admins.
+ */
+export async function promoteProjectMember(
+  _prevState: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: PROMOTE_UNAUTHORIZED };
+  }
+
+  const projectId = trimmed(formData.get("projectId"));
+  const profileId = trimmed(formData.get("profileId"));
+  if (!projectId || !profileId) {
+    return { error: PROMOTE_INVALID };
+  }
+
+  const { data, error } = await supabase
+    .from("project_members")
+    .update({ rol: "admin" })
+    .eq("project_id", projectId)
+    .eq("profile_id", profileId)
+    .eq("estado", "aprobado")
+    .eq("rol", "miembro")
+    .select("project_id, profile_id, rol");
+
+  if (error) {
+    return { error: PROMOTE_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: PROMOTE_REJECTED };
+  }
+
+  revalidatePath(`/nodo/projects/${projectId}`);
+  revalidatePath(`/nodo/projects/${projectId}/requests`);
+  revalidatePath("/nodo/projects");
+  revalidatePath("/nodo", "layout");
+  return null;
+}
