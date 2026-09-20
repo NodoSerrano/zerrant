@@ -12,13 +12,23 @@ vi.mock("next/link", () => ({
     className,
     children,
     "aria-label": ariaLabel,
+    role,
+    "aria-selected": ariaSelected,
   }: {
     href: string;
     className?: string;
     children: React.ReactNode;
     "aria-label"?: string;
+    role?: string;
+    "aria-selected"?: boolean;
   }) => (
-    <a href={href} className={className} aria-label={ariaLabel}>
+    <a
+      href={href}
+      className={className}
+      aria-label={ariaLabel}
+      role={role}
+      aria-selected={ariaSelected}
+    >
       {children}
     </a>
   ),
@@ -84,13 +94,21 @@ describe("TasksPage", () => {
       expect(screen.getByText("Proyectos")).toBeInTheDocument();
     });
 
-    it("Proyectos tab is a span not a link (placeholder)", async () => {
+    it("Proyectos tab is a real link to /nodo/projects", async () => {
       const { createClient } = await import("@/lib/supabase/server");
       (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
-      const { container } = await renderPage();
-      const links = container.querySelectorAll("a");
-      const proyectosLink = Array.from(links).find((l) => l.textContent === "Proyectos");
-      expect(proyectosLink).toBeUndefined();
+      await renderPage();
+      const proyectos = screen.getByRole("tab", { name: "Proyectos" });
+      expect(proyectos).toHaveAttribute("href", "/nodo/projects");
+      expect(proyectos).toHaveAttribute("aria-selected", "false");
+    });
+
+    it("Tareas tab is active on /nodo/tasks", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+      await renderPage();
+      expect(screen.getByRole("tab", { name: "Tareas" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("tab", { name: "Tareas" })).toHaveAttribute("href", "/nodo/tasks");
     });
   });
 
