@@ -32,6 +32,7 @@ const member: SerranoMemberDetail = {
   bio: "Construyo infraestructura para el nodo.",
   tarifaHora: 40,
   telegramHref: "https://t.me/nobeldam",
+  aportes: [],
 };
 
 describe("MemberDetail", () => {
@@ -98,12 +99,83 @@ describe("MemberDetail", () => {
     expect(screen.queryByText("Rol en el nodo")).not.toBeInTheDocument();
   });
 
-  it("renders empty aportes and proyectos previews", () => {
+  it("renders the aportes section empty line when there are none", () => {
     render(<MemberDetail member={member} />);
     expect(screen.getByText("Aportes")).toBeInTheDocument();
-    expect(screen.getByText("Proyectos")).toBeInTheDocument();
     expect(screen.getByText("Todavía no hay aportes.")).toBeInTheDocument();
+    expect(screen.queryByTestId("aporte-item")).not.toBeInTheDocument();
+  });
+
+  it("renders the proyectos section", () => {
+    render(<MemberDetail member={member} />);
+    expect(screen.getByText("Proyectos")).toBeInTheDocument();
     expect(screen.getByText("Todavía no hay proyectos.")).toBeInTheDocument();
+  });
+
+  it("renders member aportes via shared AporteItem", () => {
+    render(
+      <MemberDetail
+        member={{
+          ...member,
+          aportes: [
+            {
+              id: "a1",
+              tipo: "donacion",
+              descripcion: "Donó un proyector",
+              monto: null,
+              fecha: "2026-07-12",
+            },
+            {
+              id: "a2",
+              tipo: "charla",
+              descripcion: "Charla ZK",
+              monto: null,
+              fecha: "2026-07-24",
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Aportes")).toBeInTheDocument();
+    expect(screen.queryByText("Todavía no hay aportes.")).not.toBeInTheDocument();
+    expect(screen.getByText("Donó un proyector")).toBeInTheDocument();
+    expect(screen.getByText("Charla ZK")).toBeInTheDocument();
+    expect(screen.getAllByTestId("aporte-item")).toHaveLength(2);
+  });
+
+  it("renders null-monto without amount slot and keeps legitimate zero monto", () => {
+    render(
+      <MemberDetail
+        member={{
+          ...member,
+          aportes: [
+            {
+              id: "n1",
+              tipo: "donacion",
+              descripcion: "Sin monto",
+              monto: null,
+              fecha: "2026-07-10",
+            },
+            {
+              id: "z1",
+              tipo: "economico",
+              descripcion: "Monto cero",
+              monto: 0,
+              fecha: "2026-07-09",
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Sin monto")).toBeInTheDocument();
+    expect(screen.getByText("Monto cero")).toBeInTheDocument();
+    expect(screen.getByText(/\$0/)).toBeInTheDocument();
+
+    const nullRow = screen.getByText("Sin monto").closest('[data-testid="aporte-item"]');
+    expect(nullRow?.textContent).not.toMatch(/\$/);
+    expect(screen.queryByText(/pagar|pago|checkout|wallet/i)).not.toBeInTheDocument();
   });
 
   it("does not render a Ver todos affordance", () => {

@@ -1,6 +1,6 @@
 # Story 6.4: Aportes in member detail
 
-Status: backlog
+Status: review
 
 ## Linear
 
@@ -59,35 +59,35 @@ so that the directory reflects what people actually contribute.
 
 ## Tasks / Subtasks
 
-- [ ] **T0 — Read the framework docs and coordinate with story 5.8** (AC: 5, 6)
-  - [ ] Read the relevant guide in `node_modules/next/dist/docs/` — breaking changes vs. training data (per `AGENTS.md`).
-  - [ ] Read the "The shared test case" note in Dev Notes **before** editing `MemberDetail.test.tsx`. Story 5.8 (ZER-85) edits the same test.
-  - [ ] This story has **no Pencil frame**: `screen-inventory.md` lists member detail under "Surfaces touched but not owned by a frame". It keeps its M0–M2 layout and only gains real data — no node id to resolve, and no redesign.
+- [x] **T0 — Read the framework docs and coordinate with story 5.8** (AC: 5, 6)
+  - [x] Read the relevant guide in `node_modules/next/dist/docs/` — breaking changes vs. training data (per `AGENTS.md`).
+  - [x] Read the "The shared test case" note in Dev Notes **before** editing `MemberDetail.test.tsx`. Story 5.8 (ZER-85) edits the same test.
+  - [x] This story has **no Pencil frame**: `screen-inventory.md` lists member detail under "Surfaces touched but not owned by a frame". It keeps its M0–M2 layout and only gains real data — no node id to resolve, and no redesign.
 
-- [ ] **T1 — RED: failing tests first** (AC: 1, 2, 3, 5, 9)
-  - [ ] `MemberDetail` test: a member with aportes renders them via `AporteItem`.
-  - [ ] `MemberDetail` test: a member with none renders the empty line.
-  - [ ] `MemberDetail` test: a null-monto aporte renders no amount slot; a `0`-monto aporte renders `0` (the truthiness trap).
-  - [ ] Split `renders empty aportes and proyectos previews` per the Dev Notes plan.
-  - [ ] Page test: the detail read requests that member's aportes.
-  - [ ] Verify RED.
+- [x] **T1 — RED: failing tests first** (AC: 1, 2, 3, 5, 9)
+  - [x] `MemberDetail` test: a member with aportes renders them via `AporteItem`.
+  - [x] `MemberDetail` test: a member with none renders the empty line.
+  - [x] `MemberDetail` test: a null-monto aporte renders no amount slot; a `0`-monto aporte renders `0` (the truthiness trap).
+  - [x] Split `renders empty aportes and proyectos previews` per the Dev Notes plan.
+  - [x] Page test: the detail read requests that member's aportes.
+  - [x] Verify RED.
 
-- [ ] **T2 — GREEN: the data read** (AC: 1, 4)
-  - [ ] `src/app/(app)/plantel/[id]/page.tsx`: read that member's `aportes`, ordered by `fecha`.
-  - [ ] Handle the serrano-only read: a refused or empty read degrades to the empty line, never to a crash or a leaked row.
-  - [ ] Do not regress the ZER-43 `tarifa_hora` masking while touching this read path — the detail page reads through `public.profiles_with_rate`, and `select *` on base `profiles` is not available.
+- [x] **T2 — GREEN: the data read** (AC: 1, 4)
+  - [x] `src/app/(app)/plantel/[id]/page.tsx`: read that member's `aportes`, ordered by `fecha`.
+  - [x] Handle the serrano-only read: a refused or empty read degrades to the empty line, never to a crash or a leaked row.
+  - [x] Do not regress the ZER-43 `tarifa_hora` masking while touching this read path — the detail page reads through `public.profiles_with_rate`, and `select *` on base `profiles` is not available.
 
-- [ ] **T3 — GREEN: the section** (AC: 1, 2, 3, 7)
-  - [ ] Extend `SerranoMemberDetail` in `src/features/plantel/types.ts` with the member's aportes (additive).
-  - [ ] Extend `buildSerranoMemberDetail` in `src/features/plantel/transform.ts` accordingly.
-  - [ ] Replace line 73's `<p>Todavía no hay aportes.</p>` with the real list; keep `<SectionTitle>Aportes</SectionTitle>` at line 72 and the section's position in the page order.
-  - [ ] Reuse `AporteItem` from story 6.3.
-  - [ ] Leave the Proyectos section (lines 76–79) exactly as story 5.8 left it.
+- [x] **T3 — GREEN: the section** (AC: 1, 2, 3, 7)
+  - [x] Extend `SerranoMemberDetail` in `src/features/plantel/types.ts` with the member's aportes (additive).
+  - [x] Extend `buildSerranoMemberDetail` in `src/features/plantel/transform.ts` accordingly.
+  - [x] Replace line 73's `<p>Todavía no hay aportes.</p>` with the real list; keep `<SectionTitle>Aportes</SectionTitle>` at line 72 and the section's position in the page order.
+  - [x] Reuse `AporteItem` from story 6.3.
+  - [x] Leave the Proyectos section (lines 76–79) exactly as story 5.8 left it.
 
-- [ ] **T4 — Verify** (AC: 5, 6, 9)
-  - [ ] `pnpm test && pnpm typecheck && pnpm lint` green.
-  - [ ] Re-read `MemberDetail.test.tsx` and confirm the proyectos assertion is unchanged.
-  - [ ] Visual check at ~390px: section order preserved; rate card, roles, skills unaffected.
+- [x] **T4 — Verify** (AC: 5, 6, 9)
+  - [x] `pnpm test && pnpm typecheck && pnpm lint` green.
+  - [x] Re-read `MemberDetail.test.tsx` and confirm the proyectos assertion is unchanged.
+  - [x] Visual check at ~390px: section order preserved; rate card, roles, skills unaffected.
 
 ## Dev Notes
 
@@ -200,10 +200,30 @@ If 5.8 has already landed, this story must also keep its Proyectos assertions gr
 
 ### Agent Model Used
 
+Gentle AI on Hermes Agent
+
 ### Debug Log References
 
 ### Completion Notes List
 
+- Rebased onto main after ZER-89 landed `AporteItem`.
+- Split shared empty aportes/proyectos test; left proyectos half byte-identical for ZER-85.
+- Member detail aportes list reuses shared `AporteItem`; null monto omits amount, `0` keeps `$0`.
+- Page reads `aportes` for member id ordered by `fecha` desc; refused/empty → empty list.
+- Additive `aportes` on `SerranoMemberDetail` / `buildSerranoMemberDetail`; profiles_with_rate path unchanged.
+
 ### Change Log
 
+- 2026-09-20: Implement ZER-90 member-detail aportes list.
+
 ### File List
+
+- src/features/plantel/MemberDetail.tsx
+- src/features/plantel/MemberDetail.test.tsx
+- src/features/plantel/types.ts
+- src/features/plantel/transform.ts
+- src/features/plantel/detail-transform.test.ts
+- src/app/(app)/plantel/[id]/page.tsx
+- src/app/(app)/plantel/[id]/page.test.tsx
+- _bmad-output/implementation-artifacts/6-4-aportes-in-member-detail.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml

@@ -4,6 +4,7 @@ import { Avatar } from "@/components/Avatar";
 import { TierBadge } from "@/components/TierBadge";
 import { RoleChip } from "@/components/RoleChip";
 import { cn } from "@/lib/utils";
+import { AporteItem } from "@/features/aportes/AporteItem";
 import { availabilityLabel } from "./transform";
 import type { Disponibilidad, SerranoMemberDetail } from "./types";
 
@@ -70,7 +71,22 @@ export function MemberDetail({ member }: { member: SerranoMemberDetail }) {
 
       <section className="flex flex-col gap-3">
         <SectionTitle>Aportes</SectionTitle>
-        <p className="font-body text-sm text-text-secondary">Todavía no hay aportes.</p>
+        {member.aportes.length === 0 ? (
+          <p className="font-body text-sm text-text-secondary">Todavía no hay aportes.</p>
+        ) : (
+          <ul className="flex flex-col gap-2.5 list-none p-0 m-0">
+            {member.aportes.map((aporte) => (
+              <li key={aporte.id}>
+                <AporteItem
+                  tipo={aporte.tipo}
+                  descripcion={aporte.descripcion}
+                  fecha={aporte.fecha}
+                  monto={aporte.monto}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="flex flex-col gap-3">

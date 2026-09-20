@@ -14,6 +14,9 @@ const mocks = vi.hoisted(() => ({
   viewerProfilesSelect: vi.fn(),
   viewerProfilesEq: vi.fn(),
   viewerProfilesSingle: vi.fn(),
+  aportesSelect: vi.fn(),
+  aportesEq: vi.fn(),
+  aportesOrder: vi.fn(),
   redirect: vi.fn(),
   notFound: vi.fn(),
   from: vi.fn(),
@@ -54,6 +57,15 @@ vi.mock("@/lib/supabase/server", () => ({
         return {
           select: mocks.profileSkillsSelect.mockImplementation(() => ({
             eq: mocks.profileSkillsEq,
+          })),
+        };
+      }
+      if (table === "aportes") {
+        return {
+          select: mocks.aportesSelect.mockImplementation(() => ({
+            eq: mocks.aportesEq.mockImplementation(() => ({
+              order: mocks.aportesOrder,
+            })),
           })),
         };
       }
@@ -105,6 +117,7 @@ beforeEach(() => {
   mocks.viewerProfilesSingle.mockResolvedValue({
     data: { id: "viewer-1", is_platform_admin: false, tier: "standard" },
   });
+  mocks.aportesOrder.mockResolvedValue({ data: [], error: null });
 });
 
 describe("PlantelMemberPage", () => {
@@ -159,5 +172,36 @@ describe("PlantelMemberPage", () => {
     await PlantelMemberPage({ params: Promise.resolve({ id: "p1" }) });
     expect(mocks.viewerProfilesSelect).toHaveBeenCalledWith("id, is_platform_admin, tier");
     expect(mocks.viewerProfilesEq).toHaveBeenCalledWith("id", "viewer-1");
+  });
+
+  it("queries that member's aportes ordered by fecha", async () => {
+    mocks.aportesOrder.mockResolvedValue({
+      data: [
+        {
+          id: "a1",
+          tipo: "donacion",
+          descripcion: "Donó un proyector",
+          monto: null,
+          fecha: "2026-07-12",
+        },
+      ],
+      error: null,
+    });
+
+    await PlantelMemberPage({ params: Promise.resolve({ id: "p1" }) });
+
+    expect(mocks.from).toHaveBeenCalledWith("aportes");
+    expect(mocks.aportesSelect).toHaveBeenCalledWith("id, tipo, descripcion, monto, fecha");
+    expect(mocks.aportesEq).toHaveBeenCalledWith("profile_id", "p1");
+    expect(mocks.aportesOrder).toHaveBeenCalledWith("fecha", { ascending: false });
+  });
+
+  it("degrades to empty aportes when the read is refused or empty", async () => {
+    mocks.aportesOrder.mockResolvedValue({ data: null, error: { message: "permission denied" } });
+
+    const element = await PlantelMemberPage({ params: Promise.resolve({ id: "p1" }) });
+    render(element);
+
+    expect(screen.getByTestId("member-detail")).toBeInTheDocument();
   });
 });

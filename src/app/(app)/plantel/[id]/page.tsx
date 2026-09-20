@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { MemberDetail } from "@/features/plantel/MemberDetail";
 import { buildSerranoMemberDetail } from "@/features/plantel/transform";
+import type { AporteListItem } from "@/features/aportes/types";
 
 const DETAIL_PROFILE_COLUMNS =
   "id, nombre, apellido, apodo, nombre_visible, avatar_url, tier, disponibilidad, bio, contacto_telegram, tarifa_hora, visibilidad_tarifa";
@@ -29,16 +30,28 @@ export default async function PlantelMemberPage({ params }: { params: Promise<{ 
 
   if (profile.tier === "tourist") redirect("/plantel");
 
-  const [{ data: roleAssignments }, { data: skillAssignments }, { data: viewerProfile }] =
-    await Promise.all([
-      supabase
-        .from("profile_roles")
-        .select("roles(nombre)")
-        .eq("profile_id", id)
-        .eq("confirmado", true),
-      supabase.from("profile_skills").select("skills(nombre)").eq("profile_id", id),
-      supabase.from("profiles").select("id, is_platform_admin, tier").eq("id", user.id).single(),
-    ]);
+  const [
+    { data: roleAssignments },
+    { data: skillAssignments },
+    { data: viewerProfile },
+    { data: aporteRows },
+  ] = await Promise.all([
+    supabase
+      .from("profile_roles")
+      .select("roles(nombre)")
+      .eq("profile_id", id)
+      .eq("confirmado", true),
+    supabase.from("profile_skills").select("skills(nombre)").eq("profile_id", id),
+    supabase.from("profiles").select("id, is_platform_admin, tier").eq("id", user.id).single(),
+    // Serrano-only SELECT: refused/empty → empty list (no crash, no sample rows).
+    supabase
+      .from("aportes")
+      .select("id, tipo, descripcion, monto, fecha")
+      .eq("profile_id", id)
+      .order("fecha", { ascending: false }),
+  ]);
+
+  const aportes = (aporteRows ?? []) as AporteListItem[];
 
   const roles = (roleAssignments ?? [])
     .map((assignment) => assignment.roles?.nombre)
@@ -69,6 +82,7 @@ export default async function PlantelMemberPage({ params }: { params: Promise<{ 
       isSelf: user.id === id,
       isAdmin: viewerProfile?.is_platform_admin ?? false,
       isTourist: viewerProfile?.tier === "tourist",
+      aportes,
     },
   );
 
