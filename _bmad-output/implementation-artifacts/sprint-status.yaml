@@ -1,5 +1,5 @@
 # generated: 2026-07-23T18:20:22-03:00
-# last_updated: 2026-09-20T14:30:00-03:00
+# last_updated: 2026-09-20
 # project: nodo
 # project_key: NOKEY
 # tracking_system: linear
@@ -181,7 +181,7 @@ development_status:
   6-4-aportes-in-member-detail: backlog
   6-5-events-schema-and-rls: done
   6-6-agenda-day-strip: backlog
-  6-7-create-event: backlog
+  6-7-create-event: review
   6-8-event-detail-attendees: backlog
   6-9-rsvp: backlog
   6-10-edit-delete-event: backlog

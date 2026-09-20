@@ -2,15 +2,15 @@
 
 Pencil SSOT: `design/nodo-serrano.pen`. Mobile frame width **390**.
 
-| Pencil frame            | Node id | App route(s)        | CAP          | Notes                                                      |
-| ----------------------- | ------- | ------------------- | ------------ | ---------------------------------------------------------- |
-| 4.6 · Registrar aporte  | `h0U2J` | `/aportes/new`      | CAP-2        | tipo, descripcion, fecha, monto optional; own / admin load |
-| 3.4 · Mis aportes       | `TBD`   | `/profile/aportes`  | CAP-3        | Clean story from scratch (see note below)                  |
-| 2.5 · Agenda            | `TBD`   | `/agenda`           | CAP-6        | Day strip; **replaces the existing stub page**             |
-| 5.1 · Detalle de evento | `TBD`   | `/agenda/[id]`      | CAP-8, CAP-9 | Attendee list + RSVP control                               |
-| 5.2 · Crear evento      | `TBD`   | `/agenda/new`       | CAP-7        | Any serrano                                                |
-| 5.3 · Editar evento     | `TBD`   | `/agenda/[id]/edit` | CAP-10       | Creator or platform admin; delete lives here               |
-| 7.4 · Vacío Agenda      | `TBD`   | `/agenda` (empty)   | CAP-6        | Zero-event state                                           |
+| Pencil frame            | Node id  | App route(s)        | CAP          | Notes                                                       |
+| ----------------------- | -------- | ------------------- | ------------ | ----------------------------------------------------------- |
+| 4.6 · Registrar aporte  | `h0U2J`  | `/aportes/new`      | CAP-2        | tipo, descripcion, fecha, monto optional; own / admin load  |
+| 3.4 · Mis aportes       | `TBD`    | `/profile/aportes`  | CAP-3        | Clean story from scratch (see note below)                   |
+| 2.5 · Agenda            | `TBD`    | `/agenda`           | CAP-6        | Day strip; **replaces the existing stub page**              |
+| 5.1 · Detalle de evento | `TBD`    | `/agenda/[id]`      | CAP-8, CAP-9 | Attendee list + RSVP control                                |
+| 5.2 · Crear evento      | `X2mwbR` | `/agenda/new`       | CAP-7        | Any serrano; modal shell (no TabBar); CTA «Publicar evento» |
+| 5.3 · Editar evento     | `TBD`    | `/agenda/[id]/edit` | CAP-10       | Creator or platform admin; delete lives here                |
+| 7.4 · Vacío Agenda      | `TBD`    | `/agenda` (empty)   | CAP-6        | Zero-event state                                            |
 
 Routes above are the **expected** shape and may be adjusted to match the Pencil IA once node ids are resolved; the frame column is the binding part.
 
