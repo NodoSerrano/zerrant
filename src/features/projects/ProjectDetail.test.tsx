@@ -33,6 +33,14 @@ vi.mock("@/features/projects/ProjectJoinButton", () => ({
   ),
 }));
 
+vi.mock("@/features/projects/PromoteMemberButton", () => ({
+  PromoteMemberButton: ({ projectId, profileId }: { projectId: string; profileId: string }) => (
+    <button type="submit" data-testid={`promote-${profileId}`} data-project-id={projectId}>
+      Designar admin
+    </button>
+  ),
+}));
+
 const baseProject: ProjectDetailViewModel = {
   id: "proj-1",
   nombre: "Sitio web de Nodo",
@@ -58,6 +66,7 @@ const baseProject: ProjectDetailViewModel = {
   ],
   affordance: { kind: "join", label: "Solicitar ingreso" },
   showRequestsQueue: false,
+  canPromoteMembers: false,
 };
 
 describe("ProjectDetail", () => {
@@ -142,6 +151,35 @@ describe("ProjectDetail", () => {
 
     rerender(<ProjectDetail project={{ ...baseProject, showRequestsQueue: false }} />);
     expect(screen.queryByRole("link", { name: "Solicitudes de ingreso" })).not.toBeInTheDocument();
+  });
+
+  it("offers promote only to project admins, and only on aprobado miembros who are not already admins", () => {
+    const { rerender } = render(
+      <ProjectDetail project={{ ...baseProject, canPromoteMembers: true }} />,
+    );
+    expect(screen.getByTestId("promote-u2")).toBeInTheDocument();
+    expect(screen.queryByTestId("promote-u1")).not.toBeInTheDocument();
+
+    rerender(<ProjectDetail project={{ ...baseProject, canPromoteMembers: false }} />);
+    expect(screen.queryByTestId("promote-u2")).not.toBeInTheDocument();
+  });
+
+  it("shows Admin badge for promoted members without a demote control", () => {
+    render(
+      <ProjectDetail
+        project={{
+          ...baseProject,
+          canPromoteMembers: true,
+          members: [
+            baseProject.members[0],
+            { ...baseProject.members[1], rol: "admin", isCreator: false },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getAllByText("Admin")).toHaveLength(2);
+    expect(screen.queryByTestId("promote-u2")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /quitar admin/i })).not.toBeInTheDocument();
   });
 
   it("keeps the topbar title centered without a dead ellipsis icon", () => {

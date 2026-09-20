@@ -1,11 +1,13 @@
 /**
- * Live harness for ZER-78 projects + project_members RLS and ZER-82 ingreso door.
+ * Live harness for ZER-78 projects + project_members RLS, ZER-82 ingreso door,
+ * and ZER-84 admin promotion.
  * Invoked only via:
  *   pnpm db:check-rls
  * (vitest.db-rls.config.ts). Not part of the default `pnpm test` suite.
  *
- * Requires migrations *_zer78_projects_project_members.sql and
- * *_zer82_project_members_ingreso_door.sql applied.
+ * Requires migrations *_zer78_projects_project_members.sql,
+ * *_zer82_project_members_ingreso_door.sql, and
+ * *_zer84_project_admin_promotion.sql applied.
  * Everything runs inside one transaction that ends in ROLLBACK.
  *
  * Proves: serrano insert OK + creator auto-admin; tourist insert denied;
@@ -287,7 +289,125 @@ begin
     end;
     v_rows := v_rows || ('serrano_a_approve_member=' || v_state);
 
+    -- ZER-84: plain miembro B cannot promote anyone (incl. self)
+    perform set_config('request.jwt.claims', '{"sub":"${SERRANO_B}","role":"authenticated"}', true);
+    begin
+      update public.project_members
+      set rol = 'admin'
+      where project_id = v_project and profile_id = '${SERRANO_B}';
+      get diagnostics v_count = row_count;
+      if v_count > 0 then
+        v_state := '${SUCCESS}';
+      else
+        v_state := '${RLS_DENIED}';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('miembro_promote_denied=' || v_state);
+
+    -- ZER-84: platform admin who is not project admin cannot promote
+    perform set_config('request.jwt.claims', '{"sub":"${PLATFORM_ADMIN_ID}","role":"authenticated"}', true);
+    begin
+      update public.project_members
+      set rol = 'admin'
+      where project_id = v_project and profile_id = '${SERRANO_B}';
+      get diagnostics v_count = row_count;
+      if v_count > 0 then
+        v_state := '${SUCCESS}';
+      else
+        v_state := '${RLS_DENIED}';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('platform_admin_promote_denied=' || v_state);
+
+    -- ZER-84: non-member (tourist, no membership row) cannot promote
+    perform set_config('request.jwt.claims', '{"sub":"${TOURIST_ID}","role":"authenticated"}', true);
+    begin
+      update public.project_members
+      set rol = 'admin'
+      where project_id = v_project and profile_id = '${SERRANO_B}';
+      get diagnostics v_count = row_count;
+      if v_count > 0 then
+        v_state := '${SUCCESS}';
+      else
+        v_state := '${RLS_DENIED}';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('non_member_promote_denied=' || v_state);
+
+    -- ZER-84: project admin A promotes approved miembro B → OK
+    perform set_config('request.jwt.claims', '{"sub":"${SERRANO_A}","role":"authenticated"}', true);
+    begin
+      update public.project_members
+      set rol = 'admin'
+      where project_id = v_project
+        and profile_id = '${SERRANO_B}'
+        and estado = 'aprobado'
+        and rol = 'miembro';
+      get diagnostics v_count = row_count;
+      if v_count > 0 then
+        select rol::text into v_rol
+        from public.project_members
+        where project_id = v_project and profile_id = '${SERRANO_B}';
+        if v_rol = 'admin' then
+          v_state := '${SUCCESS}';
+        else
+          v_state := 'WRONG_ROL';
+        end if;
+      else
+        v_state := '${RLS_DENIED}';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('admin_promote_miembro_ok=' || v_state);
+
+    -- Reset B to pendiente to probe promote-on-pendiente target (ZER-84 AC6)
+    begin
+      delete from public.project_members
+      where project_id = v_project and profile_id = '${SERRANO_B}';
+      perform set_config('role', 'postgres', true);
+      insert into public.project_members (project_id, profile_id, rol, estado)
+      values (v_project, '${SERRANO_B}', 'miembro', 'pendiente');
+      perform set_config('role', 'authenticated', true);
+      perform set_config('request.jwt.claims', '{"sub":"${SERRANO_A}","role":"authenticated"}', true);
+      begin
+        update public.project_members
+        set rol = 'admin'
+        where project_id = v_project and profile_id = '${SERRANO_B}' and estado = 'pendiente';
+        get diagnostics v_count = row_count;
+        if v_count > 0 then
+          v_state := '${SUCCESS}';
+        else
+          v_state := '${RLS_DENIED}';
+        end if;
+      exception when others then v_state := SQLSTATE;
+      end;
+    exception when others then
+      v_state := SQLSTATE;
+      perform set_config('role', 'authenticated', true);
+    end;
+    v_rows := v_rows || ('admin_promote_pendiente_target=' || v_state);
+
+    -- pendiente actor cannot promote (B still pendiente after failed promote probe)
+    perform set_config('request.jwt.claims', '{"sub":"${SERRANO_B}","role":"authenticated"}', true);
+    begin
+      update public.project_members
+      set rol = 'admin'
+      where project_id = v_project and profile_id = '${SERRANO_A}';
+      get diagnostics v_count = row_count;
+      if v_count > 0 then
+        v_state := '${SUCCESS}';
+      else
+        v_state := '${RLS_DENIED}';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('pendiente_actor_promote_denied=' || v_state);
+
     -- project admin A can delete B membership
+    perform set_config('request.jwt.claims', '{"sub":"${SERRANO_A}","role":"authenticated"}', true);
     begin
       delete from public.project_members
       where project_id = v_project and profile_id = '${SERRANO_B}';
@@ -415,6 +535,17 @@ describe("projects RLS (live DB)", () => {
     expect(outcomes.serrano_a_approve_member).toBe(SUCCESS);
     expect(outcomes.serrano_a_delete_member).not.toBe(POLICY_RECURSION);
     expect(outcomes.serrano_a_delete_member).toBe(SUCCESS);
+  });
+
+  it("ZER-84: project admin promotes aprobado miembro; unauthorized actors and pendiente target denied", () => {
+    expect(outcomes.admin_promote_miembro_ok).not.toBe(POLICY_RECURSION);
+    expect(outcomes.admin_promote_miembro_ok).toBe(SUCCESS);
+    expect(outcomes.miembro_promote_denied).toBe(RLS_DENIED);
+    expect(outcomes.platform_admin_promote_denied).toBe(RLS_DENIED);
+    expect(outcomes.non_member_promote_denied).toBe(RLS_DENIED);
+    expect(outcomes.pendiente_actor_promote_denied).toBe(RLS_DENIED);
+    expect(outcomes.admin_promote_pendiente_target).not.toBe(POLICY_RECURSION);
+    expect(outcomes.admin_promote_pendiente_target).toBe(RLS_DENIED);
   });
 
   it("lets any authenticated user read projects", () => {

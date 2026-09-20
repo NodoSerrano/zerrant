@@ -62,4 +62,6 @@ export type ProjectDetailViewModel = {
   members: ProjectDetailMember[];
   affordance: JoinAffordance;
   showRequestsQueue: boolean;
+  /** Viewer is project admin — may promote aprobado miembros. */
+  canPromoteMembers: boolean;
 };
