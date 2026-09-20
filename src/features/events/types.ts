@@ -7,3 +7,16 @@ export type AgendaEvent = {
   fin: string | null;
   creado_por: string;
 };
+
+/** Shared create/edit form defaults (edit story 6.10 reuses EventForm). */
+export type EventFormDefaults = {
+  titulo?: string;
+  descripcion?: string;
+  lugar?: string;
+  /** YYYY-MM-DD in agenda TZ */
+  fecha?: string;
+  /** HH:MM wall clock */
+  inicio?: string;
+  /** HH:MM wall clock */
+  fin?: string;
+};

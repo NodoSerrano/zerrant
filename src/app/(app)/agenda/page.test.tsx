@@ -68,8 +68,10 @@ function createEventsChain(allEvents: EventRow[]) {
   return chain;
 }
 
-function mockSupabase(overrides: { events?: EventRow[]; user?: unknown } = {}) {
-  const { events = [], user = { id: "user-1" } } = overrides;
+function mockSupabase(
+  overrides: { events?: EventRow[]; user?: unknown; profileTier?: string | null } = {},
+) {
+  const { events = [], user = { id: "user-1" }, profileTier = "standard" } = overrides;
   let eventsChain: ReturnType<typeof createEventsChain> | null = null;
 
   return {
@@ -78,6 +80,18 @@ function mockSupabase(overrides: { events?: EventRow[]; user?: unknown } = {}) {
       if (table === "events") {
         eventsChain = createEventsChain(events);
         return eventsChain;
+      }
+      if (table === "profiles") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: profileTier == null ? null : { tier: profileTier },
+                error: null,
+              }),
+            }),
+          }),
+        };
       }
       return createEventsChain([]);
     }),
@@ -146,6 +160,29 @@ describe("AgendaPage", () => {
     const todayLink = screen.getByRole("link", { name: /dom\s*20/i });
     expect(todayLink).toHaveAttribute("aria-current", "date");
     expect(todayLink).toHaveAttribute("href", "/agenda?dia=2026-09-20");
+  });
+
+  it("shows a create entry for serranos", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockSupabase({ profileTier: "standard" }),
+    );
+
+    await renderPage();
+
+    const createLink = screen.getByRole("link", { name: /Nuevo evento/i });
+    expect(createLink).toHaveAttribute("href", "/agenda/new");
+  });
+
+  it("hides the create entry for tourists", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockSupabase({ profileTier: "tourist" }),
+    );
+
+    await renderPage();
+
+    expect(screen.queryByRole("link", { name: /Nuevo evento/i })).not.toBeInTheDocument();
   });
 
   it("lists events for the selected day from the events table", async () => {

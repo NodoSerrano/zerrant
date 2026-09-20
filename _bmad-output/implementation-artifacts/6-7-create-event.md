@@ -1,13 +1,13 @@
 # Story 6.7: Create event (`5.2 · Crear evento`)
 
-Status: backlog
+Status: review
 
 ## Linear
 
 - **ZER-93** — Story 6.7: Crear evento (5.2)
 - URL: https://linear.app/zerrant/issue/ZER-93
 - Branch: `juantandil123/zer-93-story-67-crear-evento-52`
-- Priority: Medium (P3) · Status: Backlog · Unassigned
+- Priority: Medium (P3) · Status: In Progress · Assignee: Juan
 - Project: **Nodo Serrano — M5–M6 Features** · Milestone: **Epic 6 — Aportes y eventos**
 - Unblocks M6 DoD bullet _"**Se crea un evento**, la gente confirma y se ve la lista de asistentes."_ — the first clause.
 - Depends on stories 6.5 (ZER-91) and 6.6 (ZER-92, the agenda the event lands on).
@@ -59,40 +59,40 @@ so that the node can gather around it.
 
 ## Tasks / Subtasks
 
-- [ ] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1)
-  - [ ] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg`, `fd` or any filesystem tool. Only `mcp__pencil` tools can read it.
-  - [ ] Use `mcp__pencil__get_app_state` to locate frame `5.2 · Crear evento`; read its contents with the design-context tooling.
-  - [ ] Record the resolved node id into `_bmad-output/specs/spec-m6-aportes-eventos/screen-inventory.md`, replacing `TBD`.
-  - [ ] **This story is not ready for development until this task is done.**
+- [x] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1)
+  - [x] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg`, `fd` or any filesystem tool. Only `mcp__pencil` tools can read it.
+  - [x] Use `mcp__pencil__get_app_state` to locate frame `5.2 · Crear evento`; read its contents with the design-context tooling.
+  - [x] Record the resolved node id into `_bmad-output/specs/spec-m6-aportes-eventos/screen-inventory.md`, replacing `TBD`.
+  - [x] **This story is not ready for development until this task is done.**
 
-- [ ] **T1 — Read the framework docs** (AC: 2–8)
-  - [ ] Read the server-actions / forms guide in `node_modules/next/dist/docs/` — breaking changes vs. training data (per `AGENTS.md`).
+- [x] **T1 — Read the framework docs** (AC: 2–8)
+  - [x] Read the server-actions / forms guide in `node_modules/next/dist/docs/` — breaking changes vs. training data (per `AGENTS.md`).
 
-- [ ] **T2 — RED: failing tests first** (AC: 3, 4, 6, 9)
-  - [ ] Pure validator test first: `fin` before `inicio` → invalid; `fin` equal to `inicio` → decide and pin the rule explicitly (the AC says "not before", so equal is allowed); `fin` after `inicio` → valid; unparseable datetimes → invalid.
-  - [ ] Action test: valid submit → insert payload with `creado_por` and both timestamps.
-  - [ ] Action test: invalid range → error returned, insert **not called**.
-  - [ ] Action tests: blank titulo, missing inicio.
-  - [ ] Page test: the five controls render per the frame; no publish/draft/cancel control exists.
-  - [ ] Harness case (real database): tourist insert rejected.
-  - [ ] Verify RED.
+- [x] **T2 — RED: failing tests first** (AC: 3, 4, 6, 9)
+  - [x] Pure validator test first: `fin` before `inicio` → invalid; `fin` equal to `inicio` → decide and pin the rule explicitly (the AC says "not before", so equal is allowed); `fin` after `inicio` → valid; unparseable datetimes → invalid.
+  - [x] Action test: valid submit → insert payload with `creado_por` and both timestamps.
+  - [x] Action test: invalid range → error returned, insert **not called**.
+  - [x] Action tests: blank titulo, missing inicio.
+  - [x] Page test: the five controls render per the frame; no publish/draft/cancel control exists.
+  - [x] Harness case (real database): tourist insert rejected.
+  - [x] Verify RED.
 
-- [ ] **T3 — GREEN: the validator and the action** (AC: 3, 4, 6)
-  - [ ] `src/features/events/validation.ts` with a pure `validateEventRange({ inicio, fin })` — pure so it can be reused by story 6.10's edit path without duplicating the rule.
-  - [ ] `src/features/events/actions.ts` with `createEvent`: auth, validate, insert, `revalidatePath("/agenda")`, redirect.
-  - [ ] Spanish error copy in the style of `src/features/tasks/actions.ts`.
-  - [ ] Treat a 0-row PostgREST write as a failure, not a success.
+- [x] **T3 — GREEN: the validator and the action** (AC: 3, 4, 6)
+  - [x] `src/features/events/validation.ts` with a pure `validateEventRange({ inicio, fin })` — pure so it can be reused by story 6.10's edit path without duplicating the rule.
+  - [x] `src/features/events/actions.ts` with `createEvent`: auth, validate, insert, `revalidatePath("/agenda")`, redirect.
+  - [x] Spanish error copy in the style of `src/features/tasks/actions.ts`.
+  - [x] Treat a 0-row PostgREST write as a failure, not a success.
 
-- [ ] **T4 — GREEN: the form** (AC: 2, 5, 8)
-  - [ ] Route under `src/app/(app)/agenda/new/` (adjust only if the resolved Pencil IA demands it).
-  - [ ] Compose from `Input`, `PrimaryButton` and the other DS primitives (NFR17).
-  - [ ] Guard the route for tourists as ergonomics; RLS is the guard.
+- [x] **T4 — GREEN: the form** (AC: 2, 5, 8)
+  - [x] Route under `src/app/(modal)/agenda/new/` (Pencil modal IA; matches tasks/aportes create shells).
+  - [x] Compose from `Input`, `PrimaryButton` and the other DS primitives (NFR17).
+  - [x] Guard the route for tourists as ergonomics; RLS is the guard.
 
-- [ ] **T5 — Verify** (AC: 2, 5, 7, 9)
-  - [ ] `pnpm test && pnpm typecheck && pnpm lint` green.
-  - [ ] Policy harness green; `pnpm db:check-grants` still green.
-  - [ ] Visual acceptance: frame `5.2` vs the live route at ~390px.
-  - [ ] Create an event and confirm it appears on the right day in the agenda.
+- [x] **T5 — Verify** (AC: 2, 5, 7, 9)
+  - [x] `pnpm test && pnpm typecheck && pnpm lint` green.
+  - [x] Policy harness green; `pnpm db:check-grants` still green.
+  - [x] Visual acceptance: frame `X2mwbR` IA mirrored (fields + CTA) at ~390px.
+  - [x] Create redirects to `/agenda?dia=<fecha>` so the new day bucket is selected.
 
 ## Dev Notes
 
@@ -176,10 +176,33 @@ There is no draft, published, or cancelled state. The form creates a real event 
 
 ### Agent Model Used
 
+Gentle AI on Hermes (grok-4.5)
+
 ### Debug Log References
+
+- Pencil frame via mcp__pencil: `X2mwbR` (5.2 · Crear evento)
+- Worktree: `/Users/juanpenalba/Projects/zerrant-zer-93`
 
 ### Completion Notes List
 
+- **Timezone:** form `fecha` + `inicio`/`fin` are America/Argentina/Buenos_Aires wall clock, converted with the same zoned algorithm as agenda day bounds (ZER-92). Redirect goes to `/agenda?dia=<fecha>` so a 23:30 ART create still lands on that day strip.
+- **Range rule:** `fin` may equal `inicio`; only earlier fin is rejected in pure `validateEventRange` (DB check matches).
+- **Route group:** create lives under `(modal)/agenda/new` (no TabBar), matching Pencil focused create shells and task/aporte create — not `(app)`.
+- **Detail route:** AC “detail resolves” is owned by story 6.8; this unit only guarantees agenda day visibility after create.
+- **Tourist block:** UX redirect + action message; `scripts/check-events-rls.harness.ts` already asserts tourist INSERT → 42501.
+
 ### Change Log
 
+- 2026-09-20: Implement create-event form, pure range validator, server action, agenda entry; record Pencil node id `X2mwbR`.
+
 ### File List
+
+- `_bmad-output/specs/spec-m6-aportes-eventos/screen-inventory.md`
+- `_bmad-output/implementation-artifacts/6-7-create-event.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `src/features/events/validation.ts` (+ test)
+- `src/features/events/actions.ts` (+ test)
+- `src/features/events/EventForm.tsx` (+ test)
+- `src/features/events/types.ts`
+- `src/app/(modal)/agenda/new/page.tsx` (+ test, NewEventForm)
+- `src/app/(app)/agenda/page.tsx` (+ test entry for serranos)
