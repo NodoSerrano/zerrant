@@ -2,6 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Mountain } from "lucide-react";
@@ -21,7 +22,7 @@ function loginErrorMessage(raw: string | null): string | null {
   return LOGIN_ERROR_COPY[raw] ?? raw;
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const [state, action, pending] = useGuardedActionState(signInWithPassword, null);
   const searchParams = useSearchParams();
   const urlError = loginErrorMessage(searchParams.get("error"));
@@ -90,5 +91,14 @@ export default function LoginPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  // Webpack production prerender requires Suspense around useSearchParams (Next 16).
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

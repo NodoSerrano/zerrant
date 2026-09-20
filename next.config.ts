@@ -1,8 +1,26 @@
+import { spawnSync } from "node:child_process";
+import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
 import {
   getSupabaseAvatarRemotePatterns,
   shouldAllowLocalIPForAvatars,
 } from "./src/lib/avatar-image-url";
+import { OFFLINE_FALLBACK_PATH } from "./src/features/pwa/offlineShellPolicy";
+
+// Revision for additional precache entries (offline shell page).
+const revision =
+  spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf-8" }).stdout?.trim() ||
+  crypto.randomUUID();
+
+const withSerwist = withSerwistInit({
+  swSrc: "src/app/sw.ts",
+  swDest: "public/sw.js",
+  // Serwist classic webpack path — Next 16 Turbopack needs --webpack for this plugin.
+  disable: process.env.NODE_ENV === "development",
+  cacheOnNavigation: true,
+  reloadOnOnline: true,
+  additionalPrecacheEntries: [{ url: OFFLINE_FALLBACK_PATH, revision }],
+});
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["*"],
@@ -26,4 +44,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSerwist(nextConfig);

@@ -48,3 +48,7 @@ Thumbs.db
 
 # agent skill registry cache
 .atl/
+
+# Serwist generated service worker
+public/sw*
+public/swe-worker*

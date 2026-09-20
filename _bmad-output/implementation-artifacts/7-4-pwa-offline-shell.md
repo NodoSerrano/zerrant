@@ -1,13 +1,13 @@
 # Story 7.4: Service worker offline shell
 
-Status: backlog
+Status: review
 
 ## Linear
 
 - **ZER-101** — Story 7.4: Service worker shell offline
 - URL: https://linear.app/zerrant/issue/ZER-101/story-74-service-worker-shell-offline
 - Branch: `juantandil123/zer-101-story-74-service-worker-shell-offline`
-- Priority: High (P2) · Status: Backlog · Unassigned
+- Priority: High (P2) · Status: In Progress · Assignee: Juan Peñalba
 - Project: **Nodo Serrano — M7 Cumpleaños, PWA y pulido** · Milestone: **Epic 7 — Cumpleaños, PWA y pulido**
 
 - Unblocks M7 DoD bullet _"La app se instala como PWA y abre offline el shell."_
@@ -43,11 +43,20 @@ so that I am not stuck on the browser generic offline page.
 
 ## Tasks / Subtasks
 
-- [ ] **T1 — Spike** Serwist on Next 16 in-repo (read Next docs first)
-- [ ] **T2 — Implement** SW + precache shell
-- [ ] **T3 — Verify** offline open after online visit
-- [ ] **T4 — Document** caching policy in PR
+- [x] **T1 — Spike** Serwist on Next 16 in-repo (read Next docs first)
+- [x] **T2 — Implement** SW + precache shell
+- [x] **T3 — Verify** offline open after online visit
+- [x] **T4 — Document** caching policy in PR
+
+## Completion Notes
+
+- Serwist `@serwist/next` + `serwist` 9.5.x with classic webpack plugin (`next build --webpack` / `next dev --webpack`). Turbopack default on Next 16 does not support this plugin path; documented in PR.
+- SW source: `src/app/sw.ts`. Generated `public/sw.js` is gitignored.
+- Navigation fallback: public precached `/~offline` reusing AppLayout TabBar chrome (no auth/onboarding gate so SW install can fetch it) with `OfflineShellFallback`.
+- Runtime cache: Serwist `defaultCache` plus leading `NetworkOnly` for `/plantel*` and Supabase hosts (no offline social graph).
+- Login page wrapped in `Suspense` so webpack production prerender accepts `useSearchParams` (required once Serwist forces `--webpack`).
 
 ## Out of scope
 
 - Full offline-first sync. Push. Background sync of RSVP/aportes.
+- Pencil-polished system states 7.5/7.6 (ZER-102).
