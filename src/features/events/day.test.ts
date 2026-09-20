@@ -1,5 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
+  addCalendarDays,
   buildDayStrip,
   dayBoundsIso,
   formatDayKey,
@@ -8,13 +9,21 @@ import {
 } from "./day";
 
 describe("formatDayKey", () => {
-  it("formats local calendar date as YYYY-MM-DD", () => {
-    expect(formatDayKey(new Date(2026, 8, 20, 15, 30))).toBe("2026-09-20");
+  it("formats the agenda-TZ calendar date as YYYY-MM-DD", () => {
+    // 15:30 ART on 2026-09-20
+    expect(formatDayKey(new Date("2026-09-20T15:30:00-03:00"))).toBe("2026-09-20");
+  });
+
+  it("keeps late-evening ART on the same calendar day under UTC runners", () => {
+    // 2026-09-21T02:00Z == 2026-09-20 23:00 ART
+    expect(formatDayKey(new Date("2026-09-21T02:00:00.000Z"))).toBe("2026-09-20");
+    // 2026-09-21T03:00Z == 2026-09-21 00:00 ART
+    expect(formatDayKey(new Date("2026-09-21T03:00:00.000Z"))).toBe("2026-09-21");
   });
 });
 
 describe("parseDayKey", () => {
-  const now = new Date(2026, 8, 20, 12, 0, 0);
+  const now = new Date("2026-09-20T15:00:00-03:00");
 
   it("returns today when the param is missing", () => {
     expect(parseDayKey(undefined, now)).toBe("2026-09-20");
@@ -31,27 +40,30 @@ describe("parseDayKey", () => {
 });
 
 describe("dayBoundsIso", () => {
-  it("covers the full local calendar day", () => {
+  it("covers the full ART calendar day as stable UTC ISO bounds", () => {
+    // ART is UTC−3 year-round in 2026: midnight 20 Sep ART = 03:00Z
     const { startIso, endIso } = dayBoundsIso("2026-09-20");
-    const start = new Date(startIso);
-    const end = new Date(endIso);
+    expect(startIso).toBe("2026-09-20T03:00:00.000Z");
+    expect(endIso).toBe("2026-09-21T03:00:00.000Z");
+  });
 
-    expect(start.getFullYear()).toBe(2026);
-    expect(start.getMonth()).toBe(8);
-    expect(start.getDate()).toBe(20);
-    expect(start.getHours()).toBe(0);
-    expect(start.getMinutes()).toBe(0);
+  it("includes a 22:00 ART event on that calendar day", () => {
+    const { startIso, endIso } = dayBoundsIso("2026-09-21");
+    const event = new Date("2026-09-21T22:00:00-03:00").getTime();
+    expect(event).toBeGreaterThanOrEqual(new Date(startIso).getTime());
+    expect(event).toBeLessThan(new Date(endIso).getTime());
+  });
+});
 
-    expect(end.getFullYear()).toBe(2026);
-    expect(end.getMonth()).toBe(8);
-    expect(end.getDate()).toBe(21);
-    expect(end.getHours()).toBe(0);
+describe("addCalendarDays", () => {
+  it("rolls month boundaries", () => {
+    expect(addCalendarDays("2026-09-30", 1)).toBe("2026-10-01");
   });
 });
 
 describe("buildDayStrip", () => {
-  it("returns consecutive local days starting from the given date", () => {
-    const strip = buildDayStrip(3, new Date(2026, 8, 20));
+  it("returns consecutive agenda-TZ days starting from the given instant", () => {
+    const strip = buildDayStrip(3, new Date("2026-09-20T12:00:00-03:00"));
     expect(strip.map((d) => d.key)).toEqual(["2026-09-20", "2026-09-21", "2026-09-22"]);
     expect(strip[0]?.weekdayShort).toBe("dom");
     expect(strip[0]?.dayNumber).toBe("20");
@@ -59,21 +71,12 @@ describe("buildDayStrip", () => {
 });
 
 describe("formatEventTimeRange", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 8, 20, 12, 0, 0));
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("formats start-only times", () => {
+  it("formats start-only times in ART regardless of process TZ", () => {
     const label = formatEventTimeRange("2026-09-20T18:00:00-03:00", null);
     expect(label).toMatch(/18:00/);
   });
 
-  it("formats start and end", () => {
+  it("formats start and end in ART", () => {
     const label = formatEventTimeRange(
       "2026-09-20T18:00:00-03:00",
       "2026-09-20T20:30:00-03:00",
@@ -81,5 +84,11 @@ describe("formatEventTimeRange", () => {
     expect(label).toMatch(/18:00/);
     expect(label).toMatch(/20:30/);
     expect(label).toContain("–");
+  });
+
+  it("keeps late ART evening labels stable under UTC", () => {
+    // 01:00Z next day = 22:00 ART previous evening
+    const label = formatEventTimeRange("2026-09-21T01:00:00.000Z", null);
+    expect(label).toMatch(/22:00/);
   });
 });

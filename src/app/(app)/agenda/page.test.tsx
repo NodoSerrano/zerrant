@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AgendaPage from "./page";
+import { dayBoundsIso } from "@/features/events/day";
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
@@ -25,19 +26,49 @@ vi.mock("next/link", () => ({
     </a>
   ),
 }));
-function createEventsChain(events: unknown[]) {
-  const resolveData = { data: events, error: null };
-  const chain: Record<string, unknown> & { then: (cb: (v: unknown) => void) => unknown } = {
-    then: (cb: (v: unknown) => void) => cb(resolveData),
+
+type EventRow = {
+  id: string;
+  titulo: string;
+  descripcion: string | null;
+  lugar: string | null;
+  inicio: string;
+  fin: string | null;
+  creado_por: string;
+};
+
+function createEventsChain(allEvents: EventRow[]) {
+  let gteVal: string | null = null;
+  let ltVal: string | null = null;
+
+  const chain: Record<string, unknown> & {
+    then: (cb: (v: unknown) => void) => unknown;
+  } = {
     select: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
-    gte: vi.fn().mockReturnThis(),
-    lt: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockImplementation((_col: string, val: string) => {
+      gteVal = val;
+      return chain;
+    }),
+    lt: vi.fn().mockImplementation((_col: string, val: string) => {
+      ltVal = val;
+      return chain;
+    }),
+    then: (cb: (v: unknown) => void) => {
+      const filtered = allEvents.filter((event) => {
+        const t = new Date(event.inicio).getTime();
+        if (gteVal !== null && t < new Date(gteVal).getTime()) return false;
+        if (ltVal !== null && t >= new Date(ltVal).getTime()) return false;
+        return true;
+      });
+      return cb({ data: filtered, error: null });
+    },
   };
+
   return chain;
 }
 
-function mockSupabase(overrides: { events?: unknown[]; user?: unknown } = {}) {
+function mockSupabase(overrides: { events?: EventRow[]; user?: unknown } = {}) {
   const { events = [], user = { id: "user-1" } } = overrides;
   let eventsChain: ReturnType<typeof createEventsChain> | null = null;
 
@@ -60,10 +91,31 @@ async function renderPage(searchParams: Record<string, string | undefined> = {})
   return render(element);
 }
 
+const EVENT_A: EventRow = {
+  id: "evt-a",
+  titulo: "Asamblea",
+  descripcion: null,
+  lugar: "Salón",
+  inicio: "2026-09-20T18:00:00-03:00",
+  fin: "2026-09-20T20:00:00-03:00",
+  creado_por: "user-1",
+};
+
+const EVENT_B: EventRow = {
+  id: "evt-b",
+  titulo: "Cena comunitaria",
+  descripcion: null,
+  lugar: "Cocina",
+  inicio: "2026-09-21T20:00:00-03:00",
+  fin: null,
+  creado_por: "user-1",
+};
+
 describe("AgendaPage", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 8, 20, 12, 0, 0));
+    // Fixed ART noon so "today" is 2026-09-20 regardless of process TZ
+    vi.setSystemTime(new Date("2026-09-20T15:00:00-03:00"));
   });
 
   afterEach(() => {
@@ -99,19 +151,7 @@ describe("AgendaPage", () => {
   it("lists events for the selected day from the events table", async () => {
     const { createClient } = await import("@/lib/supabase/server");
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
-      mockSupabase({
-        events: [
-          {
-            id: "evt-1",
-            titulo: "Asamblea",
-            descripcion: null,
-            lugar: "Salón",
-            inicio: "2026-09-20T18:00:00-03:00",
-            fin: "2026-09-20T20:00:00-03:00",
-            creado_por: "user-1",
-          },
-        ],
-      }),
+      mockSupabase({ events: [EVENT_A] }),
     );
 
     await renderPage({ dia: "2026-09-20" });
@@ -120,7 +160,39 @@ describe("AgendaPage", () => {
     expect(screen.getByText("Salón")).toBeInTheDocument();
   });
 
-  it("queries events with an inicio range for the selected day", async () => {
+  it("lists only the events whose inicio falls on the selected day", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockSupabase({ events: [EVENT_A, EVENT_B] }),
+    );
+
+    await renderPage({ dia: "2026-09-20" });
+    expect(screen.getByText("Asamblea")).toBeInTheDocument();
+    expect(screen.queryByText("Cena comunitaria")).not.toBeInTheDocument();
+
+    cleanup();
+
+    // Re-render for day B with a fresh mock (new query chain)
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockSupabase({ events: [EVENT_A, EVENT_B] }),
+    );
+    await renderPage({ dia: "2026-09-21" });
+    expect(screen.getByText("Cena comunitaria")).toBeInTheDocument();
+    expect(screen.queryByText("Asamblea")).not.toBeInTheDocument();
+  });
+
+  it("does not link event cards to a detail route (6.8 owns that)", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockSupabase({ events: [EVENT_A] }),
+    );
+
+    await renderPage({ dia: "2026-09-20" });
+
+    expect(screen.queryByRole("link", { name: /Asamblea/i })).not.toBeInTheDocument();
+  });
+
+  it("queries events with ART-stable inicio bounds for the selected day", async () => {
     const { createClient } = await import("@/lib/supabase/server");
     const client = mockSupabase();
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
@@ -132,17 +204,15 @@ describe("AgendaPage", () => {
     expect(chain!.gte).toHaveBeenCalled();
     expect(chain!.lt).toHaveBeenCalled();
 
+    const expected = dayBoundsIso("2026-09-21");
     const gteArgs = (chain!.gte as ReturnType<typeof vi.fn>).mock.calls[0];
     const ltArgs = (chain!.lt as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(gteArgs[0]).toBe("inicio");
     expect(ltArgs[0]).toBe("inicio");
-
-    const start = new Date(gteArgs[1] as string);
-    const end = new Date(ltArgs[1] as string);
-    expect(start.getDate()).toBe(21);
-    expect(start.getHours()).toBe(0);
-    expect(end.getDate()).toBe(22);
-    expect(end.getHours()).toBe(0);
+    expect(gteArgs[1]).toBe(expected.startIso);
+    expect(ltArgs[1]).toBe(expected.endIso);
+    expect(expected.startIso).toBe("2026-09-21T03:00:00.000Z");
+    expect(expected.endIso).toBe("2026-09-22T03:00:00.000Z");
   });
 
   it("renders the agenda empty state copy, not the tasks empty copy", async () => {
@@ -153,9 +223,7 @@ describe("AgendaPage", () => {
 
     expect(screen.getByText("No hay eventos")).toBeInTheDocument();
     expect(screen.queryByText("No hay tareas")).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/todavía no hay eventos/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/todavía no hay eventos/i)).toBeInTheDocument();
   });
 
   it("defaults unparseable dia to today", async () => {
