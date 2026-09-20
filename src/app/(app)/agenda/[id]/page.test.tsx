@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   attendanceEq: vi.fn(),
   profilesSelect: vi.fn(),
   profilesIn: vi.fn(),
+  profilesEq: vi.fn(),
+  profileMaybeSingle: vi.fn(),
   notFound: vi.fn(),
 }));
 
@@ -106,6 +108,10 @@ function wireFrom(
   mocks.eventsMaybeSingle.mockResolvedValue({ data: event, error: null });
   mocks.attendanceEq.mockResolvedValue({ data: attendance, error: null });
   mocks.profilesIn.mockResolvedValue({ data: profiles, error: null });
+  mocks.profileMaybeSingle.mockResolvedValue({
+    data: { is_platform_admin: false },
+    error: null,
+  });
 
   mocks.from.mockImplementation((table: string) => {
     if (table === "events") {
@@ -126,9 +132,12 @@ function wireFrom(
     }
     if (table === "profiles") {
       return {
-        select: mocks.profilesSelect.mockReturnValue({
+        select: mocks.profilesSelect.mockImplementation(() => ({
           in: mocks.profilesIn,
-        }),
+          eq: mocks.profilesEq.mockReturnValue({
+            maybeSingle: mocks.profileMaybeSingle,
+          }),
+        })),
       };
     }
     throw new Error(`unexpected table ${table}`);
@@ -214,5 +223,35 @@ describe("EventDetailPage", () => {
     const ids = mocks.profilesIn.mock.calls[0]?.[1] as string[];
     expect(mocks.profilesIn.mock.calls[0]?.[0]).toBe("id");
     expect(ids).toEqual(expect.arrayContaining(["creator-1", "a1", "a2"]));
+  });
+});
+
+describe("EventDetailPage — manage entry", () => {
+  it("shows edit for the creator", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "creator-1" } } });
+    wireFrom();
+    render(await EventDetailPage({ params: Promise.resolve({ id: EVENT_ID }) }));
+    expect(screen.getByRole("link", { name: "Editar evento" })).toHaveAttribute(
+      "href",
+      "/agenda/evt-1/edit",
+    );
+  });
+
+  it("hides edit for a non-creator non-admin", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "other" } } });
+    wireFrom();
+    render(await EventDetailPage({ params: Promise.resolve({ id: EVENT_ID }) }));
+    expect(screen.queryByRole("link", { name: "Editar evento" })).toBeNull();
+  });
+
+  it("shows edit for a platform admin", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "admin" } } });
+    wireFrom();
+    mocks.profileMaybeSingle.mockResolvedValue({
+      data: { is_platform_admin: true },
+      error: null,
+    });
+    render(await EventDetailPage({ params: Promise.resolve({ id: EVENT_ID }) }));
+    expect(screen.getByRole("link", { name: "Editar evento" })).toBeTruthy();
   });
 });

@@ -88,8 +88,17 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     });
   }
 
+  const { data: viewerProfile } = await supabase
+    .from("profiles")
+    .select("is_platform_admin")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const canManage = event.creado_por === user.id || viewerProfile?.is_platform_admin === true;
+
   return (
     <EventDetail
+      eventId={event.id}
       titulo={event.titulo}
       descripcion={event.descripcion}
       lugar={event.lugar}
@@ -97,6 +106,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
       fin={event.fin}
       creator={toCreator(profiles.get(event.creado_por), event.creado_por)}
       attendees={attendees}
+      canManage={canManage}
     />
   );
 }

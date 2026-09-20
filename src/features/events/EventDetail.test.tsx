@@ -35,6 +35,7 @@ const ATTENDEES: EventAttendee[] = [
 ];
 
 const BASE_PROPS = {
+  eventId: "evt-1",
   titulo: "Asamblea de domingo",
   descripcion: "Reunión de coordinación del nodo.",
   lugar: "Salón principal",
@@ -115,5 +116,16 @@ describe("EventDetail", () => {
   it("leaves a mount seam for the story 6.9 RSVP control", () => {
     render(<EventDetail {...BASE_PROPS} />);
     expect(screen.getByTestId("rsvp-control-slot")).toBeInTheDocument();
+  });
+
+  it("hides the edit entry when the viewer cannot manage the event", () => {
+    render(<EventDetail {...BASE_PROPS} canManage={false} />);
+    expect(screen.queryByRole("link", { name: "Editar evento" })).not.toBeInTheDocument();
+  });
+
+  it("links creators and platform admins to the edit route", () => {
+    render(<EventDetail {...BASE_PROPS} canManage />);
+    const edit = screen.getByRole("link", { name: "Editar evento" });
+    expect(edit).toHaveAttribute("href", "/agenda/evt-1/edit");
   });
 });

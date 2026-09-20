@@ -174,7 +174,7 @@ begin
     end;
     v_rows := v_rows || ('serrano_b_rsvp_as_a=' || v_state);
 
-    perform set_config('request.jwt.claims', '{"sub":"${ADMIN_ID}","role":"authenticated"}', true);
+    perform set_config('request.jwt.claims', '{"sub":"${SERRANO_B}","role":"authenticated"}', true);
     begin
       delete from public.events where id = v_event;
       get diagnostics v_count = row_count;
@@ -185,7 +185,92 @@ begin
       end if;
     exception when others then v_state := SQLSTATE;
     end;
-    v_rows := v_rows || ('admin_delete=' || v_state);
+    v_rows := v_rows || ('serrano_b_delete=' || v_state);
+
+    perform set_config('request.jwt.claims', '{"sub":"${TOURIST_ID}","role":"authenticated"}', true);
+    begin
+      update public.events set titulo = 'tourist-hijack' where id = v_event;
+      get diagnostics v_count = row_count;
+      if v_count > 0 then
+        v_state := '${SUCCESS}';
+      else
+        v_state := '${RLS_DENIED}';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('tourist_update=' || v_state);
+
+    perform set_config('request.jwt.claims', '{"sub":"${TOURIST_ID}","role":"authenticated"}', true);
+    begin
+      delete from public.events where id = v_event;
+      get diagnostics v_count = row_count;
+      if v_count > 0 then
+        v_state := '${SUCCESS}';
+      else
+        v_state := '${RLS_DENIED}';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('tourist_delete=' || v_state);
+
+    -- Cascade proof: delete an event that still has attendance rows.
+    perform set_config('request.jwt.claims', '{"sub":"${SERRANO_A}","role":"authenticated"}', true);
+    begin
+      delete from public.events where id = v_event;
+      get diagnostics v_count = row_count;
+      if v_count > 0 then
+        v_state := '${SUCCESS}';
+      else
+        v_state := '${RLS_DENIED}';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('serrano_a_delete=' || v_state);
+
+    perform set_config('role', 'postgres', true);
+    select count(*)::text into v_state from public.event_attendance where event_id = v_event;
+    v_rows := v_rows || ('delete_cascade_attendance=' || case when v_state = '0' then '${SUCCESS}' else '${RLS_DENIED}' end);
+    perform set_config('role', 'authenticated', true);
+
+    -- Fresh event for platform-admin delete path.
+    perform set_config('request.jwt.claims', '{"sub":"${SERRANO_A}","role":"authenticated"}', true);
+    begin
+      insert into public.events (titulo, inicio, fin, creado_por)
+      values ('a-event-admin', now(), now() + interval '1 hour', '${SERRANO_A}')
+      returning id into v_event;
+      v_state := '${SUCCESS}';
+    exception when others then
+      v_state := SQLSTATE;
+      v_event := null;
+    end;
+    v_rows := v_rows || ('serrano_a_create_for_admin=' || v_state);
+
+    if v_event is not null then
+      perform set_config('request.jwt.claims', '{"sub":"${ADMIN_ID}","role":"authenticated"}', true);
+      begin
+        update public.events set titulo = 'admin-edit' where id = v_event;
+        get diagnostics v_count = row_count;
+        if v_count > 0 then
+          v_state := '${SUCCESS}';
+        else
+          v_state := '${RLS_DENIED}';
+        end if;
+      exception when others then v_state := SQLSTATE;
+      end;
+      v_rows := v_rows || ('admin_update=' || v_state);
+
+      begin
+        delete from public.events where id = v_event;
+        get diagnostics v_count = row_count;
+        if v_count > 0 then
+          v_state := '${SUCCESS}';
+        else
+          v_state := '${RLS_DENIED}';
+        end if;
+      exception when others then v_state := SQLSTATE;
+      end;
+      v_rows := v_rows || ('admin_delete=' || v_state);
+    end if;
   end if;
 
   perform set_config('role', 'postgres', true);
@@ -234,7 +319,22 @@ describe("events + event_attendance RLS (live DB)", () => {
     expect(outcomes.serrano_b_rsvp_as_a).toBe(RLS_DENIED);
   });
 
-  it("allows platform admin delete", () => {
+  it("denies other serrano delete", () => {
+    expect(outcomes.serrano_b_delete).toBe(RLS_DENIED);
+  });
+
+  it("denies tourist update and delete", () => {
+    expect(outcomes.tourist_update).toBe(RLS_DENIED);
+    expect(outcomes.tourist_delete).toBe(RLS_DENIED);
+  });
+
+  it("allows creator delete and cascades attendance rows", () => {
+    expect(outcomes.serrano_a_delete).toBe(SUCCESS);
+    expect(outcomes.delete_cascade_attendance).toBe(SUCCESS);
+  });
+
+  it("allows platform admin update and delete", () => {
+    expect(outcomes.admin_update).toBe(SUCCESS);
     expect(outcomes.admin_delete).toBe(SUCCESS);
   });
 });

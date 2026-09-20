@@ -7,6 +7,13 @@ const mocks = vi.hoisted(() => ({
   profilesSelectSingle: vi.fn(),
   eventsInsert: vi.fn(),
   eventsSelect: vi.fn(),
+  eventsUpdate: vi.fn(),
+  eventsUpdateEq: vi.fn(),
+  eventsUpdateSelect: vi.fn(),
+  eventsUpdatePayload: null as unknown,
+  eventsDelete: vi.fn(),
+  eventsDeleteEq: vi.fn(),
+  eventsDeleteSelect: vi.fn(),
   eventsInsertPayload: null as unknown,
   revalidatePath: vi.fn(),
   redirect: vi.fn((url: string) => {
@@ -35,6 +42,19 @@ vi.mock("@/lib/supabase/server", () => ({
               select: mocks.eventsSelect,
             };
           }),
+          update: mocks.eventsUpdate.mockImplementation((payload: unknown) => {
+            mocks.eventsUpdatePayload = payload;
+            return {
+              eq: mocks.eventsUpdateEq.mockImplementation(() => ({
+                select: mocks.eventsUpdateSelect,
+              })),
+            };
+          }),
+          delete: mocks.eventsDelete.mockImplementation(() => ({
+            eq: mocks.eventsDeleteEq.mockImplementation(() => ({
+              select: mocks.eventsDeleteSelect,
+            })),
+          })),
         };
       }
       return {};
@@ -50,11 +70,12 @@ vi.mock("next/navigation", () => ({
   redirect: (url: string) => mocks.redirect(url),
 }));
 
-import { createEvent } from "./actions";
+import { createEvent, updateEvent, deleteEvent } from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.eventsInsertPayload = null;
+  mocks.eventsUpdatePayload = null;
 });
 
 function setupAuth(userId = "serrano-1") {
@@ -211,5 +232,102 @@ describe("createEvent", () => {
         fin: "2026-09-20T22:00:00.000Z",
       }),
     );
+  });
+});
+
+describe("updateEvent", () => {
+  function makeUpdateForm(overrides: Record<string, string> = {}) {
+    const fd = makeFormData(overrides);
+    fd.set("eventId", overrides.eventId ?? "evt-1");
+    return fd;
+  }
+
+  it("updates the row scoped to eventId and redirects to detail", async () => {
+    setupAuth("serrano-1");
+    mocks.eventsUpdateSelect.mockResolvedValue({ error: null, data: [{ id: "evt-1" }] });
+
+    await expect(updateEvent(null, makeUpdateForm())).rejects.toThrow(
+      "NEXT_REDIRECT:/agenda/evt-1",
+    );
+
+    expect(mocks.eventsUpdatePayload).toEqual({
+      titulo: "Asamblea de nodo",
+      descripcion: "Revisión de pendientes",
+      lugar: "Salón",
+      inicio: "2026-09-20T22:00:00.000Z",
+      fin: "2026-09-21T00:00:00.000Z",
+    });
+    expect(mocks.eventsUpdateEq).toHaveBeenCalledWith("id", "evt-1");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/agenda");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/agenda/evt-1");
+  });
+
+  it("rejects fin before inicio without calling update", async () => {
+    setupAuth();
+    const result = await updateEvent(null, makeUpdateForm({ inicio: "21:00", fin: "19:00" }));
+
+    expect(result).toEqual({ error: "La hora de fin no puede ser anterior al inicio." });
+    expect(mocks.eventsUpdate).not.toHaveBeenCalled();
+  });
+
+  it("treats a zero-row update as failure", async () => {
+    setupAuth();
+    mocks.eventsUpdateSelect.mockResolvedValue({ error: null, data: [] });
+
+    const result = await updateEvent(null, makeUpdateForm());
+
+    expect(result).toEqual({ error: "No pudimos guardar los cambios." });
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("returns unauthorized when there is no session", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+    const result = await updateEvent(null, makeUpdateForm());
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.eventsUpdate).not.toHaveBeenCalled();
+  });
+
+  it("rejects a missing eventId without writing", async () => {
+    setupAuth();
+    const fd = makeFormData();
+    const result = await updateEvent(null, fd);
+    expect(result).toEqual({ error: "No encontramos el evento." });
+    expect(mocks.eventsUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe("deleteEvent", () => {
+  function makeDeleteForm(eventId = "evt-1") {
+    const fd = new FormData();
+    fd.set("eventId", eventId);
+    return fd;
+  }
+
+  it("deletes the row and redirects to the agenda", async () => {
+    setupAuth("serrano-1");
+    mocks.eventsDeleteSelect.mockResolvedValue({ error: null, data: [{ id: "evt-1" }] });
+
+    await expect(deleteEvent(null, makeDeleteForm())).rejects.toThrow("NEXT_REDIRECT:/agenda");
+
+    expect(mocks.eventsDeleteEq).toHaveBeenCalledWith("id", "evt-1");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/agenda");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/agenda/evt-1");
+  });
+
+  it("treats a zero-row delete as failure", async () => {
+    setupAuth();
+    mocks.eventsDeleteSelect.mockResolvedValue({ error: null, data: [] });
+
+    const result = await deleteEvent(null, makeDeleteForm());
+
+    expect(result).toEqual({ error: "No pudimos eliminar el evento." });
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("returns unauthorized when there is no session", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+    const result = await deleteEvent(null, makeDeleteForm());
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.eventsDelete).not.toHaveBeenCalled();
   });
 });
