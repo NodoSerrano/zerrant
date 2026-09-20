@@ -1,13 +1,21 @@
 # generated: 2026-07-23T18:20:22-03:00
-# last_updated: 2026-09-20T13:52:00-03:00
+# last_updated: 2026-09-20T14:30:00-03:00
 # project: nodo
 # project_key: NOKEY
 # tracking_system: linear
 # linear_project: Nodo Serrano — UI Fidelity M0-M2
 # linear_project_url: https://linear.app/zerrant/project/nodo-serrano-ui-fidelity-m0-m2-38ca59210685
+# linear_project_m5_m6: Nodo Serrano — M5–M6 Features
 # story_location: {project-root}/_bmad-output/implementation-artifacts
 # reconciled: ZER-46 — Linear Done + main routes/PRs; phantom keys restored as closed stubs
 # story_added: 4-x-zer-43-tarifa-hora-visibility (ZER-43) ready-for-dev
+# epics_added: 2026-09-20 — epic-5-proyectos (ZER-78→ZER-86, 9 stories) and
+#   epic-6-aportes-eventos (ZER-87→ZER-97, 11 stories), from
+#   _bmad-output/planning-artifacts/epics-m5-m6.md. All 20 story files created in
+#   {project-root}/_bmad-output/implementation-artifacts, all at status backlog.
+#   Every new development_status key has a matching linear_ids entry (20/20) —
+#   the parity bug ZER-46 had to repair is not reproduced. The pre-existing
+#   3-1-modelo-de-datos-rls-seed-admin gap is left as-is (out of scope).
 
 # STATUS DEFINITIONS:
 # ==================
@@ -45,7 +53,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: "2026-07-23T18:20:22-03:00"
-last_updated: "2026-09-20T13:52:00-03:00"
+last_updated: "2026-09-20T14:30:00-03:00"
 project: nodo
 project_key: NOKEY
 tracking_system: linear
@@ -81,6 +89,26 @@ linear_ids:
   4-3-editar-habilidades: ZER-34
   4-x-zer-42-tasks-rls-split: ZER-42
   4-x-zer-43-tarifa-hora-visibility: ZER-43
+  5-1-projects-schema-and-rls: ZER-78
+  5-2-nodo-proyectos-subtab: ZER-79
+  5-3-create-project: ZER-80
+  5-4-project-detail: ZER-81
+  5-5-join-project: ZER-82
+  5-6-join-request-queue: ZER-83
+  5-7-designate-project-admins: ZER-84
+  5-8-projects-on-profile-and-member-detail: ZER-85
+  5-9-qa-m5-dod-e2e: ZER-86
+  6-1-aportes-schema-and-rls: ZER-87
+  6-2-register-aporte: ZER-88
+  6-3-mis-aportes: ZER-89
+  6-4-aportes-in-member-detail: ZER-90
+  6-5-events-schema-and-rls: ZER-91
+  6-6-agenda-day-strip: ZER-92
+  6-7-create-event: ZER-93
+  6-8-event-detail-attendees: ZER-94
+  6-9-rsvp: ZER-95
+  6-10-edit-delete-event: ZER-96
+  6-11-qa-m6-dod-e2e: ZER-97
 
 development_status:
   epic-1: done
@@ -133,3 +161,29 @@ development_status:
   4-x-zer-42-tasks-rls-split: done
   4-x-zer-43-tarifa-hora-visibility: done
   epic-ops-security-retrospective: optional
+
+  epic-5-proyectos: backlog
+  5-1-projects-schema-and-rls: backlog
+  5-2-nodo-proyectos-subtab: backlog
+  5-3-create-project: backlog
+  5-4-project-detail: backlog
+  5-5-join-project: backlog
+  5-6-join-request-queue: backlog
+  5-7-designate-project-admins: backlog
+  5-8-projects-on-profile-and-member-detail: backlog
+  5-9-qa-m5-dod-e2e: backlog
+  epic-5-proyectos-retrospective: optional
+
+  epic-6-aportes-eventos: backlog
+  6-1-aportes-schema-and-rls: backlog
+  6-2-register-aporte: backlog
+  6-3-mis-aportes: backlog
+  6-4-aportes-in-member-detail: backlog
+  6-5-events-schema-and-rls: done
+  6-6-agenda-day-strip: backlog
+  6-7-create-event: backlog
+  6-8-event-detail-attendees: backlog
+  6-9-rsvp: backlog
+  6-10-edit-delete-event: backlog
+  6-11-qa-m6-dod-e2e: backlog
+  epic-6-aportes-eventos-retrospective: optional
