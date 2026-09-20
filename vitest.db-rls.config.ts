@@ -12,6 +12,7 @@ export default defineConfig({
       "scripts/check-membership-request-rls.harness.ts",
       "scripts/check-events-rls.harness.ts",
       "scripts/check-aportes-rls.harness.ts",
+      "scripts/check-projects-rls.harness.ts",
     ],
     globals: false,
     fileParallelism: false,

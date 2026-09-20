@@ -1,13 +1,334 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5";
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
   public: {
     Tables: {
+      aportes: {
+        Row: {
+          created_at: string;
+          descripcion: string | null;
+          fecha: string;
+          id: string;
+          monto: number | null;
+          profile_id: string;
+          registrado_por: string;
+          tipo: Database["public"]["Enums"]["aporte_tipo"];
+        };
+        Insert: {
+          created_at?: string;
+          descripcion?: string | null;
+          fecha: string;
+          id?: string;
+          monto?: number | null;
+          profile_id: string;
+          registrado_por: string;
+          tipo: Database["public"]["Enums"]["aporte_tipo"];
+        };
+        Update: {
+          created_at?: string;
+          descripcion?: string | null;
+          fecha?: string;
+          id?: string;
+          monto?: number | null;
+          profile_id?: string;
+          registrado_por?: string;
+          tipo?: Database["public"]["Enums"]["aporte_tipo"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "aportes_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "aportes_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles_with_rate";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "aportes_registrado_por_fkey";
+            columns: ["registrado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "aportes_registrado_por_fkey";
+            columns: ["registrado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles_with_rate";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      event_attendance: {
+        Row: {
+          estado: Database["public"]["Enums"]["event_attendance_estado"];
+          event_id: string;
+          profile_id: string;
+        };
+        Insert: {
+          estado: Database["public"]["Enums"]["event_attendance_estado"];
+          event_id: string;
+          profile_id: string;
+        };
+        Update: {
+          estado?: Database["public"]["Enums"]["event_attendance_estado"];
+          event_id?: string;
+          profile_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "event_attendance_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "event_attendance_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "event_attendance_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles_with_rate";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      events: {
+        Row: {
+          creado_por: string;
+          created_at: string;
+          descripcion: string | null;
+          fin: string | null;
+          id: string;
+          inicio: string;
+          lugar: string | null;
+          titulo: string;
+        };
+        Insert: {
+          creado_por: string;
+          created_at?: string;
+          descripcion?: string | null;
+          fin?: string | null;
+          id?: string;
+          inicio: string;
+          lugar?: string | null;
+          titulo: string;
+        };
+        Update: {
+          creado_por?: string;
+          created_at?: string;
+          descripcion?: string | null;
+          fin?: string | null;
+          id?: string;
+          inicio?: string;
+          lugar?: string | null;
+          titulo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "events_creado_por_fkey";
+            columns: ["creado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "events_creado_por_fkey";
+            columns: ["creado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles_with_rate";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      membership_requests: {
+        Row: {
+          actualizado_en: string;
+          created_at: string;
+          estado: Database["public"]["Enums"]["membership_request_estado"];
+          id: string;
+          mensaje: string | null;
+          profile_id: string;
+          revisado_por: string | null;
+          tier_solicitado: Database["public"]["Enums"]["tier"];
+        };
+        Insert: {
+          actualizado_en?: string;
+          created_at?: string;
+          estado?: Database["public"]["Enums"]["membership_request_estado"];
+          id?: string;
+          mensaje?: string | null;
+          profile_id: string;
+          revisado_por?: string | null;
+          tier_solicitado?: Database["public"]["Enums"]["tier"];
+        };
+        Update: {
+          actualizado_en?: string;
+          created_at?: string;
+          estado?: Database["public"]["Enums"]["membership_request_estado"];
+          id?: string;
+          mensaje?: string | null;
+          profile_id?: string;
+          revisado_por?: string | null;
+          tier_solicitado?: Database["public"]["Enums"]["tier"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "membership_requests_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "membership_requests_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles_with_rate";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "membership_requests_revisado_por_fkey";
+            columns: ["revisado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "membership_requests_revisado_por_fkey";
+            columns: ["revisado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles_with_rate";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      profile_roles: {
+        Row: {
+          confirmado: boolean;
+          created_at: string;
+          id: string;
+          profile_id: string;
+          role_id: string;
+        };
+        Insert: {
+          confirmado?: boolean;
+          created_at?: string;
+          id?: string;
+          profile_id: string;
+          role_id: string;
+        };
+        Update: {
+          confirmado?: boolean;
+          created_at?: string;
+          id?: string;
+          profile_id?: string;
+          role_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "profile_roles_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "profile_roles_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles_with_rate";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "profile_roles_role_id_fkey";
+            columns: ["role_id"];
+            isOneToOne: false;
+            referencedRelation: "roles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      profile_skills: {
+        Row: {
+          created_at: string;
+          id: string;
+          profile_id: string;
+          skill_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          profile_id: string;
+          skill_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          profile_id?: string;
+          skill_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "profile_skills_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "profile_skills_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles_with_rate";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "profile_skills_skill_id_fkey";
+            columns: ["skill_id"];
+            isOneToOne: false;
+            referencedRelation: "skills";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           apellido: string | null;
@@ -74,6 +395,133 @@ export type Database = {
         };
         Relationships: [];
       };
+      project_members: {
+        Row: {
+          estado: Database["public"]["Enums"]["project_member_estado"];
+          profile_id: string;
+          project_id: string;
+          rol: Database["public"]["Enums"]["project_member_rol"];
+        };
+        Insert: {
+          estado?: Database["public"]["Enums"]["project_member_estado"];
+          profile_id: string;
+          project_id: string;
+          rol?: Database["public"]["Enums"]["project_member_rol"];
+        };
+        Update: {
+          estado?: Database["public"]["Enums"]["project_member_estado"];
+          profile_id?: string;
+          project_id?: string;
+          rol?: Database["public"]["Enums"]["project_member_rol"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "project_members_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "project_members_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles_with_rate";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "project_members_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      projects: {
+        Row: {
+          creado_por: string;
+          created_at: string;
+          descripcion: string | null;
+          estado: Database["public"]["Enums"]["project_estado"];
+          id: string;
+          ingreso: Database["public"]["Enums"]["project_ingreso"];
+          nombre: string;
+        };
+        Insert: {
+          creado_por: string;
+          created_at?: string;
+          descripcion?: string | null;
+          estado?: Database["public"]["Enums"]["project_estado"];
+          id?: string;
+          ingreso?: Database["public"]["Enums"]["project_ingreso"];
+          nombre: string;
+        };
+        Update: {
+          creado_por?: string;
+          created_at?: string;
+          descripcion?: string | null;
+          estado?: Database["public"]["Enums"]["project_estado"];
+          id?: string;
+          ingreso?: Database["public"]["Enums"]["project_ingreso"];
+          nombre?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "projects_creado_por_fkey";
+            columns: ["creado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "projects_creado_por_fkey";
+            columns: ["creado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles_with_rate";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      roles: {
+        Row: {
+          created_at: string;
+          descripcion: string | null;
+          id: string;
+          nombre: string;
+        };
+        Insert: {
+          created_at?: string;
+          descripcion?: string | null;
+          id?: string;
+          nombre: string;
+        };
+        Update: {
+          created_at?: string;
+          descripcion?: string | null;
+          id?: string;
+          nombre?: string;
+        };
+        Relationships: [];
+      };
+      skills: {
+        Row: {
+          created_at: string;
+          id: string;
+          nombre: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          nombre: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          nombre?: string;
+        };
+        Relationships: [];
+      };
       tasks: {
         Row: {
           categoria: Database["public"]["Enums"]["task_categoria"];
@@ -117,294 +565,24 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "tasks_creado_por_fkey";
+            columns: ["creado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles_with_rate";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "tasks_tomada_por_fkey";
             columns: ["tomada_por"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
-        ];
-      };
-      roles: {
-        Row: {
-          created_at: string;
-          descripcion: string | null;
-          id: string;
-          nombre: string;
-        };
-        Insert: {
-          created_at?: string;
-          descripcion?: string | null;
-          id?: string;
-          nombre: string;
-        };
-        Update: {
-          created_at?: string;
-          descripcion?: string | null;
-          id?: string;
-          nombre?: string;
-        };
-        Relationships: [];
-      };
-      profile_roles: {
-        Row: {
-          confirmado: boolean;
-          created_at: string;
-          id: string;
-          profile_id: string;
-          role_id: string;
-        };
-        Insert: {
-          confirmado?: boolean;
-          created_at?: string;
-          id?: string;
-          profile_id: string;
-          role_id: string;
-        };
-        Update: {
-          confirmado?: boolean;
-          created_at?: string;
-          id?: string;
-          profile_id?: string;
-          role_id?: string;
-        };
-        Relationships: [
           {
-            foreignKeyName: "profile_roles_profile_id_fkey";
-            columns: ["profile_id"];
+            foreignKeyName: "tasks_tomada_por_fkey";
+            columns: ["tomada_por"];
             isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "profile_roles_role_id_fkey";
-            columns: ["role_id"];
-            isOneToOne: false;
-            referencedRelation: "roles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      skills: {
-        Row: {
-          created_at: string;
-          id: string;
-          nombre: string;
-        };
-        Insert: {
-          created_at?: string;
-          id?: string;
-          nombre: string;
-        };
-        Update: {
-          created_at?: string;
-          id?: string;
-          nombre?: string;
-        };
-        Relationships: [];
-      };
-      profile_skills: {
-        Row: {
-          created_at: string;
-          id: string;
-          profile_id: string;
-          skill_id: string;
-        };
-        Insert: {
-          created_at?: string;
-          id?: string;
-          profile_id: string;
-          skill_id: string;
-        };
-        Update: {
-          created_at?: string;
-          id?: string;
-          profile_id?: string;
-          skill_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "profile_skills_profile_id_fkey";
-            columns: ["profile_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "profile_skills_skill_id_fkey";
-            columns: ["skill_id"];
-            isOneToOne: false;
-            referencedRelation: "skills";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      aportes: {
-        Row: {
-          created_at: string;
-          descripcion: string | null;
-          fecha: string;
-          id: string;
-          monto: number | null;
-          profile_id: string;
-          registrado_por: string;
-          tipo: Database["public"]["Enums"]["aporte_tipo"];
-        };
-        Insert: {
-          created_at?: string;
-          descripcion?: string | null;
-          fecha: string;
-          id?: string;
-          monto?: number | null;
-          profile_id: string;
-          registrado_por: string;
-          tipo: Database["public"]["Enums"]["aporte_tipo"];
-        };
-        Update: {
-          created_at?: string;
-          descripcion?: string | null;
-          fecha?: string;
-          id?: string;
-          monto?: number | null;
-          profile_id?: string;
-          registrado_por?: string;
-          tipo?: Database["public"]["Enums"]["aporte_tipo"];
-        };
-        Relationships: [
-          {
-            foreignKeyName: "aportes_profile_id_fkey";
-            columns: ["profile_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "aportes_registrado_por_fkey";
-            columns: ["registrado_por"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      membership_requests: {
-        Row: {
-          actualizado_en: string;
-          created_at: string;
-          estado: Database["public"]["Enums"]["membership_request_estado"];
-          id: string;
-          mensaje: string | null;
-          profile_id: string;
-          revisado_por: string | null;
-          tier_solicitado: Database["public"]["Enums"]["tier"];
-        };
-        Insert: {
-          actualizado_en?: string;
-          created_at?: string;
-          estado?: Database["public"]["Enums"]["membership_request_estado"];
-          id?: string;
-          mensaje?: string | null;
-          profile_id: string;
-          revisado_por?: string | null;
-          tier_solicitado?: Database["public"]["Enums"]["tier"];
-        };
-        Update: {
-          actualizado_en?: string;
-          created_at?: string;
-          estado?: Database["public"]["Enums"]["membership_request_estado"];
-          id?: string;
-          mensaje?: string | null;
-          profile_id?: string;
-          revisado_por?: string | null;
-          tier_solicitado?: Database["public"]["Enums"]["tier"];
-        };
-        Relationships: [
-          {
-            foreignKeyName: "membership_requests_profile_id_fkey";
-            columns: ["profile_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "membership_requests_revisado_por_fkey";
-            columns: ["revisado_por"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      events: {
-        Row: {
-          id: string;
-          titulo: string;
-          descripcion: string | null;
-          lugar: string | null;
-          inicio: string;
-          fin: string | null;
-          creado_por: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          titulo: string;
-          descripcion?: string | null;
-          lugar?: string | null;
-          inicio: string;
-          fin?: string | null;
-          creado_por: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          titulo?: string;
-          descripcion?: string | null;
-          lugar?: string | null;
-          inicio?: string;
-          fin?: string | null;
-          creado_por?: string;
-          created_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "events_creado_por_fkey";
-            columns: ["creado_por"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      event_attendance: {
-        Row: {
-          event_id: string;
-          profile_id: string;
-          estado: Database["public"]["Enums"]["event_attendance_estado"];
-        };
-        Insert: {
-          event_id: string;
-          profile_id: string;
-          estado: Database["public"]["Enums"]["event_attendance_estado"];
-        };
-        Update: {
-          event_id?: string;
-          profile_id?: string;
-          estado?: Database["public"]["Enums"]["event_attendance_estado"];
-        };
-        Relationships: [
-          {
-            foreignKeyName: "event_attendance_event_id_fkey";
-            columns: ["event_id"];
-            isOneToOne: false;
-            referencedRelation: "events";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "event_attendance_profile_id_fkey";
-            columns: ["profile_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
+            referencedRelation: "profiles_with_rate";
             referencedColumns: ["id"];
           },
         ];
@@ -433,6 +611,48 @@ export type Database = {
           tier: Database["public"]["Enums"]["tier"] | null;
           visibilidad_tarifa: Database["public"]["Enums"]["visibilidad_tarifa"] | null;
         };
+        Insert: {
+          apellido?: string | null;
+          apodo?: string | null;
+          aprobado_en?: string | null;
+          avatar_url?: string | null;
+          bio?: string | null;
+          contacto_telegram?: string | null;
+          created_at?: string | null;
+          disponibilidad?: Database["public"]["Enums"]["disponibilidad"] | null;
+          email?: string | null;
+          fecha_nacimiento?: string | null;
+          id?: string | null;
+          is_platform_admin?: boolean | null;
+          nombre?: string | null;
+          nombre_visible?: Database["public"]["Enums"]["nombre_visible"] | null;
+          onboarding_completado_en?: string | null;
+          sitio_url?: string | null;
+          tarifa_hora?: never;
+          tier?: Database["public"]["Enums"]["tier"] | null;
+          visibilidad_tarifa?: Database["public"]["Enums"]["visibilidad_tarifa"] | null;
+        };
+        Update: {
+          apellido?: string | null;
+          apodo?: string | null;
+          aprobado_en?: string | null;
+          avatar_url?: string | null;
+          bio?: string | null;
+          contacto_telegram?: string | null;
+          created_at?: string | null;
+          disponibilidad?: Database["public"]["Enums"]["disponibilidad"] | null;
+          email?: string | null;
+          fecha_nacimiento?: string | null;
+          id?: string | null;
+          is_platform_admin?: boolean | null;
+          nombre?: string | null;
+          nombre_visible?: Database["public"]["Enums"]["nombre_visible"] | null;
+          onboarding_completado_en?: string | null;
+          sitio_url?: string | null;
+          tarifa_hora?: never;
+          tier?: Database["public"]["Enums"]["tier"] | null;
+          visibilidad_tarifa?: Database["public"]["Enums"]["visibilidad_tarifa"] | null;
+        };
         Relationships: [];
       };
     };
@@ -452,6 +672,12 @@ export type Database = {
       };
       is_platform_admin: {
         Args: Record<string, never>;
+        Returns: boolean;
+      };
+      is_project_admin: {
+        Args: {
+          p_project_id: string;
+        };
         Returns: boolean;
       };
       reject_membership_request: {
@@ -488,6 +714,10 @@ export type Database = {
       event_attendance_estado: "voy" | "quizas" | "no";
       membership_request_estado: "pendiente" | "aprobada" | "rechazada";
       nombre_visible: "apodo" | "nombre_apellido" | "apellido_nombre";
+      project_estado: "idea" | "en_curso" | "pausado" | "terminado";
+      project_ingreso: "abierto" | "aprobacion";
+      project_member_estado: "pendiente" | "aprobado";
+      project_member_rol: "miembro" | "admin";
       task_categoria: "reparacion" | "limpieza" | "compra" | "mantenimiento" | "otro";
       task_estado: "abierta" | "tomada" | "hecha" | "verificada" | "cancelada";
       task_urgencia: "baja" | "media" | "alta";
@@ -616,6 +846,9 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       aporte_tipo: [
@@ -633,6 +866,10 @@ export const Constants = {
       event_attendance_estado: ["voy", "quizas", "no"],
       membership_request_estado: ["pendiente", "aprobada", "rechazada"],
       nombre_visible: ["apodo", "nombre_apellido", "apellido_nombre"],
+      project_estado: ["idea", "en_curso", "pausado", "terminado"],
+      project_ingreso: ["abierto", "aprobacion"],
+      project_member_estado: ["pendiente", "aprobado"],
+      project_member_rol: ["miembro", "admin"],
       task_categoria: ["reparacion", "limpieza", "compra", "mantenimiento", "otro"],
       task_estado: ["abierta", "tomada", "hecha", "verificada", "cancelada"],
       task_urgencia: ["baja", "media", "alta"],

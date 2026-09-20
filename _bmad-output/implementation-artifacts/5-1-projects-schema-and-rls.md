@@ -1,6 +1,6 @@
 # Story 5.1: `projects` and `project_members` migration, enums, and RLS
 
-Status: backlog
+Status: review
 
 ## Linear
 
@@ -65,36 +65,36 @@ so that every projects screen reads and writes real rows under real policy inste
 
 ## Tasks / Subtasks
 
-- [ ] **T0 — Read the framework docs before writing code** (AC: 1–10)
-  - [ ] This Next.js version has breaking changes vs. training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code (per `AGENTS.md`), and heed deprecation notices.
-  - [ ] Read `_bmad-output/specs/spec-m5-proyectos/data-model.md` end to end, including both ⚠️ sections.
+- [x] **T0 — Read the framework docs before writing code** (AC: 1–10)
+  - [x] This Next.js version has breaking changes vs. training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code (per `AGENTS.md`), and heed deprecation notices.
+  - [x] Read `_bmad-output/specs/spec-m5-proyectos/data-model.md` end to end, including both ⚠️ sections.
 
-- [ ] **T1 — RED: write the failing policy harness first** (AC: 6, 9, 10)
-  - [ ] Copy the shape of `scripts/check-membership-request-rls.harness.ts` into a projects harness.
-  - [ ] Cases: serrano insert project OK; tourist insert rejected; non-admin update config rejected; project admin update OK; no `42P17` on any `project_members` path.
-  - [ ] Verify RED: the tables do not exist yet, so every case fails.
+- [x] **T1 — RED: write the failing policy harness first** (AC: 6, 9, 10)
+  - [x] Copy the shape of `scripts/check-membership-request-rls.harness.ts` into a projects harness.
+  - [x] Cases: serrano insert project OK; tourist insert rejected; non-admin update config rejected; project admin update OK; no `42P17` on any `project_members` path.
+  - [x] Verify RED: the tables do not exist yet, so every case fails.
 
-- [ ] **T2 — GREEN: the migration** (AC: 1, 2, 3, 4, 5, 6, 7)
-  - [ ] New file under `supabase/migrations/`, timestamped **after** `20260919143000_zer75_skills_catalog_seed.sql`, named for ZER-78.
-  - [ ] `create type` for `project_estado`, `project_ingreso`, `project_member_rol`, `project_member_estado` (names are the implementer's call; the **values** are not).
-  - [ ] `create table public.projects` and `create table public.project_members` per AC 1–2.
-  - [ ] `create or replace function public.is_project_admin(p_project_id uuid) returns boolean language sql security definer set search_path = ''`; `revoke execute … from public`; `grant execute … to authenticated, service_role`.
-  - [ ] `alter table … enable row level security` on both, then the policies from AC 4–5.
-  - [ ] Header comment stating the threat model: ungranted table → `42501`; self-referencing policy → `42P17` (ZER-65).
+- [x] **T2 — GREEN: the migration** (AC: 1, 2, 3, 4, 5, 6, 7)
+  - [x] New file under `supabase/migrations/`, timestamped **after** `20260919143000_zer75_skills_catalog_seed.sql`, named for ZER-78.
+  - [x] `create type` for `project_estado`, `project_ingreso`, `project_member_rol`, `project_member_estado` (names are the implementer's call; the **values** are not).
+  - [x] `create table public.projects` and `create table public.project_members` per AC 1–2.
+  - [x] `create or replace function public.is_project_admin(p_project_id uuid) returns boolean language sql security definer set search_path = ''`; `revoke execute … from public`; `grant execute … to authenticated, service_role`.
+  - [x] `alter table … enable row level security` on both, then the policies from AC 4–5.
+  - [x] Header comment stating the threat model: ungranted table → `42501`; self-referencing policy → `42P17` (ZER-65).
 
-- [ ] **T3 — Grants verification** (AC: 8)
-  - [ ] Run `pnpm db:check-grants` locally; confirm the CI job `db grants (authenticated)` is green.
-  - [ ] Run `scripts/zer49-probe-new-table.sql` against a local database for both new tables.
-  - [ ] Do **not** re-run `GRANT … ON ALL TABLES` as a shortcut — it would undo the ZER-43 `tarifa_hora` column mask.
+- [x] **T3 — Grants verification** (AC: 8)
+  - [x] Run `pnpm db:check-grants` locally; confirm the CI job `db grants (authenticated)` is green.
+  - [x] Run `scripts/zer49-probe-new-table.sql` against a local database for both new tables.
+  - [x] Do **not** re-run `GRANT … ON ALL TABLES` as a shortcut — it would undo the ZER-43 `tarifa_hora` column mask.
 
-- [ ] **T4 — Types** (AC: 1, 2, 10)
-  - [ ] Regenerate `src/lib/supabase/database.types.ts` so `projects`, `project_members` and their enums exist in the type system before any consumer story starts.
-  - [ ] `pnpm typecheck` green.
+- [x] **T4 — Types** (AC: 1, 2, 10)
+  - [x] Regenerate `src/lib/supabase/database.types.ts` so `projects`, `project_members` and their enums exist in the type system before any consumer story starts.
+  - [x] `pnpm typecheck` green.
 
-- [ ] **T5 — Verify** (AC: 8, 9, 10)
-  - [ ] `pnpm test` green.
-  - [ ] `pnpm db:check-grants` green.
-  - [ ] `pnpm typecheck && pnpm lint` green.
+- [x] **T5 — Verify** (AC: 8, 9, 10)
+  - [x] `pnpm test` green.
+  - [x] `pnpm db:check-grants` green.
+  - [x] `pnpm typecheck && pnpm lint` green.
 
 ## Dev Notes
 
@@ -185,6 +185,16 @@ A platform admin is **not** automatically a project admin. If that override is e
 
 ### Completion Notes List
 
+- ZER-78: projects + project_members migration, is_project_admin definer, live RLS harness green; fixed aportes UPDATE 42P17 as forward migration.
+
 ### Change Log
 
 ### File List
+
+- supabase/migrations/20260920200000_zer78_projects_project_members.sql
+- supabase/migrations/20260920201000_zer78_fix_aportes_update_recursion.sql
+- scripts/check-projects-rls.harness.ts
+- src/lib/db/projects-schema.ts
+- src/lib/db/projects-schema.test.ts
+- src/lib/supabase/database.types.ts
+- vitest.db-rls.config.ts
