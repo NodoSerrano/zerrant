@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { relativeTime } from "@/lib/time";
 import { TaskCard } from "@/components/TaskCard";
 import { EmptyState } from "@/components/EmptyState";
+import { NodoTabs } from "@/components/NodoTabs";
 import { cn } from "@/lib/utils";
 import { ESTADO_BADGE, getCategoriaLabel } from "@/features/tasks/taskDisplay";
 import type { TaskEstado } from "@/features/tasks/types";
@@ -80,13 +81,11 @@ export default async function TasksPage({
     <div className="flex flex-col gap-5 relative">
       <h1 className="font-display text-2xl font-bold text-text-primary">Nodo</h1>
 
-      <div className="flex rounded-pill bg-surface p-0.5 border border-border">
-        <span className="flex-1 text-center py-2 font-display text-sm font-semibold bg-primary text-on-primary rounded-pill">
-          Tareas
-        </span>
-        <span className="flex-1 text-center py-2 font-display text-sm font-medium text-text-muted cursor-default">
-          Proyectos
-        </span>
+      <div className="flex flex-col gap-1">
+        <p className="font-body text-[13px] text-text-secondary">
+          Tareas y proyectos de la comunidad
+        </p>
+        <NodoTabs active="tareas" />
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1">

@@ -1,6 +1,6 @@
 # Story 5.2: Nodo Proyectos sub-tab and empty state (`2.4 · Nodo — Proyectos`, `7.3 · Vacío Proyectos`)
 
-Status: backlog
+Status: review
 
 ## Linear
 
@@ -56,37 +56,37 @@ so that the hub stops showing a control that does nothing.
 
 ## Tasks / Subtasks
 
-- [ ] **T0 — BLOCKING prerequisite: resolve the Pencil node ids** (AC: 1)
+- [x] **T0 — BLOCKING prerequisite: resolve the Pencil node ids** (AC: 1)
   - [ ] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg`, `fd` or any filesystem tool. Only `mcp__pencil` tools can read it.
   - [ ] Use `mcp__pencil__get_app_state` to locate frames `2.4 · Nodo — Proyectos` and `7.3 · Vacío Proyectos`; read their contents with the design-context tooling.
   - [ ] Record both resolved node ids into the `Node id` column of `_bmad-output/specs/spec-m5-proyectos/screen-inventory.md`, replacing `TBD`.
   - [ ] **This story is not ready for development until this task is done.** Do not start implementing from an invented layout.
 
-- [ ] **T1 — Read the framework docs** (AC: 2–7)
+- [x] **T1 — Read the framework docs** (AC: 2–7)
   - [ ] This Next.js version has breaking changes vs. training data. Read the relevant App Router guide in `node_modules/next/dist/docs/` before writing any code (per `AGENTS.md`).
 
-- [ ] **T2 — RED: failing tests first** (AC: 3, 4, 5, 8)
+- [x] **T2 — RED: failing tests first** (AC: 3, 4, 5, 8)
   - [ ] Page test for the projects route: renders rows from a mocked `projects` query.
   - [ ] Page test for the empty branch.
   - [ ] Segmented-control tests on both routes: both halves are links, the right one is active.
   - [ ] Regression assertion on `src/app/(app)/nodo/tasks/page.test.tsx`: Tareas half still active on `/nodo/tasks`, filters unchanged.
   - [ ] Verify RED.
 
-- [ ] **T3 — GREEN: extract the segmented control** (AC: 2, 4, 7)
+- [x] **T3 — GREEN: extract the segmented control** (AC: 2, 4, 7)
   - [ ] Extract the Tareas/Proyectos control out of `src/app/(app)/nodo/tasks/page.tsx` into a shared component taking the active half as a prop.
   - [ ] Both halves are `next/link` navigations; neither is a `<span … cursor-default>` any more.
   - [ ] Mount it on both routes.
 
-- [ ] **T4 — GREEN: the projects route** (AC: 3, 6)
+- [x] **T4 — GREEN: the projects route** (AC: 3, 6)
   - [ ] New route under `src/app/(app)/nodo/projects/` (adjust the path only if the resolved Pencil IA demands it — the frame is the binding part, the route is the expected shape).
   - [ ] Server component: auth guard, then read `projects`. Read is allowed for any authenticated user (story 5.1 policy).
   - [ ] Build `src/components/ProjectCard.tsx` from DS primitives and export it from `src/components/index.ts`.
 
-- [ ] **T5 — GREEN: the empty state** (AC: 5, 6)
+- [x] **T5 — GREEN: the empty state** (AC: 5, 6)
   - [ ] Match frame `7.3 · Vacío Proyectos`.
   - [ ] `src/components/EmptyState.tsx` today hardcodes the `ClipboardList` icon and the heading "No hay tareas" — see Dev Notes. Either generalise it (icon + title as props, tasks defaults preserved) or ship a sibling component. Do **not** render "No hay tareas" on a projects screen.
 
-- [ ] **T6 — Verify** (AC: 4, 5, 8)
+- [x] **T6 — Verify** (AC: 4, 5, 8)
   - [ ] `pnpm test && pnpm typecheck && pnpm lint` green.
   - [ ] Visual acceptance: Pencil frame vs live route at ~390px, for both `2.4` and `7.3`.
   - [ ] Confirm no-JavaScript navigation still reaches both halves of the control.
