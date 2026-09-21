@@ -25,7 +25,7 @@ describe("OfflineShellFallback", () => {
     expect(screen.getByRole("heading", { name: "Sin conexión" })).toBeInTheDocument();
     expect(
       screen.getByText(
-        /No hay red ahora\. El shell de Nodo sigue disponible; los datos en vivo no\./i,
+        /Revisá tu internet\. Mientras tanto te mostramos lo último que guardamos en el dispositivo\./,
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText(/plantel/i)).not.toBeInTheDocument();

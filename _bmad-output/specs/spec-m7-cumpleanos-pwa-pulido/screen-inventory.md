@@ -5,8 +5,8 @@ Pencil SSOT: `design/nodo-serrano.pen`. Mobile frame width **390**.
 | Pencil frame          | Node id | App route(s)                     | CAP      | Notes                                                                           |
 | --------------------- | ------- | -------------------------------- | -------- | ------------------------------------------------------------------------------- |
 | 2.1 · Inicio          | `zTB9C` | `/` (or `/inicio` if IA demands) | CAP-2, 3 | Upcoming events + birthdays; replaces profile redirect for completed onboarding |
-| 7.5 · Offline / error | `TBD`   | offline shell / error UI         | CAP-5, 6 | Designed offline and recoverable error                                          |
-| 7.6 · 404             | `TBD`   | `not-found`                      | CAP-6    | App-owned 404                                                                   |
+| 7.5 · Offline / error | `LYkM4` | `/~offline`, `(app)/error`       | CAP-5, 6 | wifi-off + “Sin conexión” + Reintentar (refresh)                                |
+| 7.6 · 404             | `eZRDM` | `not-found`                      | CAP-6    | compass + “Perdiste el rumbo” + “Ir al inicio”                                  |
 
 Routes above are the **expected** shape and may be adjusted to match Pencil IA once node ids are resolved; the frame column is the binding part.
 
