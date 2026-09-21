@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { InicioHub } from "./InicioHub";
 import type { UpcomingBirthday } from "./birthdays";
 
@@ -38,6 +38,10 @@ vi.mock("next/image", () => ({
   ),
 }));
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 const birthday = (overrides: Partial<UpcomingBirthday> = {}): UpcomingBirthday => ({
   profileId: "p1",
   displayName: "Ana García",
@@ -64,6 +68,16 @@ describe("InicioHub a11y + perf contracts (ZER-104)", () => {
     expect(img).toHaveAttribute("width", "48");
     expect(img).toHaveAttribute("height", "48");
     expect(img).toHaveAttribute("sizes", "48px");
+  });
+
+  it("keeps null-avatar birthday rows named without initials leaking into the link name", () => {
+    render(<InicioHub events={[]} birthdays={[birthday({ avatarUrl: null })]} />);
+
+    const link = screen.getByRole("link", { name: /Ana García/i });
+    expect(link).toHaveAttribute("href", "/plantel/p1");
+    // Accessible name must not start with initials (AG …).
+    expect(link).toHaveAccessibleName(expect.not.stringMatching(/^AG\b/));
+    expect(link.querySelector("[aria-hidden='true']")).toBeTruthy();
   });
 
   it("keeps event cards keyboard-reachable as named links", () => {

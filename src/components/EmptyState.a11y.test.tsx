@@ -44,4 +44,18 @@ describe("EmptyState a11y (ZER-104)", () => {
       "/nodo/tasks/new",
     );
   });
+
+  it("gives interactive CTAs the same focus-visible ring as other M7 actions", () => {
+    render(
+      <EmptyState
+        title="No hay tareas"
+        subtitle="Publicá una"
+        href="/nodo/tasks/new"
+        actionLabel="Publicar tarea"
+      />,
+    );
+    const cta = screen.getByRole("link", { name: /Publicar tarea/i });
+    expect(cta.className).toMatch(/focus-visible:ring-2/);
+    expect(cta.className).toMatch(/focus-visible:ring-primary\/40/);
+  });
 });

@@ -44,6 +44,7 @@ export function EmptyState({
             "flex items-center justify-center gap-2 rounded-pill h-12 px-[22px]",
             "bg-linear-to-br from-brand-green to-brand-blue",
             "font-display text-[15px] font-medium text-on-primary",
+            "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40",
           )}
         >
           <Plus className="size-[18px] text-on-primary" aria-hidden="true" />
@@ -57,6 +58,7 @@ export function EmptyState({
             "flex items-center justify-center gap-2 rounded-pill h-12 px-[22px]",
             "bg-linear-to-br from-brand-green to-brand-blue",
             "font-display text-[15px] font-medium text-on-primary",
+            "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40",
           )}
         >
           <Plus className="size-[18px] text-on-primary" aria-hidden="true" />
