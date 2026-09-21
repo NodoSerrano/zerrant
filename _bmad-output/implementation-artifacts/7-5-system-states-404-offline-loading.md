@@ -1,13 +1,13 @@
 # Story 7.5: System states — 404, offline/error, loading (`7.5`, `7.6`)
 
-Status: backlog
+Status: review
 
 ## Linear
 
 - **ZER-102** — Story 7.5: Estados 404, offline/error y loading (7.5, 7.6)
 - URL: https://linear.app/zerrant/issue/ZER-102/story-75-estados-404-offlineerror-y-loading-75-76
 - Branch: `juantandil123/zer-102-story-75-estados-404-offlineerror-y-loading-75-76`
-- Priority: Medium (P3) · Status: Backlog · Unassigned
+- Priority: Medium (P3) · Status: In Progress → review · Assigned
 - Project: **Nodo Serrano — M7 Cumpleaños, PWA y pulido** · Milestone: **Epic 7 — Cumpleaños, PWA y pulido**
 
 - Depends on: 7.2 (ZER-99); 7.4 (ZER-101) for offline coupling.
@@ -42,11 +42,18 @@ so that failure modes match Pencil instead of raw framework defaults.
 
 ## Tasks / Subtasks
 
-- [ ] **T0 — BLOCKING:** resolve Pencil node ids for `7.5` and `7.6` into screen-inventory
-- [ ] **T1 — RED:** not-found route test + loading/skeleton branches for Inicio fetches
-- [ ] **T2 — GREEN:** `not-found` UI, offline/error surface, loading treatment
-- [ ] **T3 — Fidelity** ~390px vs Pencil
+- [x] **T0 — BLOCKING:** resolve Pencil node ids for `7.5` and `7.6` into screen-inventory (`LYkM4`, `eZRDM`)
+- [x] **T1 — RED:** not-found route test + loading/skeleton branches for Inicio fetches
+- [x] **T2 — GREEN:** `not-found` UI, offline/error surface, loading treatment
+- [x] **T3 — Fidelity** ~390px vs Pencil (key IA/copy + icon tones from frames)
 
 ## Out of scope
 
 - Redesigning every historical empty state (7.1–7.4 already owned by earlier milestones).
+
+## Completion Notes
+
+- Pencil: `7.5` → `LYkM4`, `7.6` → `eZRDM` recorded in M7 screen-inventory.
+- Shared `SystemStateView` powers offline (`/~offline`), `(app)/error`, and root `not-found`.
+- Offline/error copy matches Pencil 7.5; 404 matches 7.6 + hub chrome TabBar.
+- Inicio loading via `(app)/(inicio)/loading.tsx` → `InicioHubSkeleton` (URL stays `/`).
