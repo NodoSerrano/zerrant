@@ -74,7 +74,7 @@ describe("SerranoMenu Mis proyectos row", () => {
 
 describe("SerranoMenu theme toggle (ZER-103)", () => {
   it("uses surface token for the switch knob, not bg-white", () => {
-    const { container } = render(<SerranoMenu />);
+    render(<SerranoMenu />);
     const toggle = screen.getByRole("button", { name: /modo oscuro|modo claro/i });
     expect(toggle.innerHTML).not.toMatch(/\bbg-white\b/);
     expect(toggle.innerHTML).toMatch(/\bbg-surface\b/);
