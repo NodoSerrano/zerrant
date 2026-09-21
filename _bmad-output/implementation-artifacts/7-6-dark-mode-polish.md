@@ -1,13 +1,13 @@
 # Story 7.6: Dark mode polish pass
 
-Status: backlog
+Status: review
 
 ## Linear
 
 - **ZER-103** — Story 7.6: Pulido modo oscuro
 - URL: https://linear.app/zerrant/issue/ZER-103/story-76-pulido-modo-oscuro
 - Branch: `juantandil123/zer-103-story-76-pulido-modo-oscuro`
-- Priority: Medium (P3) · Status: Backlog · Unassigned
+- Priority: Medium (P3) · Status: In Progress · Assignee: Juan
 - Project: **Nodo Serrano — M7 Cumpleaños, PWA y pulido** · Milestone: **Epic 7 — Cumpleaños, PWA y pulido**
 
 - Depends on: 7.2 (ZER-99) and 7.5 (ZER-102) screens exist to polish.
@@ -38,10 +38,20 @@ so that dark is first-class for the MVP close.
 
 ## Tasks / Subtasks
 
-- [ ] **T1 — Checklist** primary shells under `.dark` (auth, onboarding, plantel, nodo, agenda, profile, admin, Inicio, system states)
-- [ ] **T2 — Fix** hard-coded light-only colors / contrast breaks found in-scope (tokens only)
-- [ ] **T3 — Evidence** screenshots or clean marks on PR/Linear
+- [x] **T1 — Checklist** primary shells under `.dark` (auth, onboarding, plantel, nodo, agenda, profile, admin, Inicio, system states)
+- [x] **T2 — Fix** hard-coded light-only colors / contrast breaks found in-scope (tokens only)
+- [x] **T3 — Evidence** screenshots or clean marks on PR/Linear
 
 ## Out of scope
 
 - Pixel-perfect every historical screen beyond the checklist. Rebuilding the design system.
+
+## Completion Notes
+
+- Automated primary-shell audit (`src/lib/darkModeShellAudit.test.ts`) locks checklist surfaces free of `bg-white` / `text-white` / arbitrary hex fills.
+- Fixes (story 1.1 tokens only, no new palette):
+  - `PostRequestScreen`: warm-yellow/10 + warm-orange + surface-inset + text-muted (was light hex)
+  - Theme knobs in Tourist/Serrano menus: `bg-surface` (was `bg-white`)
+  - Admin coral count badges: `text-on-primary` (was `text-white`)
+- Checklist marks: auth, onboarding, plantel, nodo, agenda, profile, admin, Inicio, system states — remaining surfaces already token-based; no additional light-only fills found beyond the fixes above.
+- Unit locks: PostRequestScreen + TouristMenu + SerranoMenu theme knobs + shell audit.

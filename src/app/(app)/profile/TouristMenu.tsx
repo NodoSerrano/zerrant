@@ -14,7 +14,7 @@ function ThemeToggleSwitch() {
       aria-label={dark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
     >
       <div
-        className="size-[22px] rounded-full bg-white transition-transform"
+        className="size-[22px] rounded-full bg-surface transition-transform"
         style={{ transform: dark ? "translateX(18px)" : "none" }}
       />
     </button>

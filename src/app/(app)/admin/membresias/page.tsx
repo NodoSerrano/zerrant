@@ -81,7 +81,7 @@ export default async function AdminMembresiasPage() {
             </p>
           </div>
           <div className="rounded-pill bg-coral px-[13px] py-[7px]">
-            <span className="font-display text-[14px] font-bold text-white">
+            <span className="font-display text-[14px] font-bold text-on-primary">
               {pendingCount ?? 0}
             </span>
           </div>

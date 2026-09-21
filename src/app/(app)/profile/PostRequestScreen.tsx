@@ -8,8 +8,8 @@ import { SecondaryButton } from "@/components/SecondaryButton";
 export function PostRequestScreen() {
   return (
     <div className="flex flex-col items-center text-center gap-[20px]">
-      <div className="size-[92px] rounded-full bg-[#ff972820] flex items-center justify-center mt-2">
-        <Hourglass size={40} className="text-[#ff4d21]" />
+      <div className="size-[92px] rounded-full bg-warm-yellow/10 flex items-center justify-center mt-2">
+        <Hourglass size={40} className="text-warm-orange" />
       </div>
 
       <div className="flex flex-col gap-2 max-w-[300px]">
@@ -23,11 +23,11 @@ export function PostRequestScreen() {
       </div>
 
       <div className="rounded-pill bg-surface border border-border px-4 py-3 flex items-center gap-3">
-        <span className="font-body text-xs font-semibold text-[#ff4d21] bg-[#ff972820] rounded-pill px-3 py-1.5">
+        <span className="font-body text-xs font-semibold text-warm-orange bg-warm-yellow/10 rounded-pill px-3 py-1.5">
           Turista
         </span>
         <ArrowRight size={16} className="text-text-muted shrink-0" />
-        <span className="font-body text-xs font-semibold text-[#8a847c] bg-[#f1ebe0] rounded-pill px-3 py-1.5">
+        <span className="font-body text-xs font-semibold text-text-muted bg-surface-inset rounded-pill px-3 py-1.5">
           Serrano
         </span>
       </div>
