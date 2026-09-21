@@ -84,7 +84,7 @@ export default async function AdminRolesPage() {
             </p>
           </div>
           <div className="rounded-pill bg-coral px-[13px] py-[7px]">
-            <span className="font-display text-[14px] font-bold text-white">{rolesCount}</span>
+            <span className="font-display text-[14px] font-bold text-on-primary">{rolesCount}</span>
           </div>
         </div>
 

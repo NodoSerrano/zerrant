@@ -26,7 +26,7 @@ function ThemeToggleSwitch() {
       style={{ justifyContent: dark ? "flex-end" : "flex-start" }}
       aria-label={dark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
     >
-      <div className="size-[22px] rounded-full bg-white" />
+      <div className="size-[22px] rounded-full bg-surface" />
     </button>
   );
 }
