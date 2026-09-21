@@ -9,6 +9,12 @@ interface AvatarProps {
   name: string;
   src?: string | null;
   size?: "sm" | "md" | "lg";
+  /**
+   * Accessible name for the image. Pass empty string when the name is already
+   * adjacent visible text (e.g. birthday row link) so AT does not hear it twice.
+   * Defaults to `name`.
+   */
+  alt?: string;
   className?: string;
 }
 
@@ -56,7 +62,7 @@ function InitialsFallback({
   );
 }
 
-export function Avatar({ name, src, size = "md", className }: AvatarProps) {
+export function Avatar({ name, src, size = "md", alt, className }: AvatarProps) {
   const servableSrc = src && isServableAvatarImageUrl(src) ? src : null;
   const [failed, setFailed] = useState(false);
 
@@ -69,12 +75,16 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
     return <InitialsFallback name={name} size={size} className={className} />;
   }
 
+  const resolvedAlt = alt === undefined ? name : alt;
+  const px = sizePx[size];
+
   return (
     <Image
       src={servableSrc}
-      alt={name}
-      width={sizePx[size]}
-      height={sizePx[size]}
+      alt={resolvedAlt}
+      width={px}
+      height={px}
+      sizes={`${px}px`}
       onError={() => setFailed(true)}
       className={cn("rounded-full object-cover", sizeClasses[size], className)}
     />

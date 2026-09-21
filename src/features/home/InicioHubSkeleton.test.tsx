@@ -13,4 +13,11 @@ describe("InicioHubSkeleton", () => {
     // At least two section card placeholders (events + birthdays).
     expect(container.querySelectorAll("[data-skeleton='card']").length).toBeGreaterThanOrEqual(2);
   });
+
+  it("uses fixed card heights so late section content does not collapse the layout", () => {
+    const { container } = render(<InicioHubSkeleton />);
+    const cards = [...container.querySelectorAll("[data-skeleton='card']")];
+    expect(cards.some((el) => el.className.includes("h-[88px]"))).toBe(true);
+    expect(cards.some((el) => el.className.includes("h-[72px]"))).toBe(true);
+  });
 });

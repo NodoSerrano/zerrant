@@ -82,9 +82,9 @@ export function InicioHub({ events, birthdays }: InicioHubProps) {
               <li key={row.profileId}>
                 <Link
                   href={`/plantel/${row.profileId}`}
-                  className="rounded-[20px] bg-surface border border-border shadow-[0_10px_30px_-12px_rgba(26,22,20,0.15)] p-4 flex items-center gap-3 w-full"
+                  className="rounded-[20px] bg-surface border border-border shadow-[0_10px_30px_-12px_rgba(26,22,20,0.15)] p-4 flex items-center gap-3 w-full min-h-[72px] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
                 >
-                  <Avatar name={row.displayName} src={row.avatarUrl} size="md" />
+                  <Avatar name={row.displayName} src={row.avatarUrl} size="md" alt="" />
                   <div className="flex flex-col gap-0.5 min-w-0">
                     <span className="font-display text-[15px] font-medium text-text-primary truncate">
                       {row.displayName}

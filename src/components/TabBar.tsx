@@ -52,7 +52,7 @@ export function TabBar({ active = "inicio", className }: TabBarProps) {
                 isNodo ? "tracking-[0.3px]" : "tracking-[0.5px]",
               )}
             >
-              <Icon size={18} />
+              <Icon size={18} aria-hidden="true" />
               <span>{tab.label}</span>
             </Link>
           );

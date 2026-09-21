@@ -27,7 +27,7 @@ export function EmptyState({
   return (
     <div className={cn("flex flex-col items-center gap-[18px] py-5 px-5 pb-[90px]", className)}>
       <div className="size-24 rounded-full bg-surface-inset flex items-center justify-center">
-        <Icon className="size-10 text-text-muted" />
+        <Icon className="size-10 text-text-muted" aria-hidden="true" />
       </div>
 
       <div className="flex flex-col items-center gap-2 w-full">
@@ -46,7 +46,7 @@ export function EmptyState({
             "font-display text-[15px] font-medium text-on-primary",
           )}
         >
-          <Plus className="size-[18px] text-on-primary" />
+          <Plus className="size-[18px] text-on-primary" aria-hidden="true" />
           {actionLabel || defaultLabel}
         </Link>
       ) : actionLabel && onAction ? (
@@ -59,7 +59,7 @@ export function EmptyState({
             "font-display text-[15px] font-medium text-on-primary",
           )}
         >
-          <Plus className="size-[18px] text-on-primary" />
+          <Plus className="size-[18px] text-on-primary" aria-hidden="true" />
           {actionLabel}
         </button>
       ) : null}

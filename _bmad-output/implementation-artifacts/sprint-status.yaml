@@ -208,6 +208,6 @@ development_status:
   7-4-pwa-offline-shell: review
   7-5-system-states-404-offline-loading: review
   7-6-dark-mode-polish: review
-  7-7-a11y-performance-pass: backlog
+  7-7-a11y-performance-pass: review
   7-8-qa-m7-dod-e2e: backlog
   epic-7-cumpleanos-pwa-pulido-retrospective: optional
