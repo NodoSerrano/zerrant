@@ -1,13 +1,13 @@
 # Story 7.7: A11y + performance pass
 
-Status: backlog
+Status: review
 
 ## Linear
 
 - **ZER-104** — Story 7.7: Pasada a11y y performance
 - URL: https://linear.app/zerrant/issue/ZER-104/story-77-pasada-a11y-y-performance
 - Branch: `juantandil123/zer-104-story-77-pasada-a11y-y-performance`
-- Priority: Medium (P3) · Status: Backlog · Unassigned
+- Priority: Medium (P3) · Status: In Progress → review · Assignee: Juan
 - Project: **Nodo Serrano — M7 Cumpleaños, PWA y pulido** · Milestone: **Epic 7 — Cumpleaños, PWA y pulido**
 
 - Depends on: 7.2–7.5 (ZER-99 → ZER-102).
@@ -38,10 +38,19 @@ so that the MVP close includes a basic quality bar.
 
 ## Tasks / Subtasks
 
-- [ ] **T1 — A11y:** keyboard reachability + accessible names on Inicio and system states
-- [ ] **T2 — Perf:** icon/image sizing; mitigate obvious CLS on late Inicio sections
-- [ ] **T3 — Evidence** short checklist on PR/Linear
+- [x] **T1 — A11y:** keyboard reachability + accessible names on Inicio and system states
+- [x] **T2 — Perf:** icon/image sizing; mitigate obvious CLS on late Inicio sections
+- [x] **T3 — Evidence** short checklist on PR/Linear (`src/features/a11y-perf/m7Checklist.ts`)
 
 ## Out of scope
 
 - Full WCAG certification audit. Rewriting M0–M6 unrelated screens.
+
+## Completion Notes
+
+- Decorative icons on TabBar / EmptyState / system states are `aria-hidden`.
+- Birthday row Avatar uses `alt=""` because the link already names the person.
+- Avatar ships `sizes` matching fixed px dimensions.
+- System-state + Inicio primary CTAs/links get `focus-visible` rings.
+- Birthday cards `min-h-[72px]` align with skeleton slots; PWA icons stay under 16 KiB.
+- Evidence module: `src/features/a11y-perf/m7Checklist.ts` (also in PR body).

@@ -13,6 +13,7 @@ type EventCardProps = {
 export function EventCard({ title, timeLabel, place, href, className }: EventCardProps) {
   const baseClasses = cn(
     "rounded-[20px] bg-surface border border-border shadow-[0_10px_30px_-12px_rgba(26,22,20,0.15)] p-4 flex flex-col gap-2 w-full",
+    href ? "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40" : null,
     className,
   );
 
@@ -30,7 +31,9 @@ export function EventCard({ title, timeLabel, place, href, className }: EventCar
         </span>
         <span className="font-body text-xs font-normal text-text-muted">{timeLabel}</span>
         {place ? (
-          <span className="font-body text-xs font-normal text-text-secondary truncate">{place}</span>
+          <span className="font-body text-xs font-normal text-text-secondary truncate">
+            {place}
+          </span>
         ) : null}
       </div>
     </div>

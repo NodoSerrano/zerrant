@@ -9,6 +9,12 @@ interface AvatarProps {
   name: string;
   src?: string | null;
   size?: "sm" | "md" | "lg";
+  /**
+   * Accessible name for the image. Pass empty string when the name is already
+   * adjacent visible text (e.g. birthday row link) so AT does not hear it twice.
+   * Defaults to `name`. Empty string also marks initials fallback decorative.
+   */
+  alt?: string;
   className?: string;
 }
 
@@ -38,13 +44,16 @@ function InitialsFallback({
   name,
   size,
   className,
+  decorative,
 }: {
   name: string;
   size: "sm" | "md" | "lg";
   className?: string;
+  decorative?: boolean;
 }) {
   return (
     <div
+      aria-hidden={decorative ? true : undefined}
       className={cn(
         "rounded-full bg-linear-to-br from-brand-mint to-brand-blue text-on-primary flex items-center justify-center font-display font-bold",
         sizeClasses[size],
@@ -56,9 +65,12 @@ function InitialsFallback({
   );
 }
 
-export function Avatar({ name, src, size = "md", className }: AvatarProps) {
+export function Avatar({ name, src, size = "md", alt, className }: AvatarProps) {
   const servableSrc = src && isServableAvatarImageUrl(src) ? src : null;
   const [failed, setFailed] = useState(false);
+  const decorative = alt === "";
+  const resolvedAlt = alt === undefined ? name : alt;
+  const px = sizePx[size];
 
   // Reset runtime failure when the caller swaps to a new URL.
   useEffect(() => {
@@ -66,15 +78,18 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
   }, [servableSrc]);
 
   if (!servableSrc || failed) {
-    return <InitialsFallback name={name} size={size} className={className} />;
+    return (
+      <InitialsFallback name={name} size={size} className={className} decorative={decorative} />
+    );
   }
 
   return (
     <Image
       src={servableSrc}
-      alt={name}
-      width={sizePx[size]}
-      height={sizePx[size]}
+      alt={resolvedAlt}
+      width={px}
+      height={px}
+      sizes={`${px}px`}
       onError={() => setFailed(true)}
       className={cn("rounded-full object-cover", sizeClasses[size], className)}
     />

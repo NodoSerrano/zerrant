@@ -46,6 +46,7 @@ export function SystemStateView({
     "font-display text-base font-medium text-on-primary",
     "shadow-[0_4px_14px_rgba(17,88,176,0.33)]",
     "hover:opacity-90 active:scale-[0.98]",
+    "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40",
   );
 
   return (
