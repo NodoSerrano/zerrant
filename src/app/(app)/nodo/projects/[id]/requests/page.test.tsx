@@ -105,7 +105,7 @@ const pendingRows = [
       nombre: "Martín",
       apellido: "Paz",
       apodo: null,
-      nombre_visible: "Martín Paz",
+      nombre_visible: "nombre_apellido",
       avatar_url: null,
     },
   },
