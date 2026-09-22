@@ -163,6 +163,35 @@ describe("ProfilePage (serrano)", () => {
     expect(screen.queryByText(/Modo lectura/)).toBeNull();
   });
 
+  it("selects is_platform_admin for the serrano profile shell", async () => {
+    render(await ProfilePage());
+
+    expect(mocks.select).toHaveBeenCalled();
+    const selected = String(mocks.select.mock.calls[0]?.[0] ?? "");
+    expect(selected).toContain("is_platform_admin");
+  });
+
+  it("hides Panel de admin when the viewer is not a platform admin", async () => {
+    render(await ProfilePage());
+
+    expect(screen.queryByRole("link", { name: /Panel de admin/i })).toBeNull();
+    expect(screen.queryByText("Panel de admin")).toBeNull();
+  });
+
+  it("links Panel de admin to /admin/membresias for platform admins", async () => {
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: { ...serranoProfile, is_platform_admin: true },
+      error: null,
+    });
+
+    render(await ProfilePage());
+
+    const link = screen.getByRole("link", { name: /Panel de admin/i });
+    expect(link).toHaveAttribute("href", "/admin/membresias");
+    expect(link.className).not.toMatch(/\/40/);
+    expect(link.innerHTML).not.toMatch(/\/40/);
+  });
+
   it("does not render old field grid (Nombre, Apellido, Bio)", async () => {
     render(await ProfilePage());
 
