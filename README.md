@@ -26,20 +26,41 @@ Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · Supabase · Vercel
 ```bash
 pnpm install
 cp .env.example .env.local   # completar con las credenciales de Supabase
+pnpm exec supabase start
+pnpm exec supabase db reset  # migraciones + seed local (ZER-121)
+pnpm db:seed-local-avatar    # sube el avatar al bucket `avatars` (solo local)
 pnpm dev
 ```
 
+### Usuario local por defecto (solo `db reset` local)
+
+Tras `supabase db reset`, hay un admin serrano listo para login (no usar en prod/staging):
+
+| Campo    | Valor                                           |
+| -------- | ----------------------------------------------- |
+| Nombre   | Agus Diez                                       |
+| Email    | `agusdiez@example.com`                          |
+| Password | `supersecure`                                   |
+| Rol      | `is_platform_admin` + tier `standard` (serrano) |
+
+- SQL: `supabase/seed.sql` (referenciado por `[db.seed]` en `supabase/config.toml`)
+- Foto: `supabase/seed-assets/agus-diez.jpg` → `pnpm db:seed-local-avatar` la deja en Storage y setea `profiles.avatar_url`
+- Onboarding ya cerrado (`onboarding_completado_en`)
+- `db:seed-local-avatar` solo habla con el stack local (`supabase status`); ignora keys hosted de `.env.local` y falla si la URL no es loopback
+- En CI, `supabase db reset` aplica el SQL seed; **no** sube bytes a Storage (el job de grants/RLS no necesita el JPEG)
+
 ## Comandos
 
-| Comando                | Que hace                                                                                                   |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `pnpm dev`             | Servidor de desarrollo                                                                                     |
-| `pnpm build`           | Build de produccion                                                                                        |
-| `pnpm test`            | Tests (Vitest + Testing Library)                                                                           |
-| `pnpm lint`            | Lint (oxlint)                                                                                              |
-| `pnpm format`          | Formateo (oxfmt)                                                                                           |
-| `pnpm typecheck`       | Chequeo de tipos                                                                                           |
-| `pnpm db:check-grants` | Falla si tablas `public` sin DML para `authenticated` o sin default privileges (ZER-49; requiere DB local) |
+| Comando                     | Que hace                                                                                                   |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                  | Servidor de desarrollo                                                                                     |
+| `pnpm build`                | Build de produccion                                                                                        |
+| `pnpm test`                 | Tests (Vitest + Testing Library)                                                                           |
+| `pnpm lint`                 | Lint (oxlint)                                                                                              |
+| `pnpm format`               | Formateo (oxfmt)                                                                                           |
+| `pnpm typecheck`            | Chequeo de tipos                                                                                           |
+| `pnpm db:check-grants`      | Falla si tablas `public` sin DML para `authenticated` o sin default privileges (ZER-49; requiere DB local) |
+| `pnpm db:seed-local-avatar` | Sube el avatar del seed local al bucket `avatars` (requiere stack local + service role)                    |
 
 ## CI
 
