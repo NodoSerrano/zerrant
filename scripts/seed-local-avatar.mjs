@@ -19,8 +19,8 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, "..");
+const scriptDir = dirname(fileURLToPath(import.meta.url));
+const root = resolve(scriptDir, "..");
 
 /** Must match supabase/seed.sql `v_user_id`. */
 const USER_ID = "a1111111-1111-4111-8111-111111111111";
