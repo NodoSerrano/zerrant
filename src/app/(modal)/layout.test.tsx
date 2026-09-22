@@ -21,6 +21,18 @@ describe("Modal shell layout (focused screens without TabBar)", () => {
     expect(screen.getByText("task modal content")).toBeInTheDocument();
   });
 
+  it("keeps project detail / requests free of TabBar chrome (ZER-116)", () => {
+    render(
+      <ModalLayout>
+        <div>project detail focused content</div>
+      </ModalLayout>,
+    );
+
+    expect(screen.queryByTestId("tab-bar")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("tab-bar-spacer")).not.toBeInTheDocument();
+    expect(screen.getByText("project detail focused content")).toBeInTheDocument();
+  });
+
   it("does not render the fake phone status bar (device chrome, not product UI)", () => {
     render(
       <ModalLayout>
