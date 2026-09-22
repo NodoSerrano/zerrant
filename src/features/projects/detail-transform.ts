@@ -1,4 +1,6 @@
 import type { ProjectMemberRol } from "@/lib/db/projects-schema";
+import { displayName } from "@/features/profile/displayName";
+import type { NombreVisible } from "@/features/profile/types";
 import type { ProjectDetailMember } from "./types";
 
 export type RawProfile = {
@@ -17,12 +19,28 @@ export type RawProjectMember = {
   profiles: RawProfile | RawProfile[] | null;
 };
 
+const NOMBRE_VISIBLE_VALUES = new Set<NombreVisible>([
+  "nombre_apellido",
+  "apellido_nombre",
+  "apodo",
+]);
+
+function asNombreVisible(value: string | null | undefined): NombreVisible {
+  if (value && NOMBRE_VISIBLE_VALUES.has(value as NombreVisible)) {
+    return value as NombreVisible;
+  }
+  return "nombre_apellido";
+}
+
 export function memberDisplayName(profile: RawProfile | null | undefined): string {
   if (!profile) return "?";
-  if (profile.nombre_visible?.trim()) return profile.nombre_visible.trim();
-  if (profile.apodo?.trim()) return profile.apodo.trim();
-  const full = [profile.nombre, profile.apellido].filter(Boolean).join(" ").trim();
-  return full || "?";
+  const name = displayName({
+    nombre: profile.nombre,
+    apellido: profile.apellido,
+    apodo: profile.apodo,
+    nombre_visible: asNombreVisible(profile.nombre_visible),
+  }).trim();
+  return name || "?";
 }
 
 /** Keep only aprobado rows — pendiente is the join queue, never membership. */

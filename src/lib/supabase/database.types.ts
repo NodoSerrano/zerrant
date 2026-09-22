@@ -427,18 +427,21 @@ export type Database = {
       };
       project_members: {
         Row: {
+          created_at: string;
           estado: Database["public"]["Enums"]["project_member_estado"];
           profile_id: string;
           project_id: string;
           rol: Database["public"]["Enums"]["project_member_rol"];
         };
         Insert: {
+          created_at?: string;
           estado?: Database["public"]["Enums"]["project_member_estado"];
           profile_id: string;
           project_id: string;
           rol?: Database["public"]["Enums"]["project_member_rol"];
         };
         Update: {
+          created_at?: string;
           estado?: Database["public"]["Enums"]["project_member_estado"];
           profile_id?: string;
           project_id?: string;

@@ -7,7 +7,7 @@
  *
  * Requires migrations *_zer78_projects_project_members.sql,
  * *_zer82_project_members_ingreso_door.sql, and
- * *_zer84_project_admin_promotion.sql applied.
+ * *_zer84_project_admin_promotion.sql, and *_zer117_project_members_created_at.sql applied.
  * Everything runs inside one transaction that ends in ROLLBACK.
  *
  * Proves: serrano insert OK + creator auto-admin; tourist insert denied;
@@ -249,6 +249,26 @@ begin
     v_rows := v_rows || ('serrano_b_self_join_aprobacion=' || v_state);
     -- Keep legacy key used by older assertions / admin path below
     v_rows := v_rows || ('serrano_b_self_join=' || v_state);
+
+    -- ZER-117: admin can SELECT pendiente rows including created_at (queue order column)
+    perform set_config('request.jwt.claims', '{"sub":"${SERRANO_A}","role":"authenticated"}', true);
+    begin
+      select count(*)::int into v_count
+      from public.project_members
+      where project_id = v_project
+        and estado = 'pendiente'
+        and created_at is not null;
+      if v_count >= 1 then
+        v_state := '${SUCCESS}';
+      else
+        v_state := 'EMPTY_QUEUE';
+      end if;
+    exception when others then v_state := SQLSTATE;
+    end;
+    v_rows := v_rows || ('admin_select_pendiente_with_created_at=' || v_state);
+
+    -- Restore B identity for subsequent join/self-approve probes
+    perform set_config('request.jwt.claims', '{"sub":"${SERRANO_B}","role":"authenticated"}', true);
 
     -- Second join collides on composite PK
     begin
@@ -569,6 +589,7 @@ describe("projects RLS (live DB)", () => {
     expect(outcomes.third_party_profile_id).toBe(RLS_DENIED);
     expect(outcomes.serrano_b_self_join_aprobacion).not.toBe(POLICY_RECURSION);
     expect(outcomes.serrano_b_self_join_aprobacion).toBe(SUCCESS);
+    expect(outcomes.admin_select_pendiente_with_created_at).toBe(SUCCESS);
     expect(outcomes.serrano_b_second_join_pk).toBe(UNIQUE_VIOLATION);
     expect(outcomes.serrano_a_insert_open_project).toBe(SUCCESS);
     expect(outcomes.serrano_b_self_join_abierto).not.toBe(POLICY_RECURSION);

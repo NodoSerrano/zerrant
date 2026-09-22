@@ -6,7 +6,7 @@ import {
 } from "./join-request-transform";
 
 describe("toJoinRequestQueue", () => {
-  it("keeps only pendiente rows and maps display fields", () => {
+  it("keeps only pendiente rows and maps display fields via shared name rules", () => {
     const rows = toJoinRequestQueue([
       {
         profile_id: "u1",
@@ -17,7 +17,7 @@ describe("toJoinRequestQueue", () => {
           nombre: "Admin",
           apellido: "One",
           apodo: null,
-          nombre_visible: "Admin One",
+          nombre_visible: "nombre_apellido",
           avatar_url: null,
         },
       },
@@ -30,7 +30,7 @@ describe("toJoinRequestQueue", () => {
           nombre: "Martín",
           apellido: "Paz",
           apodo: null,
-          nombre_visible: "Martín Paz",
+          nombre_visible: "nombre_apellido",
           avatar_url: "https://example.com/a.png",
         },
       },
@@ -45,6 +45,26 @@ describe("toJoinRequestQueue", () => {
         createdAt: "2026-09-20T12:00:00Z",
       },
     ]);
+  });
+
+  it("formats apellido_nombre enum for pending requesters", () => {
+    const rows = toJoinRequestQueue([
+      {
+        profile_id: "u3",
+        estado: "pendiente",
+        created_at: "2026-09-20T12:00:00Z",
+        profiles: {
+          id: "u3",
+          nombre: "Juan",
+          apellido: "Peñalba",
+          apodo: null,
+          nombre_visible: "apellido_nombre",
+          avatar_url: null,
+        },
+      },
+    ]);
+
+    expect(rows[0]?.name).toBe("Peñalba Juan");
   });
 
   it("returns an empty list when there are no pending rows", () => {

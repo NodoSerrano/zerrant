@@ -55,7 +55,7 @@ export default async function ProjectJoinRequestsPage({ params }: PageProps) {
     redirect(`/nodo/projects/${id}`);
   }
 
-  const { data: pendingRows } = await supabase
+  const { data: pendingRows, error: pendingError } = await supabase
     .from("project_members")
     .select(
       "profile_id, estado, created_at, profiles:profile_id(id, nombre, apellido, apodo, nombre_visible, avatar_url)",
@@ -63,6 +63,11 @@ export default async function ProjectJoinRequestsPage({ params }: PageProps) {
     .eq("project_id", id)
     .eq("estado", "pendiente")
     .order("created_at", { ascending: false });
+
+  // Schema/RLS failures must not look like an empty queue (ZER-117).
+  if (pendingError) {
+    throw new Error(`No pudimos cargar las solicitudes: ${pendingError.message}`);
+  }
 
   const requests = toJoinRequestQueue((pendingRows ?? []) as unknown as RawJoinRequestRow[]);
 

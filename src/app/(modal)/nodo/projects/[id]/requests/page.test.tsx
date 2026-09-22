@@ -105,7 +105,7 @@ const pendingRows = [
       nombre: "Martín",
       apellido: "Paz",
       apodo: null,
-      nombre_visible: "Martín Paz",
+      nombre_visible: "nombre_apellido",
       avatar_url: null,
     },
   },
@@ -146,6 +146,112 @@ describe("ProjectJoinRequestsPage", () => {
     expect(screen.getAllByText("Martín Paz").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Aprobar" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Rechazar" })).toBeInTheDocument();
+  });
+
+  it("selects pending rows with created_at so PostgREST can order the queue", async () => {
+    let pendingSelect = "";
+    let membersCall = 0;
+    const client = {
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "admin-1" } }, error: null }),
+      },
+      from: vi.fn().mockImplementation((table: string) => {
+        if (table === "projects") {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: { id: "proj-1", nombre: "Sitio web de Nodo" },
+              error: null,
+            }),
+          };
+        }
+        if (table === "project_members") {
+          membersCall += 1;
+          if (membersCall === 1) {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi
+                .fn()
+                .mockResolvedValue({ data: { estado: "aprobado", rol: "admin" }, error: null }),
+            };
+          }
+          return {
+            select: vi.fn((cols: string) => {
+              pendingSelect = cols;
+              return {
+                eq: vi.fn().mockReturnThis(),
+                order: vi.fn().mockResolvedValue({ data: pendingRows, error: null }),
+              };
+            }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        };
+      }),
+    };
+    vi.mocked(createClient).mockResolvedValue(client as never);
+
+    await ProjectJoinRequestsPage({ params: Promise.resolve({ id: "proj-1" }) });
+
+    expect(pendingSelect).toMatch(/created_at/);
+    expect(pendingSelect).toMatch(/profile_id/);
+    expect(pendingSelect).toMatch(/estado/);
+  });
+
+  it("throws when the pending queue query fails instead of showing empty", async () => {
+    let membersCall = 0;
+    const client = {
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "admin-1" } }, error: null }),
+      },
+      from: vi.fn().mockImplementation((table: string) => {
+        if (table === "projects") {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: { id: "proj-1", nombre: "Sitio web de Nodo" },
+              error: null,
+            }),
+          };
+        }
+        if (table === "project_members") {
+          membersCall += 1;
+          if (membersCall === 1) {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi
+                .fn()
+                .mockResolvedValue({ data: { estado: "aprobado", rol: "admin" }, error: null }),
+            };
+          }
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockResolvedValue({
+              data: null,
+              error: { message: "column project_members.created_at does not exist", code: "42703" },
+            }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        };
+      }),
+    };
+    vi.mocked(createClient).mockResolvedValue(client as never);
+
+    await expect(
+      ProjectJoinRequestsPage({ params: Promise.resolve({ id: "proj-1" }) }),
+    ).rejects.toThrow(/No pudimos cargar las solicitudes/);
   });
 
   it("renders empty state when there are no pending requests", async () => {
