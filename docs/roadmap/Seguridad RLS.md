@@ -13,10 +13,12 @@ Las reglas de acceso viven en **Row Level Security de Postgres**, no solo en el 
 - `tarifa_hora`: visible al dueño, admins, y a otros serranos solo si `visibilidad_tarifa = 'publica'`. Enforced in DB via `public.profiles_with_rate` (masked column) + column SELECT revoke of base `profiles.tarifa_hora` for `authenticated` (ZER-43). Base table reads must omit `tarifa_hora` / avoid `select *`.
 - `profile_roles.confirmado`: solo lo cambia un admin. Ver [[M3 · Membresía y roles]].
 - `membership_requests`: el dueño crea/lee la suya; admins ven todas.
+- `projects`/`project_members` SELECT: solo miembros del Nodo (`is_non_tourist()`) — ZER-107.
 - `projects`/`project_members`: crear = cualquier serrano; editar config y aprobar ingresos = admins **de ese proyecto**; `ingreso=abierto` → entra aprobado, `aprobacion` → pendiente. Ver [[M5 · Proyectos]].
 - `aportes`: SELECT serranos (o admin); INSERT dueño o platform admin (`registrado_por = auth.uid`); UPDATE/DELETE registrante o admin. Económicos→Tesorería es convención de rol, no policy.
 - `events`: lee autenticado; escribe serrano; edita/borra creador o **platform admin** (`profiles.is_platform_admin`). `creado_por` es inmutable (grant + policy). Sin columna `estado` en `events` (ZER-91).
 - `event_attendance`: lee autenticado (lista de asistentes en detalle); insert/update/delete solo de la fila propia (`profile_id = auth.uid()`). Insert restringido a serranos (tourist no RSVP). Borrado de evento cascadea filas de asistencia (`ON DELETE CASCADE`). Admin de plataforma no necesita mutar RSVPs ajenos en MVP (ZER-91).
+- `tasks` SELECT: solo miembros del Nodo (`is_non_tourist()` / tier <> tourist) — ZER-107; no any-authenticated.
 - `tasks` UPDATE: policies separadas (creador / tomador / claim abierta / admin) + trigger `enforce_task_update_guard` (ZER-42). El tomador no puede setear `verificada` ni editar contenido vía PostgREST; solo admin verifica `hecha→verificada`.
 
 ## Grants vs RLS (PostgREST)

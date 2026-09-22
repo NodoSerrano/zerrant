@@ -345,3 +345,5 @@ Stories y deuda:
 - App `/solicitar` is the preferred path for Tourist→Serrano screening (WhatsApp, uso del espacio, aporte, horario reunión).
 - Google Form remains **backup** until the flow stabilizes; cutover criteria = follow-up ticket.
 - Snapshot lives on `membership_requests` only (not `profiles`).
+
+- **ZER-107** (2026-09-21): TabBar 4 tabs (sin NODO); Tareas/Proyectos entrando desde Inicio; SELECT tasks/projects/project_members solo miembros (`is_non_tourist()`).

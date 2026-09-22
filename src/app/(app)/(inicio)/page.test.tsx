@@ -109,6 +109,7 @@ const completeProfile = {
   apellido: "Pérez",
   fecha_nacimiento: "1990-01-15",
   onboarding_completado_en: "2026-01-01T00:00:00Z",
+  tier: "standard",
 };
 
 describe("InicioPage (/)", () => {

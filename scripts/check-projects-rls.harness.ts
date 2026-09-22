@@ -1,6 +1,6 @@
 /**
  * Live harness for ZER-78 projects + project_members RLS, ZER-82 ingreso door,
- * and ZER-84 admin promotion.
+ * ZER-84 admin promotion, and ZER-107 members-only SELECT.
  * Invoked only via:
  *   pnpm db:check-rls
  * (vitest.db-rls.config.ts). Not part of the default `pnpm test` suite.
@@ -599,7 +599,9 @@ describe("projects RLS (live DB)", () => {
     expect(outcomes.admin_promote_pendiente_target).toBe(RLS_DENIED);
   });
 
-  it("lets any authenticated user read projects", () => {
-    expect(outcomes.tourist_select_project).toBe(SUCCESS);
+  it("denies tourist project SELECT (members-only, ZER-107)", () => {
+    expect(outcomes.tourist_select_project).not.toBe(POLICY_RECURSION);
+    // zero visible rows mapped to RLS_DENIED in the probe, or direct 42501
+    expect(outcomes.tourist_select_project).toBe(RLS_DENIED);
   });
 });

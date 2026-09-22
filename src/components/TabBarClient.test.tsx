@@ -39,10 +39,11 @@ describe("TabBarClient", () => {
     expect(screen.getByRole("link", { name: /PLANTEL/i })).toHaveClass("bg-primary");
   });
 
-  it("marks nodo active when pathname starts with /nodo", () => {
+  it("marks inicio active when pathname starts with /nodo (hub lives under Inicio)", () => {
     (usePathname as ReturnType<typeof vi.fn>).mockReturnValue("/nodo/tasks");
     render(<TabBarClient />);
-    expect(screen.getByRole("link", { name: /NODO/i })).toHaveClass("bg-primary");
+    expect(screen.getByRole("link", { name: /INICIO/i })).toHaveClass("bg-primary");
+    expect(screen.queryByRole("link", { name: /NODO/i })).not.toBeInTheDocument();
   });
 
   it("marks agenda active when pathname starts with /agenda", () => {
