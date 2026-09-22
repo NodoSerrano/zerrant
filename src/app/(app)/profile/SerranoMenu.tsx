@@ -36,6 +36,7 @@ interface SerranoMenuProps {
   visibilidadTarifa?: string | null;
   aportesCount?: number;
   proyectosCount?: number;
+  isPlatformAdmin?: boolean;
 }
 
 export function SerranoMenu({
@@ -43,6 +44,7 @@ export function SerranoMenu({
   visibilidadTarifa,
   aportesCount = 0,
   proyectosCount = 0,
+  isPlatformAdmin = false,
 }: SerranoMenuProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -113,14 +115,21 @@ export function SerranoMenu({
           <ThemeToggleSwitch />
         </label>
 
-        <div className="h-px bg-border w-full" />
-
-        <div className="flex items-center gap-3 px-4 py-[15px] w-full text-text-primary/40">
-          <ShieldCheck size={20} className="text-brand-blue/40 shrink-0" />
-          <span className="font-body text-[15px] text-text-primary/40 text-left flex-1">
-            Panel de admin
-          </span>
-        </div>
+        {isPlatformAdmin ? (
+          <>
+            <div className="h-px bg-border w-full" />
+            <Link
+              href="/admin/membresias"
+              className="flex items-center gap-3 px-4 py-[15px] w-full"
+            >
+              <ShieldCheck size={20} className="text-brand-blue shrink-0" />
+              <span className="font-body text-[15px] text-text-primary text-left flex-1">
+                Panel de admin
+              </span>
+              <ChevronRight size={18} className="text-text-muted shrink-0" />
+            </Link>
+          </>
+        ) : null}
 
         <div className="h-px bg-border w-full" />
 

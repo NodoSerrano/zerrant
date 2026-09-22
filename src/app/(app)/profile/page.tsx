@@ -24,7 +24,7 @@ export default async function ProfilePage() {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "id, email, nombre, apellido, apodo, nombre_visible, avatar_url, tier, disponibilidad, visibilidad_tarifa",
+      "id, email, nombre, apellido, apodo, nombre_visible, avatar_url, tier, disponibilidad, visibilidad_tarifa, is_platform_admin",
     )
     .eq("id", user.id)
     .single();
@@ -155,6 +155,7 @@ export default async function ProfilePage() {
         visibilidadTarifa={profile.visibilidad_tarifa ? visMap[profile.visibilidad_tarifa] : null}
         aportesCount={aportesCount ?? 0}
         proyectosCount={proyectosCount ?? 0}
+        isPlatformAdmin={profile.is_platform_admin === true}
       />
     </div>
   );
