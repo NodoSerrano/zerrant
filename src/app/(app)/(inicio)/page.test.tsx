@@ -6,6 +6,10 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
+vi.mock("@/features/events/luma-client", () => ({
+  fetchLumaCalendarEvents: vi.fn(),
+}));
+
 vi.mock("@/features/profile/onboarding-gate-server", () => ({
   getOnboardingGateProfile: vi.fn(),
 }));
@@ -108,9 +112,14 @@ const completeProfile = {
 };
 
 describe("InicioPage (/)", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-09-20T15:00:00-03:00"));
+    const { fetchLumaCalendarEvents } = await import("@/features/events/luma-client");
+    (fetchLumaCalendarEvents as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      events: [],
+    });
   });
 
   afterEach(() => {
@@ -260,5 +269,38 @@ describe("InicioPage (/)", () => {
     render(await InicioPage());
     expect(screen.getByText("No hay eventos próximos")).toBeInTheDocument();
     expect(screen.getByText("No hay cumpleaños próximos")).toBeInTheDocument();
+  });
+
+  it("lists Luma events on Inicio with external href", async () => {
+    const { getOnboardingGateProfile } = await import("@/features/profile/onboarding-gate-server");
+    const { createClient } = await import("@/lib/supabase/server");
+    const { fetchLumaCalendarEvents } = await import("@/features/events/luma-client");
+    (getOnboardingGateProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      profile: completeProfile,
+      error: null,
+      userId: "user-1",
+    });
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+    (fetchLumaCalendarEvents as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      events: [
+        {
+          id: "luma:evt-1",
+          title: "Meetup Luma",
+          inicio: "2026-09-24T21:00:00.000Z",
+          fin: null,
+          place: "Hub",
+          href: "https://luma.com/abc",
+          source: "luma" as const,
+        },
+      ],
+    });
+
+    render(await InicioPage());
+    expect(screen.getByText("Meetup Luma")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Meetup Luma/i })).toHaveAttribute(
+      "href",
+      "https://luma.com/abc",
+    );
   });
 });

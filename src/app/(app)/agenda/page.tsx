@@ -10,6 +10,12 @@ import {
   formatEventTimeRange,
   parseDayKey,
 } from "@/features/events/day";
+import { fetchLumaCalendarEvents } from "@/features/events/luma-client";
+import {
+  filterAgendaItemsByDay,
+  internalEventToAgendaItem,
+  mergeAgendaListItems,
+} from "@/features/events/luma-normalize";
 import type { AgendaEvent } from "@/features/events/types";
 
 const STRIP_LENGTH = 14;
@@ -34,7 +40,7 @@ export default async function AgendaPage({
   const days = buildDayStrip(STRIP_LENGTH);
   const { startIso, endIso } = dayBoundsIso(selectedKey);
 
-  const [{ data: events }, { data: profile }] = await Promise.all([
+  const [{ data: events }, { data: profile }, lumaResult] = await Promise.all([
     supabase
       .from("events")
       .select("id, titulo, descripcion, lugar, inicio, fin, creado_por")
@@ -42,10 +48,14 @@ export default async function AgendaPage({
       .lt("inicio", endIso)
       .order("inicio", { ascending: true }),
     supabase.from("profiles").select("tier").eq("id", user.id).single(),
+    fetchLumaCalendarEvents(),
   ]);
 
-  const list = (events ?? []) as AgendaEvent[];
+  const internal = ((events ?? []) as AgendaEvent[]).map(internalEventToAgendaItem);
+  const lumaForDay = lumaResult.ok ? filterAgendaItemsByDay(lumaResult.events, selectedKey) : [];
+  const list = mergeAgendaListItems(lumaForDay, internal);
   const canCreate = Boolean(profile?.tier && profile.tier !== "tourist");
+  const lumaFailed = !lumaResult.ok;
 
   return (
     <div className="flex flex-col gap-5">
@@ -64,6 +74,12 @@ export default async function AgendaPage({
 
       <DayStrip days={days} selectedKey={selectedKey} />
 
+      {lumaFailed ? (
+        <p className="font-body text-xs text-text-muted" role="status">
+          No se pudieron cargar los eventos públicos de Luma. Se muestran solo los de la app.
+        </p>
+      ) : null}
+
       {!list.length ? (
         <EmptyState
           title="No hay eventos"
@@ -75,10 +91,10 @@ export default async function AgendaPage({
           {list.map((event) => (
             <EventCard
               key={event.id}
-              href={`/agenda/${event.id}`}
-              title={event.titulo}
+              href={event.href}
+              title={event.title}
               timeLabel={formatEventTimeRange(event.inicio, event.fin)}
-              place={event.lugar}
+              place={event.place}
             />
           ))}
         </div>

@@ -7,6 +7,10 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
+vi.mock("@/features/events/luma-client", () => ({
+  fetchLumaCalendarEvents: vi.fn(),
+}));
+
 vi.mock("next/link", () => ({
   default: ({
     href,
@@ -126,10 +130,15 @@ const EVENT_B: EventRow = {
 };
 
 describe("AgendaPage", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.useFakeTimers();
     // Fixed ART noon so "today" is 2026-09-20 regardless of process TZ
     vi.setSystemTime(new Date("2026-09-20T15:00:00-03:00"));
+    const { fetchLumaCalendarEvents } = await import("@/features/events/luma-client");
+    (fetchLumaCalendarEvents as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      events: [],
+    });
   });
 
   afterEach(() => {
@@ -281,5 +290,50 @@ describe("AgendaPage", () => {
     await renderPage();
 
     expect(screen.getByText(/Iniciá sesión/i)).toBeInTheDocument();
+  });
+
+  it("lists Luma calendar events for the selected day with external href", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    const { fetchLumaCalendarEvents } = await import("@/features/events/luma-client");
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase({ events: [] }));
+    (fetchLumaCalendarEvents as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      events: [
+        {
+          id: "luma:evt-1",
+          title: "La fija de los jueves: pysap",
+          inicio: "2026-09-20T21:00:00.000Z",
+          fin: "2026-09-20T22:00:00.000Z",
+          place: "San Martín 864, Tandil",
+          href: "https://luma.com/iajzrmdr",
+          source: "luma" as const,
+        },
+      ],
+    });
+
+    await renderPage({ dia: "2026-09-20" });
+
+    expect(screen.getByText("La fija de los jueves: pysap")).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /La fija de los jueves/i });
+    expect(link).toHaveAttribute("href", "https://luma.com/iajzrmdr");
+  });
+
+  it("degrades when Luma fails and still shows internal events", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    const { fetchLumaCalendarEvents } = await import("@/features/events/luma-client");
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockSupabase({ events: [EVENT_A] }),
+    );
+    (fetchLumaCalendarEvents as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      error: "Luma calendar request failed (500)",
+    });
+
+    await renderPage({ dia: "2026-09-20" });
+
+    expect(screen.getByText("Asamblea")).toBeInTheDocument();
+    expect(
+      screen.getByText(/No se pudieron cargar los eventos públicos de Luma/i),
+    ).toBeInTheDocument();
   });
 });
