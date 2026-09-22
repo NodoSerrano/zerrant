@@ -46,6 +46,8 @@ Tras `supabase db reset`, hay un admin serrano listo para login (no usar en prod
 - SQL: `supabase/seed.sql` (referenciado por `[db.seed]` en `supabase/config.toml`)
 - Foto: `supabase/seed-assets/agus-diez.jpg` → `pnpm db:seed-local-avatar` la deja en Storage y setea `profiles.avatar_url`
 - Onboarding ya cerrado (`onboarding_completado_en`)
+- `db:seed-local-avatar` solo habla con el stack local (`supabase status`); ignora keys hosted de `.env.local` y falla si la URL no es loopback
+- En CI, `supabase db reset` aplica el SQL seed; **no** sube bytes a Storage (el job de grants/RLS no necesita el JPEG)
 
 ## Comandos
 

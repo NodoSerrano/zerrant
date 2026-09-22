@@ -8,16 +8,21 @@
 -- Avatar bytes live in supabase/seed-assets/agus-diez.jpg.
 -- After reset, run: pnpm db:seed-local-avatar
 -- (uploads into the public avatars bucket and points profiles.avatar_url at it).
+--
+-- Keep v_user_id + avatar object path in sync with scripts/seed-local-avatar.mjs
+-- (USER_ID / OBJECT_PATH).
 
 create extension if not exists pgcrypto with schema extensions;
 
 do $$
 declare
+  -- SYNC: scripts/seed-local-avatar.mjs USER_ID
   v_user_id constant uuid := 'a1111111-1111-4111-8111-111111111111';
   v_email constant text := 'agusdiez@example.com';
   v_password constant text := 'supersecure';
   v_instance_id constant uuid := '00000000-0000-0000-0000-000000000000';
   -- Local API gateway default (supabase start). Avatar object is filled by db:seed-local-avatar.
+  -- SYNC: scripts/seed-local-avatar.mjs OBJECT_PATH = <v_user_id>/agus-diez.jpg
   v_avatar_url constant text :=
     'http://127.0.0.1:54321/storage/v1/object/public/avatars/a1111111-1111-4111-8111-111111111111/agus-diez.jpg';
 begin
