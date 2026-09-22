@@ -12,6 +12,7 @@ import {
 } from "@/features/events/day";
 import { fetchLumaCalendarEvents } from "@/features/events/luma-client";
 import {
+  agendaDayKeys,
   filterAgendaItemsByDay,
   internalEventToAgendaItem,
   mergeAgendaListItems,
@@ -39,21 +40,37 @@ export default async function AgendaPage({
   const selectedKey = parseDayKey(dia);
   const days = buildDayStrip(STRIP_LENGTH);
   const { startIso, endIso } = dayBoundsIso(selectedKey);
+  const stripStartIso = dayBoundsIso(days[0]!.key).startIso;
+  const stripEndIso = dayBoundsIso(days[days.length - 1]!.key).endIso;
 
-  const [{ data: events }, { data: profile }, lumaResult] = await Promise.all([
-    supabase
-      .from("events")
-      .select("id, titulo, descripcion, lugar, inicio, fin, creado_por")
-      .gte("inicio", startIso)
-      .lt("inicio", endIso)
-      .order("inicio", { ascending: true }),
-    supabase.from("profiles").select("tier").eq("id", user.id).single(),
-    fetchLumaCalendarEvents(),
-  ]);
+  const [{ data: events }, { data: stripEvents }, { data: profile }, lumaResult] =
+    await Promise.all([
+      supabase
+        .from("events")
+        .select("id, titulo, descripcion, lugar, inicio, fin, creado_por")
+        .gte("inicio", startIso)
+        .lt("inicio", endIso)
+        .order("inicio", { ascending: true }),
+      // Wide window only for strip dots (selected-day list stays day-scoped above).
+      supabase
+        .from("events")
+        .select("id, titulo, lugar, inicio, fin")
+        .gte("inicio", stripStartIso)
+        .lt("inicio", stripEndIso)
+        .order("inicio", { ascending: true }),
+      supabase.from("profiles").select("tier").eq("id", user.id).single(),
+      fetchLumaCalendarEvents(),
+    ]);
 
   const internal = ((events ?? []) as AgendaEvent[]).map(internalEventToAgendaItem);
-  const lumaForDay = lumaResult.ok ? filterAgendaItemsByDay(lumaResult.events, selectedKey) : [];
+  const lumaAll = lumaResult.ok ? lumaResult.events : [];
+  const lumaForDay = filterAgendaItemsByDay(lumaAll, selectedKey);
   const list = mergeAgendaListItems(lumaForDay, internal);
+  const internalForStrip = ((stripEvents ?? []) as AgendaEvent[]).map(internalEventToAgendaItem);
+  const stripKeySet = new Set(days.map((d) => d.key));
+  const daysWithEvents = agendaDayKeys([...lumaAll, ...internalForStrip]).filter((key) =>
+    stripKeySet.has(key),
+  );
   const canCreate = Boolean(profile?.tier && profile.tier !== "tourist");
   const lumaFailed = !lumaResult.ok;
 
@@ -72,7 +89,7 @@ export default async function AgendaPage({
         ) : null}
       </div>
 
-      <DayStrip days={days} selectedKey={selectedKey} />
+      <DayStrip days={days} selectedKey={selectedKey} daysWithEvents={daysWithEvents} />
 
       {lumaFailed ? (
         <p className="font-body text-xs text-text-muted" role="status">
@@ -95,6 +112,7 @@ export default async function AgendaPage({
               title={event.title}
               timeLabel={formatEventTimeRange(event.inicio, event.fin)}
               place={event.place}
+              coverUrl={event.coverUrl}
             />
           ))}
         </div>

@@ -5,6 +5,7 @@ import {
   getSupabaseAvatarRemotePatterns,
   shouldAllowLocalIPForAvatars,
 } from "./src/lib/avatar-image-url";
+import { getEventCoverRemotePatterns } from "./src/features/events/event-cover-image-url";
 import { OFFLINE_FALLBACK_PATH } from "./src/features/pwa/offlineShellPolicy";
 
 // Revision for additional precache entries (offline shell page).
@@ -27,7 +28,7 @@ const nextConfig: NextConfig = {
   reactCompiler: false,
   images: {
     // Keep in lockstep with isServableAvatarImageUrl (Avatar + AvatarPicker fallback).
-    remotePatterns: getSupabaseAvatarRemotePatterns(),
+    remotePatterns: [...getSupabaseAvatarRemotePatterns(), ...getEventCoverRemotePatterns()],
     // Local Supabase serves avatars on 127.0.0.1/localhost. Next 16 blocks private
     // IPs in the image optimizer unless this is true — without it, /_next/image
     // answers 400 "url parameter is not allowed" while Storage itself is 200.

@@ -88,4 +88,25 @@ describe("InicioHub", () => {
     render(<InicioHub events={[]} birthdays={[birthday({ daysUntil: 0, ageTurning: 36 })]} />);
     expect(screen.getByText(/Hoy · cumple 36/)).toBeInTheDocument();
   });
+
+  it("renders event cover when coverUrl is provided", () => {
+    const { container } = render(
+      <InicioHub
+        events={[
+          {
+            id: "e1",
+            title: "Asamblea",
+            timeLabel: "18:00 – 20:00",
+            place: "Salón",
+            href: "/agenda/e1",
+            coverUrl: "https://images.lumacdn.com/uploads/cover.png",
+          },
+        ]}
+        birthdays={[]}
+      />,
+    );
+    const img = container.querySelector('img[src="https://images.lumacdn.com/uploads/cover.png"]');
+    expect(img).toBeTruthy();
+    expect(img).toHaveAttribute("alt", "");
+  });
 });

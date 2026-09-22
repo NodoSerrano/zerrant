@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  agendaDayKeys,
   filterAgendaItemsByDay,
   lumaEventPublicUrl,
   mergeAgendaListItems,
@@ -46,7 +47,40 @@ describe("normalizeLumaCalendarEntries", () => {
       place: "San Martín 864, Tandil",
       href: "https://luma.com/iajzrmdr",
       source: "luma",
+      coverUrl: null,
     });
+  });
+
+  it("maps cover_url when present and falls back to social_image_url", () => {
+    const [withCover] = normalizeLumaCalendarEntries([
+      {
+        event: {
+          api_id: "evt-cover",
+          name: "Con cover",
+          start_at: "2026-09-24T21:00:00.000Z",
+          end_at: null,
+          url: "cover-slug",
+          cover_url: "https://images.lumacdn.com/uploads/cover.png",
+          social_image_url: "https://images.lumacdn.com/event-social/social.png",
+        },
+      },
+    ]);
+    expect(withCover.coverUrl).toBe("https://images.lumacdn.com/uploads/cover.png");
+
+    const [withSocial] = normalizeLumaCalendarEntries([
+      {
+        event: {
+          api_id: "evt-social",
+          name: "Con social",
+          start_at: "2026-09-24T21:00:00.000Z",
+          end_at: null,
+          url: "social-slug",
+          cover_url: null,
+          social_image_url: "https://images.lumacdn.com/event-social/social.png",
+        },
+      },
+    ]);
+    expect(withSocial.coverUrl).toBe("https://images.lumacdn.com/event-social/social.png");
   });
 
   it("skips entries without a usable event payload", () => {
@@ -93,6 +127,7 @@ describe("mergeAgendaListItems", () => {
     place: "Salón",
     href: "/agenda/int-1",
     source: "internal",
+    coverUrl: null,
   };
   const luma: AgendaListItem = {
     id: "luma:evt-1",
@@ -102,6 +137,7 @@ describe("mergeAgendaListItems", () => {
     place: "Hub",
     href: "https://luma.com/x",
     source: "luma",
+    coverUrl: null,
   };
 
   it("sorts by inicio ascending and keeps both sources", () => {
@@ -135,6 +171,7 @@ describe("filterAgendaItemsByDay", () => {
         place: null,
         href: "#",
         source: "luma",
+        coverUrl: null,
       },
       {
         id: "b",
@@ -144,6 +181,7 @@ describe("filterAgendaItemsByDay", () => {
         place: null,
         href: "#",
         source: "luma",
+        coverUrl: null,
       },
       {
         id: "c",
@@ -153,9 +191,48 @@ describe("filterAgendaItemsByDay", () => {
         place: null,
         href: "#",
         source: "luma",
+        coverUrl: null,
       },
     ];
     expect(filterAgendaItemsByDay(items, "2026-09-24").map((i) => i.id)).toEqual(["a", "b"]);
+  });
+});
+
+describe("agendaDayKeys", () => {
+  it("returns unique agenda-TZ day keys in first-seen order", () => {
+    const items: AgendaListItem[] = [
+      {
+        id: "a",
+        title: "A",
+        inicio: "2026-09-24T21:00:00.000Z",
+        fin: null,
+        place: null,
+        href: "#",
+        source: "luma",
+        coverUrl: null,
+      },
+      {
+        id: "b",
+        title: "B",
+        inicio: "2026-09-20T18:00:00-03:00",
+        fin: null,
+        place: null,
+        href: "#",
+        source: "internal",
+        coverUrl: null,
+      },
+      {
+        id: "a2",
+        title: "A2",
+        inicio: "2026-09-24T22:00:00.000Z",
+        fin: null,
+        place: null,
+        href: "#",
+        source: "luma",
+        coverUrl: null,
+      },
+    ];
+    expect(agendaDayKeys(items)).toEqual(["2026-09-24", "2026-09-20"]);
   });
 });
 
@@ -171,6 +248,7 @@ describe("takeUpcomingAgendaItems", () => {
         place: null,
         href: "#",
         source: "luma",
+        coverUrl: null,
       },
       {
         id: "a",
@@ -180,6 +258,7 @@ describe("takeUpcomingAgendaItems", () => {
         place: null,
         href: "#",
         source: "luma",
+        coverUrl: null,
       },
       {
         id: "b",
@@ -189,6 +268,7 @@ describe("takeUpcomingAgendaItems", () => {
         place: null,
         href: "#",
         source: "luma",
+        coverUrl: null,
       },
     ];
     expect(takeUpcomingAgendaItems(items, now, 1).map((i) => i.id)).toEqual(["a"]);

@@ -15,6 +15,7 @@ export function mapInicioEvents(events: AgendaEvent[], now: Date = new Date()): 
       timeLabel,
       place: event.lugar,
       href: `/agenda/${event.id}`,
+      coverUrl: null,
     };
   });
 }

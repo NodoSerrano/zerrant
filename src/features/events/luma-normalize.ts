@@ -10,6 +10,8 @@ export type AgendaListItem = {
   place: string | null;
   href: string;
   source: AgendaListItemSource;
+  /** Public cover image URL when available (Luma); null for internal events without media. */
+  coverUrl: string | null;
 };
 
 type LumaGeo = {
@@ -24,6 +26,8 @@ type LumaEventPayload = {
   start_at?: string | null;
   end_at?: string | null;
   url?: string | null;
+  cover_url?: string | null;
+  social_image_url?: string | null;
   geo_address_info?: LumaGeo | null;
 };
 
@@ -65,6 +69,10 @@ export function normalizeLumaCalendarEntries(entries: unknown[]): AgendaListItem
     const url = typeof event.url === "string" ? event.url.trim() : "";
     if (!apiId || !name || !start || !url) continue;
     const end = typeof event.end_at === "string" && event.end_at ? event.end_at : null;
+    const cover =
+      (typeof event.cover_url === "string" && event.cover_url.trim()) ||
+      (typeof event.social_image_url === "string" && event.social_image_url.trim()) ||
+      null;
     out.push({
       id: `luma:${apiId}`,
       title: name,
@@ -73,6 +81,7 @@ export function normalizeLumaCalendarEntries(entries: unknown[]): AgendaListItem
       place: resolvePlace(event.geo_address_info),
       href: lumaEventPublicUrl(url),
       source: "luma",
+      coverUrl: cover,
     });
   }
   return out;
@@ -118,6 +127,21 @@ export function filterAgendaItemsByDay(items: AgendaListItem[], dayKey: string):
   });
 }
 
+/** Unique agenda-TZ day keys that have at least one item (order of first appearance). */
+export function agendaDayKeys(items: AgendaListItem[]): string[] {
+  const keys: string[] = [];
+  const seen = new Set<string>();
+  for (const item of items) {
+    const start = new Date(item.inicio);
+    if (Number.isNaN(start.getTime())) continue;
+    const key = formatDayKey(start);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    keys.push(key);
+  }
+  return keys;
+}
+
 export function takeUpcomingAgendaItems(
   items: AgendaListItem[],
   now: Date,
@@ -148,5 +172,6 @@ export function internalEventToAgendaItem(event: {
     place: event.lugar,
     href: `/agenda/${event.id}`,
     source: "internal",
+    coverUrl: null,
   };
 }

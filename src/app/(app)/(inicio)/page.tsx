@@ -66,6 +66,7 @@ export default async function InicioPage() {
       timeLabel,
       place: event.place,
       href: event.href,
+      coverUrl: event.coverUrl,
     };
   });
   const birthdayRows = upcomingBirthdays((profiles ?? []) as BirthdayProfileInput[], {
