@@ -80,8 +80,8 @@ describe("projects / project_members table types", () => {
 
   it("exposes project_members with composite membership shape", () => {
     type MembersRow = Database["public"]["Tables"]["project_members"]["Row"];
-    const keys: (keyof MembersRow)[] = ["project_id", "profile_id", "rol", "estado"];
-    expect(keys).toHaveLength(4);
+    const keys: (keyof MembersRow)[] = ["project_id", "profile_id", "rol", "estado", "created_at"];
+    expect(keys).toHaveLength(5);
   });
 });
 
@@ -203,6 +203,19 @@ describe("ZER-82 ingreso door migration SQL", () => {
     expect(insertGrant, "project_members INSERT grant").toBeTruthy();
     expect(insertGrant![1].toLowerCase()).toMatch(/\bestado\b/);
     expect(insertGrant![1].toLowerCase()).not.toMatch(/\brol\b/);
+  });
+});
+
+describe("ZER-117 project_members.created_at for join queue", () => {
+  it("ships a forward migration adding created_at for queue order/select", () => {
+    const files = readdirSync(MIGRATIONS_DIR)
+      .filter((f) => f.includes("zer117") && f.endsWith(".sql"))
+      .sort();
+    expect(files.length, "expected a ZER-117 created_at migration").toBeGreaterThanOrEqual(1);
+    const sql = files.map((f) => readFileSync(path.join(MIGRATIONS_DIR, f), "utf8")).join("\n");
+    expect(sql).toMatch(/alter table public\.project_members/i);
+    expect(sql).toMatch(/add column if not exists created_at/i);
+    expect(sql).toMatch(/timestamptz not null default now\(\)/i);
   });
 });
 
