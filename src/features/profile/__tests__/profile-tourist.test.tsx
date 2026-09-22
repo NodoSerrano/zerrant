@@ -105,20 +105,45 @@ describe("ProfilePage (tourist)", () => {
     expect(ctaLink).toHaveAttribute("href", "/solicitar");
   });
 
-  it("renders post-request screen when a membership request is pending", async () => {
-    mocks.requestsMaybeSingle.mockResolvedValue({ data: { id: "req-1" }, error: null });
-    render(await ProfilePage());
+  describe("pending membership request (ZER-110)", () => {
+    beforeEach(() => {
+      mocks.requestsMaybeSingle.mockResolvedValue({ data: { id: "req-1" }, error: null });
+    });
 
-    expect(screen.getByText("Tu cuenta está en revisión")).toBeInTheDocument();
-  });
+    it("keeps the tourist profile shell while the request is pending", async () => {
+      render(await ProfilePage());
 
-  it("hides the tourist shell while the request is pending", async () => {
-    mocks.requestsMaybeSingle.mockResolvedValue({ data: { id: "req-1" }, error: null });
-    render(await ProfilePage());
+      expect(screen.getByRole("heading", { name: "Mi perfil" })).toBeInTheDocument();
+      expect(screen.getByText("Juan Visitante")).toBeInTheDocument();
+      expect(screen.getByText("juan@gmail.com")).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /Editar perfil/ })).toHaveAttribute(
+        "href",
+        "/profile/edit",
+      );
+      expect(screen.getByText("Modo oscuro")).toBeInTheDocument();
+      expect(screen.getByText("Cerrar sesión")).toBeInTheDocument();
+    });
 
-    expect(screen.queryByText("Todavía sos Tourist")).toBeNull();
-    expect(screen.queryByText("Solicitar ser Serrano")).toBeNull();
-    expect(screen.queryByRole("heading", { name: "Mi perfil" })).toBeNull();
+    it("swaps only the membership card to pending review state", async () => {
+      render(await ProfilePage());
+
+      expect(screen.getByText("Solicitud en revisión")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Un admin de Nodo va a revisar tu solicitud pronto. Cuando te aprueben, pasás de Turista a Serrano y vas a aparecer en el plantel.",
+        ),
+      ).toBeInTheDocument();
+      expect(screen.queryByText("Todavía sos Tourist")).toBeNull();
+      expect(screen.queryByText("Solicitar ser Serrano")).toBeNull();
+      expect(screen.queryByRole("link", { name: "Solicitar ser Serrano" })).toBeNull();
+      expect(screen.queryByRole("link", { name: "Explorar Nodo" })).toBeNull();
+    });
+
+    it("does not render a full-screen post-request replacement title as page chrome", async () => {
+      render(await ProfilePage());
+
+      expect(screen.queryByRole("heading", { name: "Tu cuenta está en revisión" })).toBeNull();
+    });
   });
 
   it("fails closed on membership request read error (shows tourist shell)", async () => {
@@ -129,51 +154,7 @@ describe("ProfilePage (tourist)", () => {
     render(await ProfilePage());
 
     expect(screen.getByText("Todavía sos Tourist")).toBeInTheDocument();
-    expect(screen.queryByText("Tu cuenta está en revisión")).toBeNull();
-  });
-
-  describe("post-request screen (Pencil 1.8)", () => {
-    beforeEach(() => {
-      mocks.requestsMaybeSingle.mockResolvedValue({ data: { id: "req-1" }, error: null });
-    });
-
-    it("renders the exact subtitle copy", async () => {
-      render(await ProfilePage());
-
-      expect(
-        screen.getByText(
-          "Un admin de Nodo va a revisar tu solicitud pronto. Cuando te aprueben, pasás de Turista a Serrano y vas a aparecer en el plantel.",
-        ),
-      ).toBeInTheDocument();
-    });
-
-    it("renders the Turista → Serrano status chips", async () => {
-      render(await ProfilePage());
-
-      expect(screen.getByText("Turista")).toBeInTheDocument();
-      expect(screen.getByText("Serrano")).toBeInTheDocument();
-    });
-
-    it("renders the compass info line", async () => {
-      render(await ProfilePage());
-
-      expect(
-        screen.getByText("Mientras tanto, explorá el plantel y la agenda"),
-      ).toBeInTheDocument();
-    });
-
-    it("renders Explorar Nodo linking to /nodo/tasks", async () => {
-      render(await ProfilePage());
-
-      const cta = screen.getByRole("link", { name: "Explorar Nodo" });
-      expect(cta).toHaveAttribute("href", "/nodo/tasks");
-    });
-
-    it("renders Cerrar sesión action", async () => {
-      render(await ProfilePage());
-
-      expect(screen.getByText("Cerrar sesión")).toBeInTheDocument();
-    });
+    expect(screen.queryByText("Solicitud en revisión")).toBeNull();
   });
 
   it("renders Editar perfil menu row linking to /profile/edit", async () => {

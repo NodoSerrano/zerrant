@@ -20,7 +20,7 @@ const PRIMARY_SHELL_FILES = [
   "app/(app)/nodo/projects/page.tsx",
   "app/(app)/agenda/page.tsx",
   "app/(app)/profile/page.tsx",
-  "app/(app)/profile/PostRequestScreen.tsx",
+  "app/(app)/profile/PendingMembershipCard.tsx",
   "app/(app)/profile/TouristMenu.tsx",
   "app/(app)/profile/SerranoMenu.tsx",
   "app/(app)/admin/membresias/page.tsx",

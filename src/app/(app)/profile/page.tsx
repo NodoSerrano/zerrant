@@ -8,7 +8,7 @@ import { displayName } from "@/features/profile/displayName";
 import { redirect } from "next/navigation";
 import { TouristMenu } from "./TouristMenu";
 import { SerranoMenu } from "./SerranoMenu";
-import { PostRequestScreen } from "./PostRequestScreen";
+import { PendingMembershipCard } from "./PendingMembershipCard";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -37,8 +37,8 @@ export default async function ProfilePage() {
   const isTourist = profile.tier === "tourist";
 
   if (isTourist) {
-    // Solicitud de membresía en curso: la pantalla 1.8 reemplaza TODO el shell
-    // tourist. Cualquier error de lectura falla cerrado (se muestra el shell).
+    // Pending membership: keep tourist shell; only swap the membership CTA card.
+    // Read errors fail closed (show CTA shell, never invent pending).
     const { data: pendingRequest, error: pendingError } = await supabase
       .from("membership_requests")
       .select("id")
@@ -47,9 +47,7 @@ export default async function ProfilePage() {
       .limit(1)
       .maybeSingle();
 
-    if (!pendingError && pendingRequest) {
-      return <PostRequestScreen />;
-    }
+    const isPending = !pendingError && Boolean(pendingRequest);
 
     return (
       <div className="flex flex-col gap-4">
@@ -75,26 +73,30 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        <div className="rounded-[22px] bg-gradient-to-br from-brand-mint to-brand-blue p-[18px] flex flex-col gap-3">
-          <div className="flex items-center gap-2.5">
-            <Mountain size={22} className="text-on-primary shrink-0" />
-            <span className="font-display text-[17px] font-bold text-on-primary">
-              Todavía sos Tourist
-            </span>
+        {isPending ? (
+          <PendingMembershipCard />
+        ) : (
+          <div className="rounded-[22px] bg-gradient-to-br from-brand-mint to-brand-blue p-[18px] flex flex-col gap-3">
+            <div className="flex items-center gap-2.5">
+              <Mountain size={22} className="text-on-primary shrink-0" />
+              <span className="font-display text-[17px] font-bold text-on-primary">
+                Todavía sos Tourist
+              </span>
+            </div>
+            <p className="font-body text-[13px] text-on-primary/[0.88] leading-relaxed">
+              Sumate como Serrano para aparecer en el plantel, crear eventos y participar de los
+              proyectos.
+            </p>
+            <Link
+              href="/solicitar"
+              className="rounded-pill bg-on-primary h-[46px] flex items-center justify-center w-full"
+            >
+              <span className="font-display text-[15px] font-semibold text-brand-blue">
+                Solicitar ser Serrano
+              </span>
+            </Link>
           </div>
-          <p className="font-body text-[13px] text-on-primary/[0.88] leading-relaxed">
-            Sumate como Serrano para aparecer en el plantel, crear eventos y participar de los
-            proyectos.
-          </p>
-          <Link
-            href="/solicitar"
-            className="rounded-pill bg-on-primary h-[46px] flex items-center justify-center w-full"
-          >
-            <span className="font-display text-[15px] font-semibold text-brand-blue">
-              Solicitar ser Serrano
-            </span>
-          </Link>
-        </div>
+        )}
 
         <TouristMenu />
       </div>
