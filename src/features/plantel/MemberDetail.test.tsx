@@ -34,6 +34,7 @@ const member: SerranoMemberDetail = {
   telegramHref: "https://t.me/nobeldam",
   aportes: [],
   proyectos: [],
+  isPlatformAdmin: false,
 };
 
 describe("MemberDetail", () => {
@@ -76,11 +77,21 @@ describe("MemberDetail", () => {
 
   it("renders TierBadge and availability label with a green dot for disponible", () => {
     render(<MemberDetail member={member} />);
-    expect(screen.getByText("Standard")).toBeInTheDocument();
+    expect(screen.getByText("Miembro")).toBeInTheDocument();
     expect(screen.getByText("Disponible")).toBeInTheDocument();
     const dot = document.querySelector(".size-2.rounded-full");
     expect(dot).not.toBeNull();
     expect(dot!.className).toContain("bg-brand-green");
+  });
+
+  it("renders platform Admin badge when the member is platform admin", () => {
+    render(<MemberDetail member={{ ...member, isPlatformAdmin: true }} />);
+    expect(screen.getByText("Admin")).toBeInTheDocument();
+  });
+
+  it("hides platform Admin badge for non-admins", () => {
+    render(<MemberDetail member={member} />);
+    expect(screen.queryByText("Admin")).not.toBeInTheDocument();
   });
 
   it("omits availability when null", () => {

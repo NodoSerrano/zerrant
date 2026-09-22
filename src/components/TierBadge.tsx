@@ -14,12 +14,17 @@ const tierStyles: Record<Tier, string> = {
   founder: "bg-warm-yellow/20 text-warm-yellow",
 };
 
+/** Display labels only — DB enums stay tourist/standard/scholar/founder. */
 const tierLabels: Record<Tier, string> = {
-  tourist: "Tourist",
+  tourist: "Turista",
   scholar: "Scholar",
-  standard: "Standard",
+  standard: "Miembro",
   founder: "Founder",
 };
+
+export function tierDisplayLabel(tier: Tier): string {
+  return tierLabels[tier];
+}
 
 export function TierBadge({ tier, className }: TierBadgeProps) {
   return (

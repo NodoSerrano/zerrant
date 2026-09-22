@@ -20,6 +20,7 @@ export type SerranoMember = {
   disponibilidad: Disponibilidad | null;
   roles: string[];
   skills: string[];
+  isPlatformAdmin: boolean;
 };
 
 export type PlantelFilters = {
@@ -42,4 +43,5 @@ export type SerranoMemberDetail = {
   telegramHref: string | null;
   aportes: AporteListItem[];
   proyectos: MemberProjectPreview[];
+  isPlatformAdmin: boolean;
 };

@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { TierBadge } from "./TierBadge";
 
 describe("TierBadge", () => {
-  it('renders "Tourist" label for tourist tier', () => {
+  it('renders "Turista" label for tourist tier', () => {
     render(<TierBadge tier="tourist" />);
-    expect(screen.getByText("Tourist")).toBeInTheDocument();
+    expect(screen.getByText("Turista")).toBeInTheDocument();
   });
 
   it('renders "Scholar" label for scholar tier', () => {
@@ -13,9 +13,9 @@ describe("TierBadge", () => {
     expect(screen.getByText("Scholar")).toBeInTheDocument();
   });
 
-  it('renders "Standard" label for standard tier', () => {
+  it('renders "Miembro" label for standard tier', () => {
     render(<TierBadge tier="standard" />);
-    expect(screen.getByText("Standard")).toBeInTheDocument();
+    expect(screen.getByText("Miembro")).toBeInTheDocument();
   });
 
   it('renders "Founder" label for founder tier', () => {
@@ -25,8 +25,8 @@ describe("TierBadge", () => {
 
   it("applies distinct styles per tier", () => {
     const { unmount } = render(<TierBadge tier="tourist" />);
-    expect(screen.getByText("Tourist")).toHaveClass("bg-surface-inset");
-    expect(screen.getByText("Tourist")).toHaveClass("text-text-muted");
+    expect(screen.getByText("Turista")).toHaveClass("bg-surface-inset");
+    expect(screen.getByText("Turista")).toHaveClass("text-text-muted");
     unmount();
 
     render(<TierBadge tier="scholar" />);
@@ -35,8 +35,8 @@ describe("TierBadge", () => {
     unmount();
 
     render(<TierBadge tier="standard" />);
-    expect(screen.getByText("Standard")).toHaveClass("bg-mint-raw/20");
-    expect(screen.getByText("Standard")).toHaveClass("text-brand-mint");
+    expect(screen.getByText("Miembro")).toHaveClass("bg-mint-raw/20");
+    expect(screen.getByText("Miembro")).toHaveClass("text-brand-mint");
     unmount();
 
     render(<TierBadge tier="founder" />);
@@ -46,7 +46,7 @@ describe("TierBadge", () => {
 
   it("accepts custom className", () => {
     render(<TierBadge tier="standard" className="my-badge" />);
-    expect(screen.getByText("Standard")).toHaveClass("my-badge");
+    expect(screen.getByText("Miembro")).toHaveClass("my-badge");
   });
 
   it("has rounded-pill and Pencil padding", () => {

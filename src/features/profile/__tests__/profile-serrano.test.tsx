@@ -93,10 +93,27 @@ describe("ProfilePage (serrano)", () => {
     expect(screen.getByText("nobel@nodo.ar")).toBeInTheDocument();
   });
 
-  it("renders RoleChips for serrano tier", async () => {
+  it("renders Spanish TierBadge for serrano tier", async () => {
     render(await ProfilePage());
 
-    expect(screen.getByText("Standard")).toBeInTheDocument();
+    expect(screen.getByText("Miembro")).toBeInTheDocument();
+    expect(screen.queryByText("Standard")).toBeNull();
+  });
+
+  it("renders platform Admin badge on identity when is_platform_admin", async () => {
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: { ...serranoProfile, is_platform_admin: true },
+      error: null,
+    });
+
+    render(await ProfilePage());
+
+    expect(screen.getByText("Admin")).toBeInTheDocument();
+  });
+
+  it("hides platform Admin badge on identity when not admin", async () => {
+    render(await ProfilePage());
+    expect(screen.queryByText("Admin")).not.toBeInTheDocument();
   });
 
   it("renders quick actions group rows", async () => {
@@ -153,7 +170,7 @@ describe("ProfilePage (serrano)", () => {
   it("does not render membership CTA banner", async () => {
     render(await ProfilePage());
 
-    expect(screen.queryByText("Todavía sos Tourist")).toBeNull();
+    expect(screen.queryByText("Todavía sos Turista")).toBeNull();
     expect(screen.queryByText("Solicitar ser Serrano")).toBeNull();
   });
 

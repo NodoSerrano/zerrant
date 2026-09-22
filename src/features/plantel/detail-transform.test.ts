@@ -41,6 +41,22 @@ describe("buildSerranoMemberDetail", () => {
     expect(result.skills).toEqual(["Solidity"]);
   });
 
+  it("maps is_platform_admin onto isPlatformAdmin", () => {
+    const withAdmin = buildSerranoMemberDetail(
+      { ...profile, is_platform_admin: true },
+      roles,
+      skills,
+      { isSelf: false, isAdmin: false },
+    );
+    expect(withAdmin.isPlatformAdmin).toBe(true);
+
+    const withoutAdmin = buildSerranoMemberDetail(profile, roles, skills, {
+      isSelf: false,
+      isAdmin: false,
+    });
+    expect(withoutAdmin.isPlatformAdmin).toBe(false);
+  });
+
   it("normalizes the telegram handle to a t.me deep link", () => {
     const result = buildSerranoMemberDetail(profile, roles, skills, {
       isSelf: false,

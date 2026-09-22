@@ -171,6 +171,7 @@ describe("PlantelMemberPage", () => {
     expect(selected).toContain("contacto_telegram");
     expect(selected).toContain("tarifa_hora");
     expect(selected).toContain("visibilidad_tarifa");
+    expect(selected).toContain("is_platform_admin");
 
     expect(screen.getByTestId("member-detail")).toBeInTheDocument();
   });

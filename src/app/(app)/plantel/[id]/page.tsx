@@ -6,7 +6,7 @@ import type { AporteListItem } from "@/features/aportes/types";
 import type { MemberProjectPreview } from "@/features/plantel/types";
 
 const DETAIL_PROFILE_COLUMNS =
-  "id, nombre, apellido, apodo, nombre_visible, avatar_url, tier, disponibilidad, bio, contacto_telegram, tarifa_hora, visibilidad_tarifa";
+  "id, nombre, apellido, apodo, nombre_visible, avatar_url, tier, disponibilidad, bio, contacto_telegram, tarifa_hora, visibilidad_tarifa, is_platform_admin";
 
 export default async function PlantelMemberPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -97,6 +97,7 @@ export default async function PlantelMemberPage({ params }: { params: Promise<{ 
       contacto_telegram: profile.contacto_telegram,
       tarifa_hora: profile.tarifa_hora,
       visibilidad_tarifa: profile.visibilidad_tarifa,
+      is_platform_admin: profile.is_platform_admin === true,
     },
     roles,
     skills,
