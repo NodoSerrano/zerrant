@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockGet = vi.hoisted(() => vi.fn((_key?: string) => null as string | null));
 
@@ -23,6 +23,10 @@ describe("LoginPage", () => {
     mockGet.mockImplementation(() => null);
     mockSignInWithPassword.mockReset();
     mockSignInWithGoogle.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("renders brand hero with Mountain icon, title, and subtitle", () => {
@@ -53,14 +57,20 @@ describe("LoginPage", () => {
     expect(screen.getByRole("button", { name: "Ingresar" })).toBeInTheDocument();
   });
 
-  it("renders divider with o text", () => {
+  it("hides Google CTA and orphan divider while Google auth is disabled", () => {
     render(<LoginPage />);
-    expect(screen.getByText("o")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Continuar con Google/i })).not.toBeInTheDocument();
+    expect(screen.queryByText("o")).not.toBeInTheDocument();
   });
 
-  it("renders Google SecondaryButton", () => {
-    render(<LoginPage />);
+  it("shows Google CTA and divider when Google auth is enabled", async () => {
+    vi.stubEnv("NEXT_PUBLIC_GOOGLE_AUTH_ENABLED", "true");
+    vi.resetModules();
+    const { default: EnabledLoginPage } = await import("@/app/auth/login/page");
+    render(<EnabledLoginPage />);
     expect(screen.getByRole("button", { name: /Continuar con Google/i })).toBeInTheDocument();
+    expect(screen.getByText("o")).toBeInTheDocument();
+    vi.unstubAllEnvs();
   });
 
   it("renders footer with ¿Primera vez? and Creá tu cuenta link", () => {
