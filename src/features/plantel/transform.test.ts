@@ -11,6 +11,7 @@ const profiles = [
     avatar_url: null,
     tier: "standard" as const,
     disponibilidad: "disponible" as const,
+    is_platform_admin: true,
   },
   {
     id: "p2",
@@ -21,6 +22,7 @@ const profiles = [
     avatar_url: "https://x/ada.png",
     tier: "founder" as const,
     disponibilidad: "ocupado" as const,
+    is_platform_admin: false,
   },
   {
     id: "p3",
@@ -31,6 +33,7 @@ const profiles = [
     avatar_url: null,
     tier: "tourist" as const,
     disponibilidad: null,
+    is_platform_admin: false,
   },
 ];
 
@@ -74,6 +77,18 @@ describe("buildSerranoMembers", () => {
     expect(result[0].avatarUrl).toBeNull();
     expect(result[0].disponibilidad).toBe("disponible");
     expect(result[1].avatarUrl).toBe("https://x/ada.png");
+  });
+
+  it("maps is_platform_admin onto isPlatformAdmin", () => {
+    const result = buildSerranoMembers(profiles, roleAssignments, skillAssignments);
+    expect(result[0].isPlatformAdmin).toBe(true);
+    expect(result[1].isPlatformAdmin).toBe(false);
+  });
+
+  it("defaults isPlatformAdmin to false when the column is missing", () => {
+    const withoutAdmin = profiles.map(({ is_platform_admin: _ignored, ...row }) => row);
+    const result = buildSerranoMembers(withoutAdmin, roleAssignments, skillAssignments);
+    expect(result.every((m) => m.isPlatformAdmin === false)).toBe(true);
   });
 });
 

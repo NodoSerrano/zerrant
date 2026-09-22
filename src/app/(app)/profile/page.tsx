@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/Avatar";
 import { TierBadge } from "@/components/TierBadge";
-import { RoleChip } from "@/components/RoleChip";
+import { PlatformAdminBadge } from "@/components/PlatformAdminBadge";
 import { displayName } from "@/features/profile/displayName";
 import { redirect } from "next/navigation";
 import { TouristMenu } from "./TouristMenu";
@@ -71,7 +71,10 @@ export default async function ProfilePage() {
                 <span className="font-body text-xs text-text-muted">{profile.email}</span>
               </div>
             </div>
-            <TierBadge tier={profile.tier} />
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <TierBadge tier={profile.tier} />
+              {profile.is_platform_admin === true ? <PlatformAdminBadge /> : null}
+            </div>
           </div>
         </div>
 
@@ -82,7 +85,7 @@ export default async function ProfilePage() {
             <div className="flex items-center gap-2.5">
               <Mountain size={22} className="text-on-primary shrink-0" />
               <span className="font-display text-[17px] font-bold text-on-primary">
-                Todavía sos Tourist
+                Todavía sos Turista
               </span>
             </div>
             <p className="font-body text-[13px] text-on-primary/[0.88] leading-relaxed">
@@ -104,8 +107,6 @@ export default async function ProfilePage() {
       </div>
     );
   }
-
-  const tierLabel = profile.tier.charAt(0).toUpperCase() + profile.tier.slice(1);
 
   const dispMap: Record<string, string> = {
     disponible: "Disponible",
@@ -147,7 +148,8 @@ export default async function ProfilePage() {
             </div>
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
-            <RoleChip label={tierLabel} />
+            <TierBadge tier={profile.tier} />
+            {profile.is_platform_admin === true ? <PlatformAdminBadge /> : null}
           </div>
         </div>
       </div>

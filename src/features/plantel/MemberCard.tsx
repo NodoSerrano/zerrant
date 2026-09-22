@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { TierBadge } from "@/components/TierBadge";
+import { PlatformAdminBadge } from "@/components/PlatformAdminBadge";
 import { RoleChip } from "@/components/RoleChip";
 import { cn } from "@/lib/utils";
 import { availabilityLabel } from "./transform";
@@ -31,8 +32,9 @@ export function MemberCard({ member }: { member: SerranoMember }) {
           <span className="font-display text-[17px] font-medium text-text-primary truncate">
             {member.name}
           </span>
-          <div className="flex items-center gap-[6px]">
+          <div className="flex items-center gap-[6px] flex-wrap">
             <TierBadge tier={member.tier} />
+            {member.isPlatformAdmin ? <PlatformAdminBadge /> : null}
             {dot && label && (
               <>
                 <span className={cn("size-1.5 rounded-full", dot)} />

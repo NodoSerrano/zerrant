@@ -17,6 +17,7 @@ type ProfileRow = {
   avatar_url: string | null;
   tier: "tourist" | "scholar" | "standard" | "founder";
   disponibilidad: Disponibilidad | null;
+  is_platform_admin?: boolean | null;
 };
 
 type DetailProfileRow = ProfileRow & {
@@ -88,6 +89,7 @@ export function buildSerranoMemberDetail(
     telegramHref: telegramHref(profile.contacto_telegram),
     aportes: viewer.aportes ?? [],
     proyectos: viewer.proyectos ?? [],
+    isPlatformAdmin: profile.is_platform_admin === true,
   };
 }
 
@@ -125,5 +127,6 @@ export function buildSerranoMembers(
       disponibilidad: profile.disponibilidad,
       roles: rolesByProfile.get(profile.id) ?? [],
       skills: skillsByProfile.get(profile.id) ?? [],
+      isPlatformAdmin: profile.is_platform_admin === true,
     }));
 }

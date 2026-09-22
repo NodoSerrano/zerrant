@@ -30,6 +30,7 @@ const member: SerranoMember = {
   disponibilidad: "disponible",
   roles: ["Infra", "Charlas"],
   skills: ["Solidity"],
+  isPlatformAdmin: false,
 };
 
 describe("MemberCard", () => {
@@ -57,9 +58,19 @@ describe("MemberCard", () => {
     expect(name.className).toContain("text-text-primary");
   });
 
-  it("renders the TierBadge", () => {
+  it("renders the TierBadge with Spanish standard label", () => {
     render(<MemberCard member={member} />);
-    expect(screen.getByText("Standard")).toBeInTheDocument();
+    expect(screen.getByText("Miembro")).toBeInTheDocument();
+  });
+
+  it("renders platform Admin badge when the member is platform admin", () => {
+    render(<MemberCard member={{ ...member, isPlatformAdmin: true }} />);
+    expect(screen.getByText("Admin")).toBeInTheDocument();
+  });
+
+  it("hides platform Admin badge for non-admins", () => {
+    render(<MemberCard member={member} />);
+    expect(screen.queryByText("Admin")).not.toBeInTheDocument();
   });
 
   it("renders availability dot and label for disponible", () => {

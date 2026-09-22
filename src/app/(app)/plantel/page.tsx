@@ -4,7 +4,7 @@ import { PlantelList } from "@/features/plantel/PlantelList";
 import { buildSerranoMembers } from "@/features/plantel/transform";
 
 const PLANTEL_PROFILE_COLUMNS =
-  "id, nombre, apellido, apodo, nombre_visible, avatar_url, tier, disponibilidad";
+  "id, nombre, apellido, apodo, nombre_visible, avatar_url, tier, disponibilidad, is_platform_admin";
 
 export default async function PlantelPage() {
   const supabase = await createClient();

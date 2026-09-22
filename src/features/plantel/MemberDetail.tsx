@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Briefcase, ChevronLeft, Eye } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { TierBadge } from "@/components/TierBadge";
+import { PlatformAdminBadge } from "@/components/PlatformAdminBadge";
 import { RoleChip } from "@/components/RoleChip";
 import { cn } from "@/lib/utils";
 import { BRAND_CTA_SHADOW_CLASS, BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
@@ -49,8 +50,9 @@ export function MemberDetail({ member }: { member: SerranoMemberDetail }) {
         <Avatar name={member.name} src={member.avatarUrl} size="lg" className="size-24" />
         <div className="flex flex-col items-center gap-2">
           <h1 className="font-display text-2xl font-bold text-text-primary">{member.name}</h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-center">
             <TierBadge tier={member.tier} />
+            {member.isPlatformAdmin ? <PlatformAdminBadge /> : null}
             {dot && label && (
               <>
                 <span className={cn("size-2 rounded-full", dot)} />

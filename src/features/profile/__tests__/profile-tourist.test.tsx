@@ -86,14 +86,30 @@ describe("ProfilePage (tourist)", () => {
 
     expect(screen.getByText("Juan Visitante")).toBeInTheDocument();
     expect(screen.getByText("juan@gmail.com")).toBeInTheDocument();
-    expect(screen.getByText("Tourist")).toBeInTheDocument();
+    expect(screen.getByText("Turista")).toBeInTheDocument();
   });
 
-  it("renders the membership CTA banner with Mountain icon and copy", async () => {
+  it("renders the membership CTA banner with Mountain icon and Spanish copy", async () => {
     render(await ProfilePage());
 
-    expect(screen.getByText("Todavía sos Tourist")).toBeInTheDocument();
+    expect(screen.getByText("Todavía sos Turista")).toBeInTheDocument();
     expect(screen.getByText(/Sumate como Serrano para aparecer en el plantel/)).toBeInTheDocument();
+  });
+
+  it("renders platform Admin badge on tourist identity when is_platform_admin", async () => {
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: { ...touristProfile, is_platform_admin: true },
+      error: null,
+    });
+
+    render(await ProfilePage());
+
+    expect(screen.getByText("Admin")).toBeInTheDocument();
+  });
+
+  it("hides platform Admin badge on tourist identity when not admin", async () => {
+    render(await ProfilePage());
+    expect(screen.queryByText("Admin")).not.toBeInTheDocument();
   });
 
   it("renders Solicitar ser Serrano CTA as a link to /solicitar", async () => {
@@ -133,7 +149,7 @@ describe("ProfilePage (tourist)", () => {
           "Un admin de Nodo va a revisar tu solicitud pronto. Cuando te aprueben, pasás de Turista a Serrano y vas a aparecer en el plantel.",
         ),
       ).toBeInTheDocument();
-      expect(screen.queryByText("Todavía sos Tourist")).toBeNull();
+      expect(screen.queryByText("Todavía sos Turista")).toBeNull();
       expect(screen.queryByText("Solicitar ser Serrano")).toBeNull();
       expect(screen.queryByRole("link", { name: "Solicitar ser Serrano" })).toBeNull();
       expect(screen.queryByRole("link", { name: "Explorar Nodo" })).toBeNull();
@@ -153,7 +169,7 @@ describe("ProfilePage (tourist)", () => {
     });
     render(await ProfilePage());
 
-    expect(screen.getByText("Todavía sos Tourist")).toBeInTheDocument();
+    expect(screen.getByText("Todavía sos Turista")).toBeInTheDocument();
     expect(screen.queryByText("Solicitud en revisión")).toBeNull();
   });
 

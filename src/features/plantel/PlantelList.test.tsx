@@ -31,6 +31,7 @@ function member(overrides: Partial<SerranoMember> = {}): SerranoMember {
     disponibilidad: "disponible",
     roles: ["Infra"],
     skills: ["Solidity"],
+    isPlatformAdmin: false,
     ...overrides,
   };
 }
