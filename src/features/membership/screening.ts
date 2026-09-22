@@ -1,5 +1,10 @@
 /** ZER-108 — membership screening snapshot (Google Form → /solicitar). */
 
+/** Product copy for /solicitar — reference monthly contribution (not a DB column). */
+export const APORTE_REFERENCIA_MONTO = "$15.000";
+export const APORTE_REFERENCIA_PERIODO = "por mes";
+export const APORTE_REFERENCIA_COPY = `El aporte de referencia actual es ${APORTE_REFERENCIA_MONTO} ${APORTE_REFERENCIA_PERIODO}.`;
+
 export const FRECUENCIA_USO_VALUES = [
   "1_2_mes",
   "1_semana",

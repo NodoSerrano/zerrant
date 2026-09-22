@@ -340,6 +340,11 @@ Stories y deuda:
 | 2026-09-20 | **QA M4 DoD** (ZER-64): Juan cerró QA formal del plantel (solo serranos, tarifa, skills). Residual “sin QA formal” cerrado en STATUS; sin issues nuevas. ZER-43 story/sprint drift → done.                                                |
 | 2026-09-20 | **Ticketización M7** (ZER-98→ZER-105): proyecto Linear M7 + SPEC/epics/stories + sprint-status. Inicio sigue dependiente de events M6 en runtime.                                                                                         |
 
+## ZER-109 — /solicitar UX + submit unblock (in progress)
+
+- Follow-up to ZER-108: hide TabBar (route under `(modal)`), radio choices, show `$15.000` reference aporte before attitude, 3-step wizard, required `*`, apply screening migration locally.
+- Submit failure after ZER-108 was schema drift (migration `20260922020000_zer108_membership_screening.sql` not applied), not ZER-65 recursion.
+
 ## ZER-108 — membership screening (in progress)
 
 - App `/solicitar` is the preferred path for Tourist→Serrano screening (WhatsApp, uso del espacio, aporte, horario reunión).

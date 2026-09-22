@@ -190,3 +190,11 @@ describe("membership_requests insert grant contract", () => {
     expect(MEMBERSHIP_REQUESTS_INSERT_COLUMNS).not.toContain("estado");
   });
 });
+
+describe("aporte de referencia copy", () => {
+  it("exposes a stable product amount for /solicitar", async () => {
+    const mod = await import("./screening");
+    expect(mod.APORTE_REFERENCIA_MONTO).toBe("$15.000");
+    expect(mod.APORTE_REFERENCIA_COPY).toMatch(/\$15\.000/);
+  });
+});
