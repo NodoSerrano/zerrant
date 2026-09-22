@@ -116,6 +116,25 @@ describe("PlantelList", () => {
     expect(screen.queryByText("Alan Turing")).not.toBeInTheDocument();
   });
 
+  it("Por rol chip is selected while the role picker is open without a value", () => {
+    render(<PlantelList members={members} />);
+    fireEvent.click(screen.getByRole("button", { name: "Por rol" }));
+    expect(screen.getByRole("button", { name: "Por rol" })).toHaveClass("bg-primary");
+  });
+
+  it("Por skill chip is selected while the skill picker is open without a value", () => {
+    render(<PlantelList members={members} />);
+    fireEvent.click(screen.getByRole("button", { name: "Por skill" }));
+    expect(screen.getByRole("button", { name: "Por skill" })).toHaveClass("bg-primary");
+  });
+
+  it("Por rol chip returns to unselected when the open picker is toggled off without a value", () => {
+    render(<PlantelList members={members} />);
+    fireEvent.click(screen.getByRole("button", { name: "Por rol" }));
+    fireEvent.click(screen.getByRole("button", { name: "Por rol" }));
+    expect(screen.getByRole("button", { name: "Por rol" })).not.toHaveClass("bg-primary");
+  });
+
   it("Por rol opens a picker and selecting a role filters the list", () => {
     render(<PlantelList members={members} />);
     fireEvent.click(screen.getByRole("button", { name: "Por rol" }));

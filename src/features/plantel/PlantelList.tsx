@@ -161,8 +161,18 @@ export function PlantelList({ members, roleOptions, skillOptions }: PlantelListP
           setPicker(null);
         })}
         {chip("disponibles", "Disponibles", soloDisponibles, () => setSoloDisponibles((v) => !v))}
-        {chip("rol", rol ? `Rol: ${rol}` : "Por rol", rol !== null, toggleRolePicker)}
-        {chip("skill", skill ? `Skill: ${skill}` : "Por skill", skill !== null, toggleSkillPicker)}
+        {chip(
+          "rol",
+          rol ? `Rol: ${rol}` : "Por rol",
+          rol !== null || picker === "rol",
+          toggleRolePicker,
+        )}
+        {chip(
+          "skill",
+          skill ? `Skill: ${skill}` : "Por skill",
+          skill !== null || picker === "skill",
+          toggleSkillPicker,
+        )}
       </div>
 
       {picker === "rol" && pickerPanel("rol", roles, "Todavía no hay roles cargados")}
