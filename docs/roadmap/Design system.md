@@ -15,7 +15,7 @@ Extraído de Figma. Detalle de tokens en [[2026-07-20-nodo-serrano-backoffice-de
 
 ## Componentes (en el `.pen`)
 
-Avatar, Chip, **TierBadge**, **RoleChip**, PrimaryButton, SecondaryButton, Input, StatusBar, **TabBar** (5 tabs), MemberCard, EventCard, ProjectCard, TaskCard, AporteItem, RequestCard.
+Avatar, Chip, **TierBadge**, **RoleChip**, PrimaryButton, SecondaryButton, Input, StatusBar, **TabBar** (4 tabs: Inicio · Plantel · Agenda · Perfil; sin Nodo — ZER-107), MemberCard, EventCard, ProjectCard, TaskCard, AporteItem, RequestCard.
 
 ## Implementación
 

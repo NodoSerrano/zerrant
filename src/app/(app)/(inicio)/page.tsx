@@ -73,5 +73,9 @@ export default async function InicioPage() {
     today,
   });
 
-  return <InicioHub events={eventItems} birthdays={birthdayRows} />;
+  const showCommunityHub = Boolean(profile && profile.tier !== "tourist");
+
+  return (
+    <InicioHub events={eventItems} birthdays={birthdayRows} showCommunityHub={showCommunityHub} />
+  );
 }

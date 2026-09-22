@@ -6,15 +6,14 @@ import { TabBar, type Tab } from "@/components/TabBar";
 export function TabBarClient() {
   const pathname = usePathname();
 
-  const active: Tab = pathname.startsWith("/nodo")
-    ? "nodo"
-    : pathname.startsWith("/plantel")
-      ? "plantel"
-      : pathname.startsWith("/agenda")
-        ? "agenda"
-        : pathname.startsWith("/profile") || pathname.startsWith("/onboarding")
-          ? "perfil"
-          : "inicio";
+  // /nodo/* remains reachable from Inicio (community hub) but has no TabBar tab.
+  const active: Tab = pathname.startsWith("/plantel")
+    ? "plantel"
+    : pathname.startsWith("/agenda")
+      ? "agenda"
+      : pathname.startsWith("/profile") || pathname.startsWith("/onboarding")
+        ? "perfil"
+        : "inicio";
 
   return <TabBar active={active} />;
 }

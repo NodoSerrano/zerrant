@@ -23,11 +23,12 @@ beforeEach(() => {
 });
 
 describe("TabBar", () => {
-  it("renders five destinations with uppercase labels including INICIO", () => {
+  it("renders four destinations with uppercase labels including INICIO and no NODO", () => {
     render(<TabBar />);
-    for (const label of ["INICIO", "PLANTEL", "NODO", "AGENDA", "PERFIL"]) {
+    for (const label of ["INICIO", "PLANTEL", "AGENDA", "PERFIL"]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
+    expect(screen.queryByText("NODO")).not.toBeInTheDocument();
   });
 
   it("renders lucide icons (no emoji)", () => {
@@ -37,13 +38,13 @@ describe("TabBar", () => {
     expect(inicio).not.toHaveTextContent("🏠");
   });
 
-  it("renders all five destinations as real links with href", () => {
+  it("renders all four destinations as real links with href", () => {
     render(<TabBar />);
     expect(screen.getByRole("link", { name: /INICIO/i })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: /PLANTEL/i })).toHaveAttribute("href", "/plantel");
-    expect(screen.getByRole("link", { name: /NODO/i })).toHaveAttribute("href", "/nodo/tasks");
     expect(screen.getByRole("link", { name: /AGENDA/i })).toHaveAttribute("href", "/agenda");
     expect(screen.getByRole("link", { name: /PERFIL/i })).toHaveAttribute("href", "/profile");
+    expect(screen.queryByRole("link", { name: /NODO/i })).not.toBeInTheDocument();
   });
 
   it("does not render any tab as a button", () => {
@@ -72,7 +73,7 @@ describe("TabBar", () => {
 
   it("inactive tabs have text-text-muted and no bg-primary", () => {
     render(<TabBar active="inicio" />);
-    const inactive = screen.getByRole("link", { name: /NODO/i });
+    const inactive = screen.getByRole("link", { name: /PLANTEL/i });
     expect(inactive).toHaveClass("text-text-muted");
     expect(inactive).not.toHaveClass("bg-primary");
   });

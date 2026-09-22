@@ -205,3 +205,23 @@ describe("ZER-82 ingreso door migration SQL", () => {
     expect(insertGrant![1].toLowerCase()).not.toMatch(/\brol\b/);
   });
 });
+
+describe("ZER-107 members-only project reads", () => {
+  it("replaces any-authenticated SELECT on projects and project_members with is_non_tourist", () => {
+    const files = readdirSync(MIGRATIONS_DIR).filter(
+      (f) => f.includes("zer107") && f.endsWith(".sql"),
+    );
+    expect(files.length, "expected a ZER-107 members-only read migration").toBeGreaterThanOrEqual(
+      1,
+    );
+    const sql = files.map((f) => readFileSync(path.join(MIGRATIONS_DIR, f), "utf8")).join("\n");
+
+    expect(sql).toMatch(/drop policy if exists "Authenticated users can read projects"/i);
+    expect(sql).toMatch(/create policy "Members can read projects"/i);
+    expect(sql).toMatch(/on public\.projects/i);
+    expect(sql).toMatch(/drop policy if exists "Authenticated users can read project members"/i);
+    expect(sql).toMatch(/create policy "Members can read project members"/i);
+    expect(sql).toMatch(/on public\.project_members/i);
+    expect(sql).toMatch(/is_non_tourist\(\)/);
+  });
+});

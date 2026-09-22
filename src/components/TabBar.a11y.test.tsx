@@ -27,17 +27,17 @@ describe("TabBar a11y (ZER-104)", () => {
     expect(svg?.getAttribute("aria-hidden")).toBe("true");
   });
 
-  it("keeps all five destinations as real named links for keyboard users", () => {
+  it("keeps all four destinations as real named links for keyboard users", () => {
     render(<TabBar active="inicio" />);
     for (const [label, href] of [
       ["INICIO", "/"],
       ["PLANTEL", "/plantel"],
-      ["NODO", "/nodo/tasks"],
       ["AGENDA", "/agenda"],
       ["PERFIL", "/profile"],
     ] as const) {
       const link = screen.getByRole("link", { name: new RegExp(`^${label}$`, "i") });
       expect(link).toHaveAttribute("href", href);
     }
+    expect(screen.queryByRole("link", { name: /^NODO$/i })).not.toBeInTheDocument();
   });
 });

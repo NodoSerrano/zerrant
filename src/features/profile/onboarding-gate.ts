@@ -8,6 +8,8 @@ export type OnboardingGateProfile = {
   bio?: string | null;
   contacto_telegram?: string | null;
   sitio_url?: string | null;
+  /** Present when selected; used by Inicio community hub (ZER-107). */
+  tier?: string | null;
 };
 
 export const NO_ROWS = "PGRST116";

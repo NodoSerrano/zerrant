@@ -109,4 +109,19 @@ describe("InicioHub", () => {
     expect(img).toBeTruthy();
     expect(img).toHaveAttribute("alt", "");
   });
+
+  it("links members into Tareas and Proyectos from Inicio (no Nodo tab)", () => {
+    render(<InicioHub events={[]} birthdays={[]} showCommunityHub />);
+    expect(screen.getByRole("link", { name: /Tareas/i })).toHaveAttribute("href", "/nodo/tasks");
+    expect(screen.getByRole("link", { name: /Proyectos/i })).toHaveAttribute(
+      "href",
+      "/nodo/projects",
+    );
+  });
+
+  it("hides Tareas/Proyectos entry for tourists", () => {
+    render(<InicioHub events={[]} birthdays={[]} showCommunityHub={false} />);
+    expect(screen.queryByRole("link", { name: /Tareas/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Proyectos/i })).not.toBeInTheDocument();
+  });
 });
