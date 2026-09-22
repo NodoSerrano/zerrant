@@ -54,13 +54,7 @@ export function EditProfileForm({ defaults }: EditProfileFormProps) {
           <ChevronLeft size={24} />
         </Link>
         <span className="font-display text-base font-medium text-text-primary">Editar perfil</span>
-        <button
-          type="submit"
-          form="edit-profile-form"
-          className="font-display text-[15px] font-semibold text-brand-green"
-        >
-          Guardar
-        </button>
+        <span aria-hidden="true" className="size-6" />
       </div>
 
       <AvatarPicker
