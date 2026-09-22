@@ -21,7 +21,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { SolicitarForm } from "./SolicitarForm";
-import { APORTE_REFERENCIA_MONTO } from "@/features/membership/screening";
+import { APORTE_REFERENCIA_PARAGRAPHS } from "@/features/membership/screening";
 
 function setHistoryLength(length: number) {
   Object.defineProperty(window.history, "length", { value: length, configurable: true });
@@ -157,11 +157,15 @@ describe("SolicitarForm — multi-step (ZER-109)", () => {
     expect(screen.getByRole("button", { name: "Siguiente" })).toBeInTheDocument();
   });
 
-  it("advances to step 2 and shows the reference aporte amount before attitude", () => {
+  it("advances to step 2 and shows the reference aporte guide before attitude", () => {
     render(<SolicitarForm />);
     goToStep2();
     const box = screen.getByTestId("aporte-referencia");
-    expect(within(box).getByText(APORTE_REFERENCIA_MONTO)).toBeInTheDocument();
+    expect(within(box).getByText("Aporte de referencia")).toBeInTheDocument();
+    expect(within(box).getByText(APORTE_REFERENCIA_PARAGRAPHS[0])).toBeInTheDocument();
+    expect(within(box).getByText(/\$5\.000 por día/)).toBeInTheDocument();
+    expect(within(box).getByText(/\$20\.000 por día/)).toBeInTheDocument();
+    expect(within(box).getByText(/Site Manager/)).toBeInTheDocument();
     expect(screen.getByLabelText(/aporte de referencia/i)).toBeInTheDocument();
     expect(screen.getByText(/Aporte y reunión/i)).toBeInTheDocument();
   });

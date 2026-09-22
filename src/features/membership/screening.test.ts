@@ -192,9 +192,13 @@ describe("membership_requests insert grant contract", () => {
 });
 
 describe("aporte de referencia copy", () => {
-  it("exposes a stable product amount for /solicitar", async () => {
+  it("exposes the full reference guide for /solicitar", async () => {
     const mod = await import("./screening");
-    expect(mod.APORTE_REFERENCIA_MONTO).toBe("$15.000");
-    expect(mod.APORTE_REFERENCIA_COPY).toMatch(/\$15\.000/);
+    expect(mod.APORTE_REFERENCIA_TITLE).toBe("Aporte de referencia");
+    expect(mod.APORTE_REFERENCIA_PARAGRAPHS).toHaveLength(5);
+    expect(mod.APORTE_REFERENCIA_COPY).toMatch(/\$5\.000 por día/);
+    expect(mod.APORTE_REFERENCIA_COPY).toMatch(/\$30\.000\/mes/);
+    expect(mod.APORTE_REFERENCIA_COPY).toMatch(/\$20\.000 por día/);
+    expect(mod.APORTE_REFERENCIA_COPY).toMatch(/Site Manager/);
   });
 });

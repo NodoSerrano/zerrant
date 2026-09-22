@@ -11,9 +11,8 @@ import {
   APORTE_ACTITUD_VALUES,
   APORTE_MAYOR_LABELS,
   APORTE_MAYOR_VALUES,
-  APORTE_REFERENCIA_COPY,
-  APORTE_REFERENCIA_MONTO,
-  APORTE_REFERENCIA_PERIODO,
+  APORTE_REFERENCIA_PARAGRAPHS,
+  APORTE_REFERENCIA_TITLE,
   DURACION_VISITA_LABELS,
   DURACION_VISITA_VALUES,
   FRECUENCIA_USO_LABELS,
@@ -257,22 +256,22 @@ export function SolicitarForm() {
 
         <div className={cn("flex flex-col gap-5", step !== 2 && "hidden")} data-step="2">
           <div
-            className="flex flex-col gap-1 rounded-2xl border border-border bg-surface-inset p-4"
+            className="flex flex-col gap-3 rounded-2xl border border-border bg-surface-inset p-4"
             data-testid="aporte-referencia"
           >
-            <p className="font-body text-[13px] font-medium text-text-secondary">
-              Aporte de referencia
+            <p className="font-display text-[15px] font-medium text-text-primary">
+              {APORTE_REFERENCIA_TITLE}
             </p>
-            <p className="font-display text-[22px] font-bold text-text-primary">
-              {APORTE_REFERENCIA_MONTO}{" "}
-              <span className="text-[14px] font-medium text-text-secondary">
-                {APORTE_REFERENCIA_PERIODO}
-              </span>
-            </p>
-            <p className="font-body text-[12px] leading-[1.4] text-text-secondary">
-              {APORTE_REFERENCIA_COPY} No es un cobro automático: sirve de guía para la conversación
-              con el admin.
-            </p>
+            <div className="flex flex-col gap-3">
+              {APORTE_REFERENCIA_PARAGRAPHS.map((paragraph) => (
+                <p
+                  key={paragraph}
+                  className="font-body text-[13px] leading-[1.45] text-text-secondary"
+                >
+                  {paragraph}
+                </p>
+              ))}
+            </div>
           </div>
 
           <ChoiceField
