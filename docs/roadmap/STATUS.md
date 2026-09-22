@@ -340,6 +340,12 @@ Stories y deuda:
 | 2026-09-20 | **QA M4 DoD** (ZER-64): Juan cerró QA formal del plantel (solo serranos, tarifa, skills). Residual “sin QA formal” cerrado en STATUS; sin issues nuevas. ZER-43 story/sprint drift → done.                                                |
 | 2026-09-20 | **Ticketización M7** (ZER-98→ZER-105): proyecto Linear M7 + SPEC/epics/stories + sprint-status. Inicio sigue dependiente de events M6 en runtime.                                                                                         |
 
+## ZER-116 — project detail / requests without TabBar (done)
+
+- `/nodo/projects/[id]` and `/nodo/projects/[id]/requests` live under `(modal)` (same public URLs).
+- Extends ZER-113 hub move; does not redesign detail or join queue.
+- Placement lock: `src/app/(modal)/nodo/projects/project-focused-shell.test.ts`.
+
 ## ZER-109 — /solicitar UX + submit unblock (in progress)
 
 - Follow-up to ZER-108: hide TabBar (route under `(modal)`), radio choices, show `$15.000` reference aporte before attitude, 3-step wizard, required `*`, apply screening migration locally.
