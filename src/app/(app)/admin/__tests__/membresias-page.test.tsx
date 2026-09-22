@@ -162,3 +162,16 @@ describe("AdminMembresiasPage", () => {
     expect(screen.queryByText("Aportes")).not.toBeInTheDocument();
   });
 });
+
+describe("AdminMembresiasPage — screening select (ZER-108)", () => {
+  it("requests screening columns for pending membership rows", async () => {
+    mocks.membershipResponse = Promise.resolve({ data: [], count: 0 });
+    await AdminMembresiasPage();
+    expect(mocks.membershipSelect).toHaveBeenCalled();
+    const arg = mocks.membershipSelect.mock.calls[0][0] as string;
+    expect(arg).toContain("contacto_whatsapp");
+    expect(arg).toContain("frecuencia_uso");
+    expect(arg).toContain("reunion_disponibilidad");
+    expect(arg).toContain("aporte_actitud");
+  });
+});

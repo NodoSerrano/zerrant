@@ -339,3 +339,9 @@ Stories y deuda:
 | 2026-09-20 | **QA M3** (ZER-63): DoD E2E verificado en app; residual QA M3 cerrado en §3/§7/§8; hallazgos de QA ya corregidos antes del cierre.                                                                                                        |
 | 2026-09-20 | **QA M4 DoD** (ZER-64): Juan cerró QA formal del plantel (solo serranos, tarifa, skills). Residual “sin QA formal” cerrado en STATUS; sin issues nuevas. ZER-43 story/sprint drift → done.                                                |
 | 2026-09-20 | **Ticketización M7** (ZER-98→ZER-105): proyecto Linear M7 + SPEC/epics/stories + sprint-status. Inicio sigue dependiente de events M6 en runtime.                                                                                         |
+
+## ZER-108 — membership screening (in progress)
+
+- App `/solicitar` is the preferred path for Tourist→Serrano screening (WhatsApp, uso del espacio, aporte, horario reunión).
+- Google Form remains **backup** until the flow stabilizes; cutover criteria = follow-up ticket.
+- Snapshot lives on `membership_requests` only (not `profiles`).

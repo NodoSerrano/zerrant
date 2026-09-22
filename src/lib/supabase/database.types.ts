@@ -181,32 +181,62 @@ export type Database = {
       membership_requests: {
         Row: {
           actualizado_en: string;
+          aporte_actitud: Database["public"]["Enums"]["membership_aporte_actitud"] | null;
+          aporte_mayor: Database["public"]["Enums"]["membership_aporte_mayor"] | null;
+          aporte_otro: string | null;
+          contacto_whatsapp: string | null;
           created_at: string;
+          duracion_visita: Database["public"]["Enums"]["membership_duracion_visita"] | null;
+          entrevista_items: string | null;
           estado: Database["public"]["Enums"]["membership_request_estado"];
+          frecuencia_uso: Database["public"]["Enums"]["membership_frecuencia_uso"] | null;
           id: string;
           mensaje: string | null;
+          ocupacion_detalle: string | null;
           profile_id: string;
+          reunion_disponibilidad: string | null;
           revisado_por: string | null;
+          situacion_actual: Database["public"]["Enums"]["membership_situacion_actual"] | null;
           tier_solicitado: Database["public"]["Enums"]["tier"];
         };
         Insert: {
           actualizado_en?: string;
+          aporte_actitud?: Database["public"]["Enums"]["membership_aporte_actitud"] | null;
+          aporte_mayor?: Database["public"]["Enums"]["membership_aporte_mayor"] | null;
+          aporte_otro?: string | null;
+          contacto_whatsapp?: string | null;
           created_at?: string;
+          duracion_visita?: Database["public"]["Enums"]["membership_duracion_visita"] | null;
+          entrevista_items?: string | null;
           estado?: Database["public"]["Enums"]["membership_request_estado"];
+          frecuencia_uso?: Database["public"]["Enums"]["membership_frecuencia_uso"] | null;
           id?: string;
           mensaje?: string | null;
+          ocupacion_detalle?: string | null;
           profile_id: string;
+          reunion_disponibilidad?: string | null;
           revisado_por?: string | null;
+          situacion_actual?: Database["public"]["Enums"]["membership_situacion_actual"] | null;
           tier_solicitado?: Database["public"]["Enums"]["tier"];
         };
         Update: {
           actualizado_en?: string;
+          aporte_actitud?: Database["public"]["Enums"]["membership_aporte_actitud"] | null;
+          aporte_mayor?: Database["public"]["Enums"]["membership_aporte_mayor"] | null;
+          aporte_otro?: string | null;
+          contacto_whatsapp?: string | null;
           created_at?: string;
+          duracion_visita?: Database["public"]["Enums"]["membership_duracion_visita"] | null;
+          entrevista_items?: string | null;
           estado?: Database["public"]["Enums"]["membership_request_estado"];
+          frecuencia_uso?: Database["public"]["Enums"]["membership_frecuencia_uso"] | null;
           id?: string;
           mensaje?: string | null;
+          ocupacion_detalle?: string | null;
           profile_id?: string;
+          reunion_disponibilidad?: string | null;
           revisado_por?: string | null;
+          situacion_actual?: Database["public"]["Enums"]["membership_situacion_actual"] | null;
           tier_solicitado?: Database["public"]["Enums"]["tier"];
         };
         Relationships: [
@@ -712,7 +742,24 @@ export type Database = {
         | "otro";
       disponibilidad: "disponible" | "ocupado" | "solo_eventos";
       event_attendance_estado: "voy" | "quizas" | "no";
+      membership_aporte_actitud:
+        | "comodo"
+        | "esfuerzo"
+        | "preferiria_menos"
+        | "podria_mas"
+        | "conversar_particular"
+        | "no_seguro";
+      membership_aporte_mayor: "si" | "probablemente" | "no" | "conversarlo";
+      membership_duracion_visita: "menos_2h" | "2_4h" | "4_6h" | "mas_6h" | "depende";
+      membership_frecuencia_uso:
+        | "1_2_mes"
+        | "1_semana"
+        | "2_3_semana"
+        | "4_5_semana"
+        | "casi_diario"
+        | "no_se";
       membership_request_estado: "pendiente" | "aprobada" | "rechazada";
+      membership_situacion_actual: "estudio" | "trabajo" | "estudio_trabajo" | "ninguno" | "otra";
       nombre_visible: "apodo" | "nombre_apellido" | "apellido_nombre";
       project_estado: "idea" | "en_curso" | "pausado" | "terminado";
       project_ingreso: "abierto" | "aprobacion";
@@ -864,7 +911,26 @@ export const Constants = {
       ],
       disponibilidad: ["disponible", "ocupado", "solo_eventos"],
       event_attendance_estado: ["voy", "quizas", "no"],
+      membership_aporte_actitud: [
+        "comodo",
+        "esfuerzo",
+        "preferiria_menos",
+        "podria_mas",
+        "conversar_particular",
+        "no_seguro",
+      ],
+      membership_aporte_mayor: ["si", "probablemente", "no", "conversarlo"],
+      membership_duracion_visita: ["menos_2h", "2_4h", "4_6h", "mas_6h", "depende"],
+      membership_frecuencia_uso: [
+        "1_2_mes",
+        "1_semana",
+        "2_3_semana",
+        "4_5_semana",
+        "casi_diario",
+        "no_se",
+      ],
       membership_request_estado: ["pendiente", "aprobada", "rechazada"],
+      membership_situacion_actual: ["estudio", "trabajo", "estudio_trabajo", "ninguno", "otra"],
       nombre_visible: ["apodo", "nombre_apellido", "apellido_nombre"],
       project_estado: ["idea", "en_curso", "pausado", "terminado"],
       project_ingreso: ["abierto", "aprobacion"],

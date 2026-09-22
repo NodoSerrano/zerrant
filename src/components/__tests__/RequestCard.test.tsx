@@ -14,6 +14,7 @@ vi.mock("@/features/admin/actions", () => ({
 }));
 
 const mockProfile = {
+  id: "profile-1",
   nombre: "Sofía",
   apellido: "Vega",
   apodo: null,
@@ -32,6 +33,24 @@ const mockRequest: RequestCardData = {
 const mockRequestNoMessage: RequestCardData = {
   ...mockRequest,
   mensaje: null,
+};
+
+const mockRequestWithScreening: RequestCardData = {
+  ...mockRequest,
+  mensaje: "nota libre",
+  screening: {
+    contacto_whatsapp: "1122334455",
+    frecuencia_uso: "1_semana",
+    duracion_visita: "2_4h",
+    aporte_actitud: "comodo",
+    reunion_disponibilidad: "Martes 18hs",
+    situacion_actual: "trabajo",
+    ocupacion_detalle: "Dev",
+    entrevista_items: "espacio",
+    aporte_otro: "charlas",
+    aporte_mayor: "si",
+    mensaje: "nota libre",
+  },
 };
 
 describe("RequestCard", () => {
@@ -118,5 +137,17 @@ describe("RequestCard", () => {
     await waitFor(() => {
       expect(screen.getByText("Error al rechazar")).toBeInTheDocument();
     });
+  });
+});
+
+describe("RequestCard — screening detail (ZER-108)", () => {
+  it("renders full screening snapshot labels and values", () => {
+    render(<RequestCard request={mockRequestWithScreening} />);
+    expect(screen.getByText("WhatsApp")).toBeInTheDocument();
+    expect(screen.getByText("1122334455")).toBeInTheDocument();
+    expect(screen.getByText("Horario reunión")).toBeInTheDocument();
+    expect(screen.getByText("Martes 18hs")).toBeInTheDocument();
+    expect(screen.getByText("Aproximadamente 1 vez por semana")).toBeInTheDocument();
+    expect(screen.getByText("nota libre")).toBeInTheDocument();
   });
 });

@@ -116,7 +116,7 @@ describe("SolicitarForm — title and subtitle", () => {
   it("renders the subtitle with body font, 14px, secondary color", () => {
     render(<SolicitarForm />);
 
-    const subtitle = screen.getByText(/Contanos por qué querés ser parte/);
+    const subtitle = screen.getByText(/Completá estos datos para que un admin revise/);
     expect(subtitle.className).toContain("font-body");
     expect(subtitle.className).toContain("text-[14px]");
     expect(subtitle.className).toContain("text-text-secondary");
@@ -160,7 +160,8 @@ describe("SolicitarForm — info box", () => {
   it("renders the info text about admin review", () => {
     render(<SolicitarForm />);
 
-    expect(screen.getByText(/Un admin va a revisar tu solicitud/)).toBeInTheDocument();
+    expect(screen.getByText(/Un admin va a revisar tu solicitud/i)).toBeInTheDocument();
+    expect(screen.getByText(/coordina(?:r)? la reunión/i)).toBeInTheDocument();
   });
 
   it("renders the info icon in brand-blue", () => {
@@ -261,5 +262,25 @@ describe("SolicitarForm — wiring", () => {
     render(<SolicitarForm />);
 
     expect(screen.queryByText(/solicitud pendiente/)).toBeNull();
+  });
+});
+
+describe("SolicitarForm — screening core (ZER-108)", () => {
+  it("renders WhatsApp, frequency, duration, aporte and meeting fields", () => {
+    render(<SolicitarForm />);
+    expect(screen.getByLabelText(/Teléfono \/ WhatsApp/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/frecuencia pensás venir/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/tiempo estimás quedarte/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/aporte de referencia/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Día\/horario fácil para la reunión/i)).toBeInTheDocument();
+  });
+
+  it("marks core screening controls as required", () => {
+    render(<SolicitarForm />);
+    expect(screen.getByLabelText(/Teléfono \/ WhatsApp/i)).toBeRequired();
+    expect(screen.getByLabelText(/frecuencia pensás venir/i)).toBeRequired();
+    expect(screen.getByLabelText(/tiempo estimás quedarte/i)).toBeRequired();
+    expect(screen.getByLabelText(/aporte de referencia/i)).toBeRequired();
+    expect(screen.getByLabelText(/Día\/horario fácil para la reunión/i)).toBeRequired();
   });
 });
