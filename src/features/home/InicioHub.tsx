@@ -11,6 +11,7 @@ export type InicioEventItem = {
   timeLabel: string;
   place: string | null;
   href: string;
+  coverUrl?: string | null;
 };
 
 export type InicioHubProps = {
@@ -56,6 +57,7 @@ export function InicioHub({ events, birthdays }: InicioHubProps) {
                 title={event.title}
                 timeLabel={event.timeLabel}
                 place={event.place}
+                coverUrl={event.coverUrl}
               />
             ))}
           </div>

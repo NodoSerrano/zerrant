@@ -7,21 +7,39 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
+vi.mock("@/features/events/luma-client", () => ({
+  fetchLumaCalendarEvents: vi.fn(),
+}));
+
 vi.mock("next/link", () => ({
   default: ({
     href,
     className,
     children,
+    target,
+    rel,
     "aria-current": ariaCurrent,
     "aria-label": ariaLabel,
+    ...rest
   }: {
     href: string;
     className?: string;
     children: React.ReactNode;
+    target?: string;
+    rel?: string;
     "aria-current"?: boolean | "true" | "false" | "date" | "time" | "location" | "page" | "step";
     "aria-label"?: string;
+    [key: string]: unknown;
   }) => (
-    <a href={href} className={className} aria-current={ariaCurrent} aria-label={ariaLabel}>
+    <a
+      href={href}
+      className={className}
+      target={target}
+      rel={rel}
+      aria-current={ariaCurrent}
+      aria-label={ariaLabel}
+      {...rest}
+    >
       {children}
     </a>
   ),
@@ -72,14 +90,15 @@ function mockSupabase(
   overrides: { events?: EventRow[]; user?: unknown; profileTier?: string | null } = {},
 ) {
   const { events = [], user = { id: "user-1" }, profileTier = "standard" } = overrides;
-  let eventsChain: ReturnType<typeof createEventsChain> | null = null;
+  const eventsChains: ReturnType<typeof createEventsChain>[] = [];
 
   return {
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user }, error: null }) },
     from: vi.fn().mockImplementation((table: string) => {
       if (table === "events") {
-        eventsChain = createEventsChain(events);
-        return eventsChain;
+        const chain = createEventsChain(events);
+        eventsChains.push(chain);
+        return chain;
       }
       if (table === "profiles") {
         return {
@@ -95,7 +114,9 @@ function mockSupabase(
       }
       return createEventsChain([]);
     }),
-    getEventsChain: () => eventsChain,
+    /** First events query is the selected-day list; second is the strip window. */
+    getEventsChain: () => eventsChains[0] ?? null,
+    getEventsChains: () => eventsChains,
   };
 }
 
@@ -126,10 +147,15 @@ const EVENT_B: EventRow = {
 };
 
 describe("AgendaPage", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.useFakeTimers();
     // Fixed ART noon so "today" is 2026-09-20 regardless of process TZ
     vi.setSystemTime(new Date("2026-09-20T15:00:00-03:00"));
+    const { fetchLumaCalendarEvents } = await import("@/features/events/luma-client");
+    (fetchLumaCalendarEvents as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      events: [],
+    });
   });
 
   afterEach(() => {
@@ -281,5 +307,86 @@ describe("AgendaPage", () => {
     await renderPage();
 
     expect(screen.getByText(/Iniciá sesión/i)).toBeInTheDocument();
+  });
+
+  it("lists Luma calendar events for the selected day with external href", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    const { fetchLumaCalendarEvents } = await import("@/features/events/luma-client");
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase({ events: [] }));
+    (fetchLumaCalendarEvents as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      events: [
+        {
+          id: "luma:evt-1",
+          title: "La fija de los jueves: pysap",
+          inicio: "2026-09-20T21:00:00.000Z",
+          fin: "2026-09-20T22:00:00.000Z",
+          place: "San Martín 864, Tandil",
+          href: "https://luma.com/iajzrmdr",
+          source: "luma" as const,
+          coverUrl: null,
+        },
+      ],
+    });
+
+    await renderPage({ dia: "2026-09-20" });
+
+    expect(screen.getByText("La fija de los jueves: pysap")).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /La fija de los jueves/i });
+    expect(link).toHaveAttribute("href", "https://luma.com/iajzrmdr");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("marks strip days that have Luma or internal events", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    const { fetchLumaCalendarEvents } = await import("@/features/events/luma-client");
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockSupabase({ events: [EVENT_A] }),
+    );
+    (fetchLumaCalendarEvents as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      events: [
+        {
+          id: "luma:evt-1",
+          title: "La fija de los jueves: pysap",
+          inicio: "2026-09-24T21:00:00.000Z",
+          fin: "2026-09-24T22:00:00.000Z",
+          place: "San Martín 864, Tandil",
+          href: "https://luma.com/iajzrmdr",
+          source: "luma" as const,
+          coverUrl: null,
+        },
+      ],
+    });
+
+    await renderPage({ dia: "2026-09-20" });
+
+    const dayWithInternal = screen.getByRole("link", { name: /dom\s*20/i });
+    const dayWithLuma = screen.getByRole("link", { name: /jue\s*24/i });
+    const emptyDay = screen.getByRole("link", { name: /lun\s*21/i });
+
+    expect(dayWithInternal).toHaveAttribute("data-has-events", "true");
+    expect(dayWithLuma).toHaveAttribute("data-has-events", "true");
+    expect(emptyDay).not.toHaveAttribute("data-has-events");
+  });
+
+  it("degrades when Luma fails and still shows internal events", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    const { fetchLumaCalendarEvents } = await import("@/features/events/luma-client");
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockSupabase({ events: [EVENT_A] }),
+    );
+    (fetchLumaCalendarEvents as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      error: "Luma calendar request failed (500)",
+    });
+
+    await renderPage({ dia: "2026-09-20" });
+
+    expect(screen.getByText("Asamblea")).toBeInTheDocument();
+    expect(
+      screen.getByText(/No se pudieron cargar los eventos públicos de Luma/i),
+    ).toBeInTheDocument();
   });
 });

@@ -8,13 +8,15 @@ vi.mock("next/link", () => ({
     className,
     children,
     "aria-current": ariaCurrent,
+    ...rest
   }: {
     href: string;
     className?: string;
     children: React.ReactNode;
     "aria-current"?: boolean | "true" | "false" | "date" | "time" | "location" | "page" | "step";
+    [key: string]: unknown;
   }) => (
-    <a href={href} className={className} aria-current={ariaCurrent}>
+    <a href={href} className={className} aria-current={ariaCurrent} {...rest}>
       {children}
     </a>
   ),
@@ -42,5 +44,23 @@ describe("DayStrip", () => {
     const selected = screen.getByRole("link", { name: /lun\s*21/i });
     expect(selected).toHaveAttribute("aria-current", "date");
     expect(selected.className).toMatch(/bg-primary|text-on-primary/);
+  });
+
+  it("marks days that have events without changing the selected day", () => {
+    render(
+      <DayStrip
+        days={DAYS}
+        selectedKey="2026-09-20"
+        daysWithEvents={["2026-09-22", "2026-09-24"]}
+      />,
+    );
+
+    const empty = screen.getByRole("link", { name: /dom\s*20/i });
+    const withEvents = screen.getByRole("link", { name: /mar\s*22/i });
+
+    expect(empty).toHaveAttribute("aria-current", "date");
+    expect(empty).not.toHaveAttribute("data-has-events");
+    expect(withEvents).toHaveAttribute("data-has-events", "true");
+    expect(withEvents.querySelector("[data-event-dot]")).toBeTruthy();
   });
 });
