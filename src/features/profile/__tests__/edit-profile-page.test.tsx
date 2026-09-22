@@ -73,11 +73,12 @@ beforeEach(() => {
 });
 
 describe("EditProfilePage", () => {
-  it("renders the Pencil header with chevron, title, and Guardar action", async () => {
+  it("renders header with chevron, centered title, and no header Guardar", async () => {
     render(await EditProfilePage());
 
     expect(screen.getByText("Editar perfil")).toBeInTheDocument();
-    expect(screen.getByText("Guardar")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Guardar" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Guardar")).not.toBeInTheDocument();
   });
 
   it("links Volver to /profile as a real anchor (not history-only back)", async () => {
@@ -133,9 +134,11 @@ describe("EditProfilePage", () => {
     expect(screen.getByText("Visibilidad de tarifa")).toBeInTheDocument();
   });
 
-  it("shows Guardar cambios CTA", async () => {
+  it("shows exactly one save control: bottom Guardar cambios", async () => {
     render(await EditProfilePage());
 
-    expect(screen.getByRole("button", { name: "Guardar cambios" })).toBeInTheDocument();
+    const saveButtons = screen.getAllByRole("button", { name: /guardar/i });
+    expect(saveButtons).toHaveLength(1);
+    expect(saveButtons[0]).toHaveAccessibleName("Guardar cambios");
   });
 });
