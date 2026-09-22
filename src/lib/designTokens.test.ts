@@ -24,10 +24,12 @@ describe("PENCIL_TOKENS", () => {
     expect(L.coral).toBe("#c70067");
     expect(L["warm-yellow"]).toBe("#ff9728");
     expect(L["warm-orange"]).toBe("#ff4d21");
+    expect(L["warm-red"]).toBe("#ff3121");
     expect(L["warm-violet"]).toBe("#9e1fd0");
     expect(L["mint-raw"]).toBe("#4fe6c3");
     expect(L["blue-raw"]).toBe("#2e9bff");
     expect(L["violet-raw"]).toBe("#b57fe0");
+    expect(L["grad-violet"]).toBe("#c87fe5");
   });
 
   it("has dark themed token values differing from light", () => {

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { isServableAvatarImageUrl } from "@/lib/avatar-image-url";
 import { cn } from "@/lib/utils";
+import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 
 interface AvatarProps {
   name: string;
@@ -55,7 +56,8 @@ function InitialsFallback({
     <div
       aria-hidden={decorative ? true : undefined}
       className={cn(
-        "rounded-full bg-linear-to-br from-brand-mint to-brand-blue text-on-primary flex items-center justify-center font-display font-bold",
+        "rounded-full text-on-primary flex items-center justify-center font-display font-bold",
+        BRAND_GRADIENT_CLASS,
         sizeClasses[size],
         className,
       )}

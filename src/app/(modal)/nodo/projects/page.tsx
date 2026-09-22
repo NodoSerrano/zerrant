@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { NodoTabs } from "@/components/NodoTabs";
 import { ProjectCard } from "@/components/ProjectCard";
 import { cn } from "@/lib/utils";
+import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 
 type MemberProfile = {
   nombre: string | null;
@@ -134,7 +135,7 @@ export default async function ProjectsPage() {
           className={cn(
             "fixed bottom-6 right-5 z-40",
             "size-14 rounded-full",
-            "bg-linear-to-br from-brand-green to-brand-blue",
+            BRAND_GRADIENT_CLASS,
             "shadow-[0_4px_14px_rgba(26,22,20,0.25)]",
             "flex items-center justify-center",
             "active:scale-95 hover:brightness-110 transition-all",
