@@ -1,5 +1,18 @@
 /** ZER-108 — membership screening snapshot (Google Form → /solicitar). */
 
+/** Product copy for /solicitar — reference contribution guide (not a DB column). */
+export const APORTE_REFERENCIA_TITLE = "Aporte de referencia";
+
+export const APORTE_REFERENCIA_PARAGRAPHS = [
+  "Mantener Nodo abierto tiene costos importantes: alquiler, servicios, internet, mantenimiento, herramientas, insumos y otros gastos.",
+  "Para participar, contamos con aportes de referencia según la frecuencia de uso:",
+  "🎓 Estudiantes: $5.000 por día, con una referencia de $30.000/mes para quienes asisten de forma habitual. Podés venir 1, 2 o más días por semana, de manera flexible.",
+  "💼 Trabajadores: $20.000 por día, con posibilidad de acceder a descuentos por mayor cantidad de días o frecuencia de uso.",
+  "Estos valores son orientativos y buscamos que la modalidad se adapte a cada persona. No queremos que una situación económica particular sea una barrera para participar, por lo que el aporte final se conversa personalmente con el Site Manager de Nodo.",
+] as const;
+
+/** Flattened copy for tests / plain-text surfaces. */
+export const APORTE_REFERENCIA_COPY = APORTE_REFERENCIA_PARAGRAPHS.join("\n\n");
 export const FRECUENCIA_USO_VALUES = [
   "1_2_mes",
   "1_semana",
