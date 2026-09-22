@@ -7,8 +7,8 @@ vi.mock("@/components/TabBarClient", () => ({
 
 import ModalLayout from "./layout";
 
-describe("Modal shell layout (task create/detail/edit)", () => {
-  it("does not render TabBar on focused task screens", () => {
+describe("Modal shell layout (focused screens without TabBar)", () => {
+  it("does not render TabBar or the tab-bar spacer on focused screens", () => {
     render(
       <ModalLayout>
         <div>task modal content</div>
@@ -17,6 +17,7 @@ describe("Modal shell layout (task create/detail/edit)", () => {
 
     expect(screen.queryByTestId("tab-bar")).not.toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "TabBar" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("tab-bar-spacer")).not.toBeInTheDocument();
     expect(screen.getByText("task modal content")).toBeInTheDocument();
   });
 

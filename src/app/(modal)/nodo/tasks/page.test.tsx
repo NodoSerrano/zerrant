@@ -110,6 +110,14 @@ describe("TasksPage", () => {
       expect(screen.getByRole("tab", { name: "Tareas" })).toHaveAttribute("aria-selected", "true");
       expect(screen.getByRole("tab", { name: "Tareas" })).toHaveAttribute("href", "/nodo/tasks");
     });
+
+    it("links Volver back to Inicio (/)", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+      await renderPage();
+      const back = screen.getByRole("link", { name: "Volver a Inicio" });
+      expect(back).toHaveAttribute("href", "/");
+    });
   });
 
   describe("tasks list", () => {

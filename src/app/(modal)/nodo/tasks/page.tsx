@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { ChevronLeft, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { relativeTime } from "@/lib/time";
 import { TaskCard } from "@/components/TaskCard";
@@ -79,7 +79,17 @@ export default async function TasksPage({
 
   return (
     <div className="flex flex-col gap-5 relative">
-      <h1 className="font-display text-2xl font-bold text-text-primary">Nodo</h1>
+      <div className="flex items-center justify-between w-full">
+        <Link
+          href="/"
+          aria-label="Volver a Inicio"
+          className="flex items-center justify-center shrink-0"
+        >
+          <ChevronLeft size={24} className="text-text-primary" />
+        </Link>
+        <h1 className="font-display text-2xl font-bold text-text-primary">Nodo</h1>
+        <span aria-hidden="true" className="size-6 shrink-0" />
+      </div>
 
       <div className="flex flex-col gap-1">
         <p className="font-body text-[13px] text-text-secondary">
@@ -135,7 +145,7 @@ export default async function TasksPage({
         <Link
           href="/nodo/tasks/new"
           className={cn(
-            "fixed bottom-24 right-5 z-40",
+            "fixed bottom-6 right-5 z-40",
             "size-14 rounded-full",
             "bg-linear-to-br from-brand-green to-brand-blue",
             "shadow-[0_4px_14px_rgba(26,22,20,0.25)]",

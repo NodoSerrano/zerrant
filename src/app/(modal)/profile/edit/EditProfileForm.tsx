@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { AvatarPicker } from "@/components/AvatarPicker";
@@ -44,21 +44,15 @@ interface EditProfileFormProps {
 }
 
 export function EditProfileForm({ defaults }: EditProfileFormProps) {
-  const router = useRouter();
   const [state, action, pending] = useGuardedActionState(updateProfile, null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   return (
     <div className="flex flex-col gap-[18px]">
       <div className="flex justify-between items-center">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="text-text-primary"
-          aria-label="Volver"
-        >
+        <Link href="/profile" className="text-text-primary" aria-label="Volver al perfil">
           <ChevronLeft size={24} />
-        </button>
+        </Link>
         <span className="font-display text-base font-medium text-text-primary">Editar perfil</span>
         <button
           type="submit"
