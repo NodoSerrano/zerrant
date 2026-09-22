@@ -8,10 +8,12 @@ import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { SecondaryButton } from "@/components/SecondaryButton";
 import { signUpWithPassword, signInWithGoogle } from "@/features/auth/actions";
+import { isGoogleAuthEnabled } from "@/features/auth/google-auth-enabled";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 
 export default function SignupPage() {
   const [state, action, pending] = useGuardedActionState(signUpWithPassword, null);
+  const showGoogleAuth = isGoogleAuthEnabled();
 
   return (
     <div className="px-[26px] py-6 flex flex-col justify-center gap-[22px] min-h-full">
@@ -47,17 +49,21 @@ export default function SignupPage() {
         </PrimaryButton>
       </form>
 
-      <div className="flex items-center gap-[12px]">
-        <div className="flex-1 h-px bg-border" />
-        <span className="text-[13px] text-text-muted">o</span>
-        <div className="flex-1 h-px bg-border" />
-      </div>
+      {showGoogleAuth ? (
+        <>
+          <div className="flex items-center gap-[12px]">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-[13px] text-text-muted">o</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
 
-      <form action={signInWithGoogle}>
-        <SecondaryButton type="submit" className="w-full">
-          Continuar con Google
-        </SecondaryButton>
-      </form>
+          <form action={signInWithGoogle}>
+            <SecondaryButton type="submit" className="w-full">
+              Continuar con Google
+            </SecondaryButton>
+          </form>
+        </>
+      ) : null}
 
       <div className="flex items-center justify-center gap-[5px]">
         <span className="text-[13px] text-text-secondary">¿Ya tenés cuenta?</span>
