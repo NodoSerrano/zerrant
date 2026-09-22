@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "db:check-grants": "pnpm exec vitest run --config vitest.db-grants.config.ts",
     "db:check-rls": "pnpm exec vitest run --config vitest.db-rls.config.ts",
+    "db:seed-local-avatar": "node scripts/seed-local-avatar.mjs",
     "prepare": "lefthook install"
   },
   "dependencies": {
