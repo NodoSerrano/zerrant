@@ -51,6 +51,33 @@ vi.mock("next/navigation", () => ({
 
 import { createMembershipRequest } from "./actions";
 
+function screeningForm(extra: Record<string, string> = {}) {
+  const fd = new FormData();
+  fd.set("contacto_whatsapp", "1122334455");
+  fd.set("frecuencia_uso", "1_semana");
+  fd.set("duracion_visita", "2_4h");
+  fd.set("aporte_actitud", "comodo");
+  fd.set("reunion_disponibilidad", "Martes 18hs");
+  for (const [k, v] of Object.entries(extra)) {
+    fd.set(k, v);
+  }
+  return fd;
+}
+
+const screeningInsert = {
+  contacto_whatsapp: "1122334455",
+  frecuencia_uso: "1_semana",
+  duracion_visita: "2_4h",
+  aporte_actitud: "comodo",
+  reunion_disponibilidad: "Martes 18hs",
+  situacion_actual: null,
+  ocupacion_detalle: null,
+  entrevista_items: null,
+  aporte_otro: null,
+  aporte_mayor: null,
+  mensaje: null,
+};
+
 function setupAuth(userId = "test-user-id") {
   mocks.getUser.mockResolvedValue({ data: { user: { id: userId } } });
 }
@@ -74,8 +101,7 @@ describe("createMembershipRequest", () => {
     setupTourist();
     mocks.membershipInsert.mockResolvedValue({ error: null });
 
-    const fd = new FormData();
-    fd.set("mensaje", "Quiero ayudar con la huerta");
+    const fd = screeningForm({ mensaje: "Quiero ayudar con la huerta" });
 
     await expect(createMembershipRequest(null, fd)).rejects.toThrow(
       "NEXT_REDIRECT:/solicitar/enviado",
@@ -83,9 +109,21 @@ describe("createMembershipRequest", () => {
 
     expect(mocks.membershipInsert).toHaveBeenCalledWith({
       profile_id: "test-user-id",
+      ...screeningInsert,
       mensaje: "Quiero ayudar con la huerta",
     });
     expect(mocks.redirect).toHaveBeenCalledWith("/solicitar/enviado");
+  });
+
+  it("rejects missing screening core without inserting", async () => {
+    setupTourist();
+
+    const result = await createMembershipRequest(null, new FormData());
+
+    expect(result).toEqual({
+      error: "Completá WhatsApp, uso del espacio, aporte y horario de reunión",
+    });
+    expect(mocks.membershipInsert).not.toHaveBeenCalled();
   });
 
   it("returns error when unauthenticated", async () => {
@@ -103,7 +141,7 @@ describe("createMembershipRequest", () => {
       error: { message: "new row violates row-level security policy" },
     });
 
-    const result = await createMembershipRequest(null, new FormData());
+    const result = await createMembershipRequest(null, screeningForm());
 
     expect(result).toEqual({ error: "No pudimos enviar tu solicitud. Probá de nuevo." });
   });
@@ -112,8 +150,7 @@ describe("createMembershipRequest", () => {
     setupTourist();
     mocks.membershipInsert.mockResolvedValue({ error: null });
 
-    const fd = new FormData();
-    fd.set("mensaje", "   ");
+    const fd = screeningForm({ mensaje: "   " });
 
     await expect(createMembershipRequest(null, fd)).rejects.toThrow(
       "NEXT_REDIRECT:/solicitar/enviado",
@@ -121,6 +158,7 @@ describe("createMembershipRequest", () => {
 
     expect(mocks.membershipInsert).toHaveBeenCalledWith({
       profile_id: "test-user-id",
+      ...screeningInsert,
       mensaje: null,
     });
   });
@@ -129,7 +167,7 @@ describe("createMembershipRequest", () => {
     setupTourist();
     mocks.membershipInsert.mockResolvedValue({ error: null });
 
-    const fd = new FormData();
+    const fd = screeningForm();
     fd.set("mensaje", new File(["x"], "note.txt", { type: "text/plain" }));
 
     await expect(createMembershipRequest(null, fd)).rejects.toThrow(
@@ -138,6 +176,7 @@ describe("createMembershipRequest", () => {
 
     expect(mocks.membershipInsert).toHaveBeenCalledWith({
       profile_id: "test-user-id",
+      ...screeningInsert,
       mensaje: null,
     });
   });
@@ -189,7 +228,7 @@ describe("createMembershipRequest", () => {
       },
     });
 
-    const result = await createMembershipRequest(null, new FormData());
+    const result = await createMembershipRequest(null, screeningForm());
 
     expect(result).toEqual({ error: "Ya tenes una solicitud pendiente." });
   });
@@ -201,7 +240,7 @@ describe("createMembershipRequest", () => {
       error: { code: "42P17", message: "infinite recursion detected in policy" },
     });
 
-    await createMembershipRequest(null, new FormData());
+    await createMembershipRequest(null, screeningForm());
 
     expect(spy).toHaveBeenCalledWith(
       "[createMembershipRequest] insert failed",

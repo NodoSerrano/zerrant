@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { parseMembershipScreening } from "./screening";
 
 const DB_ERROR = "No pudimos enviar tu solicitud. Probá de nuevo.";
 const NOT_TOURIST = "Solo los tourists pueden solicitar membresía.";
@@ -10,11 +11,6 @@ const ALREADY_PENDING = "Ya tenes una solicitud pendiente.";
 const NO_ROWS = "PGRST116";
 /** Partial unique index membership_requests_one_pending_per_profile. */
 const UNIQUE_VIOLATION = "23505";
-
-function messageFromForm(formData: FormData): string | null {
-  const value = formData.get("mensaje");
-  return typeof value === "string" && value.trim() ? value.trim() : null;
-}
 
 export async function createMembershipRequest(
   _prevState: { error: string } | null,
@@ -58,9 +54,14 @@ export async function createMembershipRequest(
     return { error: ALREADY_PENDING };
   }
 
+  const screening = parseMembershipScreening(formData);
+  if (!screening.ok) {
+    return { error: screening.error };
+  }
+
   const { error } = await supabase.from("membership_requests").insert({
     profile_id: user.id,
-    mensaje: messageFromForm(formData),
+    ...screening.data,
   });
 
   if (error) {

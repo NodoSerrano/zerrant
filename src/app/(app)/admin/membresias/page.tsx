@@ -4,18 +4,48 @@ import {
   RequestCard,
   type RequestCardData,
   type RequestProfileData,
+  type RequestScreeningData,
 } from "@/components/RequestCard";
 import type { Tier } from "@/features/profile/types";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
+const SCREENING_SELECT =
+  "id, mensaje, created_at, contacto_whatsapp, frecuencia_uso, duracion_visita, aporte_actitud, reunion_disponibilidad, situacion_actual, ocupacion_detalle, entrevista_items, aporte_otro, aporte_mayor, profiles!membership_requests_profile_id_fkey(nombre, apellido, apodo, nombre_visible, avatar_url, tier, id)";
+
 type RequestRow = {
   id: string;
   mensaje: string | null;
   created_at: string;
+  contacto_whatsapp: string | null;
+  frecuencia_uso: RequestScreeningData["frecuencia_uso"];
+  duracion_visita: RequestScreeningData["duracion_visita"];
+  aporte_actitud: RequestScreeningData["aporte_actitud"];
+  reunion_disponibilidad: string | null;
+  situacion_actual: RequestScreeningData["situacion_actual"];
+  ocupacion_detalle: string | null;
+  entrevista_items: string | null;
+  aporte_otro: string | null;
+  aporte_mayor: RequestScreeningData["aporte_mayor"];
   profiles: RequestProfileData & { tier: Tier };
 };
+
+function toScreening(row: RequestRow): RequestScreeningData {
+  return {
+    contacto_whatsapp: row.contacto_whatsapp,
+    frecuencia_uso: row.frecuencia_uso,
+    duracion_visita: row.duracion_visita,
+    aporte_actitud: row.aporte_actitud,
+    reunion_disponibilidad: row.reunion_disponibilidad,
+    situacion_actual: row.situacion_actual,
+    ocupacion_detalle: row.ocupacion_detalle,
+    entrevista_items: row.entrevista_items,
+    aporte_otro: row.aporte_otro,
+    aporte_mayor: row.aporte_mayor,
+    mensaje: row.mensaje,
+  };
+}
 
 export default async function AdminMembresiasPage() {
   const supabase = await createClient();
@@ -24,10 +54,7 @@ export default async function AdminMembresiasPage() {
     [
       supabase
         .from("membership_requests")
-        .select(
-          "id, mensaje, created_at, profiles!membership_requests_profile_id_fkey(nombre, apellido, apodo, nombre_visible, avatar_url, tier, id)",
-          { count: "exact" },
-        )
+        .select(SCREENING_SELECT, { count: "exact" })
         .eq("estado", "pendiente")
         .order("created_at", { ascending: false }),
       supabase
@@ -42,6 +69,7 @@ export default async function AdminMembresiasPage() {
       (row): row is RequestRow =>
         row !== null &&
         typeof row === "object" &&
+        "profiles" in row &&
         row.profiles !== null &&
         typeof row.profiles === "object",
     )
@@ -49,6 +77,7 @@ export default async function AdminMembresiasPage() {
       id: row.id,
       mensaje: row.mensaje,
       created_at: row.created_at,
+      screening: toScreening(row),
       profile: {
         id: row.profiles.id,
         nombre: row.profiles.nombre,
@@ -109,17 +138,7 @@ export default async function AdminMembresiasPage() {
               No hay solicitudes pendientes
             </p>
           ) : (
-            requests.map((r) => (
-              <RequestCard
-                key={r.id}
-                request={{
-                  id: r.id,
-                  profile: r.profile,
-                  mensaje: r.mensaje,
-                  created_at: r.created_at,
-                }}
-              />
-            ))
+            requests.map((r) => <RequestCard key={r.id} request={r} />)
           )}
         </div>
       </div>
