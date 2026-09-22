@@ -13,13 +13,12 @@ describe("PrimaryButton", () => {
     expect(screen.getByText("Click me")).toBeDisabled();
   });
 
-  it("uses brand-green to brand-blue gradient (not mint)", () => {
+  it("uses shared brand gradient utility (mint→blue→violet ramp)", () => {
     render(<PrimaryButton>Gradient</PrimaryButton>);
     const btn = screen.getByRole("button");
-    expect(btn.className).toContain("from-brand-green");
-    expect(btn.className).toContain("to-brand-blue");
-    expect(btn.className).not.toContain("from-brand-mint");
-    expect(btn.className).not.toContain("to-brand-mint");
+    expect(btn.className).toContain("bg-gradient-brand");
+    expect(btn.className).not.toContain("from-brand-green");
+    expect(btn.className).not.toContain("to-brand-blue");
   });
 
   it("has outer shadow", () => {

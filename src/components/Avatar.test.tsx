@@ -92,12 +92,10 @@ describe("Avatar", () => {
     expect(screen.getByRole("img")).toHaveClass("my-avatar");
   });
 
-  it("uses gradient brand-mint to brand-blue on fallback (not solid bg-primary)", () => {
+  it("uses brand gradient utility on fallback (not solid bg-primary)", () => {
     render(<Avatar name="Juan Pérez" />);
     const el = screen.getByText("JP");
-    expect(el.className).toContain("from-brand-mint");
-    expect(el.className).toContain("to-brand-blue");
-    expect(el.className).toContain("bg-linear-to-br");
+    expect(el.className).toContain("bg-gradient-brand");
     expect(el).not.toHaveClass("bg-primary");
   });
 

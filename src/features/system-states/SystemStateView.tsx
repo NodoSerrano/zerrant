@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BRAND_CTA_SHADOW_CLASS, BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 
 type LinkAction = {
   type: "link";
@@ -42,9 +43,9 @@ export function SystemStateView({
   const ActionIcon = action.icon;
   const ctaClass = cn(
     "inline-flex items-center justify-center gap-2 rounded-pill h-[52px] px-6",
-    "bg-linear-to-br from-brand-green to-brand-blue",
+    BRAND_GRADIENT_CLASS,
     "font-display text-base font-medium text-on-primary",
-    "shadow-[0_4px_14px_rgba(17,88,176,0.33)]",
+    BRAND_CTA_SHADOW_CLASS,
     "hover:opacity-90 active:scale-[0.98]",
     "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40",
   );

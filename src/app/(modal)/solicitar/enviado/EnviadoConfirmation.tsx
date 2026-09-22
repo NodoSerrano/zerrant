@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BRAND_CTA_SHADOW_CLASS, BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 
 export function EnviadoConfirmation() {
   return (
     <div className="flex min-h-full flex-col items-center justify-center gap-5">
-      <div className="flex size-[104px] items-center justify-center rounded-full bg-linear-to-br from-brand-mint to-brand-green">
+      <div
+        className={cn(
+          "flex size-[104px] items-center justify-center rounded-full",
+          BRAND_GRADIENT_CLASS,
+        )}
+      >
         <Check className="size-12 text-on-primary" />
       </div>
 
@@ -22,8 +28,8 @@ export function EnviadoConfirmation() {
         href="/"
         className={cn(
           "inline-flex items-center justify-center rounded-pill font-display text-[16px] font-medium text-on-primary",
-          "bg-linear-to-br from-brand-green to-brand-blue",
-          "shadow-[0_4px_14px_rgba(17,88,176,0.33)]",
+          BRAND_GRADIENT_CLASS,
+          BRAND_CTA_SHADOW_CLASS,
           "h-[54px] px-6 w-full",
         )}
       >

@@ -1,4 +1,6 @@
 // SSOT for Pencil token parity tests and future theme audits — do not delete.
+// Brand *solids* follow Pencil (app UI). Brand *gradient stops* follow Figma web /
+// landing (ZER-120). See src/lib/brandGradients.ts for the naming map.
 export const PENCIL_TOKENS = Object.freeze({
   light: Object.freeze({
     bg: "#f8f4ed",
@@ -17,10 +19,12 @@ export const PENCIL_TOKENS = Object.freeze({
     coral: "#c70067",
     "warm-yellow": "#ff9728",
     "warm-orange": "#ff4d21",
+    "warm-red": "#ff3121",
     "warm-violet": "#9e1fd0",
     "mint-raw": "#4fe6c3",
     "blue-raw": "#2e9bff",
     "violet-raw": "#b57fe0",
+    "grad-violet": "#c87fe5",
   }),
   dark: Object.freeze({
     bg: "#1a1614",

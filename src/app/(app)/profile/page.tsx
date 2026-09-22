@@ -9,6 +9,8 @@ import { redirect } from "next/navigation";
 import { TouristMenu } from "./TouristMenu";
 import { SerranoMenu } from "./SerranoMenu";
 import { PendingMembershipCard } from "./PendingMembershipCard";
+import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
+import { cn } from "@/lib/utils";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -76,7 +78,7 @@ export default async function ProfilePage() {
         {isPending ? (
           <PendingMembershipCard />
         ) : (
-          <div className="rounded-[22px] bg-gradient-to-br from-brand-mint to-brand-blue p-[18px] flex flex-col gap-3">
+          <div className={cn("rounded-[22px] p-[18px] flex flex-col gap-3", BRAND_GRADIENT_CLASS)}>
             <div className="flex items-center gap-2.5">
               <Mountain size={22} className="text-on-primary shrink-0" />
               <span className="font-display text-[17px] font-bold text-on-primary">

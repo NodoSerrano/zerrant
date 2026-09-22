@@ -8,6 +8,7 @@
   --text-display-lg--line-height: 1.2;
   --text-display-lg--font-weight: 700;
 
+  /* Pencil solids (chips, TabBar, solid fills) */
   --color-brand-mint: #0a8268;
   --color-brand-green: #0c8a5e;
   --color-brand-blue: #1158b0;
@@ -15,13 +16,16 @@
   --color-primary: #0c8a5e;
   --color-on-primary: #f8f4ed;
 
+  /* Figma web / landing gradient stops (grad-primary) */
   --color-mint-raw: #4fe6c3;
   --color-blue-raw: #2e9bff;
   --color-violet-raw: #b57fe0;
+  --color-grad-violet: #c87fe5;
 
   --color-coral: #c70067;
   --color-warm-yellow: #ff9728;
   --color-warm-orange: #ff4d21;
+  --color-warm-red: #ff3121;
   --color-warm-violet: #9e1fd0;
 
   --color-border: #e6dfd3;
@@ -38,6 +42,25 @@
   --color-text-primary: #1a1614;
   --color-text-secondary: #5a5550;
   --color-text-muted: #8a847c;
+}
+
+/* Brand ramps — Figma web grad-primary / grad-warm (landing parity, ZER-120) */
+@utility bg-gradient-brand {
+  background-image: linear-gradient(
+    131deg,
+    var(--color-mint-raw) 0%,
+    var(--color-blue-raw) 46.66%,
+    var(--color-grad-violet) 93.25%
+  );
+}
+
+@utility bg-gradient-warm {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-warm-yellow) 0%,
+    var(--color-warm-red) 50%,
+    var(--color-warm-violet) 100%
+  );
 }
 
 @variant dark (&:where(.dark, .dark *));

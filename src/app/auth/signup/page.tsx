@@ -10,6 +10,8 @@ import { SecondaryButton } from "@/components/SecondaryButton";
 import { signUpWithPassword, signInWithGoogle } from "@/features/auth/actions";
 import { isGoogleAuthEnabled } from "@/features/auth/google-auth-enabled";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
+import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
+import { cn } from "@/lib/utils";
 
 export default function SignupPage() {
   const [state, action, pending] = useGuardedActionState(signUpWithPassword, null);
@@ -18,7 +20,12 @@ export default function SignupPage() {
   return (
     <div className="px-[26px] py-6 flex flex-col justify-center gap-[22px] min-h-full">
       <div className="flex flex-col items-center gap-4">
-        <div className="size-[76px] rounded-full bg-linear-to-br from-brand-mint via-brand-blue to-brand-violet shadow-[0_8px_22px_-4px_rgba(17,88,176,0.33)] flex items-center justify-center">
+        <div
+          className={cn(
+            "size-[76px] rounded-full shadow-[0_8px_22px_-4px_rgba(17,88,176,0.33)] flex items-center justify-center",
+            BRAND_GRADIENT_CLASS,
+          )}
+        >
           <Mountain size={36} className="text-on-primary" />
         </div>
         <div className="flex flex-col items-center gap-1.5">

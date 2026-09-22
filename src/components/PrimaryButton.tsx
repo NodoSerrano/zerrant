@@ -2,6 +2,7 @@
 
 import { type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
+import { BRAND_CTA_SHADOW_CLASS, BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 
 interface PrimaryButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   className?: string;
@@ -19,8 +20,8 @@ export function PrimaryButton({ className, size = "md", children, ...props }: Pr
     <button
       className={cn(
         "inline-flex items-center justify-center rounded-pill font-display font-medium text-on-primary transition-all",
-        "bg-linear-to-br from-brand-green to-brand-blue",
-        "shadow-[0_4px_14px_rgba(17,88,176,0.33)]",
+        BRAND_GRADIENT_CLASS,
+        BRAND_CTA_SHADOW_CLASS,
         "hover:opacity-90",
         "active:scale-[0.98]",
         "disabled:opacity-50 disabled:cursor-not-allowed",

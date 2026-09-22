@@ -1,6 +1,7 @@
 import { ClipboardList, Plus, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 
 interface EmptyStateProps {
   subtitle: string;
@@ -42,7 +43,7 @@ export function EmptyState({
           href={href}
           className={cn(
             "flex items-center justify-center gap-2 rounded-pill h-12 px-[22px]",
-            "bg-linear-to-br from-brand-green to-brand-blue",
+            BRAND_GRADIENT_CLASS,
             "font-display text-[15px] font-medium text-on-primary",
             "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40",
           )}
@@ -56,7 +57,7 @@ export function EmptyState({
           onClick={onAction}
           className={cn(
             "flex items-center justify-center gap-2 rounded-pill h-12 px-[22px]",
-            "bg-linear-to-br from-brand-green to-brand-blue",
+            BRAND_GRADIENT_CLASS,
             "font-display text-[15px] font-medium text-on-primary",
             "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40",
           )}

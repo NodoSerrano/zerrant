@@ -107,8 +107,7 @@ describe("SolicitarForm — icon circle", () => {
     render(<SolicitarForm />);
 
     const container = document.querySelector(".lucide-user-plus")?.closest("div");
-    expect(container?.className).toContain("from-brand-mint");
-    expect(container?.className).toContain("to-brand-blue");
+    expect(container?.className).toContain("bg-gradient-brand");
   });
 
   it("renders the user-plus icon at 36×36 in on-primary", () => {

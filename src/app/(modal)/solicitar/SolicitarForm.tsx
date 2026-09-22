@@ -22,6 +22,7 @@ import {
 } from "@/features/membership/screening";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { cn } from "@/lib/utils";
+import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 
 const TOTAL_STEPS = 3;
 
@@ -209,7 +210,12 @@ export function SolicitarForm() {
       {step === 1 ? (
         <div className="flex flex-col gap-2">
           <div className="flex justify-center">
-            <div className="flex size-[84px] items-center justify-center rounded-full bg-linear-to-br from-brand-mint to-brand-blue">
+            <div
+              className={cn(
+                "flex size-[84px] items-center justify-center rounded-full",
+                BRAND_GRADIENT_CLASS,
+              )}
+            >
               <UserPlus className="size-9 text-on-primary" />
             </div>
           </div>

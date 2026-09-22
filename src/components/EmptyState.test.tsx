@@ -94,9 +94,7 @@ describe("EmptyState", () => {
     const btn = screen.getByRole("button", { name: /Publicar tarea/i });
     expect(btn).toBeInTheDocument();
     expect(btn.className).toContain("rounded-pill");
-    expect(btn.className).toContain("bg-linear-to-br");
-    expect(btn.className).toContain("from-brand-green");
-    expect(btn.className).toContain("to-brand-blue");
+    expect(btn.className).toContain("bg-gradient-brand");
     expect(btn.className).toContain("text-on-primary");
     expect(btn.className).toContain("h-12");
 
@@ -146,9 +144,7 @@ describe("EmptyState href mode", () => {
     render(<EmptyState subtitle="test" href="/nodo/tasks/new" />);
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("href", "/nodo/tasks/new");
-    expect(link).toHaveClass("bg-linear-to-br");
-    expect(link).toHaveClass("from-brand-green");
-    expect(link).toHaveClass("to-brand-blue");
+    expect(link).toHaveClass("bg-gradient-brand");
   });
 
   it("does not render button when href is set", () => {

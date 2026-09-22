@@ -4,6 +4,7 @@ import { Avatar } from "@/components/Avatar";
 import { TierBadge } from "@/components/TierBadge";
 import { RoleChip } from "@/components/RoleChip";
 import { cn } from "@/lib/utils";
+import { BRAND_CTA_SHADOW_CLASS, BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 import { AporteItem } from "@/features/aportes/AporteItem";
 import { availabilityLabel } from "./transform";
 import type { Disponibilidad, SerranoMemberDetail } from "./types";
@@ -14,10 +15,12 @@ const AVAILABILITY_DOT: Record<Disponibilidad, string> = {
   solo_eventos: "bg-text-muted",
 };
 
-const CTA_CLASSES =
-  "inline-flex items-center justify-center rounded-pill font-display font-medium text-on-primary transition-all " +
-  "bg-linear-to-br from-brand-green to-brand-blue shadow-[0_4px_14px_rgba(17,88,176,0.33)] " +
-  "hover:opacity-90 active:scale-[0.98] h-[54px] px-6 text-base w-full";
+const CTA_CLASSES = [
+  "inline-flex items-center justify-center rounded-pill font-display font-medium text-on-primary transition-all",
+  BRAND_GRADIENT_CLASS,
+  BRAND_CTA_SHADOW_CLASS,
+  "hover:opacity-90 active:scale-[0.98] h-[54px] px-6 text-base w-full",
+].join(" ");
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="font-display text-[17px] font-medium text-text-primary">{children}</h2>;

@@ -22,7 +22,7 @@ describe("EnviadoConfirmation — Pencil D1hKT", () => {
     expect(subtitle.className).toContain("text-center");
   });
 
-  it("renders a 104×104 mint→green circle with a 48×48 check icon", () => {
+  it("renders a 104×104 brand-gradient circle with a 48×48 check icon", () => {
     render(<EnviadoConfirmation />);
 
     const icon = document.querySelector(".lucide-check");
@@ -33,8 +33,7 @@ describe("EnviadoConfirmation — Pencil D1hKT", () => {
     const circle = icon!.closest("div");
     expect(circle?.className).toContain("size-[104px]");
     expect(circle?.className).toContain("rounded-full");
-    expect(circle?.className).toContain("from-brand-mint");
-    expect(circle?.className).toContain("to-brand-green");
+    expect(circle?.className).toContain("bg-gradient-brand");
   });
 
   it('links "Volver al inicio" to / as a primary CTA', () => {
@@ -47,6 +46,7 @@ describe("EnviadoConfirmation — Pencil D1hKT", () => {
     expect(cta.className).toContain("w-full");
     expect(cta.className).toContain("font-display");
     expect(cta.className).toContain("text-[16px]");
+    expect(cta.className).toContain("bg-gradient-brand");
     expect(cta.tagName).toBe("A");
   });
 
