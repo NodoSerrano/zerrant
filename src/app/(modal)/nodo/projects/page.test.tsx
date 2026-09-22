@@ -99,6 +99,14 @@ describe("ProjectsPage", () => {
     );
   });
 
+  it("links Volver back to Inicio (/)", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+    await renderPage();
+    const back = screen.getByRole("link", { name: "Volver a Inicio" });
+    expect(back).toHaveAttribute("href", "/");
+  });
+
   it("renders ProjectCards from mocked projects rows", async () => {
     const { createClient } = await import("@/lib/supabase/server");
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(

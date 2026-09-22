@@ -2,15 +2,28 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const mockUpdateProfile = vi.hoisted(() => vi.fn());
-const mockRouterBack = vi.hoisted(() => vi.fn());
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ back: mockRouterBack }),
-}));
 
 vi.mock("@/features/profile/actions", () => ({
   updateProfile: mockUpdateProfile,
   uploadAvatar: vi.fn(),
+}));
+
+vi.mock("next/link", () => ({
+  default: ({
+    href,
+    className,
+    children,
+    "aria-label": ariaLabel,
+  }: {
+    href: string;
+    className?: string;
+    children: React.ReactNode;
+    "aria-label"?: string;
+  }) => (
+    <a href={href} className={className} aria-label={ariaLabel}>
+      {children}
+    </a>
+  ),
 }));
 
 const mocks = vi.hoisted(() => ({
@@ -33,7 +46,7 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
-import EditProfilePage from "@/app/(app)/profile/edit/page";
+import EditProfilePage from "@/app/(modal)/profile/edit/page";
 
 const profileFixture = {
   id: "user-1",
@@ -65,6 +78,13 @@ describe("EditProfilePage", () => {
 
     expect(screen.getByText("Editar perfil")).toBeInTheDocument();
     expect(screen.getByText("Guardar")).toBeInTheDocument();
+  });
+
+  it("links Volver to /profile as a real anchor (not history-only back)", async () => {
+    render(await EditProfilePage());
+
+    const back = screen.getByRole("link", { name: "Volver al perfil" });
+    expect(back).toHaveAttribute("href", "/profile");
   });
 
   it("renders the AvatarPicker", async () => {

@@ -16,8 +16,8 @@ const PRIMARY_SHELL_FILES = [
   "app/(onboarding)/layout.tsx",
   // plantel / nodo / agenda / profile / admin / inicio
   "app/(app)/plantel/page.tsx",
-  "app/(app)/nodo/tasks/page.tsx",
-  "app/(app)/nodo/projects/page.tsx",
+  "app/(modal)/nodo/tasks/page.tsx",
+  "app/(modal)/nodo/projects/page.tsx",
   "app/(app)/agenda/page.tsx",
   "app/(app)/profile/page.tsx",
   "app/(app)/profile/PendingMembershipCard.tsx",
