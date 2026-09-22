@@ -61,4 +61,11 @@ describe("EnviadoConfirmation — Pencil D1hKT", () => {
     expect(wrapper?.className).not.toMatch(/\bpx-/);
     expect(wrapper?.className).not.toMatch(/\bpb-/);
   });
+
+  it("fills the modal content shell height so justify-center centers vertically", () => {
+    const { container } = render(<EnviadoConfirmation />);
+    const wrapper = container.firstElementChild;
+    expect(wrapper?.className).toMatch(/\bmin-h-full\b/);
+    expect(wrapper?.className).toContain("justify-center");
+  });
 });
