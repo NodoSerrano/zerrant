@@ -11,6 +11,7 @@ import { SerranoMenu } from "./SerranoMenu";
 import { PendingMembershipCard } from "./PendingMembershipCard";
 import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 import { cn } from "@/lib/utils";
+import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "@/features/membership/request-state";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -43,13 +44,13 @@ export default async function ProfilePage() {
     // Read errors fail closed (show CTA shell, never invent pending).
     const { data: pendingRequest, error: pendingError } = await supabase
       .from("membership_requests")
-      .select("id")
+      .select("id, estado")
       .eq("profile_id", user.id)
-      .eq("estado", "pendiente")
+      .in("estado", MEMBERSHIP_REQUEST_ACTIVE_ESTADOS)
       .limit(1)
       .maybeSingle();
 
-    const isPending = !pendingError && Boolean(pendingRequest);
+    const activeRequest = pendingError ? null : pendingRequest;
 
     return (
       <div className="flex flex-col gap-4">
@@ -78,8 +79,8 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        {isPending ? (
-          <PendingMembershipCard />
+        {activeRequest ? (
+          <PendingMembershipCard estado={activeRequest.estado} />
         ) : (
           <div className={cn("rounded-[22px] p-[18px] flex flex-col gap-3", BRAND_GRADIENT_CLASS)}>
             <div className="flex items-center gap-2.5">

@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
     count: number;
   }>,
   membershipSelect: vi.fn(),
+  membershipOrder: vi.fn(),
   rolesCountResponse: Promise.resolve({ count: 0 }) as Promise<{ count: number }>,
 }));
 
@@ -16,8 +17,10 @@ vi.mock("@/lib/supabase/server", () => ({
       if (table === "membership_requests") {
         return {
           select: mocks.membershipSelect.mockImplementation(() => ({
-            eq: vi.fn().mockReturnThis(),
-            order: vi.fn(() => mocks.membershipResponse),
+            in: vi.fn().mockReturnThis(),
+            order: mocks.membershipOrder.mockImplementation(() => ({
+              order: mocks.membershipOrder.mockImplementation(() => mocks.membershipResponse),
+            })),
           })),
         };
       }
@@ -34,8 +37,12 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 vi.mock("@/components/RequestCard", () => ({
-  RequestCard: ({ request }: { request: { profile: { nombre: string; apellido: string } } }) => (
-    <div data-testid="request-card">
+  RequestCard: ({
+    request,
+  }: {
+    request: { estado: string; profile: { nombre: string; apellido: string } };
+  }) => (
+    <div data-testid="request-card" data-estado={request.estado}>
       {request.profile.nombre} {request.profile.apellido}
     </div>
   ),
@@ -50,6 +57,7 @@ beforeEach(() => {
 const pendingRequests = [
   {
     id: "req-1",
+    estado: "pendiente_coordinacion" as const,
     mensaje: "Quiero ayudar",
     created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
     profiles: {
@@ -62,6 +70,7 @@ const pendingRequests = [
   },
   {
     id: "req-2",
+    estado: "reprogramacion" as const,
     mensaje: null,
     created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
     profiles: {
@@ -103,6 +112,23 @@ describe("AdminMembresiasPage", () => {
     expect(screen.getByText(/Roles/)).toBeInTheDocument();
   });
 
+  it("selects estado and passes it to each card", async () => {
+    setMembershipData(pendingRequests, 2);
+    render(await AdminMembresiasPage());
+    const [select] = mocks.membershipSelect.mock.calls[0];
+    expect(select).toMatch(/\bestado\b/);
+    expect(screen.getAllByTestId("request-card").map((c) => c.dataset.estado)).toEqual([
+      "pendiente_coordinacion",
+      "reprogramacion",
+    ]);
+  });
+
+  it("orders by created_at desc with an id tiebreaker so cards never jump after a transition", async () => {
+    render(await AdminMembresiasPage());
+    expect(mocks.membershipOrder).toHaveBeenNthCalledWith(1, "created_at", { ascending: false });
+    expect(mocks.membershipOrder).toHaveBeenNthCalledWith(2, "id", { ascending: true });
+  });
+
   it("renders counter badge with pending count", async () => {
     setMembershipData(pendingRequests, 2);
     render(await AdminMembresiasPage());
@@ -132,6 +158,7 @@ describe("AdminMembresiasPage", () => {
     const withNullProfile = [
       {
         id: "req-1",
+        estado: "pendiente_coordinacion" as const,
         mensaje: "Quiero ayudar",
         created_at: new Date().toISOString(),
         profiles: {

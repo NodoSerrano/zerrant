@@ -8,14 +8,16 @@ import {
 } from "@/components/RequestCard";
 import type { Tier } from "@/features/profile/types";
 import Link from "next/link";
+import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "@/features/membership/request-state";
 
 export const dynamic = "force-dynamic";
 
 const SCREENING_SELECT =
-  "id, mensaje, created_at, contacto_whatsapp, frecuencia_uso, duracion_visita, aporte_actitud, reunion_disponibilidad, situacion_actual, ocupacion_detalle, entrevista_items, aporte_otro, aporte_mayor, profiles!membership_requests_profile_id_fkey(nombre, apellido, apodo, nombre_visible, avatar_url, tier, id)";
+  "id, estado, mensaje, created_at, contacto_whatsapp, frecuencia_uso, duracion_visita, aporte_actitud, reunion_disponibilidad, situacion_actual, ocupacion_detalle, entrevista_items, aporte_otro, aporte_mayor, profiles!membership_requests_profile_id_fkey(nombre, apellido, apodo, nombre_visible, avatar_url, tier, id)";
 
 type RequestRow = {
   id: string;
+  estado: RequestCardData["estado"];
   mensaje: string | null;
   created_at: string;
   contacto_whatsapp: string | null;
@@ -55,8 +57,11 @@ export default async function AdminMembresiasPage() {
       supabase
         .from("membership_requests")
         .select(SCREENING_SELECT, { count: "exact" })
-        .eq("estado", "pendiente")
-        .order("created_at", { ascending: false }),
+        .in("estado", MEMBERSHIP_REQUEST_ACTIVE_ESTADOS)
+        .order("created_at", { ascending: false })
+        // Tiebreaker: equal created_at would otherwise fall back to physical row
+        // order, and an UPDATE (every transition) moves the row to the end.
+        .order("id", { ascending: true }),
       supabase
         .from("profile_roles")
         .select("id", { count: "exact", head: true })
@@ -75,6 +80,7 @@ export default async function AdminMembresiasPage() {
     )
     .map((row) => ({
       id: row.id,
+      estado: row.estado,
       mensaje: row.mensaje,
       created_at: row.created_at,
       screening: toScreening(row),

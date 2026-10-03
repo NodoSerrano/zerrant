@@ -16,7 +16,18 @@ export type Database = {
           query?: string;
           variables?: Json;
         };
-        Returns: Json;
+        Returns: {
+          success?: boolean;
+          estado?: Database["public"]["Enums"]["membership_request_estado"];
+          error?: string;
+          code?:
+            | "forbidden"
+            | "not_found"
+            | "invalid_transition"
+            | "unsupported_tier"
+            | "invalid_motivo"
+            | "conflict";
+        };
       };
     };
     Enums: {
@@ -177,6 +188,76 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      membership_request_events: {
+        Row: {
+          actor_id: string | null;
+          created_at: string;
+          from_estado: Database["public"]["Enums"]["membership_request_estado"] | null;
+          id: string;
+          motivo: string | null;
+          request_id: string;
+          to_estado: Database["public"]["Enums"]["membership_request_estado"];
+        };
+        Insert: {
+          actor_id?: string | null;
+          created_at?: string;
+          from_estado?: Database["public"]["Enums"]["membership_request_estado"] | null;
+          id?: string;
+          motivo?: string | null;
+          request_id: string;
+          to_estado: Database["public"]["Enums"]["membership_request_estado"];
+        };
+        Update: {
+          actor_id?: string | null;
+          created_at?: string;
+          from_estado?: Database["public"]["Enums"]["membership_request_estado"] | null;
+          id?: string;
+          motivo?: string | null;
+          request_id?: string;
+          to_estado?: Database["public"]["Enums"]["membership_request_estado"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "membership_request_events_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "membership_request_events_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles_with_rate";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "membership_request_events_request_id_fkey";
+            columns: ["request_id"];
+            isOneToOne: false;
+            referencedRelation: "membership_requests";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      membership_request_transitions: {
+        Row: {
+          actor: string;
+          from_estado: Database["public"]["Enums"]["membership_request_estado"];
+          to_estado: Database["public"]["Enums"]["membership_request_estado"];
+        };
+        Insert: {
+          actor: string;
+          from_estado: Database["public"]["Enums"]["membership_request_estado"];
+          to_estado: Database["public"]["Enums"]["membership_request_estado"];
+        };
+        Update: {
+          actor?: string;
+          from_estado?: Database["public"]["Enums"]["membership_request_estado"];
+          to_estado?: Database["public"]["Enums"]["membership_request_estado"];
+        };
+        Relationships: [];
       };
       membership_requests: {
         Row: {
@@ -690,45 +771,30 @@ export type Database = {
       };
     };
     Functions: {
-      approve_membership_request: {
-        Args: {
-          p_request_id: string;
-        };
-        Returns: {
-          error?: string;
-          success?: boolean;
-        };
-      };
-      is_non_tourist: {
-        Args: Record<string, never>;
-        Returns: boolean;
-      };
-      is_platform_admin: {
-        Args: Record<string, never>;
-        Returns: boolean;
-      };
-      is_project_admin: {
-        Args: {
-          p_project_id: string;
-        };
-        Returns: boolean;
-      };
-      reject_membership_request: {
-        Args: {
-          p_request_id: string;
-        };
-        Returns: {
-          error?: string;
-          success?: boolean;
-        };
-      };
+      is_non_tourist: { Args: never; Returns: boolean };
+      is_platform_admin: { Args: never; Returns: boolean };
+      is_project_admin: { Args: { p_project_id: string }; Returns: boolean };
       sync_profile_skills: {
+        Args: { p_skill_ids: string[] };
+        Returns: { error?: string; success?: boolean };
+      };
+      transition_membership_request: {
         Args: {
-          p_skill_ids: string[];
+          p_motivo?: string;
+          p_request_id: string;
+          p_to: Database["public"]["Enums"]["membership_request_estado"];
         };
         Returns: {
-          error?: string;
           success?: boolean;
+          estado?: Database["public"]["Enums"]["membership_request_estado"];
+          error?: string;
+          code?:
+            | "forbidden"
+            | "not_found"
+            | "invalid_transition"
+            | "unsupported_tier"
+            | "invalid_motivo"
+            | "conflict";
         };
       };
     };
@@ -761,7 +827,14 @@ export type Database = {
         | "4_5_semana"
         | "casi_diario"
         | "no_se";
-      membership_request_estado: "pendiente" | "aprobada" | "rechazada";
+      membership_request_estado:
+        | "pendiente_coordinacion"
+        | "entrevista_solicitada"
+        | "entrevista_coordinada"
+        | "reprogramacion"
+        | "entrevista_realizada"
+        | "aprobado"
+        | "cerrada";
       membership_situacion_actual: "estudio" | "trabajo" | "estudio_trabajo" | "ninguno" | "otra";
       nombre_visible: "apodo" | "nombre_apellido" | "apellido_nombre";
       project_estado: "idea" | "en_curso" | "pausado" | "terminado";
@@ -932,7 +1005,15 @@ export const Constants = {
         "casi_diario",
         "no_se",
       ],
-      membership_request_estado: ["pendiente", "aprobada", "rechazada"],
+      membership_request_estado: [
+        "pendiente_coordinacion",
+        "entrevista_solicitada",
+        "entrevista_coordinada",
+        "reprogramacion",
+        "entrevista_realizada",
+        "aprobado",
+        "cerrada",
+      ],
       membership_situacion_actual: ["estudio", "trabajo", "estudio_trabajo", "ninguno", "otra"],
       nombre_visible: ["apodo", "nombre_apellido", "apellido_nombre"],
       project_estado: ["idea", "en_curso", "pausado", "terminado"],
