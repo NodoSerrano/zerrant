@@ -727,6 +727,43 @@ describe("uploadAvatar", () => {
     expect(mocks.storageUpload).not.toHaveBeenCalled();
   });
 
+  it("rejects a file over 5 MiB without touching storage", async () => {
+    happyPath();
+    const oversized = new Uint8Array(5 * 1024 * 1024 + 1);
+    oversized.set(PNG_BYTES);
+
+    const result = await uploadAvatar(null, avatarForm(oversized, "foto.png", "image/png"));
+
+    expect(result).toEqual({ error: "La imagen no puede superar los 5 MB" });
+    expect(mocks.storageUpload).not.toHaveBeenCalled();
+  });
+
+  it("stores the type sniffed from the bytes, not the one the client declares", async () => {
+    happyPath();
+    const jpegBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+    await uploadAvatar(null, avatarForm(jpegBytes, "foto.png", "image/png"));
+
+    expect(mocks.storageUpload).toHaveBeenCalledWith(
+      expect.stringMatching(/\.jpg$/),
+      expect.any(Uint8Array),
+      expect.objectContaining({ contentType: "image/jpeg" }),
+    );
+  });
+
+  it("rejects a converted image that ends up over 5 MiB without touching storage", async () => {
+    happyPath();
+    mocks.ensureWebSafeImage.mockResolvedValue({
+      bytes: new Uint8Array(5 * 1024 * 1024 + 1),
+      mime: "image/jpeg",
+    });
+
+    const result = await uploadAvatar(null, avatarForm(HEIC_BYTES, "foto.heic", "image/heic"));
+
+    expect(result).toEqual({ error: "La imagen no puede superar los 5 MB" });
+    expect(mocks.storageUpload).not.toHaveBeenCalled();
+  });
+
   it("uploads the image and persists avatar_url", async () => {
     happyPath();
 
@@ -810,6 +847,21 @@ describe("uploadAvatar", () => {
     happyPath();
     mocks.profilesSelectSingle.mockResolvedValue({
       data: { avatar_url: "https://gravatar.com/avatar/abc.png" },
+      error: null,
+    });
+
+    await uploadAvatar(null, avatarForm(PNG_BYTES, "foto.png", "image/png"));
+
+    expect(mocks.storageRemove).not.toHaveBeenCalled();
+  });
+
+  it("never tries to delete an object outside the user's own folder", async () => {
+    happyPath();
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: {
+        avatar_url:
+          "https://proj.supabase.co/storage/v1/object/public/avatars/other-user-id/theirs.png",
+      },
       error: null,
     });
 

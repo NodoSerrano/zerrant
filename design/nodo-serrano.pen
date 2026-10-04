@@ -1,5 +1,5 @@
 {
-  "version": "2.14",
+  "version": "2.20",
   "children": [
     {
       "type": "frame",
@@ -311,8 +311,7 @@
               "x": 0,
               "y": 8
             },
-            "blur": 24,
-            "spread": -6
+            "blur": 24
           },
           "padding": 4,
           "alignItems": "center",
@@ -513,8 +512,7 @@
           "x": 0,
           "y": 10
         },
-        "blur": 30,
-        "spread": -12
+        "blur": 30
       },
       "layout": "vertical",
       "gap": 14,
@@ -655,8 +653,7 @@
           "x": 0,
           "y": 10
         },
-        "blur": 30,
-        "spread": -12
+        "blur": 30
       },
       "gap": 14,
       "padding": 16,
@@ -828,8 +825,7 @@
                       "x": 0,
                       "y": 8
                     },
-                    "blur": 22,
-                    "spread": -4
+                    "blur": 22
                   },
                   "layout": "vertical",
                   "justifyContent": "center",
@@ -1388,11 +1384,114 @@
                 {
                   "type": "text",
                   "id": "dIHdk",
+                  "x": 130.5,
+                  "y": 110,
+                  "enabled": false,
                   "fill": "$brand-green",
                   "content": "Agregar foto",
                   "fontFamily": "$font-display",
                   "fontSize": 13,
                   "fontWeight": "500"
+                },
+                {
+                  "type": "text",
+                  "id": "uSt3L",
+                  "name": "hint",
+                  "fill": "$text-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Necesitamos una foto clara para poder reconocerte.",
+                  "textAlign": "center",
+                  "fontFamily": "$font-body",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "JnYQM",
+                  "name": "actions",
+                  "gap": 8,
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "bf5m6",
+                      "name": "upload-btn",
+                      "height": 40,
+                      "fill": "$surface",
+                      "cornerRadius": 999,
+                      "stroke": "$border",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "gap": 6,
+                      "padding": [
+                        0,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "kRrUI",
+                          "name": "upload-btn icon",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "image-up",
+                          "library": "lucide",
+                          "fill": "$brand-green"
+                        },
+                        {
+                          "type": "text",
+                          "id": "S4efG",
+                          "name": "upload-btn label",
+                          "fill": "$brand-green",
+                          "content": "Subir foto",
+                          "fontFamily": "$font-display",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "vaifI",
+                      "name": "camera-btn",
+                      "height": 40,
+                      "fill": "$surface",
+                      "cornerRadius": 999,
+                      "stroke": "$border",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "gap": 6,
+                      "padding": [
+                        0,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "bb67L",
+                          "name": "camera-btn icon",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "camera",
+                          "library": "lucide",
+                          "fill": "$brand-green"
+                        },
+                        {
+                          "type": "text",
+                          "id": "i5lxup",
+                          "name": "camera-btn label",
+                          "fill": "$brand-green",
+                          "content": "Sacar foto",
+                          "fontFamily": "$font-display",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             },
@@ -4424,8 +4523,7 @@
           "x": 0,
           "y": 10
         },
-        "blur": 30,
-        "spread": -12
+        "blur": 30
       },
       "layout": "vertical",
       "gap": 14,
@@ -7404,8 +7502,7 @@
           "x": 0,
           "y": 10
         },
-        "blur": 30,
-        "spread": -12
+        "blur": 30
       },
       "layout": "vertical",
       "gap": 12,
@@ -7662,8 +7759,7 @@
           "x": 0,
           "y": 10
         },
-        "blur": 30,
-        "spread": -12
+        "blur": 30
       },
       "layout": "vertical",
       "gap": 12,
@@ -11982,8 +12078,7 @@
                       "x": 0,
                       "y": 10
                     },
-                    "blur": 30,
-                    "spread": -12
+                    "blur": 30
                   },
                   "layout": "vertical",
                   "gap": 14,
@@ -12149,8 +12244,7 @@
                       "x": 0,
                       "y": 10
                     },
-                    "blur": 30,
-                    "spread": -12
+                    "blur": 30
                   },
                   "layout": "vertical",
                   "gap": 14,
@@ -15508,6 +15602,385 @@
                   ]
                 }
               }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Jk5Rb",
+      "x": 4230,
+      "y": 940,
+      "name": "1.5 · Onboarding · Paso 1 · Foto — estados",
+      "width": 390,
+      "fill": "$bg",
+      "layout": "vertical",
+      "gap": 28,
+      "padding": 24,
+      "children": [
+        {
+          "type": "frame",
+          "id": "P0H8B",
+          "name": "state Subiendo",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 10,
+          "children": [
+            {
+              "type": "text",
+              "id": "CqrIa",
+              "name": "state title",
+              "fill": "$text-muted",
+              "content": "Subiendo",
+              "fontFamily": "$font-body",
+              "fontSize": 12,
+              "fontWeight": "500"
+            },
+            {
+              "type": "frame",
+              "id": "jLGRE",
+              "name": "upload",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "iV90u",
+                  "name": "circ",
+                  "width": 100,
+                  "height": 100,
+                  "fill": "$surface-inset",
+                  "cornerRadius": 999,
+                  "stroke": "$border",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "qYpCI",
+                      "width": 30,
+                      "height": 30,
+                      "icon": "loader-circle",
+                      "library": "lucide",
+                      "fill": "$text-muted"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "y6swb",
+                  "x": 130.5,
+                  "y": 110,
+                  "enabled": false,
+                  "fill": "$brand-green",
+                  "content": "Agregar foto",
+                  "fontFamily": "$font-display",
+                  "fontSize": 13,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "text",
+                  "id": "PCNze",
+                  "name": "hint",
+                  "fill": "$text-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Necesitamos una foto clara para poder reconocerte.",
+                  "textAlign": "center",
+                  "fontFamily": "$font-body",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "CfCmO",
+                  "name": "actions",
+                  "opacity": 0.6,
+                  "gap": 8,
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "LeRBR",
+                      "name": "upload-btn",
+                      "height": 40,
+                      "fill": "$surface",
+                      "cornerRadius": 999,
+                      "stroke": "$border",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "gap": 6,
+                      "padding": [
+                        0,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "IgrRD",
+                          "name": "upload-btn icon",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "image-up",
+                          "library": "lucide",
+                          "fill": "$brand-green"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Y4MbFt",
+                          "name": "upload-btn label",
+                          "fill": "$brand-green",
+                          "content": "Subiendo...",
+                          "fontFamily": "$font-display",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Fqveu",
+                      "name": "camera-btn",
+                      "height": 40,
+                      "fill": "$surface",
+                      "cornerRadius": 999,
+                      "stroke": "$border",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "gap": 6,
+                      "padding": [
+                        0,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "v8wLr",
+                          "name": "camera-btn icon",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "camera",
+                          "library": "lucide",
+                          "fill": "$brand-green"
+                        },
+                        {
+                          "type": "text",
+                          "id": "KlsOn",
+                          "name": "camera-btn label",
+                          "fill": "$brand-green",
+                          "content": "Sacar foto",
+                          "fontFamily": "$font-display",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "mh9f9",
+          "name": "state Error",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 10,
+          "children": [
+            {
+              "type": "text",
+              "id": "wTopu",
+              "name": "state title",
+              "fill": "$text-muted",
+              "content": "Error",
+              "fontFamily": "$font-body",
+              "fontSize": 12,
+              "fontWeight": "500"
+            },
+            {
+              "type": "frame",
+              "id": "pNHZI",
+              "name": "upload",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Ihtfm",
+                  "name": "circ",
+                  "width": 100,
+                  "height": 100,
+                  "fill": "$surface-inset",
+                  "cornerRadius": 999,
+                  "stroke": "$border",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "hxS60",
+                      "width": 30,
+                      "height": 30,
+                      "icon": "camera",
+                      "library": "lucide",
+                      "fill": "$text-muted"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "daUKq",
+                  "x": 130.5,
+                  "y": 110,
+                  "enabled": false,
+                  "fill": "$brand-green",
+                  "content": "Agregar foto",
+                  "fontFamily": "$font-display",
+                  "fontSize": 13,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "text",
+                  "id": "c48vCt",
+                  "name": "hint",
+                  "fill": "$text-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Necesitamos una foto clara para poder reconocerte.",
+                  "textAlign": "center",
+                  "fontFamily": "$font-body",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "tixCf",
+                  "name": "actions",
+                  "gap": 8,
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ke0JJ",
+                      "name": "upload-btn",
+                      "height": 40,
+                      "fill": "$surface",
+                      "cornerRadius": 999,
+                      "stroke": "$border",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "gap": 6,
+                      "padding": [
+                        0,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "az4bj",
+                          "name": "upload-btn icon",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "image-up",
+                          "library": "lucide",
+                          "fill": "$brand-green"
+                        },
+                        {
+                          "type": "text",
+                          "id": "bL6fN",
+                          "name": "upload-btn label",
+                          "fill": "$brand-green",
+                          "content": "Subir foto",
+                          "fontFamily": "$font-display",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ZUsgk",
+                      "name": "camera-btn",
+                      "height": 40,
+                      "fill": "$surface",
+                      "cornerRadius": 999,
+                      "stroke": "$border",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "gap": 6,
+                      "padding": [
+                        0,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "t4qj3",
+                          "name": "camera-btn icon",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "camera",
+                          "library": "lucide",
+                          "fill": "$brand-green"
+                        },
+                        {
+                          "type": "text",
+                          "id": "ohqB8",
+                          "name": "camera-btn label",
+                          "fill": "$brand-green",
+                          "content": "Sacar foto",
+                          "fontFamily": "$font-display",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "vEMu2",
+                  "name": "alert",
+                  "width": "fill_container",
+                  "fill": "#c700671A",
+                  "cornerRadius": 6,
+                  "padding": [
+                    8,
+                    12
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "uff3N",
+                      "name": "alert text",
+                      "fill": "$coral",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "La imagen no puede superar los 5 MB",
+                      "fontFamily": "$font-body",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
