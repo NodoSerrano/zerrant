@@ -78,7 +78,7 @@ describe("OnboardingStep1 page", () => {
     render(await OnboardingStep1());
 
     expect(screen.getByLabelText("Nombre")).toHaveValue("");
-    expect(screen.getByText("Agregar foto")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Subir foto" })).toBeInTheDocument();
   });
 
   it("still renders an empty form when the profile row is genuinely missing (PGRST116)", async () => {

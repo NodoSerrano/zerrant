@@ -40,6 +40,7 @@ export function Step1Form({ defaults, avatarUrl }: Step1FormProps) {
         action={uploadAvatar}
         initialUrl={avatarUrl}
         onUploadingChange={setUploadingPhoto}
+        hint="Necesitamos una foto clara para poder reconocerte."
       />
 
       <form action={action} className="flex flex-col gap-4">
