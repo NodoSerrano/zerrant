@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { MailCheck } from "lucide-react";
 import { ResendSignupForm } from "./resend-form";
+import { safeInternalPath, withNext } from "@/lib/safe-next";
 
 interface CheckEmailPageProps {
-  searchParams: Promise<{ email?: string; flow?: string }>;
+  searchParams: Promise<{ email?: string; flow?: string; next?: string }>;
 }
 
 export default async function CheckEmailPage({ searchParams }: CheckEmailPageProps) {
-  const { email, flow } = await searchParams;
+  const { email, flow, next: rawNext } = await searchParams;
+  const next = safeInternalPath(rawNext);
 
   const signupSubtitle = `Te enviamos un enlace a ${email ?? "tu correo"}. Abrilo para confirmar tu cuenta y entrar.`;
   const recoverySubtitle = `Te enviamos un enlace para restablecer tu contraseña a ${email ?? "tu correo"}. Revisá tu bandeja de entrada y seguí las instrucciones.`;
@@ -28,9 +30,12 @@ export default async function CheckEmailPage({ searchParams }: CheckEmailPagePro
         </p>
       </div>
 
-      {showResend ? <ResendSignupForm email={email} /> : null}
+      {showResend ? <ResendSignupForm email={email} next={next} /> : null}
 
-      <Link href="/auth/login" className="text-sm text-text-muted hover:underline font-medium">
+      <Link
+        href={withNext("/auth/login", next)}
+        className="text-sm text-text-muted hover:underline font-medium"
+      >
         Volver al inicio de sesión
       </Link>
     </div>

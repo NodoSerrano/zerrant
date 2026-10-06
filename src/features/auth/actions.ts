@@ -3,12 +3,22 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { safeInternalPath, withNext } from "@/lib/safe-next";
 
 function getSiteUrl() {
   const base = process.env.NEXT_PUBLIC_SITE_URL;
   if (base) return base;
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return "http://localhost:3000";
+}
+
+/** Post-auth target from the form; unsafe or missing values collapse to "/". */
+function formNext(formData: FormData): string {
+  return safeInternalPath(formData.get("next"));
+}
+
+function callbackUrl(next: string): string {
+  return `${getSiteUrl()}${withNext("/auth/callback", next)}`;
 }
 
 export async function signInWithPassword(_prevState: { error: string } | null, formData: FormData) {
@@ -26,7 +36,7 @@ export async function signInWithPassword(_prevState: { error: string } | null, f
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect(formNext(formData));
 }
 
 export async function signUpWithPassword(_prevState: { error: string } | null, formData: FormData) {
@@ -37,10 +47,12 @@ export async function signUpWithPassword(_prevState: { error: string } | null, f
     password: formData.get("password") as string,
   };
 
+  const next = formNext(formData);
+
   const { data: signUpData, error } = await supabase.auth.signUp({
     ...data,
     options: {
-      emailRedirectTo: `${getSiteUrl()}/auth/callback`,
+      emailRedirectTo: callbackUrl(next),
     },
   });
 
@@ -52,10 +64,10 @@ export async function signUpWithPassword(_prevState: { error: string } | null, f
   // email) → no session; send the user to check-email.
   if (signUpData.session) {
     revalidatePath("/", "layout");
-    redirect("/");
+    redirect(next);
   }
 
-  redirect(`/auth/check-email?email=${encodeURIComponent(data.email)}&flow=signup`);
+  redirect(withNext(`/auth/check-email?email=${encodeURIComponent(data.email)}&flow=signup`, next));
 }
 
 export async function resendSignupEmail(
@@ -73,7 +85,7 @@ export async function resendSignupEmail(
     type: "signup",
     email,
     options: {
-      emailRedirectTo: `${getSiteUrl()}/auth/callback`,
+      emailRedirectTo: callbackUrl(formNext(formData)),
     },
   });
 
@@ -84,18 +96,19 @@ export async function resendSignupEmail(
   return { success: true };
 }
 
-export async function signInWithGoogle(_formData: FormData) {
+export async function signInWithGoogle(formData: FormData) {
   const supabase = await createClient();
+  const next = formNext(formData);
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${getSiteUrl()}/auth/callback`,
+      redirectTo: callbackUrl(next),
     },
   });
 
   if (error) {
-    redirect(`/auth/login?error=${encodeURIComponent(error.message)}`);
+    redirect(withNext(`/auth/login?error=${encodeURIComponent(error.message)}`, next));
   }
 
   if (data.url) {
