@@ -6,20 +6,37 @@ const mocks = vi.hoisted(() => ({
   profilesSelectEq: vi.fn(),
   profilesSelectSingle: vi.fn(),
   redirect: vi.fn(),
+  closedEq: vi.fn(),
+  closedMaybeSingle: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mocks.getUser },
-    from: vi.fn(() => ({
-      select: mocks.profilesSelect.mockImplementation(() => ({
-        eq: mocks.profilesSelectEq.mockImplementation(() => ({
-          single: mocks.profilesSelectSingle,
-        })),
-      })),
-    })),
+    from: vi.fn((table: string) =>
+      table === "membership_requests"
+        ? {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: mocks.closedEq.mockImplementation(() => ({
+                  limit: vi.fn(() => ({ maybeSingle: mocks.closedMaybeSingle })),
+                })),
+              })),
+            })),
+          }
+        : {
+            select: mocks.profilesSelect.mockImplementation(() => ({
+              eq: mocks.profilesSelectEq.mockImplementation(() => ({
+                single: mocks.profilesSelectSingle,
+              })),
+            })),
+          },
+    ),
   }),
 }));
+
+const flow = vi.hoisted(() => ({ getFlowProgress: vi.fn() }));
+vi.mock("@/features/membership/flow-progress", () => ({ getFlowProgress: flow.getFlowProgress }));
 
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
@@ -36,6 +53,7 @@ import SolicitarPage from "./page";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.closedMaybeSingle.mockResolvedValue({ data: null, error: null });
 });
 
 function setUser(id: string | null) {
@@ -47,11 +65,11 @@ async function renderPage() {
 }
 
 describe("SolicitarPage — authorization", () => {
-  it("redirects unauthenticated users to /auth/login", async () => {
+  it("redirects unauthenticated users to /auth/login carrying next (ZER-136)", async () => {
     setUser(null);
 
-    await expect(renderPage()).rejects.toThrow("NEXT_REDIRECT:/auth/login");
-    expect(mocks.redirect).toHaveBeenCalledWith("/auth/login");
+    await expect(renderPage()).rejects.toThrow("NEXT_REDIRECT:/auth/login?next=%2Fsolicitar");
+    expect(mocks.redirect).toHaveBeenCalledWith("/auth/login?next=%2Fsolicitar");
   });
 
   it("does not query profile when there is no user", async () => {
@@ -118,5 +136,40 @@ describe("SolicitarPage — authorization", () => {
     });
 
     await expect(renderPage()).rejects.toThrow("NEXT_REDIRECT:/nodo/tasks");
+  });
+});
+
+describe("SolicitarPage — no re-application after cerrada (ZER-136, ZER-180)", () => {
+  it("sends a tourist with a cerrada request to the status page", async () => {
+    setUser("tourist-id");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "tourist" } });
+    mocks.closedMaybeSingle.mockResolvedValue({ data: { id: "req-1" }, error: null });
+
+    await expect(renderPage()).rejects.toThrow("NEXT_REDIRECT:/solicitar/estado");
+    expect(mocks.closedEq).toHaveBeenCalledWith("estado", "cerrada");
+  });
+
+  it("still renders the form when the cerrada read fails (the action fails closed)", async () => {
+    setUser("tourist-id");
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "tourist" } });
+    mocks.closedMaybeSingle.mockResolvedValue({ data: null, error: { code: "500" } });
+
+    expect(await renderPage()).toBeTruthy();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+});
+
+describe("SolicitarPage — membership flow (ZER-136)", () => {
+  it("forwards the Solicitud flow progress to the form", async () => {
+    setUser("tourist-id");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "tourist" } });
+    const progress = { current: 4, steps: [] };
+    flow.getFlowProgress.mockResolvedValue(progress);
+
+    const result = await renderPage();
+
+    expect(flow.getFlowProgress).toHaveBeenCalledWith("solicitud");
+    expect(result.props.progress).toBe(progress);
   });
 });

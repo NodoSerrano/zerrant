@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { Input } from "@/components/Input";
+import { PipelineProgress } from "@/components/PipelineProgress";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import type { PipelineProgress as PipelineProgressData } from "@/features/membership/pipeline";
 import { saveOnboardingStep1, uploadAvatar } from "@/features/profile/actions";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 
@@ -17,17 +19,23 @@ export interface Step1Defaults {
 interface Step1FormProps {
   defaults?: Step1Defaults;
   avatarUrl?: string | null;
+  /** Membership flow (ZER-136): replaces "Paso 1 de 2" with the pipeline progress. */
+  progress?: PipelineProgressData;
 }
 
-export function Step1Form({ defaults, avatarUrl }: Step1FormProps) {
+export function Step1Form({ defaults, avatarUrl, progress }: Step1FormProps) {
   const [state, action, pending] = useGuardedActionState(saveOnboardingStep1, null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   return (
     <div className="flex flex-col gap-[22px]">
-      <div className="flex justify-end">
-        <p className="text-[13px] font-medium text-text-muted">Paso 1 de 2</p>
-      </div>
+      {progress ? (
+        <PipelineProgress progress={progress} />
+      ) : (
+        <div className="flex justify-end">
+          <p className="text-[13px] font-medium text-text-muted">Paso 1 de 2</p>
+        </div>
+      )}
 
       <div className="flex flex-col gap-1.5">
         <h1 className="font-display text-[26px] font-bold text-text-primary">Creá tu perfil</h1>

@@ -5,6 +5,10 @@ const mocks = vi.hoisted(() => ({
   getOnboardingGateProfile: vi.fn(),
 }));
 
+vi.mock("@/features/membership/flow-progress", () => ({
+  getFlowProgress: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("@/features/profile/onboarding-gate-server", () => ({
   getOnboardingGateProfile: mocks.getOnboardingGateProfile,
 }));

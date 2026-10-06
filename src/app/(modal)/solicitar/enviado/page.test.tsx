@@ -37,6 +37,9 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
+const flow = vi.hoisted(() => ({ getFlowProgress: vi.fn() }));
+vi.mock("@/features/membership/flow-progress", () => ({ getFlowProgress: flow.getFlowProgress }));
+
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     mocks.redirect(url);
@@ -114,5 +117,18 @@ describe("EnviadoPage — guards", () => {
 
     expect(mocks.redirect).not.toHaveBeenCalled();
     expect(result).toBeTruthy();
+  });
+
+  it("forwards the Horario flow progress to the confirmation (ZER-136)", async () => {
+    setUser("tourist-id");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "tourist" }, error: null });
+    mocks.pendingMaybeSingle.mockResolvedValue({ data: { id: "req-1" }, error: null });
+    const progress = { current: 5, steps: [] };
+    flow.getFlowProgress.mockResolvedValue(progress);
+
+    const result = await EnviadoPage();
+
+    expect(flow.getFlowProgress).toHaveBeenCalledWith("horario");
+    expect(result.props.progress).toBe(progress);
   });
 });
