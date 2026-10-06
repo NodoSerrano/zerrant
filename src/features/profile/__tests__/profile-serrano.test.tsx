@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   select: vi.fn(),
   from: vi.fn(),
   countEq: vi.fn(),
+  approvedRequest: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -49,6 +50,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
   mocks.profilesSelectSingle.mockResolvedValue({ data: serranoProfile, error: null });
+  mocks.approvedRequest.mockResolvedValue({ data: null, error: null });
   const countResult = Promise.resolve({ count: 0, error: null });
   const countChain = {
     eq: vi.fn(function eq() {
@@ -60,6 +62,19 @@ beforeEach(() => {
       return {
         select: mocks.select.mockImplementation(() => ({
           eq: vi.fn(() => ({ single: mocks.profilesSelectSingle })),
+        })),
+      };
+    }
+    if (table === "membership_requests") {
+      return {
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              limit: vi.fn(() => ({
+                maybeSingle: mocks.approvedRequest,
+              })),
+            })),
+          })),
         })),
       };
     }
@@ -91,6 +106,15 @@ describe("ProfilePage (serrano)", () => {
 
     expect(screen.getByText("Nóbel Dam")).toBeInTheDocument();
     expect(screen.getByText("nobel@nodo.ar")).toBeInTheDocument();
+  });
+
+  it("shows an explicit confirmation when the membership request was approved", async () => {
+    mocks.approvedRequest.mockResolvedValue({ data: { id: "req-1" }, error: null });
+
+    render(await ProfilePage());
+
+    expect(screen.getByRole("heading", { name: "Ya sos miembro del Nodo" })).toBeInTheDocument();
+    expect(screen.getByText("Miembro")).toBeInTheDocument();
   });
 
   it("renders Spanish TierBadge for serrano tier", async () => {

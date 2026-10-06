@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Cake, Calendar, FolderOpen, ListTodo } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { EmptyState } from "@/components/EmptyState";
+import { MemberConfirmedNotice } from "@/features/membership/MemberConfirmedNotice";
 import { EventCard } from "@/features/events/EventCard";
 import type { UpcomingBirthday } from "@/features/home/birthdays";
 
@@ -19,6 +20,8 @@ export type InicioHubProps = {
   birthdays: UpcomingBirthday[];
   /** Members (non-tourist) see Tareas/Proyectos entry under Inicio. */
   showCommunityHub?: boolean;
+  /** Set when this member has an aprobado membership request (ZER-146). */
+  memberConfirmed?: boolean;
 };
 
 function birthdaySubtitle(row: UpcomingBirthday): string {
@@ -31,10 +34,17 @@ function birthdaySubtitle(row: UpcomingBirthday): string {
   return `En ${row.daysUntil} días · cumple ${row.ageTurning}`;
 }
 
-export function InicioHub({ events, birthdays, showCommunityHub = false }: InicioHubProps) {
+export function InicioHub({
+  events,
+  birthdays,
+  showCommunityHub = false,
+  memberConfirmed = false,
+}: InicioHubProps) {
   return (
     <div className="flex flex-col gap-6" data-pencil-frame="zTB9C">
       <h1 className="font-display text-[22px] font-bold text-text-primary">Inicio</h1>
+
+      {memberConfirmed ? <MemberConfirmedNotice /> : null}
 
       {showCommunityHub ? (
         <section className="flex flex-col gap-3" aria-labelledby="inicio-comunidad-heading">

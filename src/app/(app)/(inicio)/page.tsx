@@ -41,16 +41,24 @@ export default async function InicioPage() {
   const nowIso = now.toISOString();
   const today = formatDayKey(now);
 
-  const [{ data: events }, { data: profiles }, lumaResult] = await Promise.all([
-    supabase
-      .from("events")
-      .select("id, titulo, descripcion, lugar, inicio, fin, creado_por")
-      .gte("inicio", nowIso)
-      .order("inicio", { ascending: true })
-      .limit(UPCOMING_EVENTS_LIMIT),
-    supabase.from("profiles").select(BIRTHDAY_PROFILE_COLUMNS).neq("tier", "tourist"),
-    fetchLumaCalendarEvents(),
-  ]);
+  const [{ data: events }, { data: profiles }, lumaResult, { data: approvedRequest }] =
+    await Promise.all([
+      supabase
+        .from("events")
+        .select("id, titulo, descripcion, lugar, inicio, fin, creado_por")
+        .gte("inicio", nowIso)
+        .order("inicio", { ascending: true })
+        .limit(UPCOMING_EVENTS_LIMIT),
+      supabase.from("profiles").select(BIRTHDAY_PROFILE_COLUMNS).neq("tier", "tourist"),
+      fetchLumaCalendarEvents(),
+      supabase
+        .from("membership_requests")
+        .select("id")
+        .eq("profile_id", userId)
+        .eq("estado", "aprobado")
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
   const internal = ((events ?? []) as AgendaEvent[]).map(internalEventToAgendaItem);
   const luma = lumaResult.ok ? lumaResult.events : [];
@@ -76,6 +84,11 @@ export default async function InicioPage() {
   const showCommunityHub = Boolean(profile && profile.tier !== "tourist");
 
   return (
-    <InicioHub events={eventItems} birthdays={birthdayRows} showCommunityHub={showCommunityHub} />
+    <InicioHub
+      events={eventItems}
+      birthdays={birthdayRows}
+      showCommunityHub={showCommunityHub}
+      memberConfirmed={Boolean(approvedRequest)}
+    />
   );
 }

@@ -52,6 +52,9 @@ export async function transitionRequest(
   });
 
   if (rpcError) {
+    if (rpcError.message?.includes("propia solicitud")) {
+      return { error: "No podés aprobar tu propia solicitud" };
+    }
     return { error: "No pudimos actualizar la solicitud" };
   }
 

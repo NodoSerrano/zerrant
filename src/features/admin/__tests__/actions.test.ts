@@ -88,6 +88,19 @@ describe("transitionRequest", () => {
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 
+  it("surfaces a self-approval rejection from the database", async () => {
+    setupAdmin();
+    mocks.rpc.mockResolvedValue({
+      data: null,
+      error: { message: "No podés aprobar tu propia solicitud" },
+    });
+
+    const result = await transitionRequest(null, makeFormData("aprobado"));
+
+    expect(result).toEqual({ error: "No podés aprobar tu propia solicitud" });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
   it("returns a generic error when the RPC call itself fails", async () => {
     setupAdmin();
     mocks.rpc.mockResolvedValue({ data: null, error: { message: "boom" } });

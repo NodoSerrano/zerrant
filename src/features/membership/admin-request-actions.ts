@@ -57,7 +57,7 @@ const ACTIONS: Partial<Record<MembershipRequestEstado, AdminRequestAction[]>> = 
     },
   ],
   entrevista_realizada: [
-    { to: "aprobado", label: "Aprobar como miembro", variant: "primary", icon: "check" },
+    { to: "aprobado", label: "Convertir en miembro", variant: "primary", icon: "check" },
   ],
 };
 

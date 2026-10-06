@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { TouristMenu } from "./TouristMenu";
 import { SerranoMenu } from "./SerranoMenu";
 import { PendingMembershipCard } from "./PendingMembershipCard";
+import { MemberConfirmedNotice } from "@/features/membership/MemberConfirmedNotice";
 import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 import { cn } from "@/lib/utils";
 import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "@/features/membership/request-state";
@@ -119,14 +120,25 @@ export default async function ProfilePage() {
     privada: "Privada",
   };
 
-  const [{ count: aportesCount }, { count: proyectosCount }] = await Promise.all([
-    supabase.from("aportes").select("id", { count: "exact", head: true }).eq("profile_id", user.id),
-    supabase
-      .from("project_members")
-      .select("project_id", { count: "exact", head: true })
-      .eq("profile_id", user.id)
-      .eq("estado", "aprobado"),
-  ]);
+  const [{ count: aportesCount }, { count: proyectosCount }, { data: approvedRequest }] =
+    await Promise.all([
+      supabase
+        .from("aportes")
+        .select("id", { count: "exact", head: true })
+        .eq("profile_id", user.id),
+      supabase
+        .from("project_members")
+        .select("project_id", { count: "exact", head: true })
+        .eq("profile_id", user.id)
+        .eq("estado", "aprobado"),
+      supabase
+        .from("membership_requests")
+        .select("id")
+        .eq("profile_id", user.id)
+        .eq("estado", "aprobado")
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -154,6 +166,8 @@ export default async function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {approvedRequest ? <MemberConfirmedNotice /> : null}
 
       <SerranoMenu
         disponibilidad={profile.disponibilidad ? dispMap[profile.disponibilidad] : null}

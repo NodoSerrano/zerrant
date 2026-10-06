@@ -32,6 +32,7 @@ const PRIMARY_SHELL_FILES = [
   "app/(app)/error.tsx",
   "features/system-states/SystemStateView.tsx",
   "features/home/InicioHub.tsx",
+  "features/membership/MemberConfirmedNotice.tsx",
 ] as const;
 
 const BANNED = [
