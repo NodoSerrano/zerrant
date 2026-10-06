@@ -56,4 +56,23 @@ describe("PendingMembershipCard", () => {
     const chip = screen.getByText(estadoLabel(estado)).closest("[data-estado-chip]");
     expect(chip?.className).toContain(cls);
   });
+
+  it("offers a booking link while the request can still pick a slot", () => {
+    render(<PendingMembershipCard estado="pendiente_coordinacion" />);
+    expect(screen.getByRole("link", { name: "Elegir horario" })).toHaveAttribute(
+      "href",
+      "/solicitar/entrevista",
+    );
+  });
+
+  it("shows the reserved slot instead of the picker when already booked", () => {
+    render(
+      <PendingMembershipCard
+        estado="pendiente_coordinacion"
+        bookingLabel="2026-10-07 · 15:00 – 15:30"
+      />,
+    );
+    expect(screen.getByText("Reservaste 2026-10-07 · 15:00 – 15:30")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Elegir horario" })).not.toBeInTheDocument();
+  });
 });

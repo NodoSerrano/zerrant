@@ -189,6 +189,84 @@ export type Database = {
           },
         ];
       };
+      interview_bookings: {
+        Row: {
+          created_at: string;
+          id: string;
+          profile_id: string;
+          request_id: string;
+          slot_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          profile_id: string;
+          request_id: string;
+          slot_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          profile_id?: string;
+          request_id?: string;
+          slot_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "interview_bookings_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "interview_bookings_request_id_fkey";
+            columns: ["request_id"];
+            isOneToOne: true;
+            referencedRelation: "membership_requests";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "interview_bookings_slot_id_fkey";
+            columns: ["slot_id"];
+            isOneToOne: true;
+            referencedRelation: "interview_slots";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      interview_slots: {
+        Row: {
+          created_at: string;
+          ends_at: string;
+          id: string;
+          interviewer_id: string;
+          starts_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          ends_at: string;
+          id?: string;
+          interviewer_id: string;
+          starts_at: string;
+        };
+        Update: {
+          created_at?: string;
+          ends_at?: string;
+          id?: string;
+          interviewer_id?: string;
+          starts_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "interview_slots_interviewer_id_fkey";
+            columns: ["interviewer_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       membership_request_events: {
         Row: {
           actor_id: string | null;
@@ -703,6 +781,18 @@ export type Database = {
       };
     };
     Views: {
+      interview_slot_availability: {
+        Row: {
+          booked: boolean | null;
+          ends_at: string | null;
+          id: string | null;
+          interviewer_id: string | null;
+          starts_at: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       profiles_with_rate: {
         Row: {
           apellido: string | null;
@@ -771,6 +861,25 @@ export type Database = {
       };
     };
     Functions: {
+      book_interview_slot: {
+        Args: { p_slot_id: string };
+        Returns: {
+          success?: boolean;
+          id?: string;
+          request_id?: string;
+          error?: string;
+          code?: "forbidden" | "not_found" | "invalid_slot" | "invalid_transition" | "conflict";
+        };
+      };
+      create_interview_slot: {
+        Args: { p_minutes?: number; p_starts_at: string };
+        Returns: {
+          success?: boolean;
+          id?: string;
+          error?: string;
+          code?: "forbidden" | "invalid_slot" | "conflict";
+        };
+      };
       is_non_tourist: { Args: never; Returns: boolean };
       is_platform_admin: { Args: never; Returns: boolean };
       is_project_admin: { Args: { p_project_id: string }; Returns: boolean };
