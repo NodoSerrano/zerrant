@@ -1,5 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { safeInternalPath } from "@/lib/safe-next";
+import {
+  MEMBERSHIP_FLOW_COOKIE,
+  MEMBERSHIP_FLOW_COOKIE_OPTIONS,
+  MEMBERSHIP_FLOW_VALUE,
+} from "@/features/membership/flow-cookie";
 
 function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -44,7 +50,7 @@ function updateSession(request: NextRequest) {
   return { response, supabase };
 }
 
-const PROTECTED_PREFIXES = ["/onboarding", "/profile", "/nodo"];
+const PROTECTED_PREFIXES = ["/onboarding", "/profile", "/nodo", "/solicitar"];
 const AUTH_PREFIXES = [
   "/auth/login",
   "/auth/signup",
@@ -91,7 +97,11 @@ export default async function proxy(request: NextRequest) {
   const isAuthPage = AUTH_PREFIXES.some((p) => underPrefix(pathname, p));
 
   if (user && isAuthPage) {
-    return NextResponse.redirect(new URL("/", request.url));
+    // Honor a safe deep-link target (ZER-136), but never another auth page:
+    // that would bounce straight back here.
+    const next = safeInternalPath(request.nextUrl.searchParams.get("next"));
+    const target = AUTH_PREFIXES.some((p) => underPrefix(next.split(/[?#]/, 1)[0], p)) ? "/" : next;
+    return NextResponse.redirect(new URL(target, request.url));
   }
 
   if (!user && isProtected) {
@@ -129,6 +139,16 @@ export default async function proxy(request: NextRequest) {
         headers: { "content-type": "text/html; charset=utf-8" },
       });
     }
+  }
+
+  // Entering through the /unirme deep link marks the membership flow (ZER-136).
+  // Set here because /unirme is a page, and pages cannot write cookies.
+  if (pathname === "/unirme") {
+    response.cookies.set(
+      MEMBERSHIP_FLOW_COOKIE,
+      MEMBERSHIP_FLOW_VALUE,
+      MEMBERSHIP_FLOW_COOKIE_OPTIONS,
+    );
   }
 
   return response;

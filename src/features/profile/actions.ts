@@ -3,6 +3,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { isMembershipFlow } from "@/features/membership/flow-cookie";
+import { resolveUnirmeTarget } from "@/features/membership/pipeline";
+import { loadMembershipPipeline } from "@/features/membership/pipeline-server";
 import {
   AVATAR_BUCKET,
   AVATAR_MAX_BYTES,
@@ -273,6 +277,12 @@ export async function saveOnboardingStep2(
   }
 
   revalidatePath("/", "layout");
+  // Entered through /unirme: continue to the next pipeline step instead of the
+  // tourist profile (ZER-136). Resolved here, never via /unirme, so the
+  // browser URL matches the screen and its forms post to the right route (bug-375).
+  if (isMembershipFlow(await cookies())) {
+    redirect(resolveUnirmeTarget(await loadMembershipPipeline(supabase)));
+  }
   redirect("/profile");
 }
 
