@@ -68,6 +68,20 @@ describe("Step1Form", () => {
     expect(screen.getByLabelText("Fecha de nacimiento")).toHaveAttribute("type", "date");
   });
 
+  it("birth date field is native date with min/max bounds (mobile-friendly)", () => {
+    render(<Step1Form />);
+
+    const birth = screen.getByLabelText("Fecha de nacimiento");
+    expect(birth).toHaveAttribute("type", "date");
+    expect(birth).toHaveAttribute("name", "fecha_nacimiento");
+    expect(birth).toHaveAttribute("min", "1900-01-01");
+    expect(birth).toHaveAttribute("max");
+    const max = birth.getAttribute("max");
+    expect(max).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(max! <= new Date().toISOString().slice(0, 10)).toBe(true);
+    expect(birth).toHaveAttribute("autoComplete", "bday");
+  });
+
   it("marks nombre, apellido and fecha de nacimiento as required — apodo is not", () => {
     render(<Step1Form />);
 

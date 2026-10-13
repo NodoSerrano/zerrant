@@ -191,6 +191,51 @@ describe("saveOnboardingStep1", () => {
     },
   );
 
+  it("capitalizes nombre and apellido with particles (ZER-139)", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = new FormData();
+    fd.set("nombre", "maría josé");
+    fd.set("apellido", "de la cruz");
+    fd.set("fecha_nacimiento", "1990-01-15");
+
+    try {
+      await saveOnboardingStep1(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nombre: "María José",
+        apellido: "De la Cruz",
+        fecha_nacimiento: "1990-01-15",
+      }),
+    );
+  });
+
+  it("does not title-case apodo (intentional casing)", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = new FormData();
+    fd.set("nombre", "Juan");
+    fd.set("apellido", "Pérez");
+    fd.set("apodo", "juaNcho");
+    fd.set("fecha_nacimiento", "1990-01-15");
+
+    try {
+      await saveOnboardingStep1(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ apodo: "juaNcho" }),
+    );
+  });
+
   // Step 1's form has no tarifa, bio or contacto inputs: a handcrafted POST must
   // not reach columns this step does not own.
   it.each([
@@ -498,6 +543,29 @@ describe("updateProfile", () => {
         nombre: "Juan",
         apellido: "Pérez",
         apodo: "juancito",
+      }),
+    );
+  });
+
+  it("capitalizes nombre and apellido on edit (ZER-139)", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = new FormData();
+    fd.set("nombre", "maría josé");
+    fd.set("apellido", "de la cruz");
+    fd.set("fecha_nacimiento", "1990-01-15");
+
+    try {
+      await updateProfile(null, fd);
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nombre: "María José",
+        apellido: "De la Cruz",
       }),
     );
   });
