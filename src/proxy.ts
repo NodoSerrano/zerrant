@@ -1,5 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
+import { publicSiteUrl } from "@/lib/public-url";
 
 function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -20,6 +22,7 @@ function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
+      cookieOptions: supabaseCookieOptions(),
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -57,6 +60,12 @@ const AUTH_PREFIXES = [
 // are real failures and are handled differently.
 const NO_ROWS = "PGRST116";
 
+function appUrl(request: NextRequest, path: string): string {
+  const site = publicSiteUrl();
+  if (process.env.NEXT_PUBLIC_SITE_URL) return `${site}${path}`;
+  return new URL(path, request.url).toString();
+}
+
 /** Segment-aware match: `/nodo` must not capture `/nodocosas`. */
 function underPrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
@@ -91,11 +100,11 @@ export default async function proxy(request: NextRequest) {
   const isAuthPage = AUTH_PREFIXES.some((p) => underPrefix(pathname, p));
 
   if (user && isAuthPage) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(appUrl(request, "/"));
   }
 
   if (!user && isProtected) {
-    const loginUrl = new URL("/auth/login", request.url);
+    const loginUrl = new URL(appUrl(request, "/auth/login"));
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }

@@ -1,3 +1,4 @@
+import { publicSiteUrl } from "@/lib/public-url";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -13,7 +14,9 @@ const OTP_TYPES = new Set<string>([
 ]);
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const requestUrl = new URL(request.url);
+  const origin = publicSiteUrl(requestUrl.origin);
+  const searchParams = requestUrl.searchParams;
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type");
