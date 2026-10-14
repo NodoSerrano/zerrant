@@ -64,4 +64,6 @@ export type ProjectDetailViewModel = {
   showRequestsQueue: boolean;
   /** Viewer is project admin — may promote aprobado miembros. */
   canPromoteMembers: boolean;
+  /** Viewer is project admin — may edit metadata and archive. */
+  canEdit: boolean;
 };
