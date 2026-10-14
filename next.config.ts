@@ -17,13 +17,18 @@ const withSerwist = withSerwistInit({
   swSrc: "src/app/sw.ts",
   swDest: "public/sw.js",
   // Serwist classic webpack path — Next 16 Turbopack needs --webpack for this plugin.
-  disable: process.env.NODE_ENV === "development",
+  // Subpath hosting (basePath) registers the worker at the wrong scope; skip it there.
+  disable: process.env.NODE_ENV === "development" || Boolean(process.env.NEXT_PUBLIC_BASE_PATH),
   cacheOnNavigation: true,
   reloadOnOnline: true,
   additionalPrecacheEntries: [{ url: OFFLINE_FALLBACK_PATH, revision }],
 });
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.replace(/\/$/, "") || "";
+
 const nextConfig: NextConfig = {
+  ...(basePath ? { basePath } : {}),
+  output: "standalone",
   allowedDevOrigins: ["*"],
   reactCompiler: false,
   images: {
