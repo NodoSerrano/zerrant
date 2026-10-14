@@ -120,7 +120,14 @@ describe("EditProjectPage", () => {
     expect(screen.getByRole("button", { name: "Guardar cambios" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Archivar proyecto" }));
-    expect(screen.getByRole("dialog", { name: "Confirmar archivo" })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Archivar proyecto" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Sí, archivar" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Volver" })).toBeInTheDocument();
     expect(screen.getByText(/miembros y las solicitudes/i)).toBeInTheDocument();
+    expect(screen.getByText(/Terminado no bloquea/i)).toBeInTheDocument();
   });
 });

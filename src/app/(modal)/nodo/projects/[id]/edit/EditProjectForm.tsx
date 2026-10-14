@@ -43,18 +43,27 @@ export function EditProjectForm({ projectId, defaults }: EditProjectFormProps) {
         hiddenFields={{ projectId }}
       />
 
-      <div className="flex justify-center pt-1">
+      <div className="flex w-full flex-col items-center gap-3 pt-1">
+        <button
+          type="button"
+          aria-expanded={confirming}
+          aria-controls="archive-confirm"
+          onClick={() => setConfirming(true)}
+          className="inline-flex items-center justify-center font-display text-[15px] font-medium text-coral focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
+        >
+          Archivar proyecto
+        </button>
         {confirming ? (
           <form
+            id="archive-confirm"
             action={archiveAction}
             className="flex w-full flex-col gap-3 rounded-2xl border border-border bg-surface p-4"
-            role="dialog"
-            aria-label="Confirmar archivo"
           >
             <input type="hidden" name="projectId" value={projectId} />
             <p className="font-body text-sm text-text-primary">
               El proyecto queda como Terminado. Los miembros y las solicitudes de ingreso siguen en
-              este proyecto.
+              este proyecto. Terminado no bloquea el proyecto: un admin puede volver a Idea o En
+              curso.
             </p>
             {archiveState?.error ? (
               <p role="alert" className="font-body text-xs text-coral">
@@ -79,15 +88,7 @@ export function EditProjectForm({ projectId, defaults }: EditProjectFormProps) {
               </button>
             </div>
           </form>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setConfirming(true)}
-            className="inline-flex items-center justify-center font-display text-[15px] font-medium text-coral focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
-          >
-            Archivar proyecto
-          </button>
-        )}
+        ) : null}
       </div>
     </div>
   );
