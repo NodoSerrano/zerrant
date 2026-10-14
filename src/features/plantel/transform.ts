@@ -1,7 +1,6 @@
 import { telegramHref } from "./visibility";
 import type { AporteListItem } from "@/features/aportes/types";
 import type {
-  Disponibilidad,
   MemberProjectPreview,
   SerranoMember,
   SerranoMemberDetail,
@@ -16,11 +15,10 @@ type ProfileRow = {
   nombre_visible: "apodo" | "nombre_apellido" | "apellido_nombre";
   avatar_url: string | null;
   tier: "tourist" | "scholar" | "standard" | "founder";
-  disponibilidad: Disponibilidad | null;
   is_platform_admin?: boolean | null;
 };
 
-type DetailProfileRow = Omit<ProfileRow, "disponibilidad"> & {
+type DetailProfileRow = ProfileRow & {
   bio: string | null;
   contacto_telegram: string | null;
 };
@@ -28,18 +26,7 @@ type DetailProfileRow = Omit<ProfileRow, "disponibilidad"> & {
 type RoleAssignment = { profile_id: string; roles: { nombre: string } | null };
 type SkillAssignment = { profile_id: string; skills: { nombre: string } | null };
 
-const AVAILABILITY_LABELS: Record<Disponibilidad, string> = {
-  disponible: "Disponible",
-  ocupado: "Ocupado",
-  solo_eventos: "Solo eventos",
-};
-
-export function availabilityLabel(disponibilidad: Disponibilidad | null): string | null {
-  if (!disponibilidad) return null;
-  return AVAILABILITY_LABELS[disponibilidad];
-}
-
-function visibleName(profile: Omit<ProfileRow, "disponibilidad">): string {
+function visibleName(profile: ProfileRow): string {
   switch (profile.nombre_visible) {
     case "apodo":
       if (profile.apodo) return profile.apodo;
@@ -107,7 +94,6 @@ export function buildSerranoMembers(
       apodo: profile.apodo,
       avatarUrl: profile.avatar_url,
       tier: profile.tier as SerranoTier,
-      disponibilidad: profile.disponibilidad,
       roles: rolesByProfile.get(profile.id) ?? [],
       skills: skillsByProfile.get(profile.id) ?? [],
       isPlatformAdmin: profile.is_platform_admin === true,

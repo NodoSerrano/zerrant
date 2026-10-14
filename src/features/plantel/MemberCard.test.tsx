@@ -27,7 +27,6 @@ const member: SerranoMember = {
   apodo: null,
   avatarUrl: null,
   tier: "standard",
-  disponibilidad: "disponible",
   roles: ["Infra", "Charlas"],
   skills: ["Solidity"],
   isPlatformAdmin: false,
@@ -73,16 +72,12 @@ describe("MemberCard", () => {
     expect(screen.queryByText("Admin")).not.toBeInTheDocument();
   });
 
-  it("renders availability dot and label for disponible", () => {
+  it("does not render availability", () => {
     render(<MemberCard member={member} />);
-    expect(screen.getByText("Disponible")).toBeInTheDocument();
-  });
-
-  it("uses a green dot for disponible", () => {
-    render(<MemberCard member={member} />);
-    const dot = document.querySelector(".size-1\\.5.rounded-full");
-    expect(dot).not.toBeNull();
-    expect(dot!.className).toContain("bg-brand-green");
+    expect(screen.queryByText("Disponible")).not.toBeInTheDocument();
+    expect(screen.queryByText("Ocupado")).not.toBeInTheDocument();
+    expect(screen.queryByText("Solo eventos")).not.toBeInTheDocument();
+    expect(document.querySelector(".size-1\\.5.rounded-full")).toBeNull();
   });
 
   it("renders one RoleChip per role", () => {
@@ -97,15 +92,4 @@ describe("MemberCard", () => {
     expect(chevron.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders Ocupado with a muted dot", () => {
-    render(<MemberCard member={{ ...member, disponibilidad: "ocupado" }} />);
-    expect(screen.getByText("Ocupado")).toBeInTheDocument();
-    const dot = document.querySelector(".size-1\\.5.rounded-full");
-    expect(dot!.className).toContain("bg-text-muted");
-  });
-
-  it("omits availability when null", () => {
-    render(<MemberCard member={{ ...member, disponibilidad: null }} />);
-    expect(screen.queryByText("Disponible")).not.toBeInTheDocument();
-  });
 });
