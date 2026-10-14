@@ -9,6 +9,7 @@ export type InicioEventItem = {
   id: string;
   title: string;
   timeLabel: string;
+  durationLabel?: string | null;
   place: string | null;
   href: string;
   coverUrl?: string | null;
@@ -96,6 +97,7 @@ export function InicioHub({ events, birthdays, showCommunityHub = false }: Inici
                 href={event.href}
                 title={event.title}
                 timeLabel={event.timeLabel}
+                durationLabel={event.durationLabel}
                 place={event.place}
                 coverUrl={event.coverUrl}
               />

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { formatDayKey, formatEventTimeRange } from "@/features/events/day";
+import { formatDayKey, formatEventDuration, formatEventTimeRange } from "@/features/events/day";
 import type { AgendaEvent } from "@/features/events/types";
 import { fetchLumaCalendarEvents } from "@/features/events/luma-client";
 import {
@@ -64,6 +64,7 @@ export default async function InicioPage() {
       id: event.id,
       title: event.title,
       timeLabel,
+      durationLabel: formatEventDuration(event.inicio, event.fin),
       place: event.place,
       href: event.href,
       coverUrl: event.coverUrl,

@@ -1,9 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { cn } from "@/lib/utils";
+import { DateField } from "./DateField";
+import { TimeField } from "./TimeField";
+import { clampEnd, formatDuration } from "./timeOptions";
 import type { EventFormDefaults } from "./types";
 
 const GROUP_LABEL = "text-[13px] font-medium text-text-secondary";
@@ -27,6 +31,18 @@ export function EventForm({
   hiddenFields,
 }: EventFormProps) {
   const [state, formAction, pending] = useGuardedActionState(action, null);
+  const [titulo, setTitulo] = useState(defaults?.titulo ?? "");
+  const [fecha, setFecha] = useState(defaults?.fecha ?? "");
+  const [inicio, setInicio] = useState(defaults?.inicio ?? "");
+  const [fin, setFin] = useState(defaults?.fin ?? "");
+  const [lugar, setLugar] = useState(defaults?.lugar ?? "");
+  const ready = [titulo, fecha, inicio, fin, lugar].every((field) => field.trim() !== "");
+  const duration = formatDuration(inicio, fin);
+
+  function changeInicio(next: string) {
+    setInicio(next);
+    setFin((current) => clampEnd(next, current));
+  }
 
   return (
     <form action={formAction} className="flex flex-col gap-[18px]">
@@ -40,7 +56,8 @@ export function EventForm({
           name="titulo"
           label="Título"
           placeholder="Ej: Charla sobre ZK Proofs"
-          defaultValue={defaults?.titulo}
+          value={titulo}
+          onChange={(event) => setTitulo(event.target.value)}
           required
         />
 
@@ -61,28 +78,37 @@ export function EventForm({
           />
         </div>
 
-        <Input name="fecha" label="Fecha" type="date" defaultValue={defaults?.fecha} required />
-
-        <div className="flex gap-3">
-          <div className="min-w-0 flex-1">
-            <Input
-              name="inicio"
-              label="Inicio"
-              type="time"
-              defaultValue={defaults?.inicio}
-              required
-            />
+        <div className="flex flex-col gap-3 rounded-[18px] border border-border bg-surface-inset p-3">
+          <p className="font-display text-[13px] font-medium text-text-secondary">Cuándo</p>
+          <DateField name="fecha" label="Fecha" value={fecha} onChange={setFecha} required />
+          <div className="flex gap-3">
+            <div className="min-w-0 flex-1">
+              <TimeField
+                name="inicio"
+                label="Inicio"
+                value={inicio}
+                onChange={changeInicio}
+                required
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <TimeField name="fin" label="Fin" value={fin} onChange={setFin} notBefore={inicio} />
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <Input name="fin" label="Fin" type="time" defaultValue={defaults?.fin} />
-          </div>
+          {duration ? (
+            <p className="text-right font-display text-[13px] font-medium text-text-primary">
+              Dura {duration}
+            </p>
+          ) : null}
         </div>
 
         <Input
           name="lugar"
           label="Lugar"
-          placeholder="Espacio Nodo"
-          defaultValue={defaults?.lugar}
+          placeholder="¿Dónde?"
+          value={lugar}
+          onChange={(event) => setLugar(event.target.value)}
+          required
         />
       </div>
 
@@ -92,7 +118,11 @@ export function EventForm({
         </p>
       ) : null}
 
-      <PrimaryButton type="submit" disabled={pending} className="w-full">
+      <PrimaryButton
+        type="submit"
+        disabled={pending || !ready}
+        className="w-full disabled:bg-surface disabled:text-text-muted disabled:opacity-100 disabled:shadow-none disabled:[background-image:none]"
+      >
         {pending ? pendingLabel : submitLabel}
       </PrimaryButton>
     </form>

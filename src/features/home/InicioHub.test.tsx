@@ -68,7 +68,7 @@ describe("InicioHub", () => {
       />,
     );
     expect(screen.getByText("Asamblea")).toBeInTheDocument();
-    expect(screen.getByText("Salón")).toBeInTheDocument();
+    expect(screen.getByText(/Salón/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Asamblea/i })).toHaveAttribute("href", "/agenda/e1");
     expect(screen.queryByText("No hay eventos próximos")).not.toBeInTheDocument();
   });
