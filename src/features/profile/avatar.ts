@@ -2,6 +2,8 @@ export const AVATAR_BUCKET = "avatars";
 
 export const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 
+export const AVATAR_TOO_LARGE_ERROR = "La imagen no puede superar los 5 MB";
+
 /** Formats we accept from the user. HEIC gets in but is converted before uploading. */
 export const AVATAR_ACCEPTED_TYPES = [
   "image/jpeg",
@@ -37,7 +39,7 @@ export function validateAvatarFile(file: unknown): string | null {
   }
 
   if (file.size > AVATAR_MAX_BYTES) {
-    return "La imagen no puede superar los 5 MB";
+    return AVATAR_TOO_LARGE_ERROR;
   }
 
   return null;

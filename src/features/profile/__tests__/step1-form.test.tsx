@@ -28,13 +28,25 @@ describe("Step1Form", () => {
     expect(screen.getByText("Así el resto de la comunidad te conoce.")).toBeInTheDocument();
   });
 
+  it("explains why the photo matters, keeping it optional", () => {
+    render(<Step1Form />);
+
+    expect(
+      screen.getByText("Necesitamos una foto clara para poder reconocerte."),
+    ).toBeInTheDocument();
+    for (const input of document.querySelectorAll('input[type="file"]')) {
+      expect(input).not.toBeRequired();
+    }
+  });
+
   it("has no back control (onboarding cannot be skipped)", () => {
     render(<Step1Form />);
 
     // Step 1's only controls are the photo and the submit: any "back"
     // chevron (link or button) would show up here.
     expect(screen.getAllByRole("button").map((el) => el.textContent)).toEqual([
-      "Agregar foto",
+      "Subir foto",
+      "Sacar foto",
       "Guardar y continuar",
     ]);
     expect(screen.queryAllByRole("link")).toHaveLength(0);
@@ -87,7 +99,7 @@ describe("Step1Form", () => {
   it("renders the photo control wired to the upload pipeline", () => {
     render(<Step1Form />);
 
-    expect(screen.getByText("Agregar foto")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Subir foto" })).toBeInTheDocument();
     expect(document.querySelector('input[type="file"]')).toHaveAttribute("name", "avatar");
   });
 
@@ -96,7 +108,7 @@ describe("Step1Form", () => {
     render(<Step1Form avatarUrl="https://sb.test/storage/v1/object/public/avatars/u/a.jpg" />);
 
     expect(screen.getByRole("img", { name: "Foto de perfil" })).toBeInTheDocument();
-    expect(screen.getByText("Cambiar foto")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Subir foto" })).toBeInTheDocument();
   });
 
   it("prefills the fields with the saved profile data", () => {

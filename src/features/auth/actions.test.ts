@@ -309,3 +309,102 @@ describe("signOut", () => {
     expect(authMock.signOut).toHaveBeenCalled();
   });
 });
+
+describe("next propagation (ZER-136)", () => {
+  const creds = (next?: string) => {
+    const fd = new FormData();
+    fd.set("email", "newuser@example.com");
+    fd.set("password", "newpass456");
+    if (next !== undefined) fd.set("next", next);
+    return fd;
+  };
+
+  it("signIn redirects to a safe next", async () => {
+    authMock.signInWithPassword.mockResolvedValue({ error: null });
+
+    await expect(signInWithPassword(null, creds("/unirme"))).rejects.toThrow(
+      "NEXT_REDIRECT:/unirme",
+    );
+  });
+
+  it("signIn ignores an unsafe next", async () => {
+    authMock.signInWithPassword.mockResolvedValue({ error: null });
+
+    await expect(signInWithPassword(null, creds("//evil.com"))).rejects.toThrow("NEXT_REDIRECT:/");
+    expect(navigationMocks.redirect).toHaveBeenCalledWith("/");
+  });
+
+  it("signUp threads next into emailRedirectTo and check-email", async () => {
+    authMock.signUp.mockResolvedValue({ data: { session: null, user: { id: "u1" } }, error: null });
+
+    await expect(signUpWithPassword(null, creds("/unirme"))).rejects.toThrow(
+      "NEXT_REDIRECT:/auth/check-email?email=newuser%40example.com&flow=signup&next=%2Funirme",
+    );
+    expect(authMock.signUp).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: { emailRedirectTo: "http://localhost:3000/auth/callback?next=%2Funirme" },
+      }),
+    );
+  });
+
+  it("signUp with live session redirects to the safe next", async () => {
+    authMock.signUp.mockResolvedValue({
+      data: { session: { access_token: "tok" }, user: { id: "u1" } },
+      error: null,
+    });
+
+    await expect(signUpWithPassword(null, creds("/unirme"))).rejects.toThrow(
+      "NEXT_REDIRECT:/unirme",
+    );
+  });
+
+  it("signUp drops an unsafe next everywhere", async () => {
+    authMock.signUp.mockResolvedValue({ data: { session: null, user: { id: "u1" } }, error: null });
+
+    await expect(signUpWithPassword(null, creds("@evil.com"))).rejects.toThrow(
+      "NEXT_REDIRECT:/auth/check-email?email=newuser%40example.com&flow=signup",
+    );
+    expect(authMock.signUp).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: { emailRedirectTo: "http://localhost:3000/auth/callback" },
+      }),
+    );
+  });
+
+  it("resend threads a safe next into emailRedirectTo", async () => {
+    authMock.resend.mockResolvedValue({ data: {}, error: null });
+    const fd = new FormData();
+    fd.set("email", "newuser@example.com");
+    fd.set("next", "/unirme");
+
+    await resendSignupEmail(null, fd);
+
+    expect(authMock.resend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: { emailRedirectTo: "http://localhost:3000/auth/callback?next=%2Funirme" },
+      }),
+    );
+  });
+
+  it("Google threads a safe next into redirectTo", async () => {
+    authMock.signInWithOAuth.mockResolvedValue({ data: { url: "https://g" }, error: null });
+    const fd = new FormData();
+    fd.set("next", "/unirme");
+
+    await expect(signInWithGoogle(fd)).rejects.toThrow("NEXT_REDIRECT:https://g");
+    expect(authMock.signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: { redirectTo: "http://localhost:3000/auth/callback?next=%2Funirme" },
+    });
+  });
+
+  it("Google keeps a safe next on the error redirect", async () => {
+    authMock.signInWithOAuth.mockResolvedValue({ data: null, error: { message: "x" } });
+    const fd = new FormData();
+    fd.set("next", "/unirme");
+
+    await expect(signInWithGoogle(fd)).rejects.toThrow(
+      "NEXT_REDIRECT:/auth/login?error=x&next=%2Funirme",
+    );
+  });
+});

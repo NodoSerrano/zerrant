@@ -28,7 +28,7 @@ vi.mock("@/lib/supabase/server", () => ({
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
               in: mocks.activeIn.mockReturnValue({
-                maybeSingle: mocks.pendingMaybeSingle,
+                limit: vi.fn(() => ({ maybeSingle: mocks.pendingMaybeSingle })),
               }),
             })),
           })),
@@ -214,7 +214,35 @@ describe("createMembershipRequest", () => {
     const result = await createMembershipRequest(null, new FormData());
 
     expect(result).toEqual({ error: "Ya tenés una solicitud en curso." });
-    expect(mocks.activeIn).toHaveBeenCalledWith("estado", MEMBERSHIP_REQUEST_ACTIVE_ESTADOS);
+    expect(mocks.activeIn).toHaveBeenCalledWith("estado", [
+      ...MEMBERSHIP_REQUEST_ACTIVE_ESTADOS,
+      "cerrada",
+    ]);
+    expect(mocks.membershipInsert).not.toHaveBeenCalled();
+  });
+
+  it("rejects re-application after a cerrada request without inserting (ZER-136, ZER-180)", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "tourist" }, error: null });
+    mocks.pendingMaybeSingle.mockResolvedValue({ data: { estado: "cerrada" }, error: null });
+
+    const result = await createMembershipRequest(null, screeningForm());
+
+    expect(result).toEqual({
+      error: "Tu solicitud anterior fue cerrada. Por ahora no podés enviar una nueva.",
+    });
+    expect(mocks.membershipInsert).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when the existing-request read fails", async () => {
+    setupAuth();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "tourist" }, error: null });
+    mocks.pendingMaybeSingle.mockResolvedValue({ data: null, error: { code: "500" } });
+
+    const result = await createMembershipRequest(null, screeningForm());
+
+    expect(result).toEqual({ error: "No pudimos enviar tu solicitud. Probá de nuevo." });
     expect(mocks.membershipInsert).not.toHaveBeenCalled();
   });
 

@@ -2,7 +2,9 @@
 
 export const dynamic = "force-dynamic";
 
+import { Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Mountain } from "lucide-react";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -12,9 +14,12 @@ import { isGoogleAuthEnabled } from "@/features/auth/google-auth-enabled";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 import { cn } from "@/lib/utils";
+import { safeInternalPath, withNext } from "@/lib/safe-next";
+import { NextField } from "@/features/auth/NextField";
 
-export default function SignupPage() {
+function SignupForm() {
   const [state, action, pending] = useGuardedActionState(signUpWithPassword, null);
+  const next = safeInternalPath(useSearchParams().get("next"));
   const showGoogleAuth = isGoogleAuthEnabled();
 
   return (
@@ -37,6 +42,7 @@ export default function SignupPage() {
       </div>
 
       <form action={action} className="flex flex-col gap-[14px]">
+        <NextField next={next} />
         <Input name="email" type="email" label="Email" placeholder="tu@email.com" required />
         <Input
           name="password"
@@ -65,6 +71,7 @@ export default function SignupPage() {
           </div>
 
           <form action={signInWithGoogle}>
+            <NextField next={next} />
             <SecondaryButton type="submit" className="w-full">
               Continuar con Google
             </SecondaryButton>
@@ -74,10 +81,22 @@ export default function SignupPage() {
 
       <div className="flex items-center justify-center gap-[5px]">
         <span className="text-[13px] text-text-secondary">¿Ya tenés cuenta?</span>
-        <Link href="/auth/login" className="text-[13px] font-semibold text-coral hover:underline">
+        <Link
+          href={withNext("/auth/login", next)}
+          className="text-[13px] font-semibold text-coral hover:underline"
+        >
           Iniciá sesión
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  // Webpack production prerender requires Suspense around useSearchParams (Next 16).
+  return (
+    <Suspense fallback={null}>
+      <SignupForm />
+    </Suspense>
   );
 }

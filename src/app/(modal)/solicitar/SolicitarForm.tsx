@@ -3,8 +3,10 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Info, UserPlus } from "lucide-react";
+import { PipelineProgress } from "@/components/PipelineProgress";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { Input } from "@/components/Input";
+import type { PipelineProgress as PipelineProgressData } from "@/features/membership/pipeline";
 import { createMembershipRequest } from "@/features/membership/actions";
 import {
   APORTE_ACTITUD_LABELS,
@@ -136,7 +138,7 @@ function StepDots({ step }: { step: number }) {
   );
 }
 
-export function SolicitarForm() {
+export function SolicitarForm({ progress }: { progress?: PipelineProgressData }) {
   const [state, action, pending] = useGuardedActionState(createMembershipRequest, null);
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -192,7 +194,7 @@ export function SolicitarForm() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
+      <div className={cn("flex items-center", progress ? "gap-4" : "justify-between")}>
         <button
           type="button"
           aria-label="Volver"
@@ -201,9 +203,21 @@ export function SolicitarForm() {
         >
           <ChevronLeft className="size-6 text-text-primary" />
         </button>
-        <p className="font-display text-[13px] font-medium text-text-muted">{stepTitle}</p>
-        <span aria-hidden="true" className="size-6" />
+        {progress ? (
+          <PipelineProgress progress={progress} className="flex-1" />
+        ) : (
+          <>
+            <p className="font-display text-[13px] font-medium text-text-muted">{stepTitle}</p>
+            <span aria-hidden="true" className="size-6" />
+          </>
+        )}
       </div>
+
+      {progress ? (
+        <p className="text-center font-display text-[13px] font-medium text-text-muted">
+          {stepTitle}
+        </p>
+      ) : null}
 
       <StepDots step={step} />
 

@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Input } from "@/components/Input";
+import { PipelineProgress } from "@/components/PipelineProgress";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import type { PipelineProgress as PipelineProgressData } from "@/features/membership/pipeline";
 import { saveOnboardingStep2 } from "@/features/profile/actions";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 
@@ -15,22 +17,28 @@ export interface Step2Defaults {
 
 interface Step2FormProps {
   defaults?: Step2Defaults;
+  /** Membership flow (ZER-136): replaces "Paso 2 de 2" with the pipeline progress. */
+  progress?: PipelineProgressData;
 }
 
-export function Step2Form({ defaults }: Step2FormProps) {
+export function Step2Form({ defaults, progress }: Step2FormProps) {
   const [state, action, pending] = useGuardedActionState(saveOnboardingStep2, null);
 
   return (
     <div className="flex flex-col gap-[22px]">
-      <div className="flex justify-between items-center">
+      <div className={progress ? "flex items-center gap-4" : "flex justify-between items-center"}>
         <Link
           href="/onboarding/step1"
           aria-label="Volver al paso 1"
-          className="inline-flex text-text-primary"
+          className="-ml-2.5 inline-flex size-11 shrink-0 items-center justify-center rounded-md text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
         >
           <ChevronLeft className="w-6 h-6" aria-hidden />
         </Link>
-        <p className="text-[13px] font-medium text-text-muted">Paso 2 de 2</p>
+        {progress ? (
+          <PipelineProgress progress={progress} className="flex-1" />
+        ) : (
+          <p className="text-[13px] font-medium text-text-muted">Paso 2 de 2</p>
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
