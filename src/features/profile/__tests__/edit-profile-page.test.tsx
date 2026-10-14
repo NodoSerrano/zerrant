@@ -91,7 +91,7 @@ describe("EditProfilePage", () => {
   it("renders the AvatarPicker", async () => {
     render(await EditProfilePage());
 
-    expect(screen.getByText("Agregar foto")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Subir foto" })).toBeInTheDocument();
   });
 
   it("prefills form fields from profile", async () => {

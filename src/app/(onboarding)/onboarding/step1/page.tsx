@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getOnboardingGateProfile } from "@/features/profile/onboarding-gate-server";
 import { NO_ROWS } from "@/features/profile/onboarding-gate";
+import { getFlowProgress } from "@/features/membership/flow-progress";
 import { Step1Form } from "./Step1Form";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +45,8 @@ export default async function OnboardingStep1() {
     return <PrefillLoadError />;
   }
 
+  const progress = await getFlowProgress("perfil");
+
   return (
     <Step1Form
       defaults={{
@@ -53,6 +56,7 @@ export default async function OnboardingStep1() {
         fecha_nacimiento: profile?.fecha_nacimiento,
       }}
       avatarUrl={profile?.avatar_url}
+      progress={progress ?? undefined}
     />
   );
 }
