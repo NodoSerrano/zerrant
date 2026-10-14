@@ -22,10 +22,13 @@ describe("mapInicioEvents", () => {
     expect(item.title).toBe("Asamblea");
   });
 
-  it("prefixes the civil day when the event is not today", () => {
+  it("keeps the civil day on the card date block, not in the time line", () => {
     const now = new Date("2026-09-19T12:00:00-03:00");
     const [item] = mapInicioEvents([base], now);
-    expect(item.timeLabel).toContain("2026-09-20");
+    expect(item.dateLabel).toMatch(/20/);
+    expect(item.dateLabel).toMatch(/sept/);
     expect(item.timeLabel).toMatch(/18:00/);
+    expect(item.timeLabel).not.toContain("2026-09-20");
+    expect(item.durationLabel).toBe("2 h");
   });
 });
