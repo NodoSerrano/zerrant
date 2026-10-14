@@ -446,7 +446,7 @@ describe("saveOnboardingStep2", () => {
 });
 
 describe("updateProfile", () => {
-  it("updates profile with numeric tarifa_hora and redirects on success", async () => {
+  it("updates the identity fields and does not write availability or rates", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
     mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
 
@@ -459,6 +459,7 @@ describe("updateProfile", () => {
     fd.set("disponibilidad", "disponible");
     fd.set("visibilidad_tarifa", "publica");
     fd.set("tarifa_hora", "50");
+    fd.set("tarifa_dia", "400");
 
     try {
       await updateProfile(null, fd);
@@ -472,10 +473,12 @@ describe("updateProfile", () => {
       apodo: "juancito",
       nombre_visible: "nombre_apellido",
       fecha_nacimiento: "1990-01-15",
-      disponibilidad: "disponible",
-      visibilidad_tarifa: "publica",
-      tarifa_hora: 50,
     });
+    const update = mocks.profilesUpdate.mock.calls[0][0];
+    expect(update).not.toHaveProperty("disponibilidad");
+    expect(update).not.toHaveProperty("visibilidad_tarifa");
+    expect(update).not.toHaveProperty("tarifa_hora");
+    expect(update).not.toHaveProperty("tarifa_dia");
     expect(mocks.profilesUpdateEq).toHaveBeenCalledWith("id", "test-user-id");
   });
 
@@ -615,12 +618,11 @@ describe("updateProfile", () => {
     expect(mocks.profilesUpdate).not.toHaveBeenCalled();
   });
 
-  // `Number()` would silently turn these into 16, 1000 and 1e21: a tarifa is a
-  // plain decimal, so anything else is rejected instead of transformed.
-  it.each(["abc", "-5", "0x10", "1e3", "Infinity", "1,5"])(
-    "rejects %s as tarifa_hora without touching the DB",
+  it.each(["abc", "-5", "0x10", "1e3", "Infinity", "1,5", "50", ""])(
+    "ignores tarifa_hora value %s and still saves the profile",
     async (tarifa) => {
       mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+      mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
 
       const fd = new FormData();
       fd.set("nombre", "Juan");
@@ -628,54 +630,16 @@ describe("updateProfile", () => {
       fd.set("fecha_nacimiento", "1990-01-15");
       fd.set("tarifa_hora", tarifa);
 
-      const result = await updateProfile(null, fd);
+      try {
+        await updateProfile(null, fd);
+      } catch {
+        // redirect throws
+      }
 
-      expect(result).toEqual({ error: "Ingresá una tarifa por hora válida" });
-      expect(mocks.profilesUpdate).not.toHaveBeenCalled();
+      expect(mocks.profilesUpdate).toHaveBeenCalled();
+      expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty("tarifa_hora");
     },
   );
-
-  it.each(["50", "50.5", "0"])("accepts %s as tarifa_hora", async (tarifa) => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    const fd = new FormData();
-    fd.set("nombre", "Juan");
-    fd.set("apellido", "Pérez");
-    fd.set("fecha_nacimiento", "1990-01-15");
-    fd.set("tarifa_hora", tarifa);
-
-    try {
-      await updateProfile(null, fd);
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ tarifa_hora: Number(tarifa) }),
-    );
-  });
-
-  it("clears tarifa_hora when the field is sent empty", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    const fd = new FormData();
-    fd.set("nombre", "Juan");
-    fd.set("apellido", "Pérez");
-    fd.set("fecha_nacimiento", "1990-01-15");
-    fd.set("tarifa_hora", "");
-
-    try {
-      await updateProfile(null, fd);
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ tarifa_hora: null }),
-    );
-  });
 });
 
 const PNG_BYTES = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);

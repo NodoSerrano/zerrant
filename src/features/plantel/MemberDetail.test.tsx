@@ -26,11 +26,9 @@ const member: SerranoMemberDetail = {
   name: "Nóbel Dam",
   avatarUrl: null,
   tier: "standard",
-  disponibilidad: "disponible",
   roles: ["Infra", "Charlas"],
   skills: ["Solidity"],
   bio: "Construyo infraestructura para el nodo.",
-  tarifaHora: 40,
   telegramHref: "https://t.me/nobeldam",
   aportes: [],
   proyectos: [],
@@ -75,13 +73,14 @@ describe("MemberDetail", () => {
     expect(name.className).toContain("text-text-primary");
   });
 
-  it("renders TierBadge and availability label with a green dot for disponible", () => {
+  it("renders TierBadge and does not show availability or rates", () => {
     render(<MemberDetail member={member} />);
     expect(screen.getByText("Miembro")).toBeInTheDocument();
-    expect(screen.getByText("Disponible")).toBeInTheDocument();
-    const dot = document.querySelector(".size-2.rounded-full");
-    expect(dot).not.toBeNull();
-    expect(dot!.className).toContain("bg-brand-green");
+    expect(screen.queryByText("Disponible")).not.toBeInTheDocument();
+    expect(screen.queryByText("Disponible para proyectos")).not.toBeInTheDocument();
+    expect(screen.queryByText(/USD/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/hora/i)).not.toBeInTheDocument();
+    expect(document.querySelector(".size-2.rounded-full")).toBeNull();
   });
 
   it("renders platform Admin badge when the member is platform admin", () => {
@@ -92,11 +91,6 @@ describe("MemberDetail", () => {
   it("hides platform Admin badge for non-admins", () => {
     render(<MemberDetail member={member} />);
     expect(screen.queryByText("Admin")).not.toBeInTheDocument();
-  });
-
-  it("omits availability when null", () => {
-    render(<MemberDetail member={{ ...member, disponibilidad: null }} />);
-    expect(screen.queryByText("Disponible")).not.toBeInTheDocument();
   });
 
   it("renders confirmed roles under Rol en el nodo", () => {
@@ -230,25 +224,11 @@ describe("MemberDetail", () => {
     expect(screen.queryByText("Habilidades")).not.toBeInTheDocument();
   });
 
-  it("renders the rate card when tarifaHora is set", () => {
+  it("does not show an hourly rate", () => {
     render(<MemberDetail member={member} />);
-    expect(screen.getByText("Disponible para proyectos")).toBeInTheDocument();
-    expect(screen.getByText("USD 40 / hora")).toBeInTheDocument();
-  });
-
-  it("renders an integer rate as-is", () => {
-    render(<MemberDetail member={{ ...member, tarifaHora: 40 }} />);
-    expect(screen.getByText("USD 40 / hora")).toBeInTheDocument();
-  });
-
-  it("renders a decimal rate as stored", () => {
-    render(<MemberDetail member={{ ...member, tarifaHora: 40.5 }} />);
-    expect(screen.getByText("USD 40.5 / hora")).toBeInTheDocument();
-  });
-
-  it("omits the rate card when tarifaHora is null", () => {
-    render(<MemberDetail member={{ ...member, tarifaHora: null }} />);
     expect(screen.queryByText("Disponible para proyectos")).not.toBeInTheDocument();
+    expect(screen.queryByText(/USD/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/hora/i)).not.toBeInTheDocument();
   });
 
   it("renders the bio section", () => {

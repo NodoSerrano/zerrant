@@ -35,11 +35,9 @@ export type SerranoMemberDetail = {
   name: string;
   avatarUrl: string | null;
   tier: SerranoTier;
-  disponibilidad: Disponibilidad | null;
   roles: string[];
   skills: string[];
   bio: string | null;
-  tarifaHora: number | null;
   telegramHref: string | null;
   aportes: AporteListItem[];
   proyectos: MemberProjectPreview[];

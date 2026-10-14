@@ -1,4 +1,4 @@
-import { resolveTarifaHora, telegramHref } from "./visibility";
+import { telegramHref } from "./visibility";
 import type { AporteListItem } from "@/features/aportes/types";
 import type {
   Disponibilidad,
@@ -20,11 +20,9 @@ type ProfileRow = {
   is_platform_admin?: boolean | null;
 };
 
-type DetailProfileRow = ProfileRow & {
+type DetailProfileRow = Omit<ProfileRow, "disponibilidad"> & {
   bio: string | null;
   contacto_telegram: string | null;
-  tarifa_hora: number | null;
-  visibilidad_tarifa: "publica" | "privada";
 };
 
 type RoleAssignment = { profile_id: string; roles: { nombre: string } | null };
@@ -41,7 +39,7 @@ export function availabilityLabel(disponibilidad: Disponibilidad | null): string
   return AVAILABILITY_LABELS[disponibilidad];
 }
 
-function visibleName(profile: ProfileRow): string {
+function visibleName(profile: Omit<ProfileRow, "disponibilidad">): string {
   switch (profile.nombre_visible) {
     case "apodo":
       if (profile.apodo) return profile.apodo;
@@ -59,33 +57,18 @@ export function buildSerranoMemberDetail(
   roles: string[],
   skills: string[],
   viewer: {
-    isSelf: boolean;
-    isAdmin: boolean;
-    isTourist?: boolean;
     aportes?: AporteListItem[];
     proyectos?: MemberProjectPreview[];
   },
 ): SerranoMemberDetail {
-  const tarifaHora = resolveTarifaHora({
-    tarifaHora: profile.tarifa_hora,
-    visibilidadTarifa: profile.visibilidad_tarifa,
-    viewer: {
-      isSelf: viewer.isSelf,
-      isAdmin: viewer.isAdmin,
-      isTourist: viewer.isTourist ?? false,
-    },
-  });
-
   return {
     id: profile.id,
     name: visibleName(profile),
     avatarUrl: profile.avatar_url,
     tier: profile.tier as SerranoTier,
-    disponibilidad: profile.disponibilidad,
     roles,
     skills,
     bio: profile.bio,
-    tarifaHora,
     telegramHref: telegramHref(profile.contacto_telegram),
     aportes: viewer.aportes ?? [],
     proyectos: viewer.proyectos ?? [],
