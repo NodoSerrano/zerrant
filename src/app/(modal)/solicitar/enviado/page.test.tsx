@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   profilesSelectSingle: vi.fn(),
   pendingMaybeSingle: vi.fn(),
+  activeIn: vi.fn(),
   redirect: vi.fn(),
 }));
 
@@ -24,9 +25,9 @@ vi.mock("@/lib/supabase/server", () => ({
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              eq: vi.fn(() => ({
+              in: mocks.activeIn.mockReturnValue({
                 maybeSingle: mocks.pendingMaybeSingle,
-              })),
+              }),
             })),
           })),
         };

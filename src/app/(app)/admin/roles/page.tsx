@@ -7,6 +7,7 @@ import {
   type PendingProfile,
 } from "@/features/roles/roles-confirmation-panel";
 import type { Profile } from "@/features/profile/types";
+import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "@/features/membership/request-state";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export default async function AdminRolesPage() {
     supabase
       .from("membership_requests")
       .select("id", { count: "exact", head: true })
-      .eq("estado", "pendiente"),
+      .in("estado", MEMBERSHIP_REQUEST_ACTIVE_ESTADOS),
     supabase
       .from("profile_roles")
       .select(

@@ -1,7 +1,11 @@
 "use client";
 
-import { Check } from "lucide-react";
-import { approveRequest, rejectRequest } from "@/features/admin/actions";
+import { useState } from "react";
+import { Check, CalendarCheck, CalendarClock, CalendarPlus } from "lucide-react";
+import { transitionRequest } from "@/features/admin/actions";
+import { adminRequestActions } from "@/features/membership/admin-request-actions";
+import { type MembershipRequestEstado } from "@/features/membership/request-state";
+import { MembershipEstadoChip } from "./MembershipEstadoChip";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { Avatar } from "./Avatar";
 import { type Profile } from "@/features/profile/types";
@@ -46,6 +50,7 @@ export interface RequestCardData {
   profile: RequestProfileData;
   mensaje: string | null;
   created_at: string;
+  estado: MembershipRequestEstado;
   screening?: RequestScreeningData | null;
 }
 
@@ -75,47 +80,124 @@ function displayName(profile: RequestProfileData): string {
   }
 }
 
-type ActionState = { error?: string } | null;
+type ActionState = { error?: string; success?: string } | null;
 
-function RequestCardActions({ requestId }: { requestId: string }) {
-  const [approveState, approveAction, approvePending] = useGuardedActionState(approveRequest, null);
-  const [rejectState, rejectAction, rejectPending] = useGuardedActionState(rejectRequest, null);
+const ACTION_ICONS = {
+  "calendar-plus": CalendarPlus,
+  "calendar-check": CalendarCheck,
+  "calendar-clock": CalendarClock,
+  check: Check,
+} as const;
 
-  const approveError = (approveState as ActionState)?.error;
-  const rejectError = (rejectState as ActionState)?.error;
-  const busy = approvePending || rejectPending;
+function RequestCardActions({
+  requestId,
+  estado,
+  name,
+}: {
+  requestId: string;
+  estado: MembershipRequestEstado;
+  name: string;
+}) {
+  const [state, formAction, pending] = useGuardedActionState(
+    transitionRequest as (s: ActionState, f: FormData) => Promise<ActionState>,
+    null,
+  );
+  const [confirmingClose, setConfirmingClose] = useState(false);
+  const { actions, canClose } = adminRequestActions(estado);
+
+  if (actions.length === 0 && !canClose) {
+    return null;
+  }
+
+  const feedback = state?.error ?? state?.success;
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-2.5">
-        <form action={approveAction} className="flex-1">
-          <input type="hidden" name="requestId" value={requestId} />
+      <form action={formAction} className="flex flex-col gap-2">
+        <input type="hidden" name="requestId" value={requestId} />
+        {!confirmingClose &&
+          actions.map((action) => {
+            const Icon = ACTION_ICONS[action.icon];
+            const primary = action.variant === "primary";
+            return (
+              <button
+                key={`${action.to}-${action.label}`}
+                type="submit"
+                name="to"
+                value={action.to}
+                disabled={pending}
+                className={
+                  primary
+                    ? "rounded-pill bg-primary h-[44px] flex items-center justify-center gap-1.5 w-full disabled:opacity-50"
+                    : "rounded-pill bg-surface border border-border h-[44px] flex items-center justify-center gap-1.5 w-full disabled:opacity-50"
+                }
+              >
+                <Icon
+                  aria-hidden
+                  className={primary ? "size-[17px] text-on-primary" : "size-4 text-text-secondary"}
+                />
+                <span
+                  className={`font-display text-[15px] font-medium ${primary ? "text-on-primary" : "text-text-secondary"}`}
+                >
+                  {action.label}
+                </span>
+              </button>
+            );
+          })}
+        {canClose && !confirmingClose && (
           <button
-            type="submit"
-            disabled={busy}
-            className="rounded-pill bg-primary h-[44px] flex items-center justify-center gap-1.5 w-full disabled:opacity-50"
+            type="button"
+            disabled={pending}
+            onClick={() => setConfirmingClose(true)}
+            className="min-h-[44px] w-full flex items-center justify-center disabled:opacity-50"
           >
-            <Check className="size-[17px] text-on-primary" />
-            <span className="font-display text-[15px] font-medium text-on-primary">
-              {approvePending ? "Aprobando..." : "Aprobar"}
+            <span className="font-display text-[13px] font-medium text-text-muted">
+              Cerrar solicitud
             </span>
           </button>
-        </form>
-        <form action={rejectAction} className="flex-1">
-          <input type="hidden" name="requestId" value={requestId} />
-          <button
-            type="submit"
-            disabled={busy}
-            className="rounded-pill bg-surface border border-border h-[44px] flex items-center justify-center w-full disabled:opacity-50"
-          >
-            <span className="font-display text-[15px] font-medium text-text-secondary">
-              {rejectPending ? "Rechazando..." : "Rechazar"}
-            </span>
-          </button>
-        </form>
-      </div>
-      {(approveError || rejectError) && (
-        <p className="font-body text-xs text-coral text-center">{approveError || rejectError}</p>
+        )}
+        {canClose && confirmingClose && (
+          <div className="flex flex-col gap-3 rounded-2xl bg-surface-inset p-3.5">
+            <p className="font-display text-[15px] font-medium text-text-primary">
+              ¿Cerrar la solicitud de {name}?
+            </p>
+            <p className="font-body text-xs leading-[1.4] text-text-secondary">
+              Deja de estar en curso y queda en el historial. Si el problema es el horario, usá
+              Reprogramar.
+            </p>
+            <div className="flex gap-2.5">
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => setConfirmingClose(false)}
+                className="rounded-pill h-[44px] flex-1 flex items-center justify-center disabled:opacity-50"
+              >
+                <span className="font-display text-[15px] font-medium text-text-secondary">
+                  Cancelar
+                </span>
+              </button>
+              <button
+                type="submit"
+                name="to"
+                value="cerrada"
+                disabled={pending}
+                className="rounded-pill bg-surface border border-text-primary h-[44px] flex-1 flex items-center justify-center disabled:opacity-50"
+              >
+                <span className="font-display text-[15px] font-medium text-text-primary">
+                  Sí, cerrar
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
+      </form>
+      {feedback && (
+        <p
+          role="status"
+          className={`font-body text-xs text-center ${state?.error ? "text-coral" : "text-text-secondary"}`}
+        >
+          {feedback}
+        </p>
       )}
     </div>
   );
@@ -227,9 +309,12 @@ export function RequestCard({ request }: { request: RequestCardData }) {
           <span className="font-display text-[16px] font-medium text-text-primary truncate">
             {name || "Sin nombre"}
           </span>
-          <span className="font-body text-[11px] text-text-muted">
-            Solicitó {timeAgo(request.created_at)}
-          </span>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-0.5">
+            <MembershipEstadoChip estado={request.estado} />
+            <span className="font-body text-[11px] text-text-muted whitespace-nowrap">
+              {timeAgo(request.created_at)}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -243,7 +328,11 @@ export function RequestCard({ request }: { request: RequestCardData }) {
         )
       )}
 
-      <RequestCardActions requestId={request.id} />
+      <RequestCardActions
+        requestId={request.id}
+        estado={request.estado}
+        name={name || "Sin nombre"}
+      />
     </div>
   );
 }

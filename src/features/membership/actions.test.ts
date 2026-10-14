@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   profilesSelectSingle: vi.fn(),
   pendingMaybeSingle: vi.fn(),
+  activeIn: vi.fn(),
   membershipInsert: vi.fn(),
   redirect: vi.fn(),
 }));
@@ -26,9 +27,9 @@ vi.mock("@/lib/supabase/server", () => ({
           insert: mocks.membershipInsert,
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              eq: vi.fn(() => ({
+              in: mocks.activeIn.mockReturnValue({
                 maybeSingle: mocks.pendingMaybeSingle,
-              })),
+              }),
             })),
           })),
         };
@@ -50,6 +51,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { createMembershipRequest } from "./actions";
+import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "./request-state";
 
 function screeningForm(extra: Record<string, string> = {}) {
   const fd = new FormData();
@@ -204,33 +206,34 @@ describe("createMembershipRequest", () => {
     expect(mocks.membershipInsert).not.toHaveBeenCalled();
   });
 
-  it("rejects a second pending request without inserting", async () => {
+  it("rejects a second active request without inserting", async () => {
     setupAuth();
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "tourist" }, error: null });
     mocks.pendingMaybeSingle.mockResolvedValue({ data: { id: "req-1" }, error: null });
 
     const result = await createMembershipRequest(null, new FormData());
 
-    expect(result).toEqual({ error: "Ya tenes una solicitud pendiente." });
+    expect(result).toEqual({ error: "Ya tenés una solicitud en curso." });
+    expect(mocks.activeIn).toHaveBeenCalledWith("estado", MEMBERSHIP_REQUEST_ACTIVE_ESTADOS);
     expect(mocks.membershipInsert).not.toHaveBeenCalled();
   });
 
-  it("maps a unique-violation on the one-pending index to the pending message", async () => {
+  it("maps a unique-violation on the one-active index to the in-progress message", async () => {
     // The pre-check races: between `maybeSingle` and the insert another submit
     // can land. The partial unique index is what actually enforces the rule, so
-    // 23505 means "already pending", not an unknown DB failure.
+    // 23505 means "already in progress", not an unknown DB failure.
     setupTourist();
     mocks.membershipInsert.mockResolvedValue({
       error: {
         code: "23505",
         message:
-          'duplicate key value violates unique constraint "membership_requests_one_pending_per_profile"',
+          'duplicate key value violates unique constraint "membership_requests_one_active_per_profile"',
       },
     });
 
     const result = await createMembershipRequest(null, screeningForm());
 
-    expect(result).toEqual({ error: "Ya tenes una solicitud pendiente." });
+    expect(result).toEqual({ error: "Ya tenés una solicitud en curso." });
   });
 
   it("logs the supabase error when the insert fails", async () => {
