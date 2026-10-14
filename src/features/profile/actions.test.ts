@@ -39,10 +39,24 @@ vi.mock("./avatar-convert", () => ({ ensureWebSafeImage: mocks.ensureWebSafeImag
 // revalidatePath needs Next's store, which doesn't exist outside a request.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
+const pipelineMock = vi.hoisted(() => ({ load: vi.fn() }));
+vi.mock("@/features/membership/pipeline-server", () => ({
+  loadMembershipPipeline: pipelineMock.load,
+}));
+
+const cookieJar = vi.hoisted(() => ({ flow: undefined as string | undefined }));
+vi.mock("next/headers", () => ({
+  cookies: async () => ({
+    get: (name: string) =>
+      name === "ns_flujo" && cookieJar.flow ? { value: cookieJar.flow } : undefined,
+  }),
+}));
+
 import { saveOnboardingStep1, saveOnboardingStep2, updateProfile, uploadAvatar } from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  cookieJar.flow = undefined;
 });
 
 describe("saveOnboardingStep1", () => {
@@ -727,6 +741,43 @@ describe("uploadAvatar", () => {
     expect(mocks.storageUpload).not.toHaveBeenCalled();
   });
 
+  it("rejects a file over 5 MiB without touching storage", async () => {
+    happyPath();
+    const oversized = new Uint8Array(5 * 1024 * 1024 + 1);
+    oversized.set(PNG_BYTES);
+
+    const result = await uploadAvatar(null, avatarForm(oversized, "foto.png", "image/png"));
+
+    expect(result).toEqual({ error: "La imagen no puede superar los 5 MB" });
+    expect(mocks.storageUpload).not.toHaveBeenCalled();
+  });
+
+  it("stores the type sniffed from the bytes, not the one the client declares", async () => {
+    happyPath();
+    const jpegBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+    await uploadAvatar(null, avatarForm(jpegBytes, "foto.png", "image/png"));
+
+    expect(mocks.storageUpload).toHaveBeenCalledWith(
+      expect.stringMatching(/\.jpg$/),
+      expect.any(Uint8Array),
+      expect.objectContaining({ contentType: "image/jpeg" }),
+    );
+  });
+
+  it("rejects a converted image that ends up over 5 MiB without touching storage", async () => {
+    happyPath();
+    mocks.ensureWebSafeImage.mockResolvedValue({
+      bytes: new Uint8Array(5 * 1024 * 1024 + 1),
+      mime: "image/jpeg",
+    });
+
+    const result = await uploadAvatar(null, avatarForm(HEIC_BYTES, "foto.heic", "image/heic"));
+
+    expect(result).toEqual({ error: "La imagen no puede superar los 5 MB" });
+    expect(mocks.storageUpload).not.toHaveBeenCalled();
+  });
+
   it("uploads the image and persists avatar_url", async () => {
     happyPath();
 
@@ -816,5 +867,69 @@ describe("uploadAvatar", () => {
     await uploadAvatar(null, avatarForm(PNG_BYTES, "foto.png", "image/png"));
 
     expect(mocks.storageRemove).not.toHaveBeenCalled();
+  });
+
+  it("never tries to delete an object outside the user's own folder", async () => {
+    happyPath();
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: {
+        avatar_url:
+          "https://proj.supabase.co/storage/v1/object/public/avatars/other-user-id/theirs.png",
+      },
+      error: null,
+    });
+
+    await uploadAvatar(null, avatarForm(PNG_BYTES, "foto.png", "image/png"));
+
+    expect(mocks.storageRemove).not.toHaveBeenCalled();
+  });
+});
+
+describe("saveOnboardingStep2 — membership flow (ZER-136)", () => {
+  async function redirectTarget(): Promise<string> {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: { nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" },
+      error: null,
+    });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+    try {
+      await saveOnboardingStep2(null, new FormData());
+    } catch (e) {
+      return String((e as { digest?: string }).digest).split(";")[2];
+    }
+    throw new Error("expected a redirect");
+  }
+
+  it("continues the pipeline straight to the resolved step, never via /unirme (bug-375)", async () => {
+    cookieJar.flow = "membresia";
+    pipelineMock.load.mockResolvedValue({
+      hasSession: true,
+      emailConfirmed: true,
+      profile: {
+        nombre: "Juan",
+        apellido: "Pérez",
+        fecha_nacimiento: "1990-01-15",
+        onboarding_completado_en: "2026-10-06T00:00:00Z",
+        tier: "tourist",
+      },
+      request: null,
+      profileError: false,
+      requestError: false,
+    });
+
+    const target = await redirectTarget();
+
+    expect(target).toBe("/solicitar");
+    expect(target).not.toBe("/unirme");
+  });
+
+  it("keeps the tourist path to /profile without the cookie", async () => {
+    expect(await redirectTarget()).toBe("/profile");
+  });
+
+  it("ignores an unexpected cookie value", async () => {
+    cookieJar.flow = "otra-cosa";
+    expect(await redirectTarget()).toBe("/profile");
   });
 });

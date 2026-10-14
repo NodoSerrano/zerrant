@@ -250,4 +250,79 @@ describe("proxy", () => {
 
     expect(result.status).toBe(200);
   });
+
+  describe("membership deep link (ZER-136)", () => {
+    it.each([true, false])(
+      "marks the membership flow cookie on /unirme (session: %s)",
+      async (session) => {
+        if (session) authAs();
+        else noAuth();
+        await proxy(makeRequest("/unirme"));
+
+        expect(mockNextCookiesSet).toHaveBeenCalledWith(
+          "ns_flujo",
+          "membresia",
+          expect.objectContaining({ httpOnly: true, sameSite: "lax", path: "/", maxAge: 604800 }),
+        );
+      },
+    );
+
+    it.each([true, false])(
+      "sets the flow cookie exactly once per /unirme request (session: %s)",
+      async (session) => {
+        if (session) authAs();
+        else noAuth();
+        await proxy(makeRequest("/unirme"));
+
+        const flowSets = mockNextCookiesSet.mock.calls.filter(([name]) => name === "ns_flujo");
+        expect(flowSets).toHaveLength(1);
+      },
+    );
+
+    it("does not set the flow cookie elsewhere", async () => {
+      authAs();
+      await proxy(makeRequest("/solicitar"));
+
+      expect(mockNextCookiesSet).not.toHaveBeenCalledWith(
+        "ns_flujo",
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    it("sends an authenticated user on an auth page to a safe next", async () => {
+      authAs();
+      const res = await proxy(makeRequest("/auth/signup?next=%2Funirme"));
+
+      expect(res.headers.get("location")).toBe("https://example.com/unirme");
+    });
+
+    it("ignores an unsafe next on an auth page", async () => {
+      authAs();
+      const res = await proxy(makeRequest("/auth/login?next=%2F%2Fevil.com"));
+
+      expect(res.headers.get("location")).toBe("https://example.com/");
+    });
+
+    it("never bounces back to the auth page itself", async () => {
+      authAs();
+      const res = await proxy(makeRequest("/auth/login?next=%2Fauth%2Flogin"));
+
+      expect(res.headers.get("location")).toBe("https://example.com/");
+    });
+
+    it("protects /solicitar and carries it as next", async () => {
+      noAuth();
+      const res = await proxy(makeRequest("/solicitar"));
+
+      expect(res.headers.get("location")).toBe("https://example.com/auth/login?next=%2Fsolicitar");
+    });
+
+    it("leaves /unirme public (the route resolves no-session itself)", async () => {
+      noAuth();
+      const res = await proxy(makeRequest("/unirme"));
+
+      expect(res.status).toBe(200);
+    });
+  });
 });

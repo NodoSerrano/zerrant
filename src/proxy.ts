@@ -1,7 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
-import { publicSiteUrl } from "@/lib/public-url";
+import { publicAppHref } from "@/lib/public-url";
+import { safeInternalPath } from "@/lib/safe-next";
+import {
+  MEMBERSHIP_FLOW_COOKIE,
+  MEMBERSHIP_FLOW_COOKIE_OPTIONS,
+  MEMBERSHIP_FLOW_VALUE,
+} from "@/features/membership/flow-cookie";
 
 function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -47,7 +53,7 @@ function updateSession(request: NextRequest) {
   return { response, supabase };
 }
 
-const PROTECTED_PREFIXES = ["/onboarding", "/profile", "/nodo"];
+const PROTECTED_PREFIXES = ["/onboarding", "/profile", "/nodo", "/solicitar"];
 const AUTH_PREFIXES = [
   "/auth/login",
   "/auth/signup",
@@ -59,12 +65,6 @@ const AUTH_PREFIXES = [
 // PostgREST returns this code when `.single()` finds no row; all other codes
 // are real failures and are handled differently.
 const NO_ROWS = "PGRST116";
-
-function appUrl(request: NextRequest, path: string): string {
-  const site = publicSiteUrl();
-  if (process.env.NEXT_PUBLIC_SITE_URL) return `${site}${path}`;
-  return new URL(path, request.url).toString();
-}
 
 /** Segment-aware match: `/nodo` must not capture `/nodocosas`. */
 function underPrefix(pathname: string, prefix: string): boolean {
@@ -95,16 +95,21 @@ export default async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+  const requestOrigin = request.nextUrl.origin;
 
   const isProtected = PROTECTED_PREFIXES.some((p) => underPrefix(pathname, p)) || pathname === "/";
   const isAuthPage = AUTH_PREFIXES.some((p) => underPrefix(pathname, p));
 
   if (user && isAuthPage) {
-    return NextResponse.redirect(appUrl(request, "/"));
+    // Honor a safe deep-link target (ZER-136), but never another auth page:
+    // that would bounce straight back here.
+    const next = safeInternalPath(request.nextUrl.searchParams.get("next"));
+    const target = AUTH_PREFIXES.some((p) => underPrefix(next.split(/[?#]/, 1)[0], p)) ? "/" : next;
+    return NextResponse.redirect(publicAppHref(target, requestOrigin));
   }
 
   if (!user && isProtected) {
-    const loginUrl = new URL(appUrl(request, "/auth/login"));
+    const loginUrl = new URL(publicAppHref("/auth/login", requestOrigin));
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }
@@ -138,6 +143,17 @@ export default async function proxy(request: NextRequest) {
         headers: { "content-type": "text/html; charset=utf-8" },
       });
     }
+  }
+
+  // Entering through the /unirme deep link marks the membership flow (ZER-136).
+  // Set here because /unirme is a page, and pages cannot write cookies.
+  // Scope the cookie to the hosted base path so test and prod do not share it.
+  if (pathname === "/unirme") {
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.replace(/\/$/, "") || "/";
+    response.cookies.set(MEMBERSHIP_FLOW_COOKIE, MEMBERSHIP_FLOW_VALUE, {
+      ...MEMBERSHIP_FLOW_COOKIE_OPTIONS,
+      path: basePath,
+    });
   }
 
   return response;
