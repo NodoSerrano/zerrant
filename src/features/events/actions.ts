@@ -1,9 +1,11 @@
 "use server";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { EVENT_ATTENDANCE_ESTADOS, type EventAttendanceEstado } from "@/lib/db/events-schema";
+import type { Database } from "@/lib/supabase/database.types";
 import { parseAgendaWallClockIso, validateEventRange } from "./validation";
 
 const CREATE_ERROR = "No pudimos publicar el evento. Probá de nuevo.";
@@ -43,11 +45,9 @@ function coverUrlFromForm(value: string | null): { ok: true; url: string | null 
   return { ok: true, url: url.toString() };
 }
 
-type EventWriter = Awaited<ReturnType<typeof createClient>>;
-
 /** Creator or platform admin. Anyone else gets `forbidden` and no write. */
 async function assertCanManageEvent(
-  supabase: EventWriter,
+  supabase: SupabaseClient<Database>,
   userId: string,
   eventId: string,
   messages: { read: string; forbidden: string },

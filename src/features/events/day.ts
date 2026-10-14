@@ -4,6 +4,8 @@
  * CI (UTC) and production match the node's wall clock.
  */
 
+import type { EventFormDefaults } from "./types";
+
 export const AGENDA_TIME_ZONE = "America/Argentina/Buenos_Aires";
 
 const DAY_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -209,7 +211,7 @@ export function eventFormDefaultsFromRow(event: {
   inicio: string;
   fin: string | null;
   cover_url?: string | null;
-}): import("./types").EventFormDefaults {
+}): EventFormDefaults {
   return {
     titulo: event.titulo,
     descripcion: event.descripcion ?? "",
