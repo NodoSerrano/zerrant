@@ -239,6 +239,36 @@ describe("ZER-143 AC2 — invalid transitions fail in the server", () => {
     expect(await readEstado(requestId)).toBe("pendiente_coordinacion");
   });
 
+  it("an admin cannot approve their own request; service role still can", async () => {
+    const self = await createUser({ admin: true });
+    const requestId = await submitRequest(self);
+    await walk(self, requestId, [
+      "entrevista_solicitada",
+      "entrevista_coordinada",
+      "entrevista_realizada",
+    ]);
+
+    const refused = await transition(self, requestId, "aprobado");
+    expect(refused.data).toBeNull();
+    expect(refused.error?.hint).toBe("self_approve");
+    expect(refused.error?.code).toBe("23514");
+    expect(await readEstado(requestId)).toBe("entrevista_realizada");
+
+    const { data: stillTourist } = await service
+      .from("profiles")
+      .select("tier")
+      .eq("id", self.id)
+      .single();
+    expect(stillTourist?.tier).toBe("tourist");
+
+    const { error: serviceError } = await service
+      .from("membership_requests")
+      .update({ estado: "aprobado" })
+      .eq("id", requestId);
+    expect(serviceError).toBeNull();
+    expect(await readEstado(requestId)).toBe("aprobado");
+  });
+
   it("approving after the interview grants the standard tier", async () => {
     const owner = await createUser();
     const requestId = await submitRequest(owner);

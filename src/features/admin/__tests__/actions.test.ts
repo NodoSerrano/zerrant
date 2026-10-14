@@ -88,17 +88,33 @@ describe("transitionRequest", () => {
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 
-  it("surfaces a self-approval rejection from the database", async () => {
+  it("surfaces a self-approval rejection from the trigger hint, not the message text", async () => {
     setupAdmin();
     mocks.rpc.mockResolvedValue({
       data: null,
-      error: { message: "No podés aprobar tu propia solicitud" },
+      error: {
+        code: "23514",
+        hint: "self_approve",
+        message: "wrapped: check_violation",
+      },
     });
 
     const result = await transitionRequest(null, makeFormData("aprobado"));
 
     expect(result).toEqual({ error: "No podés aprobar tu propia solicitud" });
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("does not treat every check_violation as self-approval", async () => {
+    setupAdmin();
+    mocks.rpc.mockResolvedValue({
+      data: null,
+      error: { code: "23514", hint: null, message: "Transición inválida" },
+    });
+
+    const result = await transitionRequest(null, makeFormData("aprobado"));
+
+    expect(result).toEqual({ error: "No pudimos actualizar la solicitud" });
   });
 
   it("returns a generic error when the RPC call itself fails", async () => {

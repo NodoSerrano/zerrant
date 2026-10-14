@@ -17,9 +17,10 @@ describe("convert to member gate", () => {
   });
 
   it("blocks self-approval on the existing transition write, without a second tier update", () => {
+    expect(MIGRATION).toMatch(/before update of estado on public\.membership_requests/);
     expect(MIGRATION).toMatch(/new\.estado = 'aprobado'/);
     expect(MIGRATION).toMatch(/new\.profile_id = auth\.uid\(\)/);
-    expect(MIGRATION).toMatch(/No podés aprobar tu propia solicitud/);
+    expect(MIGRATION).toMatch(/hint = 'self_approve'/);
     expect(MIGRATION).not.toMatch(/update public\.profiles/);
     expect(MIGRATION).not.toMatch(/approve_membership_request/);
   });

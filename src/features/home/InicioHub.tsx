@@ -20,7 +20,7 @@ export type InicioHubProps = {
   birthdays: UpcomingBirthday[];
   /** Members (non-tourist) see Tareas/Proyectos entry under Inicio. */
   showCommunityHub?: boolean;
-  /** Set when this member has an aprobado membership request (ZER-146). */
+  /** Set when this member was converted within the confirmation window (ZER-146). */
   memberConfirmed?: boolean;
 };
 

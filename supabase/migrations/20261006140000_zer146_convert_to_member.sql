@@ -19,7 +19,8 @@ begin
      and new.profile_id = auth.uid()
   then
     raise exception 'No podés aprobar tu propia solicitud'
-      using errcode = 'check_violation';
+      using errcode = 'check_violation',
+            hint = 'self_approve';
   end if;
   return new;
 end;

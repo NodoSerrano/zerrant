@@ -70,8 +70,10 @@ beforeEach(() => {
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
             eq: vi.fn(() => ({
-              limit: vi.fn(() => ({
-                maybeSingle: mocks.approvedRequest,
+              gte: vi.fn(() => ({
+                limit: vi.fn(() => ({
+                  maybeSingle: mocks.approvedRequest,
+                })),
               })),
             })),
           })),

@@ -52,7 +52,9 @@ export async function transitionRequest(
   });
 
   if (rpcError) {
-    if (rpcError.message?.includes("propia solicitud")) {
+    // Stable token from the trigger hint. check_violation (23514) is shared
+    // with other estado guards, so the code alone is not enough.
+    if (rpcError.hint === "self_approve") {
       return { error: "No podés aprobar tu propia solicitud" };
     }
     return { error: "No pudimos actualizar la solicitud" };

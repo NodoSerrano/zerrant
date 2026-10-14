@@ -10,6 +10,7 @@ import { TouristMenu } from "./TouristMenu";
 import { SerranoMenu } from "./SerranoMenu";
 import { PendingMembershipCard } from "./PendingMembershipCard";
 import { MemberConfirmedNotice } from "@/features/membership/MemberConfirmedNotice";
+import { memberConfirmedSince } from "@/features/membership/member-confirmed";
 import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 import { cn } from "@/lib/utils";
 import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "@/features/membership/request-state";
@@ -136,6 +137,7 @@ export default async function ProfilePage() {
         .select("id")
         .eq("profile_id", user.id)
         .eq("estado", "aprobado")
+        .gte("actualizado_en", memberConfirmedSince())
         .limit(1)
         .maybeSingle(),
     ]);
