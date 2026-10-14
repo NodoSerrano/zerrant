@@ -143,6 +143,9 @@ describe("ZER-91 migration SQL", () => {
     expect(files).toHaveLength(1);
     const sql = readFileSync(path.join(MIGRATIONS_DIR, files[0]!), "utf8");
     expect(sql).toMatch(/add column cover_url text/i);
+    expect(sql).toMatch(
+      /check\s*\(\s*cover_url is null or cover_url like 'https:\/\/%'\s*\)/i,
+    );
     expect(sql).toMatch(/grant insert \(cover_url\) on public\.events to authenticated/i);
     expect(sql).toMatch(/grant update \(cover_url\) on public\.events to authenticated/i);
   });
