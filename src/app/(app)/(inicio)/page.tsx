@@ -40,17 +40,21 @@ export default async function InicioPage() {
   const now = new Date();
   const nowIso = now.toISOString();
   const today = formatDayKey(now);
+  const viewerIsTourist = profile?.tier === "tourist";
 
-  const [{ data: events }, { data: profiles }, lumaResult] = await Promise.all([
+  const [{ data: events }, birthdayProfiles, lumaResult] = await Promise.all([
     supabase
       .from("events")
       .select("id, titulo, descripcion, lugar, inicio, fin, creado_por")
       .gte("inicio", nowIso)
       .order("inicio", { ascending: true })
       .limit(UPCOMING_EVENTS_LIMIT),
-    supabase.from("profiles").select(BIRTHDAY_PROFILE_COLUMNS).neq("tier", "tourist"),
+    viewerIsTourist
+      ? Promise.resolve({ data: null })
+      : supabase.from("profiles").select(BIRTHDAY_PROFILE_COLUMNS).neq("tier", "tourist"),
     fetchLumaCalendarEvents(),
   ]);
+  const profiles = birthdayProfiles.data;
 
   const internal = ((events ?? []) as AgendaEvent[]).map(internalEventToAgendaItem);
   const luma = lumaResult.ok ? lumaResult.events : [];
