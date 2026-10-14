@@ -163,6 +163,7 @@ export function internalEventToAgendaItem(event: {
   lugar: string | null;
   inicio: string;
   fin: string | null;
+  cover_url?: string | null;
 }): AgendaListItem {
   return {
     id: event.id,
@@ -172,6 +173,6 @@ export function internalEventToAgendaItem(event: {
     place: event.lugar,
     href: `/agenda/${event.id}`,
     source: "internal",
-    coverUrl: null,
+    coverUrl: event.cover_url ?? null,
   };
 }

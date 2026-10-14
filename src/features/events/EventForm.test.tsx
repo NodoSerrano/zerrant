@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -43,6 +43,45 @@ describe("EventForm", () => {
     for (const banned of ["borrador", "cancelar evento", "estado", "publicar/cancelar"]) {
       expect(copy).not.toContain(banned);
     }
+  });
+
+  it("keeps description, date, times, and image when the title changes", () => {
+    render(
+      <EventForm
+        action={async () => null}
+        defaults={{
+          titulo: "Charla",
+          descripcion: "Una intro práctica.",
+          fecha: "2026-09-20",
+          inicio: "19:00",
+          fin: "21:00",
+          coverUrl: "https://images.lumacdn.com/uploads/cover.png",
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Título"), { target: { value: "Charla nueva" } });
+
+    expect(screen.getByLabelText("Título")).toHaveValue("Charla nueva");
+    expect(screen.getByLabelText("Descripción")).toHaveValue("Una intro práctica.");
+    expect(screen.getByLabelText("Fecha")).toHaveValue("2026-09-20");
+    expect(screen.getByLabelText("Inicio")).toHaveValue("19:00");
+    expect(screen.getByLabelText("Fin")).toHaveValue("21:00");
+    expect(screen.getByLabelText("Imagen")).toHaveValue(
+      "https://images.lumacdn.com/uploads/cover.png",
+    );
+  });
+
+  it("uses a 24-hour time control so 19:00 does not surface as AM/PM", () => {
+    render(<EventForm action={async () => null} defaults={{ inicio: "19:00", fin: "21:00" }} />);
+
+    for (const label of ["Inicio", "Fin"]) {
+      const input = screen.getByLabelText(label);
+      expect(input).toHaveAttribute("type", "time");
+      expect(input).toHaveAttribute("lang", "en-GB");
+    }
+    expect(screen.getByLabelText("Inicio")).toHaveValue("19:00");
+    expect(screen.getByLabelText("Fin")).toHaveValue("21:00");
   });
 
   it("shows a Spanish alert when the action returns an error", () => {

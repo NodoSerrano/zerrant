@@ -69,12 +69,21 @@ export function EventForm({
               name="inicio"
               label="Inicio"
               type="time"
+              lang="en-GB"
+              step={60}
               defaultValue={defaults?.inicio}
               required
             />
           </div>
           <div className="min-w-0 flex-1">
-            <Input name="fin" label="Fin" type="time" defaultValue={defaults?.fin} />
+            <Input
+              name="fin"
+              label="Fin"
+              type="time"
+              lang="en-GB"
+              step={60}
+              defaultValue={defaults?.fin}
+            />
           </div>
         </div>
 
@@ -83,6 +92,15 @@ export function EventForm({
           label="Lugar"
           placeholder="Espacio Nodo"
           defaultValue={defaults?.lugar}
+        />
+
+        <Input
+          name="cover_url"
+          label="Imagen"
+          type="url"
+          inputMode="url"
+          placeholder="https://..."
+          defaultValue={defaults?.coverUrl}
         />
       </div>
 

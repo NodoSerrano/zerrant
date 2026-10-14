@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
+import { parseAgendaWallClockIso } from "./validation";
 import {
   addCalendarDays,
   buildDayStrip,
   dayBoundsIso,
+  eventFormDefaultsFromRow,
   formatDayKey,
   formatEventTimeRange,
+  hourMinuteFromFormatParts,
   parseDayKey,
   wallClockHmFromIso,
-  eventFormDefaultsFromRow,
 } from "./day";
 
 describe("formatDayKey", () => {
@@ -92,7 +94,46 @@ describe("formatEventTimeRange", () => {
   });
 });
 
+describe("hourMinuteFromFormatParts", () => {
+  it("reads a 12-hour clock with PM as 24-hour 19:00 and 21:00", () => {
+    expect(
+      hourMinuteFromFormatParts([
+        { type: "hour", value: "07" },
+        { type: "minute", value: "00" },
+        { type: "dayPeriod", value: "PM" },
+      ]),
+    ).toBe("19:00");
+    expect(
+      hourMinuteFromFormatParts([
+        { type: "hour", value: "9" },
+        { type: "minute", value: "00" },
+        { type: "dayPeriod", value: "p. m." },
+      ]),
+    ).toBe("21:00");
+  });
+
+  it("keeps an hour that is already 24-hour", () => {
+    expect(
+      hourMinuteFromFormatParts([
+        { type: "hour", value: "19" },
+        { type: "minute", value: "00" },
+      ]),
+    ).toBe("19:00");
+  });
+});
+
 describe("wallClockHmFromIso", () => {
+  it("roundtrips 19:00 and 21:00 in 24-hour form", () => {
+    const inicio = parseAgendaWallClockIso("2026-09-20", "19:00");
+    const fin = parseAgendaWallClockIso("2026-09-20", "21:00");
+    expect(inicio).toBeTruthy();
+    expect(fin).toBeTruthy();
+    expect(wallClockHmFromIso(inicio!)).toBe("19:00");
+    expect(wallClockHmFromIso(fin!)).toBe("21:00");
+    expect(formatEventTimeRange(inicio!, fin!)).toBe("19:00 – 21:00");
+    expect(formatEventTimeRange(inicio!, fin!)).not.toMatch(/[AaPp]\.?\s*[Mm]/);
+  });
+
   it("returns ART wall clock HH:MM from a UTC ISO", () => {
     expect(wallClockHmFromIso("2026-09-20T22:00:00.000Z")).toBe("19:00");
   });

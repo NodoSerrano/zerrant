@@ -60,8 +60,9 @@ describe("events / event_attendance table types", () => {
       "fin",
       "creado_por",
       "created_at",
+      "cover_url",
     ];
-    expect(eventKeys).toHaveLength(8);
+    expect(eventKeys).toHaveLength(9);
 
     const attendanceKeys: (keyof AttendanceRow)[] = ["event_id", "profile_id", "estado"];
     expect(attendanceKeys).toHaveLength(3);
@@ -123,9 +124,26 @@ describe("ZER-91 migration SQL", () => {
       "inicio",
       "fin",
       "creado_por",
+      "cover_url",
     ]);
-    expect([...EVENTS_UPDATE_COLUMNS]).toEqual(["titulo", "descripcion", "lugar", "inicio", "fin"]);
+    expect([...EVENTS_UPDATE_COLUMNS]).toEqual([
+      "titulo",
+      "descripcion",
+      "lugar",
+      "inicio",
+      "fin",
+      "cover_url",
+    ]);
     expect([...EVENT_ATTENDANCE_INSERT_COLUMNS]).toEqual(["event_id", "profile_id", "estado"]);
     expect([...EVENT_ATTENDANCE_UPDATE_COLUMNS]).toEqual(["estado"]);
+  });
+
+  it("grants cover_url on insert and update", () => {
+    const files = readdirSync(MIGRATIONS_DIR).filter((f) => f.includes("zer155_events_cover_url"));
+    expect(files).toHaveLength(1);
+    const sql = readFileSync(path.join(MIGRATIONS_DIR, files[0]!), "utf8");
+    expect(sql).toMatch(/add column cover_url text/i);
+    expect(sql).toMatch(/grant insert \(cover_url\) on public\.events to authenticated/i);
+    expect(sql).toMatch(/grant update \(cover_url\) on public\.events to authenticated/i);
   });
 });

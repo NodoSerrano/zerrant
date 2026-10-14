@@ -146,6 +146,7 @@ export type Database = {
           creado_por: string;
           created_at: string;
           descripcion: string | null;
+          cover_url: string | null;
           fin: string | null;
           id: string;
           inicio: string;
@@ -154,6 +155,7 @@ export type Database = {
         };
         Insert: {
           creado_por: string;
+          cover_url?: string | null;
           created_at?: string;
           descripcion?: string | null;
           fin?: string | null;
@@ -164,6 +166,7 @@ export type Database = {
         };
         Update: {
           creado_por?: string;
+          cover_url?: string | null;
           created_at?: string;
           descripcion?: string | null;
           fin?: string | null;

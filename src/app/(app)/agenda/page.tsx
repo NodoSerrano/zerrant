@@ -47,7 +47,7 @@ export default async function AgendaPage({
     await Promise.all([
       supabase
         .from("events")
-        .select("id, titulo, descripcion, lugar, inicio, fin, creado_por")
+        .select("id, titulo, descripcion, lugar, inicio, fin, creado_por, cover_url")
         .gte("inicio", startIso)
         .lt("inicio", endIso)
         .order("inicio", { ascending: true }),
