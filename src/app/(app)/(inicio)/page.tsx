@@ -80,6 +80,11 @@ export default async function InicioPage() {
   const showCommunityHub = Boolean(profile && profile.tier !== "tourist");
 
   return (
-    <InicioHub events={eventItems} birthdays={birthdayRows} showCommunityHub={showCommunityHub} />
+    <InicioHub
+      events={eventItems}
+      birthdays={birthdayRows}
+      showCommunityHub={showCommunityHub}
+      showBirthdays={!viewerIsTourist}
+    />
   );
 }

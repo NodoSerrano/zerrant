@@ -251,6 +251,7 @@ describe("InicioPage (/)", () => {
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
 
     render(await InicioPage());
+    expect(screen.getByRole("heading", { name: "Próximos cumpleaños" })).toBeInTheDocument();
     expect(screen.getByText("Ana García")).toBeInTheDocument();
     expect(screen.queryByText("Lejos X")).not.toBeInTheDocument();
     expect(client.from).toHaveBeenCalledWith("profiles");
@@ -285,6 +286,8 @@ describe("InicioPage (/)", () => {
 
     expect(client.from).not.toHaveBeenCalledWith("profiles");
     expect(client.profilesChain.select).not.toHaveBeenCalled();
+    expect(screen.queryByRole("heading", { name: "Próximos cumpleaños" })).not.toBeInTheDocument();
+    expect(screen.queryByText("No hay cumpleaños próximos")).not.toBeInTheDocument();
     expect(screen.queryByText("Ana García")).not.toBeInTheDocument();
     expect(document.body.innerHTML).not.toContain("1990-09-25");
     expect(document.body.innerHTML).not.toContain("Ana García");

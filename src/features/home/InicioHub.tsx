@@ -19,6 +19,8 @@ export type InicioHubProps = {
   birthdays: UpcomingBirthday[];
   /** Members (non-tourist) see Tareas/Proyectos entry under Inicio. */
   showCommunityHub?: boolean;
+  /** Members see upcoming birthdays. Tourists must not see the section. */
+  showBirthdays?: boolean;
 };
 
 function birthdaySubtitle(row: UpcomingBirthday): string {
@@ -31,7 +33,12 @@ function birthdaySubtitle(row: UpcomingBirthday): string {
   return `En ${row.daysUntil} días · cumple ${row.ageTurning}`;
 }
 
-export function InicioHub({ events, birthdays, showCommunityHub = false }: InicioHubProps) {
+export function InicioHub({
+  events,
+  birthdays,
+  showCommunityHub = false,
+  showBirthdays = true,
+}: InicioHubProps) {
   return (
     <div className="flex flex-col gap-6" data-pencil-frame="zTB9C">
       <h1 className="font-display text-[22px] font-bold text-text-primary">Inicio</h1>
@@ -104,43 +111,45 @@ export function InicioHub({ events, birthdays, showCommunityHub = false }: Inici
         )}
       </section>
 
-      <section className="flex flex-col gap-3" aria-labelledby="inicio-cumples-heading">
-        <h2
-          id="inicio-cumples-heading"
-          className="font-display text-[15px] font-semibold text-text-primary"
-        >
-          Próximos cumpleaños
-        </h2>
-        {!birthdays.length ? (
-          <EmptyState
-            title="No hay cumpleaños próximos"
-            subtitle="No hay cumpleaños en los próximos 30 días."
-            icon={Cake}
-            className="pb-5"
-          />
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {birthdays.map((row) => (
-              <li key={row.profileId}>
-                <Link
-                  href={`/plantel/${row.profileId}`}
-                  className="rounded-[20px] bg-surface border border-border shadow-[0_10px_30px_-12px_rgba(26,22,20,0.15)] p-4 flex items-center gap-3 w-full min-h-[72px] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
-                >
-                  <Avatar name={row.displayName} src={row.avatarUrl} size="md" alt="" />
-                  <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="font-display text-[15px] font-medium text-text-primary truncate">
-                      {row.displayName}
-                    </span>
-                    <span className="font-body text-xs font-normal text-text-muted">
-                      {birthdaySubtitle(row)}
-                    </span>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {showBirthdays ? (
+        <section className="flex flex-col gap-3" aria-labelledby="inicio-cumples-heading">
+          <h2
+            id="inicio-cumples-heading"
+            className="font-display text-[15px] font-semibold text-text-primary"
+          >
+            Próximos cumpleaños
+          </h2>
+          {!birthdays.length ? (
+            <EmptyState
+              title="No hay cumpleaños próximos"
+              subtitle="No hay cumpleaños en los próximos 30 días."
+              icon={Cake}
+              className="pb-5"
+            />
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {birthdays.map((row) => (
+                <li key={row.profileId}>
+                  <Link
+                    href={`/plantel/${row.profileId}`}
+                    className="rounded-[20px] bg-surface border border-border shadow-[0_10px_30px_-12px_rgba(26,22,20,0.15)] p-4 flex items-center gap-3 w-full min-h-[72px] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
+                  >
+                    <Avatar name={row.displayName} src={row.avatarUrl} size="md" alt="" />
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <span className="font-display text-[15px] font-medium text-text-primary truncate">
+                        {row.displayName}
+                      </span>
+                      <span className="font-body text-xs font-normal text-text-muted">
+                        {birthdaySubtitle(row)}
+                      </span>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
     </div>
   );
 }
