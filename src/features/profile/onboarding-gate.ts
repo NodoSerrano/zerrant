@@ -28,9 +28,7 @@ export function isStep1Complete(profile: OnboardingGateProfile | null | undefine
 }
 
 /** Incomplete onboarding always resumes on the single profile screen. */
-export function nextOnboardingPath(
-  _profile: OnboardingGateProfile | null | undefined,
-): "/onboarding/step1" {
+export function nextOnboardingPath(): "/onboarding/step1" {
   return "/onboarding/step1";
 }
 
@@ -46,7 +44,7 @@ export function resolveOnboardingRedirect(
   const isOnboarding = underPrefix(pathname, "/onboarding");
 
   if (!onboardingDone && !underPrefix(pathname, "/onboarding/step1")) {
-    return nextOnboardingPath(profile);
+    return nextOnboardingPath();
   }
 
   if (onboardingDone && isOnboarding) {

@@ -55,13 +55,7 @@ describe("isStep1Complete", () => {
 
 describe("nextOnboardingPath", () => {
   it("sends every incomplete profile to step1", () => {
-    expect(nextOnboardingPath(null)).toBe("/onboarding/step1");
-    expect(nextOnboardingPath(profile({ nombre: "Juan" }))).toBe("/onboarding/step1");
-    expect(
-      nextOnboardingPath(
-        profile({ nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" }),
-      ),
-    ).toBe("/onboarding/step1");
+    expect(nextOnboardingPath()).toBe("/onboarding/step1");
   });
 });
 
