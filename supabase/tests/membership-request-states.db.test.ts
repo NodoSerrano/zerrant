@@ -269,6 +269,37 @@ describe("ZER-143 AC2 — invalid transitions fail in the server", () => {
     expect(await readEstado(requestId)).toBe("aprobado");
   });
 
+  it("aprobado_en is stamped on convert and a later row update does not move it", async () => {
+    const owner = await createUser();
+    const requestId = await submitRequest(owner);
+    await walk(admin, requestId, [
+      "entrevista_solicitada",
+      "entrevista_coordinada",
+      "entrevista_realizada",
+      "aprobado",
+    ]);
+
+    const { data: stamped } = await service
+      .from("membership_requests")
+      .select("aprobado_en")
+      .eq("id", requestId)
+      .single();
+    expect(stamped?.aprobado_en).toEqual(expect.any(String));
+
+    const { error } = await service
+      .from("membership_requests")
+      .update({ mensaje: "nota posterior" })
+      .eq("id", requestId);
+    expect(error).toBeNull();
+
+    const { data: after } = await service
+      .from("membership_requests")
+      .select("aprobado_en")
+      .eq("id", requestId)
+      .single();
+    expect(after?.aprobado_en).toBe(stamped?.aprobado_en);
+  });
+
   it("approving after the interview grants the standard tier", async () => {
     const owner = await createUser();
     const requestId = await submitRequest(owner);

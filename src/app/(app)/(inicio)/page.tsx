@@ -9,7 +9,7 @@ import {
   takeUpcomingAgendaItems,
 } from "@/features/events/luma-normalize";
 import { InicioHub } from "@/features/home/InicioHub";
-import { memberConfirmedSince } from "@/features/membership/member-confirmed";
+import { recentMemberConfirmation } from "@/features/membership/member-confirmed";
 import { upcomingBirthdays, type BirthdayProfileInput } from "@/features/home/birthdays";
 import { NO_ROWS, resolveOnboardingRedirect } from "@/features/profile/onboarding-gate";
 import { getOnboardingGateProfile } from "@/features/profile/onboarding-gate-server";
@@ -52,14 +52,7 @@ export default async function InicioPage() {
         .limit(UPCOMING_EVENTS_LIMIT),
       supabase.from("profiles").select(BIRTHDAY_PROFILE_COLUMNS).neq("tier", "tourist"),
       fetchLumaCalendarEvents(),
-      supabase
-        .from("membership_requests")
-        .select("id")
-        .eq("profile_id", userId)
-        .eq("estado", "aprobado")
-        .gte("actualizado_en", memberConfirmedSince(now))
-        .limit(1)
-        .maybeSingle(),
+      recentMemberConfirmation(supabase, userId, now),
     ]);
 
   const internal = ((events ?? []) as AgendaEvent[]).map(internalEventToAgendaItem);
