@@ -1,5 +1,3 @@
-import { Mountain } from "lucide-react";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/Avatar";
 import { TierBadge } from "@/components/TierBadge";
@@ -9,8 +7,7 @@ import { redirect } from "next/navigation";
 import { TouristMenu } from "./TouristMenu";
 import { SerranoMenu } from "./SerranoMenu";
 import { PendingMembershipCard } from "./PendingMembershipCard";
-import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
-import { cn } from "@/lib/utils";
+import { SerSerranoCta } from "@/features/membership/SerSerranoCta";
 import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "@/features/membership/request-state";
 
 export default async function ProfilePage() {
@@ -82,26 +79,7 @@ export default async function ProfilePage() {
         {activeRequest ? (
           <PendingMembershipCard estado={activeRequest.estado} />
         ) : (
-          <div className={cn("rounded-[22px] p-[18px] flex flex-col gap-3", BRAND_GRADIENT_CLASS)}>
-            <div className="flex items-center gap-2.5">
-              <Mountain size={22} className="text-on-primary shrink-0" />
-              <span className="font-display text-[17px] font-bold text-on-primary">
-                Todavía sos Turista
-              </span>
-            </div>
-            <p className="font-body text-[13px] text-on-primary/[0.88] leading-relaxed">
-              Sumate como Serrano para aparecer en el plantel, crear eventos y participar de los
-              proyectos.
-            </p>
-            <Link
-              href="/solicitar"
-              className="rounded-pill bg-on-primary h-[46px] flex items-center justify-center w-full"
-            >
-              <span className="font-display text-[15px] font-semibold text-brand-blue">
-                Solicitar ser Serrano
-              </span>
-            </Link>
-          </div>
+          <SerSerranoCta />
         )}
 
         <TouristMenu />

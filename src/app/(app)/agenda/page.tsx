@@ -11,6 +11,8 @@ import {
 import { fetchLumaCalendarEvents } from "@/features/events/luma-client";
 import { internalEventToAgendaItem, mergeAgendaListItems } from "@/features/events/luma-normalize";
 import type { AgendaEvent } from "@/features/events/types";
+import { SerSerranoCta } from "@/features/membership/SerSerranoCta";
+import { resolveSerSerranoCtaVisibility } from "@/features/membership/ser-serrano-cta-server";
 
 export default async function AgendaPage() {
   const supabase = await createClient();
@@ -23,13 +25,14 @@ export default async function AgendaPage() {
     return <p className="text-text-secondary">Iniciá sesión para ver la agenda.</p>;
   }
 
-  const [{ data: events }, { data: profile }, lumaResult] = await Promise.all([
+  const [{ data: events }, { data: profile }, lumaResult, showSerSerranoCta] = await Promise.all([
     supabase
       .from("events")
       .select("id, titulo, descripcion, lugar, inicio, fin, creado_por")
       .order("inicio", { ascending: true }),
     supabase.from("profiles").select("tier").eq("id", user.id).single(),
     fetchLumaCalendarEvents(),
+    resolveSerSerranoCtaVisibility(user.id),
   ]);
 
   const internal = ((events ?? []) as AgendaEvent[]).map(internalEventToAgendaItem);
@@ -52,6 +55,8 @@ export default async function AgendaPage() {
           </Link>
         ) : null}
       </div>
+
+      {showSerSerranoCta ? <SerSerranoCta /> : null}
 
       {lumaFailed ? (
         <p className="font-body text-xs text-text-muted" role="status">

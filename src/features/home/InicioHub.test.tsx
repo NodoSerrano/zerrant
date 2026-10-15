@@ -127,4 +127,17 @@ describe("InicioHub", () => {
     expect(screen.queryByRole("link", { name: /Tareas/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Proyectos/i })).not.toBeInTheDocument();
   });
+
+  it("shows Ser Serrano CTA when enabled (ZER-171)", () => {
+    render(<InicioHub events={[]} birthdays={[]} showSerSerranoCta />);
+    expect(screen.getByRole("link", { name: /Solicitar ser Serrano/i })).toHaveAttribute(
+      "href",
+      "/solicitar",
+    );
+  });
+
+  it("hides Ser Serrano CTA by default", () => {
+    render(<InicioHub events={[]} birthdays={[]} />);
+    expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
+  });
 });

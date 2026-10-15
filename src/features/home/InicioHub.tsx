@@ -4,6 +4,7 @@ import { Avatar } from "@/components/Avatar";
 import { EmptyState } from "@/components/EmptyState";
 import { EventCard } from "@/features/events/EventCard";
 import type { UpcomingBirthday } from "@/features/home/birthdays";
+import { SerSerranoCta } from "@/features/membership/SerSerranoCta";
 
 export type InicioEventItem = {
   id: string;
@@ -21,6 +22,8 @@ export type InicioHubProps = {
   birthdays: UpcomingBirthday[];
   /** Members (non-tourist) see Tareas/Proyectos entry under Inicio. */
   showCommunityHub?: boolean;
+  /** Tourists without an active membership request (ZER-171). */
+  showSerSerranoCta?: boolean;
 };
 
 function birthdaySubtitle(row: UpcomingBirthday): string {
@@ -33,10 +36,17 @@ function birthdaySubtitle(row: UpcomingBirthday): string {
   return `En ${row.daysUntil} días · cumple ${row.ageTurning}`;
 }
 
-export function InicioHub({ events, birthdays, showCommunityHub = false }: InicioHubProps) {
+export function InicioHub({
+  events,
+  birthdays,
+  showCommunityHub = false,
+  showSerSerranoCta = false,
+}: InicioHubProps) {
   return (
     <div className="flex flex-col gap-6" data-pencil-frame="zTB9C">
       <h1 className="font-display text-[22px] font-bold text-text-primary">Inicio</h1>
+
+      {showSerSerranoCta ? <SerSerranoCta /> : null}
 
       {showCommunityHub ? (
         <section className="flex flex-col gap-3" aria-labelledby="inicio-comunidad-heading">

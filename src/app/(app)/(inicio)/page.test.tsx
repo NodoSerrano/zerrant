@@ -14,6 +14,10 @@ vi.mock("@/features/profile/onboarding-gate-server", () => ({
   getOnboardingGateProfile: vi.fn(),
 }));
 
+vi.mock("@/features/membership/ser-serrano-cta-server", () => ({
+  resolveSerSerranoCtaVisibility: vi.fn().mockResolvedValue(false),
+}));
+
 vi.mock("next/navigation", () => ({
   redirect: (path: string) => {
     throw new Error(`REDIRECT:${path}`);
@@ -303,5 +307,39 @@ describe("InicioPage (/)", () => {
       "href",
       "https://luma.com/abc",
     );
+  });
+
+  it("shows Ser Serrano CTA when resolver returns true (ZER-171)", async () => {
+    const { getOnboardingGateProfile } = await import("@/features/profile/onboarding-gate-server");
+    const { createClient } = await import("@/lib/supabase/server");
+    const { resolveSerSerranoCtaVisibility } =
+      await import("@/features/membership/ser-serrano-cta-server");
+    (getOnboardingGateProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      profile: { ...completeProfile, tier: "tourist" },
+      error: null,
+      userId: "user-1",
+    });
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+    (resolveSerSerranoCtaVisibility as ReturnType<typeof vi.fn>).mockResolvedValueOnce(true);
+
+    render(await InicioPage());
+    expect(screen.getByRole("link", { name: /Solicitar ser Serrano/i })).toHaveAttribute(
+      "href",
+      "/solicitar",
+    );
+  });
+
+  it("hides Ser Serrano CTA when resolver returns false (ZER-171)", async () => {
+    const { getOnboardingGateProfile } = await import("@/features/profile/onboarding-gate-server");
+    const { createClient } = await import("@/lib/supabase/server");
+    (getOnboardingGateProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      profile: completeProfile,
+      error: null,
+      userId: "user-1",
+    });
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+
+    render(await InicioPage());
+    expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
   });
 });

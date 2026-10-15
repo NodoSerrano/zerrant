@@ -15,6 +15,7 @@ import {
 } from "@/features/events/luma-normalize";
 import { InicioHub } from "@/features/home/InicioHub";
 import { upcomingBirthdays, type BirthdayProfileInput } from "@/features/home/birthdays";
+import { resolveSerSerranoCtaVisibility } from "@/features/membership/ser-serrano-cta-server";
 import { NO_ROWS, resolveOnboardingRedirect } from "@/features/profile/onboarding-gate";
 import { getOnboardingGateProfile } from "@/features/profile/onboarding-gate-server";
 
@@ -79,8 +80,14 @@ export default async function InicioPage() {
   });
 
   const showCommunityHub = Boolean(profile && profile.tier !== "tourist");
+  const showSerSerranoCta = userId ? await resolveSerSerranoCtaVisibility(userId) : false;
 
   return (
-    <InicioHub events={eventItems} birthdays={birthdayRows} showCommunityHub={showCommunityHub} />
+    <InicioHub
+      events={eventItems}
+      birthdays={birthdayRows}
+      showCommunityHub={showCommunityHub}
+      showSerSerranoCta={showSerSerranoCta}
+    />
   );
 }

@@ -65,6 +65,10 @@ vi.mock("next/navigation", () => ({
   },
 }));
 
+vi.mock("@/features/membership/ser-serrano-cta-server", () => ({
+  resolveSerSerranoCtaVisibility: vi.fn().mockResolvedValue(false),
+}));
+
 vi.mock("@/features/plantel/PlantelList", () => ({
   PlantelList: ({
     members,
@@ -154,5 +158,25 @@ describe("PlantelPage", () => {
     expect(mocks.skillsSelect).toHaveBeenCalledWith("nombre");
     expect(screen.getByTestId("role-options")).toHaveTextContent("Infra,Charlas");
     expect(screen.getByTestId("skill-options")).toHaveTextContent("Solidity");
+  });
+
+  it("shows Ser Serrano CTA when visibility resolver says so (ZER-171)", async () => {
+    const { resolveSerSerranoCtaVisibility } =
+      await import("@/features/membership/ser-serrano-cta-server");
+    (resolveSerSerranoCtaVisibility as ReturnType<typeof vi.fn>).mockResolvedValueOnce(true);
+
+    const element = await PlantelPage();
+    render(element);
+
+    expect(screen.getByRole("link", { name: /Solicitar ser Serrano/i })).toHaveAttribute(
+      "href",
+      "/solicitar",
+    );
+  });
+
+  it("hides Ser Serrano CTA by default for members (ZER-171)", async () => {
+    const element = await PlantelPage();
+    render(element);
+    expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
   });
 });
