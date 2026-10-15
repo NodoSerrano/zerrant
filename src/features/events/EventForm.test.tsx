@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -57,5 +57,63 @@ describe("EventForm", () => {
     expect(screen.getByRole("alert").textContent).toContain(
       "La hora de fin no puede ser anterior al inicio.",
     );
+  });
+
+  it("opens a 24h sheet and does not offer an end before the start", () => {
+    render(<EventForm action={async () => null} />);
+
+    fireEvent.click(screen.getByLabelText("Inicio"));
+    expect(screen.getByRole("dialog", { name: "Inicio" }).textContent).not.toMatch(/AM|PM/);
+    fireEvent.click(screen.getByRole("button", { name: "Hora 19" }));
+    fireEvent.click(screen.getByRole("button", { name: "Minuto 00" }));
+    fireEvent.click(screen.getByRole("button", { name: "Listo" }));
+    expect(screen.getByLabelText("Inicio")).toHaveValue("19:00");
+
+    fireEvent.click(screen.getByLabelText("Fin"));
+    expect(screen.getByRole("button", { name: "Hora 18" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Hora 19" })).not.toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Hora 21" }));
+    fireEvent.click(screen.getByRole("button", { name: "Minuto 00" }));
+    fireEvent.click(screen.getByRole("button", { name: "Listo" }));
+    expect(screen.getByLabelText("Fin")).toHaveValue("21:00");
+
+    fireEvent.click(screen.getByLabelText("Inicio"));
+    fireEvent.click(screen.getByRole("button", { name: "Hora 22" }));
+    fireEvent.click(screen.getByRole("button", { name: "Minuto 00" }));
+    fireEvent.click(screen.getByRole("button", { name: "Listo" }));
+    expect(screen.getByLabelText("Inicio")).toHaveValue("22:00");
+    expect(screen.getByLabelText("Fin")).toHaveValue("22:00");
+  });
+
+  it("keeps publish disabled until titulo, fecha, inicio, fin and lugar are filled", () => {
+    render(<EventForm action={async () => null} />);
+    const publish = screen.getByRole("button", { name: "Publicar evento" });
+    expect(publish).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("Título"), { target: { value: "Charla" } });
+    fireEvent.click(screen.getByLabelText("Fecha"));
+    fireEvent.click(screen.getByRole("button", { name: "15" }));
+    fireEvent.click(screen.getByLabelText("Inicio"));
+    fireEvent.click(screen.getByRole("button", { name: "Hora 18" }));
+    fireEvent.click(screen.getByRole("button", { name: "Minuto 30" }));
+    fireEvent.click(screen.getByRole("button", { name: "Listo" }));
+    expect(publish).toBeDisabled();
+    expect(screen.queryByText(/Dura/)).toBeNull();
+
+    fireEvent.click(screen.getByLabelText("Fin"));
+    fireEvent.click(screen.getByRole("button", { name: "Hora 19" }));
+    fireEvent.click(screen.getByRole("button", { name: "Minuto 30" }));
+    fireEvent.click(screen.getByRole("button", { name: "Listo" }));
+    expect(screen.getByText("Dura 1 h")).toBeTruthy();
+    expect(publish).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("Lugar"), { target: { value: "Espacio Nodo" } });
+    expect(publish).toBeEnabled();
+  });
+
+  it("marks today in the date sheet", () => {
+    render(<EventForm action={async () => null} />);
+    fireEvent.click(screen.getByLabelText("Fecha"));
+    expect(screen.getByRole("button", { current: "date" })).toHaveAccessibleName(/Hoy/);
   });
 });

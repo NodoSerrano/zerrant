@@ -4,6 +4,9 @@
  * CI (UTC) and production match the node's wall clock.
  */
 
+import { formatAgendaDate } from "./dateOptions";
+import { formatMinutes } from "./timeOptions";
+
 export const AGENDA_TIME_ZONE = "America/Argentina/Buenos_Aires";
 
 const DAY_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -142,6 +145,14 @@ export function buildDayStrip(count: number, from: Date = new Date()): StripDay[
   return days;
 }
 
+export function formatEventDuration(inicio: string, fin: string | null): string | null {
+  if (!fin) return null;
+  const start = new Date(inicio);
+  const end = new Date(fin);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  return formatMinutes((end.getTime() - start.getTime()) / 60_000);
+}
+
 export function formatEventTimeRange(inicio: string, fin: string | null): string {
   const start = new Date(inicio);
   if (Number.isNaN(start.getTime())) return "";
@@ -160,6 +171,13 @@ export function formatEventTimeRange(inicio: string, fin: string | null): string
   if (Number.isNaN(end.getTime())) return startLabel;
 
   return `${startLabel} – ${timeFmt.format(end)}`;
+}
+
+/** "vie 23 oct" for an event start, in the agenda timezone. */
+export function formatAgendaDateLabel(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return formatAgendaDate(formatDayKey(date));
 }
 
 /** HH:MM wall clock in the agenda TZ for an ISO timestamp (edit form prefill). */

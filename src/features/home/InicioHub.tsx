@@ -8,7 +8,9 @@ import type { UpcomingBirthday } from "@/features/home/birthdays";
 export type InicioEventItem = {
   id: string;
   title: string;
+  dateLabel?: string;
   timeLabel: string;
+  durationLabel?: string | null;
   place: string | null;
   href: string;
   coverUrl?: string | null;
@@ -95,7 +97,9 @@ export function InicioHub({ events, birthdays, showCommunityHub = false }: Inici
                 key={event.id}
                 href={event.href}
                 title={event.title}
+                dateLabel={event.dateLabel}
                 timeLabel={event.timeLabel}
+                durationLabel={event.durationLabel}
                 place={event.place}
                 coverUrl={event.coverUrl}
               />

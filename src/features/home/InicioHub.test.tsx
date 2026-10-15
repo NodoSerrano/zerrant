@@ -59,6 +59,7 @@ describe("InicioHub", () => {
           {
             id: "e1",
             title: "Asamblea",
+            dateLabel: "dom 20 sept",
             timeLabel: "18:00 – 20:00",
             place: "Salón",
             href: "/agenda/e1",
@@ -68,7 +69,9 @@ describe("InicioHub", () => {
       />,
     );
     expect(screen.getByText("Asamblea")).toBeInTheDocument();
-    expect(screen.getByText("Salón")).toBeInTheDocument();
+    expect(screen.getByText("20")).toBeInTheDocument();
+    expect(screen.getByText("sept")).toBeInTheDocument();
+    expect(screen.getByText(/Salón/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Asamblea/i })).toHaveAttribute("href", "/agenda/e1");
     expect(screen.queryByText("No hay eventos próximos")).not.toBeInTheDocument();
   });
