@@ -24,6 +24,7 @@ const DOCKER_DB_CONTAINER = process.env.SUPABASE_DB_CONTAINER ?? "supabase_db_ba
 
 const TOURIST_ID = "11111111-1111-1111-1111-111111111111";
 const STANDARD_ID = "22222222-2222-2222-2222-222222222222";
+const ADMIN_ID = "33333333-3333-4333-8333-333333333333";
 
 const SUCCESS = "00000";
 const UNIQUE_VIOLATION = "23505";
@@ -90,15 +91,18 @@ begin;
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
 values
   ('${TOURIST_ID}','00000000-0000-0000-0000-000000000000','authenticated','authenticated','rls-tourist@test.local','x',now(),now()),
-  ('${STANDARD_ID}','00000000-0000-0000-0000-000000000000','authenticated','authenticated','rls-standard@test.local','x',now(),now());
+  ('${STANDARD_ID}','00000000-0000-0000-0000-000000000000','authenticated','authenticated','rls-standard@test.local','x',now(),now()),
+  ('${ADMIN_ID}','00000000-0000-0000-0000-000000000000','authenticated','authenticated','rls-admin@test.local','x',now(),now());
 
 update public.profiles set tier = 'standard' where id = '${STANDARD_ID}';
+update public.profiles set is_platform_admin = true where id = '${ADMIN_ID}';
 
 create temp table rls_result(name text, sqlstate text) on commit drop;
 
 do $$
 declare
   v_state text;
+  v_count text;
   v_rows text[] := '{}';
 begin
   perform set_config('role', 'authenticated', true);
@@ -125,6 +129,23 @@ begin
   exception when others then v_state := SQLSTATE;
   end;
   v_rows := v_rows || ('non_tourist_insert=' || v_state);
+
+  -- ZER-145: seed as owner (RLS bypass), then read as authenticated.
+  perform set_config('role', 'postgres', true);
+  insert into public.interview_notes (request_id, author_id, body)
+  select id, '${ADMIN_ID}', 'nota interna'
+  from public.membership_requests
+  where profile_id = '${TOURIST_ID}'
+  limit 1;
+
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', '{"sub":"${TOURIST_ID}","role":"authenticated"}', true);
+  select count(*)::text into v_count from public.interview_notes;
+  v_rows := v_rows || ('non_admin_interview_notes=' || v_count);
+
+  perform set_config('request.jwt.claims', '{"sub":"${ADMIN_ID}","role":"authenticated"}', true);
+  select count(*)::text into v_count from public.interview_notes;
+  v_rows := v_rows || ('admin_interview_notes=' || v_count);
 
   perform set_config('role', 'postgres', true);
 
@@ -161,5 +182,13 @@ describe("membership_requests insert policy (live DB)", () => {
 
   it("denies a non-tourist by row-level security", () => {
     expect(outcomes.non_tourist_insert).toBe(RLS_DENIED);
+  });
+
+  it("returns zero interview notes to a non-admin JWT", () => {
+    expect(outcomes.non_admin_interview_notes).toBe("0");
+  });
+
+  it("returns the interview note to an admin JWT", () => {
+    expect(outcomes.admin_interview_notes).toBe("1");
   });
 });
