@@ -136,5 +136,4 @@ describe("re-verification at 375px (bug-375 #2, #3, #4)", () => {
     expect(root).toHaveClass("flex-1", "flex-col");
     expect(root.className).toMatch(/\bgap-/);
   });
-
 });
