@@ -27,11 +27,11 @@ export function isStep1Complete(profile: OnboardingGateProfile | null | undefine
   return Boolean(profile?.nombre && profile?.apellido && profile?.fecha_nacimiento);
 }
 
-/** Where to send a user that still owes onboarding (not already under the right step). */
+/** Incomplete onboarding always resumes on the single profile screen. */
 export function nextOnboardingPath(
-  profile: OnboardingGateProfile | null | undefined,
-): "/onboarding/step1" | "/onboarding/step2" {
-  return isStep1Complete(profile) ? "/onboarding/step2" : "/onboarding/step1";
+  _profile: OnboardingGateProfile | null | undefined,
+): "/onboarding/step1" {
+  return "/onboarding/step1";
 }
 
 /**
@@ -43,16 +43,10 @@ export function resolveOnboardingRedirect(
   pathname: string,
 ): string | null {
   const onboardingDone = isOnboardingComplete(profile);
-  const step1Done = isStep1Complete(profile);
   const isOnboarding = underPrefix(pathname, "/onboarding");
 
-  if (!onboardingDone && !isOnboarding) {
+  if (!onboardingDone && !underPrefix(pathname, "/onboarding/step1")) {
     return nextOnboardingPath(profile);
-  }
-
-  // Step 2 cannot skip step 1: step 1 holds the required data.
-  if (!onboardingDone && !step1Done && !underPrefix(pathname, "/onboarding/step1")) {
-    return "/onboarding/step1";
   }
 
   if (onboardingDone && isOnboarding) {

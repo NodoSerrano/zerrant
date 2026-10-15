@@ -47,7 +47,7 @@ describe("Step1Form", () => {
     expect(screen.getAllByRole("button").map((el) => el.textContent)).toEqual([
       "Subir foto",
       "Sacar foto",
-      "Guardar y continuar",
+      "Guardar perfil",
     ]);
     expect(screen.queryAllByRole("link")).toHaveLength(0);
   });
@@ -87,6 +87,9 @@ describe("Step1Form", () => {
     expect(screen.getByLabelText("Apellido")).toBeRequired();
     expect(screen.getByLabelText("Fecha de nacimiento")).toBeRequired();
     expect(screen.getByLabelText("Apodo (opcional)")).not.toBeRequired();
+    expect(screen.getByLabelText("Bio")).not.toBeRequired();
+    expect(screen.getByLabelText("Telegram / contacto")).not.toBeRequired();
+    expect(screen.getByLabelText("Sitio o portfolio (opcional)")).not.toBeRequired();
     expect(screen.getAllByText("*")).toHaveLength(3);
   });
 
@@ -129,12 +132,39 @@ describe("Step1Form", () => {
     expect(screen.getByLabelText("Fecha de nacimiento")).toHaveValue("1990-01-15");
   });
 
-  it("submits with the Pencil CTA copy", () => {
+  it("names the next step on the submit button", () => {
     render(<Step1Form />);
 
-    expect(screen.getByRole("button", { name: "Guardar y continuar" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Guardar perfil" })).toHaveAttribute(
       "type",
       "submit",
     );
+  });
+
+  it("names the membership next step when the pipeline is showing", () => {
+    render(
+      <Step1Form
+        progress={{
+          current: 3,
+          steps: [
+            { key: "registro", label: "Registro", status: "done" },
+            { key: "verificacion", label: "Verificación", status: "done" },
+            { key: "perfil", label: "Perfil", status: "current" },
+            { key: "solicitud", label: "Solicitud", status: "pending" },
+            { key: "horario", label: "Horario", status: "pending" },
+            { key: "entrevista", label: "Entrevista", status: "pending" },
+            { key: "resolucion", label: "Resolución", status: "pending" },
+            { key: "miembro", label: "Miembro", status: "pending" },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Continuar a la solicitud" })).toHaveAttribute(
+      "type",
+      "submit",
+    );
+    expect(screen.queryByRole("button", { name: "Finalizar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Guardar y continuar" })).not.toBeInTheDocument();
   });
 });

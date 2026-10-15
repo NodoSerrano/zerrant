@@ -54,43 +54,46 @@ describe("isStep1Complete", () => {
 });
 
 describe("nextOnboardingPath", () => {
-  it("sends unfinished step1 users to step1", () => {
+  it("sends every incomplete profile to step1", () => {
     expect(nextOnboardingPath(null)).toBe("/onboarding/step1");
     expect(nextOnboardingPath(profile({ nombre: "Juan" }))).toBe("/onboarding/step1");
-  });
-
-  it("sends step1-done users to step2", () => {
     expect(
       nextOnboardingPath(
         profile({ nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" }),
       ),
-    ).toBe("/onboarding/step2");
+    ).toBe("/onboarding/step1");
   });
 });
 
 describe("resolveOnboardingRedirect", () => {
-  it("sends unfinished users outside onboarding to the right step", () => {
+  it("sends unfinished users outside onboarding to step1", () => {
     expect(resolveOnboardingRedirect(profile(), "/nodo/tasks")).toBe("/onboarding/step1");
     expect(
       resolveOnboardingRedirect(
         profile({ nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" }),
         "/profile",
       ),
-    ).toBe("/onboarding/step2");
+    ).toBe("/onboarding/step1");
   });
 
-  it("does not bounce inside the correct onboarding step", () => {
+  it("does not bounce unfinished users already on step1", () => {
     expect(resolveOnboardingRedirect(profile(), "/onboarding/step1")).toBeNull();
+    expect(
+      resolveOnboardingRedirect(
+        profile({ nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" }),
+        "/onboarding/step1",
+      ),
+    ).toBeNull();
+  });
+
+  it("never leaves an incomplete profile on step2", () => {
+    expect(resolveOnboardingRedirect(profile(), "/onboarding/step2")).toBe("/onboarding/step1");
     expect(
       resolveOnboardingRedirect(
         profile({ nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" }),
         "/onboarding/step2",
       ),
-    ).toBeNull();
-  });
-
-  it("sends unfinished users on step2 without step1 back to step1", () => {
-    expect(resolveOnboardingRedirect(profile(), "/onboarding/step2")).toBe("/onboarding/step1");
+    ).toBe("/onboarding/step1");
   });
 
   it("sends finished users out of /onboarding", () => {

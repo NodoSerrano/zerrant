@@ -14,6 +14,9 @@ export interface Step1Defaults {
   apellido?: string | null;
   apodo?: string | null;
   fecha_nacimiento?: string | null;
+  bio?: string | null;
+  contacto_telegram?: string | null;
+  sitio_url?: string | null;
 }
 
 interface Step1FormProps {
@@ -80,6 +83,35 @@ export function Step1Form({ defaults, avatarUrl, progress }: Step1FormProps) {
           required
         />
 
+        <div className="flex flex-col gap-[7px]">
+          <label htmlFor="bio" className="text-[13px] font-medium text-text-secondary">
+            Bio
+          </label>
+          <textarea
+            id="bio"
+            name="bio"
+            rows={4}
+            placeholder="Contanos quién sos y qué hacés..."
+            defaultValue={defaults?.bio ?? ""}
+            className="h-[100px] rounded-2xl border border-border bg-surface px-4 py-4 text-[15px] text-text-primary placeholder:text-text-muted focus:outline-hidden focus:ring-2 focus:ring-primary/40 resize-none"
+          />
+        </div>
+
+        <Input
+          name="contacto_telegram"
+          label="Telegram / contacto"
+          placeholder="@usuario"
+          defaultValue={defaults?.contacto_telegram ?? ""}
+        />
+
+        <Input
+          name="sitio_url"
+          label="Sitio o portfolio (opcional)"
+          type="url"
+          placeholder="https://tusitio.com"
+          defaultValue={defaults?.sitio_url ?? ""}
+        />
+
         {state?.error && (
           <p role="alert" className="text-sm text-coral bg-coral/10 rounded-md px-3 py-2">
             {state.error}
@@ -90,7 +122,13 @@ export function Step1Form({ defaults, avatarUrl, progress }: Step1FormProps) {
             before knowing whether the photo got in: the user would believe
             they have it and they don't. */}
         <PrimaryButton type="submit" disabled={pending || uploadingPhoto} className="mt-2">
-          {uploadingPhoto ? "Subiendo foto..." : pending ? "Guardando..." : "Guardar y continuar"}
+          {uploadingPhoto
+            ? "Subiendo foto..."
+            : pending
+              ? "Guardando..."
+              : progress
+                ? "Continuar a la solicitud"
+                : "Guardar perfil"}
         </PrimaryButton>
       </form>
     </div>
