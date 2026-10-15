@@ -7,6 +7,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { NodoTabs } from "@/components/NodoTabs";
 import { cn } from "@/lib/utils";
 import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
+import { displayName } from "@/features/profile/displayName";
+import type { NombreVisible } from "@/features/profile/types";
 import { ESTADO_BADGE, getCategoriaLabel } from "@/features/tasks/taskDisplay";
 import type { TaskEstado } from "@/features/tasks/types";
 
@@ -40,6 +42,27 @@ function toCardEstado(estado: TaskEstado | null): CardEstado {
   return ESTADO_MAP[estado as NonNullable<TaskEstado>] ?? "abierta";
 }
 
+type TakerProfile = {
+  nombre: string | null;
+  apellido: string | null;
+  apodo: string | null;
+  nombre_visible: NombreVisible | null;
+};
+
+function takerLabel(task: {
+  tomada_por: string | null;
+  tomador: TakerProfile | null;
+}): string | null {
+  if (!task.tomada_por || !task.tomador) return null;
+  const name = displayName({
+    nombre: task.tomador.nombre,
+    apellido: task.tomador.apellido,
+    apodo: task.tomador.apodo,
+    nombre_visible: task.tomador.nombre_visible ?? "nombre_apellido",
+  });
+  return name || null;
+}
+
 export default async function TasksPage({
   searchParams,
 }: {
@@ -58,7 +81,9 @@ export default async function TasksPage({
 
   let query = supabase
     .from("tasks")
-    .select("*, profiles:creado_por(nombre, apellido, apodo, nombre_visible)")
+    .select(
+      "*, profiles:creado_por(nombre, apellido, apodo, nombre_visible), tomador:tomada_por(nombre, apellido, apodo, nombre_visible)",
+    )
     .order("created_at", { ascending: false });
 
   if (filter === "todas") {
@@ -136,6 +161,7 @@ export default async function TasksPage({
               timeAgo={relativeTime(task.created_at)}
               estado={toCardEstado(task.estado)}
               urgencia={task.urgencia ?? "media"}
+              assigneeName={takerLabel(task)}
               actionLabel="Tomar"
             />
           ))}

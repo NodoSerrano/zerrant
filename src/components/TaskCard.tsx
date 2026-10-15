@@ -13,6 +13,7 @@ interface TaskCardProps {
   urgencia: "alta" | "media" | "baja";
   actionLabel: string;
   onAction?: () => void;
+  assigneeName?: string | null;
   className?: string;
 }
 
@@ -32,6 +33,7 @@ export function TaskCard({
   urgencia,
   actionLabel,
   onAction,
+  assigneeName,
   className,
 }: TaskCardProps) {
   const Icon = getCategoryIcon(category);
@@ -73,6 +75,11 @@ export function TaskCard({
           <span className="font-body text-xs font-normal text-text-muted">
             {category} · {timeAgo}
           </span>
+          {assigneeName ? (
+            <span className="font-body text-xs font-normal text-text-muted">
+              {`Tomada por ${assigneeName}`}
+            </span>
+          ) : null}
         </div>
         <span
           className={cn(

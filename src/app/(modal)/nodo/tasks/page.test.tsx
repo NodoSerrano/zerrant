@@ -366,6 +366,69 @@ describe("TasksPage", () => {
       expect(badge.className).toContain("bg-surface-inset");
     });
 
+    const TAKER_ID = "11111111-1111-4111-8111-111111111111";
+
+    it("shows the taker display name and not the profile id", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      const client = mockSupabase({
+        tasks: [
+          {
+            id: "task-1",
+            titulo: "Arreglar cerca",
+            categoria: "reparacion",
+            estado: "tomada",
+            urgencia: "media",
+            created_at: "2026-07-27T12:00:00Z",
+            creado_por: "user-1",
+            tomada_por: TAKER_ID,
+            profiles: { nombre: "Juan", apellido: "Perez", apodo: null, nombre_visible: "nombre_apellido" },
+            tomador: {
+              nombre: "Ana",
+              apellido: "Sosa",
+              apodo: null,
+              nombre_visible: "nombre_apellido",
+            },
+          },
+        ],
+      });
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
+
+      await renderPage();
+
+      expect(screen.getByText("Tomada por Ana Sosa")).toBeInTheDocument();
+      expect(screen.queryByText(TAKER_ID)).not.toBeInTheDocument();
+      expect(client.getTasksChain()?.select).toHaveBeenCalledWith(
+        expect.stringContaining("tomador:tomada_por(nombre, apellido, apodo, nombre_visible)"),
+      );
+    });
+
+    it("does not print a profile id when a taken task has no taker profile", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({
+          tasks: [
+            {
+              id: "task-1",
+              titulo: "Arreglar cerca",
+              categoria: "reparacion",
+              estado: "tomada",
+              urgencia: "media",
+              created_at: "2026-07-27T12:00:00Z",
+              creado_por: "user-1",
+              tomada_por: TAKER_ID,
+              tomador: null,
+              profiles: { nombre: "Juan", apellido: "Perez", apodo: null, nombre_visible: "nombre_apellido" },
+            },
+          ],
+        }),
+      );
+
+      await renderPage();
+
+      expect(screen.queryByText(TAKER_ID)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Tomada por/)).not.toBeInTheDocument();
+    });
+
     it("renders a task with a null estado instead of crashing", async () => {
       const { createClient } = await import("@/lib/supabase/server");
       (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
