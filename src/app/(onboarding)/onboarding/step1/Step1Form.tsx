@@ -7,6 +7,8 @@ import { PipelineProgress } from "@/components/PipelineProgress";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import type { PipelineProgress as PipelineProgressData } from "@/features/membership/pipeline";
 import { saveOnboardingStep1, uploadAvatar } from "@/features/profile/actions";
+import { todayIsoDate } from "@/features/profile/birthdate";
+import { formatPersonName } from "@/features/profile/person-name";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 
 export interface Step1Defaults {
@@ -61,6 +63,10 @@ export function Step1Form({ defaults, avatarUrl, progress }: Step1FormProps) {
           placeholder="Tu nombre"
           defaultValue={defaults?.nombre ?? ""}
           required
+          autoComplete="given-name"
+          onBlur={(e) => {
+            e.currentTarget.value = formatPersonName(e.currentTarget.value);
+          }}
         />
         <Input
           name="apellido"
@@ -68,12 +74,17 @@ export function Step1Form({ defaults, avatarUrl, progress }: Step1FormProps) {
           placeholder="Tu apellido"
           defaultValue={defaults?.apellido ?? ""}
           required
+          autoComplete="family-name"
+          onBlur={(e) => {
+            e.currentTarget.value = formatPersonName(e.currentTarget.value);
+          }}
         />
         <Input
           name="apodo"
           label="Apodo (opcional)"
           placeholder="Cómo te dicen en Nodo"
           defaultValue={defaults?.apodo ?? ""}
+          autoComplete="nickname"
         />
         <Input
           name="fecha_nacimiento"
@@ -81,6 +92,9 @@ export function Step1Form({ defaults, avatarUrl, progress }: Step1FormProps) {
           label="Fecha de nacimiento"
           defaultValue={defaults?.fecha_nacimiento ?? ""}
           required
+          min="1900-01-01"
+          max={todayIsoDate()}
+          autoComplete="bday"
         />
 
         <div className="flex flex-col gap-[7px]">

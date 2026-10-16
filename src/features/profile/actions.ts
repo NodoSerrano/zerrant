@@ -17,6 +17,8 @@ import {
   validateAvatarFile,
 } from "./avatar";
 import { ensureWebSafeImage } from "./avatar-convert";
+import { isValidBirthDate } from "./birthdate";
+import { formatPersonName } from "./person-name";
 import type { ProfileUpdate } from "./types";
 
 /** What the user sees when Postgres fails: never the engine's message. */
@@ -46,20 +48,6 @@ const EDIT_PROFILE_FIELDS = [
 
 function text(value: FormDataEntryValue | null): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
-}
-
-/** A real `YYYY-MM-DD`, not in the future and not absurd. The `type=date` input can degrade to free text. */
-function isValidBirthDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return false;
-  }
-
-  const date = new Date(`${value}T00:00:00Z`);
-  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
-    return false;
-  }
-
-  return date.getTime() <= Date.now() && date.getUTCFullYear() >= 1900;
 }
 
 /** The one guard the three NOT NULL enum columns share: unknown or blank values are dropped. */
@@ -114,8 +102,20 @@ function buildProfileUpdate(
     }
   };
 
-  assignText("nombre", "nombre");
-  assignText("apellido", "apellido");
+  /** Nombre/apellido: trim then legible casing (particles preserved). */
+  const assignPersonName = (field: "nombre" | "apellido", key: string): void => {
+    if (!owns(field)) {
+      return;
+    }
+    const raw = formData.get(key);
+    if (raw !== null) {
+      const t = text(raw);
+      update[field] = t ? formatPersonName(t) : t;
+    }
+  };
+
+  assignPersonName("nombre", "nombre");
+  assignPersonName("apellido", "apellido");
   assignText("apodo", "apodo");
   assignText("fecha_nacimiento", "fecha_nacimiento");
   assignText("bio", "bio");
