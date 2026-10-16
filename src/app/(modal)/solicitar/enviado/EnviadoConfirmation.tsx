@@ -23,7 +23,7 @@ export function EnviadoConfirmation({ progress }: { progress?: PipelineProgressD
           ¡Solicitud enviada!
         </h1>
         <p className="font-body text-[14px] text-text-secondary leading-[1.5] text-center">
-          Un admin va a revisar tu pedido. Te avisamos cuando te aprueben como Serrano.
+          Un administrador va a revisar tu solicitud. El próximo paso es coordinar una entrevista.
         </p>
       </div>
 

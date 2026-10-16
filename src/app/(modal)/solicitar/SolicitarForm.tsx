@@ -237,8 +237,7 @@ export function SolicitarForm({ progress }: { progress?: PipelineProgressData })
             Sumate como Serrano
           </h1>
           <p className="font-body text-[14px] leading-[1.5] text-text-secondary">
-            Completá estos datos para que un admin revise tu solicitud y coordine una breve reunión
-            con el horario que indiques.
+            Completá estos datos para que un administrador revise tu solicitud.
           </p>
         </div>
       ) : null}
@@ -398,8 +397,8 @@ export function SolicitarForm({ progress }: { progress?: PipelineProgressData })
           <div className="flex items-center gap-[10px] rounded-2xl bg-surface-inset p-[14px]">
             <Info className="size-[18px] shrink-0 text-brand-blue" />
             <p className="font-body text-[12px] leading-[1.4] text-text-secondary">
-              Un admin va a revisar tu solicitud, coordinar la reunión con el horario que indiques y
-              asignarte un tier.
+              Un administrador va a revisar tu solicitud. El próximo paso es coordinar una
+              entrevista.
             </p>
           </div>
         </div>

@@ -13,7 +13,7 @@ describe("EnviadoConfirmation — Pencil D1hKT", () => {
     expect(title.className).toContain("text-text-primary");
 
     const subtitle = screen.getByText(
-      "Un admin va a revisar tu pedido. Te avisamos cuando te aprueben como Serrano.",
+      "Un administrador va a revisar tu solicitud. El próximo paso es coordinar una entrevista.",
     );
     expect(subtitle.className).toContain("font-body");
     expect(subtitle.className).toContain("text-[14px]");

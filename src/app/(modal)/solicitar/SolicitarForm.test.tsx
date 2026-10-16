@@ -134,7 +134,9 @@ describe("SolicitarForm — title and subtitle", () => {
   it("renders the subtitle with body font, 14px, secondary color", () => {
     render(<SolicitarForm />);
 
-    const subtitle = screen.getByText(/Completá estos datos para que un admin revise/);
+    const subtitle = screen.getByText(
+      "Completá estos datos para que un administrador revise tu solicitud.",
+    );
     expect(subtitle.className).toContain("font-body");
     expect(subtitle.className).toContain("text-[14px]");
     expect(subtitle.className).toContain("text-text-secondary");
@@ -254,8 +256,13 @@ describe("SolicitarForm — info box", () => {
     render(<SolicitarForm />);
     goToStep3();
 
-    expect(screen.getByText(/Un admin va a revisar tu solicitud/i)).toBeInTheDocument();
-    expect(screen.getByText(/coordina(?:r)? la reunión/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Un administrador va a revisar tu solicitud. El próximo paso es coordinar una entrevista.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/tier/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/horario que indiques/i)).not.toBeInTheDocument();
   });
 
   it("renders the info icon in brand-blue", () => {
