@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { formatDayKey, formatEventTimeRange } from "@/features/events/day";
+import {
+  formatAgendaDateLabel,
+  formatDayKey,
+  formatEventDuration,
+  formatEventTimeRange,
+} from "@/features/events/day";
 import type { AgendaEvent } from "@/features/events/types";
 import { fetchLumaCalendarEvents } from "@/features/events/luma-client";
 import {
@@ -9,7 +14,9 @@ import {
   takeUpcomingAgendaItems,
 } from "@/features/events/luma-normalize";
 import { InicioHub } from "@/features/home/InicioHub";
+import { recentMemberConfirmation } from "@/features/membership/member-confirmed";
 import { upcomingBirthdays, type BirthdayProfileInput } from "@/features/home/birthdays";
+import { resolveSerSerranoCtaVisibility } from "@/features/membership/ser-serrano-cta-server";
 import { NO_ROWS, resolveOnboardingRedirect } from "@/features/profile/onboarding-gate";
 import { getOnboardingGateProfile } from "@/features/profile/onboarding-gate-server";
 
@@ -42,7 +49,13 @@ export default async function InicioPage() {
   const today = formatDayKey(now);
   const viewerIsTourist = profile?.tier === "tourist";
 
-  const [{ data: events }, birthdayProfiles, lumaResult] = await Promise.all([
+  const [
+    { data: events },
+    birthdayProfiles,
+    lumaResult,
+    { data: approvedRequest },
+    showSerSerranoCta,
+  ] = await Promise.all([
     supabase
       .from("events")
       .select("id, titulo, descripcion, lugar, inicio, fin, creado_por")
@@ -53,6 +66,11 @@ export default async function InicioPage() {
       ? Promise.resolve({ data: null })
       : supabase.from("profiles").select(BIRTHDAY_PROFILE_COLUMNS).neq("tier", "tourist"),
     fetchLumaCalendarEvents(),
+    recentMemberConfirmation(supabase, userId, now),
+    resolveSerSerranoCtaVisibility(userId, {
+      client: supabase,
+      tier: profile?.tier ?? null,
+    }),
   ]);
   const profiles = birthdayProfiles.data;
 
@@ -61,13 +79,13 @@ export default async function InicioPage() {
   const merged = mergeAgendaListItems(luma, internal);
   const upcoming = takeUpcomingAgendaItems(merged, now, UPCOMING_EVENTS_LIMIT);
   const eventItems = upcoming.map((event) => {
-    const day = formatDayKey(new Date(event.inicio));
     const time = formatEventTimeRange(event.inicio, event.fin);
-    const timeLabel = day === today ? time : `${day} · ${time}`;
     return {
       id: event.id,
       title: event.title,
-      timeLabel,
+      dateLabel: formatAgendaDateLabel(event.inicio),
+      timeLabel: time,
+      durationLabel: formatEventDuration(event.inicio, event.fin),
       place: event.place,
       href: event.href,
       coverUrl: event.coverUrl,
@@ -85,6 +103,8 @@ export default async function InicioPage() {
       birthdays={birthdayRows}
       showCommunityHub={showCommunityHub}
       showBirthdays={!viewerIsTourist}
+      showSerSerranoCta={showSerSerranoCta}
+      memberConfirmed={Boolean(approvedRequest)}
     />
   );
 }

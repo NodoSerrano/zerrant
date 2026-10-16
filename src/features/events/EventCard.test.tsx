@@ -55,8 +55,8 @@ describe("EventCard", () => {
     );
 
     expect(screen.getByText("Asamblea de domingo")).toBeInTheDocument();
-    expect(screen.getByText("18:00 – 20:00")).toBeInTheDocument();
-    expect(screen.getByText("Salón principal")).toBeInTheDocument();
+    expect(screen.getByText(/18:00 – 20:00/)).toBeInTheDocument();
+    expect(screen.getByText(/Salón principal/)).toBeInTheDocument();
   });
 
   it("links to the event detail when href is set", () => {
@@ -126,5 +126,34 @@ describe("EventCard", () => {
     );
     expect(container.querySelector("svg.lucide-calendar")).toBeTruthy();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("shows the day number as the left block when a date is set", () => {
+    const { container } = render(
+      <EventCard
+        title="test 2"
+        dateLabel="jue 15 oct"
+        timeLabel="19:30 – 21:30"
+        place="Nodo labs"
+      />,
+    );
+    expect(screen.getByText("15")).toBeInTheDocument();
+    expect(screen.getByText("oct")).toBeInTheDocument();
+    expect(screen.getByText(/19:30 – 21:30 · Nodo labs/)).toBeInTheDocument();
+    expect(screen.queryByText("2 h")).not.toBeInTheDocument();
+    expect(container.querySelector("svg.lucide-calendar")).toBeNull();
+  });
+
+  it("shows the duration on the right when one is set", () => {
+    render(
+      <EventCard
+        title="test 2"
+        dateLabel="jue 15 oct"
+        timeLabel="19:30 – 21:30"
+        durationLabel="2 h"
+        place="Nodo labs"
+      />,
+    );
+    expect(screen.getByText("2 h")).toBeInTheDocument();
   });
 });

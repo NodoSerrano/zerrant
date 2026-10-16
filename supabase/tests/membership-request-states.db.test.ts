@@ -239,6 +239,67 @@ describe("ZER-143 AC2 — invalid transitions fail in the server", () => {
     expect(await readEstado(requestId)).toBe("pendiente_coordinacion");
   });
 
+  it("an admin cannot approve their own request; service role still can", async () => {
+    const self = await createUser({ admin: true });
+    const requestId = await submitRequest(self);
+    await walk(self, requestId, [
+      "entrevista_solicitada",
+      "entrevista_coordinada",
+      "entrevista_realizada",
+    ]);
+
+    const refused = await transition(self, requestId, "aprobado");
+    expect(refused.data).toBeNull();
+    expect(refused.error?.hint).toBe("self_approve");
+    expect(refused.error?.code).toBe("23514");
+    expect(await readEstado(requestId)).toBe("entrevista_realizada");
+
+    const { data: stillTourist } = await service
+      .from("profiles")
+      .select("tier")
+      .eq("id", self.id)
+      .single();
+    expect(stillTourist?.tier).toBe("tourist");
+
+    const { error: serviceError } = await service
+      .from("membership_requests")
+      .update({ estado: "aprobado" })
+      .eq("id", requestId);
+    expect(serviceError).toBeNull();
+    expect(await readEstado(requestId)).toBe("aprobado");
+  });
+
+  it("aprobado_en is stamped on convert and a later row update does not move it", async () => {
+    const owner = await createUser();
+    const requestId = await submitRequest(owner);
+    await walk(admin, requestId, [
+      "entrevista_solicitada",
+      "entrevista_coordinada",
+      "entrevista_realizada",
+      "aprobado",
+    ]);
+
+    const { data: stamped } = await service
+      .from("membership_requests")
+      .select("aprobado_en")
+      .eq("id", requestId)
+      .single();
+    expect(stamped?.aprobado_en).toEqual(expect.any(String));
+
+    const { error } = await service
+      .from("membership_requests")
+      .update({ mensaje: "nota posterior" })
+      .eq("id", requestId);
+    expect(error).toBeNull();
+
+    const { data: after } = await service
+      .from("membership_requests")
+      .select("aprobado_en")
+      .eq("id", requestId)
+      .single();
+    expect(after?.aprobado_en).toBe(stamped?.aprobado_en);
+  });
+
   it("approving after the interview grants the standard tier", async () => {
     const owner = await createUser();
     const requestId = await submitRequest(owner);

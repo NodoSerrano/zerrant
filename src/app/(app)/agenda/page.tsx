@@ -2,30 +2,19 @@ import Link from "next/link";
 import { Calendar, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/EmptyState";
-import { DayStrip } from "@/features/events/DayStrip";
 import { EventCard } from "@/features/events/EventCard";
 import {
-  buildDayStrip,
-  dayBoundsIso,
+  formatAgendaDateLabel,
+  formatEventDuration,
   formatEventTimeRange,
-  parseDayKey,
 } from "@/features/events/day";
 import { fetchLumaCalendarEvents } from "@/features/events/luma-client";
-import {
-  agendaDayKeys,
-  filterAgendaItemsByDay,
-  internalEventToAgendaItem,
-  mergeAgendaListItems,
-} from "@/features/events/luma-normalize";
+import { internalEventToAgendaItem, mergeAgendaListItems } from "@/features/events/luma-normalize";
 import type { AgendaEvent } from "@/features/events/types";
+import { SerSerranoCta } from "@/features/membership/SerSerranoCta";
+import { resolveSerSerranoCtaVisibility } from "@/features/membership/ser-serrano-cta-server";
 
-const STRIP_LENGTH = 14;
-
-export default async function AgendaPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ dia?: string }>;
-}) {
+export default async function AgendaPage() {
   const supabase = await createClient();
 
   const {
@@ -36,41 +25,26 @@ export default async function AgendaPage({
     return <p className="text-text-secondary">Iniciá sesión para ver la agenda.</p>;
   }
 
-  const { dia } = await searchParams;
-  const selectedKey = parseDayKey(dia);
-  const days = buildDayStrip(STRIP_LENGTH);
-  const { startIso, endIso } = dayBoundsIso(selectedKey);
-  const stripStartIso = dayBoundsIso(days[0]!.key).startIso;
-  const stripEndIso = dayBoundsIso(days[days.length - 1]!.key).endIso;
+  const profileRead = supabase.from("profiles").select("tier").eq("id", user.id).single();
 
-  const [{ data: events }, { data: stripEvents }, { data: profile }, lumaResult] =
-    await Promise.all([
-      supabase
-        .from("events")
-        .select("id, titulo, descripcion, lugar, inicio, fin, creado_por")
-        .gte("inicio", startIso)
-        .lt("inicio", endIso)
-        .order("inicio", { ascending: true }),
-      // Wide window only for strip dots (selected-day list stays day-scoped above).
-      supabase
-        .from("events")
-        .select("id, titulo, lugar, inicio, fin")
-        .gte("inicio", stripStartIso)
-        .lt("inicio", stripEndIso)
-        .order("inicio", { ascending: true }),
-      supabase.from("profiles").select("tier").eq("id", user.id).single(),
-      fetchLumaCalendarEvents(),
-    ]);
+  const [{ data: events }, { data: profile }, lumaResult, showSerSerranoCta] = await Promise.all([
+    supabase
+      .from("events")
+      .select("id, titulo, descripcion, lugar, inicio, fin, creado_por")
+      .order("inicio", { ascending: true }),
+    profileRead,
+    fetchLumaCalendarEvents(),
+    profileRead.then(({ data }) =>
+      resolveSerSerranoCtaVisibility(user.id, {
+        client: supabase,
+        tier: data?.tier ?? null,
+      }),
+    ),
+  ]);
 
   const internal = ((events ?? []) as AgendaEvent[]).map(internalEventToAgendaItem);
   const lumaAll = lumaResult.ok ? lumaResult.events : [];
-  const lumaForDay = filterAgendaItemsByDay(lumaAll, selectedKey);
-  const list = mergeAgendaListItems(lumaForDay, internal);
-  const internalForStrip = ((stripEvents ?? []) as AgendaEvent[]).map(internalEventToAgendaItem);
-  const stripKeySet = new Set(days.map((d) => d.key));
-  const daysWithEvents = agendaDayKeys([...lumaAll, ...internalForStrip]).filter((key) =>
-    stripKeySet.has(key),
-  );
+  const list = mergeAgendaListItems(lumaAll, internal);
   const canCreate = Boolean(profile?.tier && profile.tier !== "tourist");
   const lumaFailed = !lumaResult.ok;
 
@@ -89,7 +63,7 @@ export default async function AgendaPage({
         ) : null}
       </div>
 
-      <DayStrip days={days} selectedKey={selectedKey} daysWithEvents={daysWithEvents} />
+      {showSerSerranoCta ? <SerSerranoCta /> : null}
 
       {lumaFailed ? (
         <p className="font-body text-xs text-text-muted" role="status">
@@ -98,11 +72,7 @@ export default async function AgendaPage({
       ) : null}
 
       {!list.length ? (
-        <EmptyState
-          title="No hay eventos"
-          subtitle="Parece que todavía no hay eventos para este día."
-          icon={Calendar}
-        />
+        <EmptyState title="No hay eventos" subtitle="Todavía no hay eventos." icon={Calendar} />
       ) : (
         <div className="flex flex-col gap-3">
           {list.map((event) => (
@@ -110,7 +80,9 @@ export default async function AgendaPage({
               key={event.id}
               href={event.href}
               title={event.title}
+              dateLabel={formatAgendaDateLabel(event.inicio)}
               timeLabel={formatEventTimeRange(event.inicio, event.fin)}
+              durationLabel={formatEventDuration(event.inicio, event.fin)}
               place={event.place}
               coverUrl={event.coverUrl}
             />

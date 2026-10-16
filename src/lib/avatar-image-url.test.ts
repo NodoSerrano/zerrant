@@ -27,6 +27,23 @@ describe("getSupabaseAvatarRemotePatterns", () => {
     ]);
   });
 
+  it("preserves a subpath prefix on the avatars pattern", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://nogal-labs.com.ar/zerrant-test-api");
+    expect(getSupabaseAvatarRemotePatterns()).toEqual([
+      {
+        protocol: "https",
+        hostname: "nogal-labs.com.ar",
+        port: "",
+        pathname: "/zerrant-test-api/storage/v1/object/public/avatars/**",
+      },
+    ]);
+    expect(
+      isServableAvatarImageUrl(
+        "https://nogal-labs.com.ar/zerrant-test-api/storage/v1/object/public/avatars/u/a.jpg",
+      ),
+    ).toBe(true);
+  });
+
   it("preserves the local Supabase port in the pattern", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
     expect(getSupabaseAvatarRemotePatterns()).toEqual([

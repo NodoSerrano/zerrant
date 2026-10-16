@@ -11,6 +11,7 @@ const CREATE_REJECTED = "No pudimos publicar el evento.";
 const INVALID_TITULO = "El título no puede estar vacío.";
 const INVALID_FECHA = "Indicá la fecha del evento.";
 const INVALID_INICIO = "Indicá el inicio del evento.";
+const INVALID_LUGAR = "Indicá dónde es el evento.";
 const INVALID_DATETIME = "Revisá la fecha y la hora del evento.";
 const TOURIST_BLOCKED = "Solo los serranos pueden crear eventos.";
 const UPDATE_ERROR = "No pudimos guardar los cambios. Probá de nuevo.";
@@ -80,6 +81,9 @@ export async function createEvent(
   const finHm = trimmed(formData.get("fin"));
   const descripcion = trimmed(formData.get("descripcion"));
   const lugar = trimmed(formData.get("lugar"));
+  if (!lugar) {
+    return { error: INVALID_LUGAR };
+  }
 
   const inicioIso = parseAgendaWallClockIso(fecha, inicioHm);
   if (!inicioIso) {
@@ -120,7 +124,7 @@ export async function createEvent(
   }
 
   revalidatePath("/agenda");
-  redirect(`/agenda?dia=${fecha}`);
+  redirect(`/agenda`);
 }
 
 export async function updateEvent(
@@ -160,6 +164,9 @@ export async function updateEvent(
   const finHm = trimmed(formData.get("fin"));
   const descripcion = trimmed(formData.get("descripcion"));
   const lugar = trimmed(formData.get("lugar"));
+  if (!lugar) {
+    return { error: INVALID_LUGAR };
+  }
 
   const inicioIso = parseAgendaWallClockIso(fecha, inicioHm);
   if (!inicioIso) {
