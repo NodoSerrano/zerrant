@@ -1,6 +1,12 @@
 import { ChevronLeft, Flame, Tag, User, UserCheck } from "lucide-react";
 import Link from "next/link";
-import { TakeTaskButton, MarkDoneButton, VerifyTaskButton } from "./task-actions";
+import {
+  AssignTaskForm,
+  MarkDoneButton,
+  ReleaseTaskButton,
+  TakeTaskButton,
+  VerifyTaskButton,
+} from "./task-actions";
 import { TaskMenu } from "./TaskMenu";
 import { getCategoriaIcon, getCategoriaLabel, getEstadoBadge, getUrgencia } from "./taskDisplay";
 import { relativeTime } from "@/lib/time";
@@ -31,6 +37,7 @@ export interface TaskDetailViewProps {
   isTaker: boolean;
   isAdmin: boolean;
   isSerrano: boolean;
+  assignees?: { id: string; name: string }[];
 }
 
 export function TaskDetailView({
@@ -47,6 +54,7 @@ export function TaskDetailView({
   isTaker,
   isAdmin,
   isSerrano,
+  assignees = [],
 }: TaskDetailViewProps) {
   const badge = getEstadoBadge(estado);
   const urgenciaData = getUrgencia(urgencia);
@@ -60,6 +68,9 @@ export function TaskDetailView({
 
   // The menu only makes sense for the creator and while the task is still alive.
   const showMenu = isOwner && (estado === "abierta" || estado === "tomada");
+  const canRelease = estado === "tomada" && (isTaker || isOwner || isAdmin);
+  const canAssign =
+    (estado === "abierta" || estado === "tomada") && (isOwner || isAdmin) && (isSerrano || isAdmin);
 
   return (
     <div className="flex w-full flex-col gap-[18px]">
@@ -137,6 +148,10 @@ export function TaskDetailView({
       {estado === "abierta" && isSerrano && !isOwner && <TakeTaskButton taskId={taskId} />}
 
       {estado === "tomada" && isTaker && <MarkDoneButton taskId={taskId} />}
+
+      {canRelease && <ReleaseTaskButton taskId={taskId} />}
+
+      {canAssign && <AssignTaskForm taskId={taskId} members={assignees} />}
 
       {estado === "tomada" && !isTaker && (
         <p className="font-body text-sm text-text-muted text-center">

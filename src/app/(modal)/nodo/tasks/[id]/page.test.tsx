@@ -7,18 +7,23 @@ const mocks = vi.hoisted(() => ({
   profileSingle: vi.fn(),
   redirect: vi.fn(),
   notFound: vi.fn(),
+  memberRows: [] as Record<string, unknown>[],
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mocks.getUser },
-    from: vi.fn((table: string) => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: table === "tasks" ? mocks.taskSingle : mocks.profileSingle,
-        })),
-      })),
-    })),
+    from: vi.fn((table: string) => {
+      const chain: Record<string, unknown> = {};
+      const self = () => chain;
+      chain.select = vi.fn(self);
+      chain.eq = vi.fn(self);
+      chain.neq = vi.fn(self);
+      chain.single = table === "tasks" ? mocks.taskSingle : mocks.profileSingle;
+      chain.then = (resolve: (value: unknown) => unknown) =>
+        Promise.resolve({ data: mocks.memberRows, error: null }).then(resolve);
+      return chain;
+    }),
   }),
 }));
 
@@ -57,6 +62,7 @@ import TaskDetailPage from "./page";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.memberRows = [];
 });
 
 // `nombre_visible` is the preference for how to show the name, not the name itself.
@@ -378,6 +384,46 @@ describe("TaskDetailPage — primary action (AC5)", () => {
 
   // The data was correct but it spoke to the wrong reader: the creator is not
   // "otro serrano" with respect to their own task.
+  it("lets the taker release the task", async () => {
+    await renderDetail({
+      task: makeTask({ estado: "tomada", tomada_por: TAKER.id, tomador: TAKER }),
+      viewerId: TAKER.id,
+    });
+
+    expect(screen.getByRole("button", { name: "Liberar tarea" })).toBeInTheDocument();
+  });
+
+  it("lets the creator assign a serrano by name", async () => {
+    mocks.memberRows = [
+      {
+        id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        nombre: "Ana",
+        apellido: "Sosa",
+        apodo: null,
+        nombre_visible: "nombre_apellido",
+        tier: "standard",
+      },
+    ];
+    await renderDetail({
+      task: makeTask({ estado: "tomada", tomada_por: TAKER.id, tomador: TAKER }),
+      viewerId: CREATOR.id,
+    });
+
+    expect(screen.getByRole("button", { name: "Liberar tarea" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Ana Sosa" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /bbbbbbbb/ })).not.toBeInTheDocument();
+  });
+
+  it("hides assign and release from a member who is not taker, creator, or admin", async () => {
+    await renderDetail({
+      task: makeTask({ estado: "tomada", tomada_por: TAKER.id, tomador: TAKER }),
+      viewerId: "third-party",
+    });
+
+    expect(screen.queryByRole("button", { name: "Liberar tarea" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Asignar" })).not.toBeInTheDocument();
+  });
+
   it("addresses the creator directly when someone took their task", async () => {
     await renderDetail({
       task: makeTask({ estado: "tomada", tomada_por: TAKER.id, tomador: TAKER }),
