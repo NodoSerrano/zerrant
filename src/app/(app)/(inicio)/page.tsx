@@ -47,10 +47,11 @@ export default async function InicioPage() {
   const now = new Date();
   const nowIso = now.toISOString();
   const today = formatDayKey(now);
+  const viewerIsTourist = profile?.tier === "tourist";
 
   const [
     { data: events },
-    { data: profiles },
+    birthdayProfiles,
     lumaResult,
     { data: approvedRequest },
     showSerSerranoCta,
@@ -61,7 +62,9 @@ export default async function InicioPage() {
       .gte("inicio", nowIso)
       .order("inicio", { ascending: true })
       .limit(UPCOMING_EVENTS_LIMIT),
-    supabase.from("profiles").select(BIRTHDAY_PROFILE_COLUMNS).neq("tier", "tourist"),
+    viewerIsTourist
+      ? Promise.resolve({ data: null })
+      : supabase.from("profiles").select(BIRTHDAY_PROFILE_COLUMNS).neq("tier", "tourist"),
     fetchLumaCalendarEvents(),
     recentMemberConfirmation(supabase, userId, now),
     resolveSerSerranoCtaVisibility(userId, {
@@ -69,6 +72,7 @@ export default async function InicioPage() {
       tier: profile?.tier ?? null,
     }),
   ]);
+  const profiles = birthdayProfiles.data;
 
   const internal = ((events ?? []) as AgendaEvent[]).map(internalEventToAgendaItem);
   const luma = lumaResult.ok ? lumaResult.events : [];
@@ -98,6 +102,7 @@ export default async function InicioPage() {
       events={eventItems}
       birthdays={birthdayRows}
       showCommunityHub={showCommunityHub}
+      showBirthdays={!viewerIsTourist}
       showSerSerranoCta={showSerSerranoCta}
       memberConfirmed={Boolean(approvedRequest)}
     />

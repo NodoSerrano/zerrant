@@ -265,10 +265,46 @@ describe("InicioPage (/)", () => {
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
 
     render(await InicioPage());
+    expect(screen.getByRole("heading", { name: "Próximos cumpleaños" })).toBeInTheDocument();
     expect(screen.getByText("Ana García")).toBeInTheDocument();
     expect(screen.queryByText("Lejos X")).not.toBeInTheDocument();
     expect(client.from).toHaveBeenCalledWith("profiles");
     expect(client.profilesChain.neq).toHaveBeenCalledWith("tier", "tourist");
+  });
+
+  it("does not query or render member birthdays for a tourist session", async () => {
+    const { getOnboardingGateProfile } = await import("@/features/profile/onboarding-gate-server");
+    const { createClient } = await import("@/lib/supabase/server");
+    (getOnboardingGateProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      profile: { ...completeProfile, tier: "tourist" },
+      error: null,
+      userId: "user-1",
+    });
+    const client = mockSupabase({
+      profiles: [
+        {
+          id: "p-ok",
+          nombre: "Ana",
+          apellido: "García",
+          apodo: null,
+          nombre_visible: "nombre_apellido",
+          fecha_nacimiento: "1990-09-25",
+          avatar_url: null,
+          tier: "standard",
+        },
+      ],
+    });
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
+
+    render(await InicioPage());
+
+    expect(client.from).not.toHaveBeenCalledWith("profiles");
+    expect(client.profilesChain.select).not.toHaveBeenCalled();
+    expect(screen.queryByRole("heading", { name: "Próximos cumpleaños" })).not.toBeInTheDocument();
+    expect(screen.queryByText("No hay cumpleaños próximos")).not.toBeInTheDocument();
+    expect(screen.queryByText("Ana García")).not.toBeInTheDocument();
+    expect(document.body.innerHTML).not.toContain("1990-09-25");
+    expect(document.body.innerHTML).not.toContain("Ana García");
   });
 
   it("shows honest empty sections when there are no rows", async () => {
