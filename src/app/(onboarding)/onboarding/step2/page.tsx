@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { getOnboardingGateProfile } from "@/features/profile/onboarding-gate-server";
 import { NO_ROWS } from "@/features/profile/onboarding-gate";
+import { getFlowProgress } from "@/features/membership/flow-progress";
 import { Step2Form } from "./Step2Form";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ function PrefillLoadError() {
         <Link
           href="/onboarding/step1"
           aria-label="Volver al paso 1"
-          className="inline-flex text-text-primary"
+          className="-ml-2.5 inline-flex size-11 shrink-0 items-center justify-center rounded-md text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
         >
           <ChevronLeft className="w-6 h-6" aria-hidden />
         </Link>
@@ -52,6 +53,8 @@ export default async function OnboardingStep2() {
     return <PrefillLoadError />;
   }
 
+  const progress = await getFlowProgress("perfil");
+
   return (
     <Step2Form
       defaults={{
@@ -59,6 +62,7 @@ export default async function OnboardingStep2() {
         contacto_telegram: profile?.contacto_telegram,
         sitio_url: profile?.sitio_url,
       }}
+      progress={progress ?? undefined}
     />
   );
 }

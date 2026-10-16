@@ -1,26 +1,23 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { EventForm } from "@/features/events/EventForm";
 import { createEvent } from "@/features/events/actions";
 
 export function NewEventForm() {
-  const router = useRouter();
-
   return (
-    <div className="flex flex-col gap-[18px]">
+    <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
-        <button
-          type="button"
-          aria-label="Cerrar"
-          onClick={() => (window.history.length > 1 ? router.back() : router.push("/agenda"))}
-          className="rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
+        <Link
+          href="/agenda"
+          aria-label="Volver a la agenda"
+          className="flex size-10 items-center justify-center rounded-full focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
         >
-          <X className="size-6 text-text-primary" />
-        </button>
+          <ChevronLeft className="size-6 text-text-primary" />
+        </Link>
         <h1 className="font-display text-base font-medium text-text-primary">Nuevo evento</h1>
-        <span aria-hidden="true" className="size-6" />
+        <span aria-hidden="true" className="size-10" />
       </div>
 
       <EventForm action={createEvent} submitLabel="Publicar evento" pendingLabel="Publicando..." />

@@ -3,8 +3,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { isMembershipFlow } from "@/features/membership/flow-cookie";
+import { resolveUnirmeTarget } from "@/features/membership/pipeline";
+import { loadMembershipPipeline } from "@/features/membership/pipeline-server";
 import {
   AVATAR_BUCKET,
+  AVATAR_MAX_BYTES,
+  AVATAR_TOO_LARGE_ERROR,
   avatarObjectPath,
   avatarPathFromPublicUrl,
   sniffImageType,
@@ -271,6 +277,12 @@ export async function saveOnboardingStep2(
   }
 
   revalidatePath("/", "layout");
+  // Entered through /unirme: continue to the next pipeline step instead of the
+  // tourist profile (ZER-136). Resolved here, never via /unirme, so the
+  // browser URL matches the screen and its forms post to the right route (bug-375).
+  if (isMembershipFlow(await cookies())) {
+    redirect(resolveUnirmeTarget(await loadMembershipPipeline(supabase)));
+  }
   redirect("/profile");
 }
 
@@ -316,6 +328,12 @@ export async function uploadAvatar(
     return { error: error instanceof Error ? error.message : "No pudimos procesar la imagen" };
   }
 
+  // HEIC→JPEG can grow the file: re-check against the bucket limit so Storage
+  // never answers with a generic failure.
+  if (image.bytes.byteLength > AVATAR_MAX_BYTES) {
+    return { error: AVATAR_TOO_LARGE_ERROR };
+  }
+
   const path = avatarObjectPath(user.id, image.mime);
 
   const { error: uploadError } = await supabase.storage
@@ -354,7 +372,8 @@ export async function uploadAvatar(
   }
 
   const previousPath = avatarPathFromPublicUrl(previous?.avatar_url ?? null);
-  if (previousPath && previousPath !== path) {
+  // Only ever clean up inside the user's own folder, whatever avatar_url says.
+  if (previousPath?.startsWith(`${user.id}/`) && previousPath !== path) {
     await supabase.storage.from(AVATAR_BUCKET).remove([previousPath]);
   }
 

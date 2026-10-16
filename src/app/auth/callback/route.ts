@@ -1,7 +1,9 @@
+import { publicAppHref } from "@/lib/public-url";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { safeInternalPath } from "@/lib/safe-next";
 
 const OTP_TYPES = new Set<string>([
   "signup",
@@ -13,15 +15,24 @@ const OTP_TYPES = new Set<string>([
 ]);
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const requestUrl = new URL(request.url);
+  const requestOrigin = requestUrl.origin;
+  const searchParams = requestUrl.searchParams;
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type");
   const errorCode = searchParams.get("error_code");
-  const next = searchParams.get("next") ?? "/";
+  const rawNext = searchParams.get("next");
+  const next = safeInternalPath(rawNext);
+  // `next` is validated first. String-joining it onto SITE_URL is safe, and
+  // required when SITE_URL already includes a base path (ZER-136 + hosted subpath).
+  const success = () => NextResponse.redirect(publicAppHref(next, requestOrigin));
 
   if (errorCode === "otp_expired") {
-    return NextResponse.redirect(`${origin}/auth/login?error=otp_expired`);
+    const login = new URL(publicAppHref("/auth/login", requestOrigin));
+    login.searchParams.set("error", "otp_expired");
+    if (rawNext !== null && next !== "/") login.searchParams.set("next", next);
+    return NextResponse.redirect(login);
   }
 
   const supabase = await createClient();
@@ -30,7 +41,7 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      return success();
     }
   } else if (tokenHash && type && OTP_TYPES.has(type)) {
     const { error } = await supabase.auth.verifyOtp({
@@ -39,9 +50,13 @@ export async function GET(request: NextRequest) {
     });
 
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      return success();
     }
   }
 
-  return NextResponse.redirect(`${origin}/auth/login?error=auth_callback_failed`);
+  const failed = new URL(publicAppHref("/auth/login", requestOrigin));
+  failed.searchParams.set("error", "auth_callback_failed");
+  // Keep the deep link (e.g. /unirme) so the user resumes it after logging in.
+  if (next !== "/") failed.searchParams.set("next", next);
+  return NextResponse.redirect(failed);
 }

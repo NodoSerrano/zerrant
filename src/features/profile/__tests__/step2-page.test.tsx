@@ -5,6 +5,10 @@ const mocks = vi.hoisted(() => ({
   getOnboardingGateProfile: vi.fn(),
 }));
 
+vi.mock("@/features/membership/flow-progress", () => ({
+  getFlowProgress: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("@/features/profile/onboarding-gate-server", () => ({
   getOnboardingGateProfile: mocks.getOnboardingGateProfile,
 }));
@@ -120,5 +124,17 @@ describe("OnboardingStep2 page", () => {
       "href",
       "/onboarding/step1",
     );
+  });
+
+  it("keeps a 44x44 back target on the load-error screen too (ZER-136 re-verification)", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    mocks.getOnboardingGateProfile.mockResolvedValue({
+      profile: null,
+      error: { code: "57014", message: "timeout" },
+      userId: "u1",
+    });
+    render(await OnboardingStep2());
+
+    expect(screen.getByRole("link", { name: "Volver al paso 1" })).toHaveClass("size-11");
   });
 });

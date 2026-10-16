@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 
 const authMock = vi.hoisted(() => ({
@@ -14,6 +14,11 @@ import { GET } from "./route";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.unstubAllEnvs();
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 function makeRequest(pathWithQuery: string): NextRequest {
@@ -78,5 +83,87 @@ describe("GET /auth/callback", () => {
     expect(result.headers.get("location")).toBe(
       "https://example.com/auth/login?error=auth_callback_failed",
     );
+  });
+});
+
+describe("GET /auth/callback — next validation (ZER-136)", () => {
+  it.each([
+    ["userinfo trick", "%40evil.com"],
+    ["protocol-relative", "%2F%2Fevil.com"],
+    ["backslash host", "%2F%5Cevil.com"],
+    ["absolute url", "https%3A%2F%2Fevil.com"],
+  ])("falls back to / on code exchange when next is a %s", async (_label, next) => {
+    authMock.exchangeCodeForSession.mockResolvedValue({ error: null });
+
+    const result = await GET(makeRequest(`/auth/callback?code=abc&next=${next}`));
+
+    expect(result.headers.get("location")).toBe("https://example.com/");
+  });
+
+  it("falls back to / on verifyOtp when next is unsafe", async () => {
+    authMock.verifyOtp.mockResolvedValue({ error: null });
+
+    const result = await GET(
+      makeRequest("/auth/callback?token_hash=t&type=signup&next=%40evil.com"),
+    );
+
+    expect(result.headers.get("location")).toBe("https://example.com/");
+  });
+
+  it("keeps a safe membership next through verifyOtp", async () => {
+    authMock.verifyOtp.mockResolvedValue({ error: null });
+
+    const result = await GET(makeRequest("/auth/callback?token_hash=t&type=signup&next=%2Funirme"));
+
+    expect(result.headers.get("location")).toBe("https://example.com/unirme");
+  });
+
+  it("carries a safe next to login when the link expired", async () => {
+    const result = await GET(makeRequest("/auth/callback?error_code=otp_expired&next=%2Funirme"));
+
+    expect(result.headers.get("location")).toBe(
+      "https://example.com/auth/login?error=otp_expired&next=%2Funirme",
+    );
+  });
+
+  it("drops an unsafe next when the link expired", async () => {
+    const result = await GET(
+      makeRequest("/auth/callback?error_code=otp_expired&next=%2F%2Fevil.com"),
+    );
+
+    expect(result.headers.get("location")).toBe("https://example.com/auth/login?error=otp_expired");
+  });
+});
+
+describe("GET /auth/callback — keeps next on failure (Codex review)", () => {
+  it("carries a safe next to login when the code exchange fails", async () => {
+    authMock.exchangeCodeForSession.mockResolvedValue({ error: { message: "invalid" } });
+
+    const result = await GET(makeRequest("/auth/callback?code=bad&next=%2Funirme"));
+
+    expect(result.headers.get("location")).toBe(
+      "https://example.com/auth/login?error=auth_callback_failed&next=%2Funirme",
+    );
+  });
+
+  it("drops an unsafe next when the token verification fails", async () => {
+    authMock.verifyOtp.mockResolvedValue({ error: { message: "invalid" } });
+
+    const result = await GET(
+      makeRequest("/auth/callback?token_hash=t&type=signup&next=%2F%2Fevil.com"),
+    );
+
+    expect(result.headers.get("location")).toBe(
+      "https://example.com/auth/login?error=auth_callback_failed",
+    );
+  });
+
+  it("keeps the hosted base path when SITE_URL includes one", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://nogal-labs.com.ar/zerrant-test");
+    authMock.exchangeCodeForSession.mockResolvedValue({ error: null });
+
+    const result = await GET(makeRequest("/auth/callback?code=abc&next=%2Funirme"));
+
+    expect(result.headers.get("location")).toBe("https://nogal-labs.com.ar/zerrant-test/unirme");
   });
 });

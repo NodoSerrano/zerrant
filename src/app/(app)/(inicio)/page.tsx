@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { formatDayKey, formatEventTimeRange } from "@/features/events/day";
+import {
+  formatAgendaDateLabel,
+  formatDayKey,
+  formatEventDuration,
+  formatEventTimeRange,
+} from "@/features/events/day";
 import type { AgendaEvent } from "@/features/events/types";
 import { fetchLumaCalendarEvents } from "@/features/events/luma-client";
 import {
@@ -60,13 +65,13 @@ export default async function InicioPage() {
   const merged = mergeAgendaListItems(luma, internal);
   const upcoming = takeUpcomingAgendaItems(merged, now, UPCOMING_EVENTS_LIMIT);
   const eventItems = upcoming.map((event) => {
-    const day = formatDayKey(new Date(event.inicio));
     const time = formatEventTimeRange(event.inicio, event.fin);
-    const timeLabel = day === today ? time : `${day} · ${time}`;
     return {
       id: event.id,
       title: event.title,
-      timeLabel,
+      dateLabel: formatAgendaDateLabel(event.inicio),
+      timeLabel: time,
+      durationLabel: formatEventDuration(event.inicio, event.fin),
       place: event.place,
       href: event.href,
       coverUrl: event.coverUrl,
