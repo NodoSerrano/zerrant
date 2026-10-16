@@ -24,10 +24,33 @@ const withSerwist = withSerwistInit({
   additionalPrecacheEntries: [{ url: OFFLINE_FALLBACK_PATH, revision }],
 });
 
+function gitText(args: string[]): string {
+  const out = spawnSync("git", args, { encoding: "utf-8" });
+  return out.status === 0 ? out.stdout?.trim() || "" : "";
+}
+
+function stamped(name: string, fallback = ""): string {
+  return process.env[name]?.trim() || fallback;
+}
+
+// The image has no .git. Deploy passes the checkout it just reset to.
+// Local next reads git, so package.json version stays untouched.
+const gitSha = stamped("NEXT_PUBLIC_GIT_SHA", gitText(["rev-parse", "--short=7", "HEAD"]));
+const gitRef = stamped("NEXT_PUBLIC_GIT_REF", gitText(["rev-parse", "--abbrev-ref", "HEAD"]));
+const appChannel = stamped(
+  "NEXT_PUBLIC_APP_CHANNEL",
+  process.env.APP_ENV?.trim() || (process.env.NODE_ENV === "production" ? "" : "local"),
+);
+
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.replace(/\/$/, "") || "";
 
 const nextConfig: NextConfig = {
   ...(basePath ? { basePath } : {}),
+  env: {
+    NEXT_PUBLIC_GIT_SHA: gitSha,
+    NEXT_PUBLIC_GIT_REF: gitRef,
+    NEXT_PUBLIC_APP_CHANNEL: appChannel,
+  },
   output: "standalone",
   allowedDevOrigins: ["*"],
   reactCompiler: false,

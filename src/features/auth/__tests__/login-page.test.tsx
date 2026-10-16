@@ -81,6 +81,16 @@ describe("LoginPage", () => {
     expect(cuentaLink.closest("a")).toHaveAttribute("href", "/auth/signup");
   });
 
+  it("shows the git stamp when the build baked channel, branch and sha", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_CHANNEL", "test");
+    vi.stubEnv("NEXT_PUBLIC_GIT_REF", "develop");
+    vi.stubEnv("NEXT_PUBLIC_GIT_SHA", "0988fc8");
+    vi.resetModules();
+    const { default: StampedLoginPage } = await import("@/app/auth/login/page");
+    render(<StampedLoginPage />);
+    expect(screen.getByTestId("build-stamp")).toHaveTextContent("test · develop · 0988fc8");
+  });
+
   it("shows error message after failed submission", async () => {
     mockSignInWithPassword.mockReturnValue({ error: "Credenciales inválidas" });
     render(<LoginPage />);

@@ -36,7 +36,8 @@ jobs:
             sudo git -C /opt/zerrant/app fetch origin "$BRANCH"
             sudo git -C /opt/zerrant/app checkout "$BRANCH"
             sudo git -C /opt/zerrant/app reset --hard "origin/$BRANCH"
-            sudo docker compose -p "zerrant-${ENV_NAME}-app" \
+            SHA=$(sudo git -C /opt/zerrant/app rev-parse --short=7 HEAD)
+            sudo GIT_SHA="$SHA" GIT_REF="$BRANCH" APP_CHANNEL="$ENV_NAME" docker compose -p "zerrant-${ENV_NAME}-app" \
               -f /opt/zerrant/app/docker-compose.app.yml \
               --env-file "/opt/zerrant/${ENV_NAME}/app.env" \
               up -d --build
