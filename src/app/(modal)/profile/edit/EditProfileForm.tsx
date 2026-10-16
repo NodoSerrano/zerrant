@@ -15,17 +15,6 @@ const NOMBRE_VISIBLE_OPTIONS = [
   { value: "apellido_nombre", label: "Apellido Nombre" },
 ] as const;
 
-const DISPONIBILIDAD_OPTIONS = [
-  { value: "disponible", label: "Disponible" },
-  { value: "ocupado", label: "Ocupado" },
-  { value: "solo_eventos", label: "Solo eventos" },
-] as const;
-
-const VISIBILIDAD_OPTIONS = [
-  { value: "publica", label: "Pública" },
-  { value: "privada", label: "Privada" },
-] as const;
-
 interface EditProfileFormProps {
   defaults: {
     nombre?: string | null;
@@ -36,9 +25,6 @@ interface EditProfileFormProps {
     bio?: string | null;
     contacto_telegram?: string | null;
     sitio_url?: string | null;
-    disponibilidad?: string | null;
-    visibilidad_tarifa?: string | null;
-    tarifa_hora?: number | null;
     avatar_url?: string | null;
   };
 }
@@ -119,56 +105,6 @@ export function EditProfileForm({ defaults }: EditProfileFormProps) {
             </span>
           </div>
           <p className="text-xs text-text-muted">Los roles nuevos los confirma un admin.</p>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <span className="text-[13px] font-medium text-text-secondary">Disponibilidad</span>
-          <div className="flex rounded-2xl bg-surface-inset p-1 gap-1">
-            {DISPONIBILIDAD_OPTIONS.map((opt) => (
-              <label
-                key={opt.value}
-                className="flex-1 flex items-center justify-center rounded-xl py-2 text-sm font-medium cursor-pointer transition-colors has-checked:bg-surface has-checked:text-text-primary has-checked:shadow-sm text-text-muted"
-              >
-                <input
-                  type="radio"
-                  name="disponibilidad"
-                  value={opt.value}
-                  defaultChecked={opt.value === defaults.disponibilidad}
-                  className="sr-only"
-                />
-                {opt.label}
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <Input
-          name="tarifa_hora"
-          type="number"
-          label="Tarifa por hora"
-          placeholder="0"
-          defaultValue={defaults.tarifa_hora?.toString() ?? ""}
-        />
-
-        <div className="flex flex-col gap-2">
-          <span className="text-[13px] font-medium text-text-secondary">Visibilidad de tarifa</span>
-          <div className="flex rounded-2xl bg-surface-inset p-1 gap-1">
-            {VISIBILIDAD_OPTIONS.map((opt) => (
-              <label
-                key={opt.value}
-                className="flex-1 flex items-center justify-center rounded-xl py-2 text-sm font-medium cursor-pointer transition-colors has-checked:bg-surface has-checked:text-text-primary has-checked:shadow-sm text-text-muted"
-              >
-                <input
-                  type="radio"
-                  name="visibilidad_tarifa"
-                  value={opt.value}
-                  defaultChecked={opt.value === (defaults.visibilidad_tarifa ?? "privada")}
-                  className="sr-only"
-                />
-                {opt.label}
-              </label>
-            ))}
-          </div>
         </div>
 
         <input type="hidden" name="fecha_nacimiento" value={defaults.fecha_nacimiento ?? ""} />

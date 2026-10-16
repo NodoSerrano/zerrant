@@ -5,19 +5,9 @@ import { TierBadge } from "@/components/TierBadge";
 import { PlatformAdminBadge } from "@/components/PlatformAdminBadge";
 import { RoleChip } from "@/components/RoleChip";
 import { cn } from "@/lib/utils";
-import { availabilityLabel } from "./transform";
-import type { Disponibilidad, SerranoMember } from "./types";
-
-const AVAILABILITY_DOT: Record<Disponibilidad, string> = {
-  disponible: "bg-brand-green",
-  ocupado: "bg-text-muted",
-  solo_eventos: "bg-text-muted",
-};
+import type { SerranoMember } from "./types";
 
 export function MemberCard({ member }: { member: SerranoMember }) {
-  const label = availabilityLabel(member.disponibilidad);
-  const dot = member.disponibilidad ? AVAILABILITY_DOT[member.disponibilidad] : null;
-
   return (
     <Link
       href={`/plantel/${member.id}`}
@@ -35,12 +25,6 @@ export function MemberCard({ member }: { member: SerranoMember }) {
           <div className="flex items-center gap-[6px] flex-wrap">
             <TierBadge tier={member.tier} />
             {member.isPlatformAdmin ? <PlatformAdminBadge /> : null}
-            {dot && label && (
-              <>
-                <span className={cn("size-1.5 rounded-full", dot)} />
-                <span className="font-body text-xs text-text-secondary">{label}</span>
-              </>
-            )}
           </div>
         </div>
         <ChevronRight size={20} className="text-text-muted ml-auto shrink-0" />

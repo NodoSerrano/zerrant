@@ -81,6 +81,26 @@ describe("ProfilePage (tourist)", () => {
     expect(screen.queryByText(/Modo lectura/)).toBeNull();
   });
 
+  it("does not show availability or rates", async () => {
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: {
+        ...touristProfile,
+        disponibilidad: "disponible",
+        visibilidad_tarifa: "publica",
+        tarifa_hora: 40,
+      },
+      error: null,
+    });
+
+    render(await ProfilePage());
+
+    expect(screen.queryByText("Disponibilidad")).not.toBeInTheDocument();
+    expect(screen.queryByText("Visibilidad de tarifa")).not.toBeInTheDocument();
+    expect(screen.queryByText("Disponible")).not.toBeInTheDocument();
+    expect(screen.queryByText(/tarifa/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/USD/)).not.toBeInTheDocument();
+  });
+
   it("renders the identity card with Avatar, name, email, and TierBadge", async () => {
     render(await ProfilePage());
 

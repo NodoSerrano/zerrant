@@ -6,7 +6,7 @@ import type { AporteListItem } from "@/features/aportes/types";
 import type { MemberProjectPreview } from "@/features/plantel/types";
 
 const DETAIL_PROFILE_COLUMNS =
-  "id, nombre, apellido, apodo, nombre_visible, avatar_url, tier, disponibilidad, bio, contacto_telegram, tarifa_hora, visibilidad_tarifa, is_platform_admin";
+  "id, nombre, apellido, apodo, nombre_visible, avatar_url, tier, bio, contacto_telegram, is_platform_admin";
 
 export default async function PlantelMemberPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,14 +18,13 @@ export default async function PlantelMemberPage({ params }: { params: Promise<{ 
 
   if (!user) redirect("/auth/login");
 
-  // ZER-43: rate-bearing reads use profiles_with_rate (DB-masked tarifa_hora).
   const { data: profile } = await supabase
-    .from("profiles_with_rate")
+    .from("profiles")
     .select(DETAIL_PROFILE_COLUMNS)
     .eq("id", id)
     .maybeSingle();
 
-  if (!profile?.id || !profile.tier || !profile.nombre_visible || !profile.visibilidad_tarifa) {
+  if (!profile?.id || !profile.tier || !profile.nombre_visible) {
     notFound();
   }
 
@@ -34,7 +33,6 @@ export default async function PlantelMemberPage({ params }: { params: Promise<{ 
   const [
     { data: roleAssignments },
     { data: skillAssignments },
-    { data: viewerProfile },
     { data: aporteRows },
     { data: projectMemberRows },
   ] = await Promise.all([
@@ -44,7 +42,6 @@ export default async function PlantelMemberPage({ params }: { params: Promise<{ 
       .eq("profile_id", id)
       .eq("confirmado", true),
     supabase.from("profile_skills").select("skills(nombre)").eq("profile_id", id),
-    supabase.from("profiles").select("id, is_platform_admin, tier").eq("id", user.id).single(),
     // Serrano-only SELECT: refused/empty → empty list (no crash, no sample rows).
     supabase
       .from("aportes")
@@ -92,19 +89,13 @@ export default async function PlantelMemberPage({ params }: { params: Promise<{ 
       nombre_visible: profile.nombre_visible,
       avatar_url: profile.avatar_url,
       tier: profile.tier,
-      disponibilidad: profile.disponibilidad,
       bio: profile.bio,
       contacto_telegram: profile.contacto_telegram,
-      tarifa_hora: profile.tarifa_hora,
-      visibilidad_tarifa: profile.visibilidad_tarifa,
       is_platform_admin: profile.is_platform_admin === true,
     },
     roles,
     skills,
     {
-      isSelf: user.id === id,
-      isAdmin: viewerProfile?.is_platform_admin ?? false,
-      isTourist: viewerProfile?.tier === "tourist",
       aportes,
       proyectos,
     },

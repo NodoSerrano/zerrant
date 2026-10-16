@@ -23,8 +23,6 @@ import type { ProfileUpdate } from "./types";
 const DB_ERROR = "No pudimos guardar tus datos. Probá de nuevo.";
 
 const NOMBRE_VISIBLE_VALUES = ["apodo", "nombre_apellido", "apellido_nombre"] as const;
-const DISPONIBILIDAD_VALUES = ["disponible", "ocupado", "solo_eventos"] as const;
-const VISIBILIDAD_TARIFA_VALUES = ["publica", "privada"] as const;
 
 // Each action owns the fields its form actually renders: anything not listed is
 // ignored even if it arrives in the FormData.
@@ -36,9 +34,6 @@ const EDIT_PROFILE_FIELDS = [
   "apodo",
   "nombre_visible",
   "fecha_nacimiento",
-  "disponibilidad",
-  "tarifa_hora",
-  "visibilidad_tarifa",
 ] as const;
 
 function text(value: FormDataEntryValue | null): string | null {
@@ -77,10 +72,7 @@ type ProfileField =
   | "nombre_visible"
   | "bio"
   | "contacto_telegram"
-  | "sitio_url"
-  | "disponibilidad"
-  | "tarifa_hora"
-  | "visibilidad_tarifa";
+  | "sitio_url";
 
 type ProfileTextField =
   | "nombre"
@@ -142,45 +134,12 @@ function buildProfileUpdate(
     return { error: "Ingresá una fecha de nacimiento válida" };
   }
 
-  // The enum columns are NOT NULL with a default: only overwrite them when the
+  // nombre_visible is NOT NULL with a default: only overwrite it when the
   // form sends a recognized value. Absent, blank or unknown => omitted.
   if (owns("nombre_visible")) {
     const nombreVisible = enumValue(formData.get("nombre_visible"), NOMBRE_VISIBLE_VALUES);
     if (nombreVisible) {
       update.nombre_visible = nombreVisible;
-    }
-  }
-
-  if (owns("disponibilidad")) {
-    const disponibilidad = enumValue(formData.get("disponibilidad"), DISPONIBILIDAD_VALUES);
-    if (disponibilidad) {
-      update.disponibilidad = disponibilidad;
-    }
-  }
-
-  if (owns("visibilidad_tarifa")) {
-    const visibilidadTarifa = enumValue(
-      formData.get("visibilidad_tarifa"),
-      VISIBILIDAD_TARIFA_VALUES,
-    );
-    if (visibilidadTarifa) {
-      update.visibilidad_tarifa = visibilidadTarifa;
-    }
-  }
-
-  if (owns("tarifa_hora")) {
-    const tarifa = formData.get("tarifa_hora");
-    if (tarifa !== null) {
-      const trimmed = text(tarifa);
-      if (trimmed === null) {
-        update.tarifa_hora = null;
-      } else {
-        // A rate is a plain decimal: no sign, exponent or hex that Number() would accept.
-        if (!/^\d+(\.\d+)?$/.test(trimmed)) {
-          return { error: "Ingresá una tarifa por hora válida" };
-        }
-        update.tarifa_hora = Number(trimmed);
-      }
     }
   }
 

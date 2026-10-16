@@ -153,8 +153,31 @@ describe("ProfilePage (serrano)", () => {
     render(await ProfilePage());
 
     expect(screen.getByText("Mis habilidades")).toBeInTheDocument();
-    expect(screen.getByText("Disponibilidad")).toBeInTheDocument();
-    expect(screen.getByText("Visibilidad de tarifa")).toBeInTheDocument();
+  });
+
+  it("does not show availability or rates", async () => {
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: {
+        ...serranoProfile,
+        disponibilidad: "disponible",
+        visibilidad_tarifa: "publica",
+        tarifa_hora: 40,
+      },
+      error: null,
+    });
+
+    render(await ProfilePage());
+
+    expect(screen.queryByText("Disponibilidad")).not.toBeInTheDocument();
+    expect(screen.queryByText("Visibilidad de tarifa")).not.toBeInTheDocument();
+    expect(screen.queryByText("Disponible")).not.toBeInTheDocument();
+    expect(screen.queryByText(/tarifa/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/USD/)).not.toBeInTheDocument();
+
+    const selected = String(mocks.select.mock.calls[0]?.[0] ?? "");
+    expect(selected).not.toContain("disponibilidad");
+    expect(selected).not.toContain("visibilidad_tarifa");
+    expect(selected).not.toContain("tarifa_hora");
   });
 
   it("links Mis habilidades to /profile/habilidades", async () => {

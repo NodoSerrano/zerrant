@@ -6,7 +6,7 @@ import { SerSerranoCta } from "@/features/membership/SerSerranoCta";
 import { resolveSerSerranoCtaVisibility } from "@/features/membership/ser-serrano-cta-server";
 
 const PLANTEL_PROFILE_COLUMNS =
-  "id, nombre, apellido, apodo, nombre_visible, avatar_url, tier, disponibilidad, is_platform_admin";
+  "id, nombre, apellido, apodo, nombre_visible, avatar_url, tier, is_platform_admin";
 
 export default async function PlantelPage() {
   const supabase = await createClient();

@@ -111,7 +111,6 @@ const serranoProfiles = [
     nombre_visible: "nombre_apellido",
     avatar_url: null,
     tier: "standard",
-    disponibilidad: "disponible",
   },
 ];
 
@@ -141,7 +140,7 @@ describe("PlantelPage", () => {
     expect(selected).toContain("nombre_visible");
     expect(selected).toContain("avatar_url");
     expect(selected).toContain("tier");
-    expect(selected).toContain("disponibilidad");
+    expect(selected).not.toContain("disponibilidad");
     expect(selected).not.toContain("tarifa_hora");
     expect(selected).not.toContain("visibilidad_tarifa");
 
