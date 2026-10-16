@@ -11,10 +11,10 @@ vi.mock("@/features/auth/actions", () => ({
 }));
 
 describe("TouristMenu theme toggle (ZER-103)", () => {
-  it("uses surface token for the switch knob, not bg-white", () => {
+  it("uses the on-primary token for the switch knob, not bg-white", () => {
     render(<TouristMenu />);
-    const toggle = screen.getByRole("button", { name: /modo oscuro|modo claro/i });
+    const toggle = screen.getByRole("switch", { name: /modo oscuro|modo claro/i });
     expect(toggle.innerHTML).not.toMatch(/\bbg-white\b/);
-    expect(toggle.innerHTML).toMatch(/\bbg-surface\b/);
+    expect(toggle.innerHTML).toMatch(/\bbg-on-primary\b/);
   });
 });

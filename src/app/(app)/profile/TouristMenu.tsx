@@ -1,25 +1,8 @@
 "use client";
 
 import { Moon, LogOut, UserRound } from "lucide-react";
-import { useTheme } from "@/lib/useTheme";
+import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { signOut } from "@/features/auth/actions";
-
-function ThemeToggleSwitch() {
-  const { dark, toggle } = useTheme();
-
-  return (
-    <button
-      onClick={toggle}
-      className="w-[46px] h-7 rounded-pill bg-surface-inset border border-border p-[3px] transition-colors"
-      aria-label={dark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-    >
-      <div
-        className="size-[22px] rounded-full bg-surface transition-transform"
-        style={{ transform: dark ? "translateX(18px)" : "none" }}
-      />
-    </button>
-  );
-}
 
 export function TouristMenu() {
   return (
@@ -51,7 +34,7 @@ export function TouristMenu() {
         <span className="font-body text-[15px] text-text-primary text-left flex-1">
           Modo oscuro
         </span>
-        <ThemeToggleSwitch />
+        <ThemeSwitch />
       </label>
 
       <div className="h-px bg-border w-full" />
