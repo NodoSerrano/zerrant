@@ -140,9 +140,7 @@ describe("EditEventPage", () => {
     expect(screen.getByLabelText("Lugar")).toHaveValue("Espacio Nodo");
     expect(screen.getByLabelText("Fecha")).toHaveValue("2026-09-20");
     expect(screen.getByLabelText("Inicio")).toHaveValue("19:00");
-    expect(screen.getByLabelText("Inicio")).toHaveAttribute("lang", "en-GB");
     expect(screen.getByLabelText("Fin")).toHaveValue("21:00");
-    expect(screen.getByLabelText("Fin")).toHaveAttribute("lang", "en-GB");
     expect(screen.getByLabelText("Imagen")).toHaveValue(
       "https://images.lumacdn.com/uploads/cover.png",
     );

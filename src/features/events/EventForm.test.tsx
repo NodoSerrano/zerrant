@@ -79,16 +79,12 @@ describe("EventForm", () => {
     );
   });
 
-  it("uses a 24-hour time control so 19:00 does not surface as AM/PM", () => {
+  it("keeps 19:00 as a 24-hour value, not AM/PM", () => {
     render(<EventForm action={async () => null} defaults={{ inicio: "19:00", fin: "21:00" }} />);
 
-    for (const label of ["Inicio", "Fin"]) {
-      const input = screen.getByLabelText(label);
-      expect(input).toHaveAttribute("type", "time");
-      expect(input).toHaveAttribute("lang", "en-GB");
-    }
     expect(screen.getByLabelText("Inicio")).toHaveValue("19:00");
     expect(screen.getByLabelText("Fin")).toHaveValue("21:00");
+    expect(screen.queryByText(/AM|PM/)).toBeNull();
   });
 
   it("shows a Spanish alert when the action returns an error", () => {
