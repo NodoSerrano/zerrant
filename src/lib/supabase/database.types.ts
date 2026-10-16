@@ -264,6 +264,7 @@ export type Database = {
       };
       membership_requests: {
         Row: {
+          aprobado_en: string | null;
           actualizado_en: string;
           aporte_actitud: Database["public"]["Enums"]["membership_aporte_actitud"] | null;
           aporte_mayor: Database["public"]["Enums"]["membership_aporte_mayor"] | null;
@@ -284,6 +285,7 @@ export type Database = {
           tier_solicitado: Database["public"]["Enums"]["tier"];
         };
         Insert: {
+          aprobado_en?: string | null;
           actualizado_en?: string;
           aporte_actitud?: Database["public"]["Enums"]["membership_aporte_actitud"] | null;
           aporte_mayor?: Database["public"]["Enums"]["membership_aporte_mayor"] | null;
@@ -304,6 +306,7 @@ export type Database = {
           tier_solicitado?: Database["public"]["Enums"]["tier"];
         };
         Update: {
+          aprobado_en?: string | null;
           actualizado_en?: string;
           aporte_actitud?: Database["public"]["Enums"]["membership_aporte_actitud"] | null;
           aporte_mayor?: Database["public"]["Enums"]["membership_aporte_mayor"] | null;

@@ -13,6 +13,7 @@ const CREATE_REJECTED = "No pudimos publicar el evento.";
 const INVALID_TITULO = "El título no puede estar vacío.";
 const INVALID_FECHA = "Indicá la fecha del evento.";
 const INVALID_INICIO = "Indicá el inicio del evento.";
+const INVALID_LUGAR = "Indicá dónde es el evento.";
 const INVALID_DATETIME = "Revisá la fecha y la hora del evento.";
 const INVALID_COVER = "La imagen tiene que ser una URL https.";
 const TOURIST_BLOCKED = "Solo los serranos pueden crear eventos.";
@@ -125,6 +126,9 @@ export async function createEvent(
   const finHm = trimmed(formData.get("fin"));
   const descripcion = trimmed(formData.get("descripcion"));
   const lugar = trimmed(formData.get("lugar"));
+  if (!lugar) {
+    return { error: INVALID_LUGAR };
+  }
 
   let coverUrl: string | null = null;
   if (formData.has("cover_url")) {
@@ -173,7 +177,7 @@ export async function createEvent(
   }
 
   revalidatePath("/agenda");
-  redirect(`/agenda?dia=${fecha}`);
+  redirect(`/agenda`);
 }
 
 export async function updateEvent(
@@ -219,7 +223,9 @@ export async function updateEvent(
     patch.descripcion = trimmed(formData.get("descripcion"));
   }
   if (formData.has("lugar")) {
-    patch.lugar = trimmed(formData.get("lugar"));
+    const lugar = trimmed(formData.get("lugar"));
+    if (!lugar) return { error: INVALID_LUGAR };
+    patch.lugar = lugar;
   }
   if (formData.has("cover_url")) {
     const cover = coverUrlFromForm(trimmed(formData.get("cover_url")));

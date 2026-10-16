@@ -1,3 +1,4 @@
+import { publicAppHref } from "@/lib/public-url";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -14,19 +15,21 @@ const OTP_TYPES = new Set<string>([
 ]);
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const requestUrl = new URL(request.url);
+  const requestOrigin = requestUrl.origin;
+  const searchParams = requestUrl.searchParams;
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type");
   const errorCode = searchParams.get("error_code");
   const rawNext = searchParams.get("next");
   const next = safeInternalPath(rawNext);
-  // Built with URL, never string concat: `${origin}${next}` let `next=@evil.com`
-  // redirect off-site (ZER-136).
-  const success = () => NextResponse.redirect(new URL(next, origin));
+  // `next` is validated first. String-joining it onto SITE_URL is safe, and
+  // required when SITE_URL already includes a base path (ZER-136 + hosted subpath).
+  const success = () => NextResponse.redirect(publicAppHref(next, requestOrigin));
 
   if (errorCode === "otp_expired") {
-    const login = new URL("/auth/login", origin);
+    const login = new URL(publicAppHref("/auth/login", requestOrigin));
     login.searchParams.set("error", "otp_expired");
     if (rawNext !== null && next !== "/") login.searchParams.set("next", next);
     return NextResponse.redirect(login);
@@ -51,7 +54,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const failed = new URL("/auth/login", origin);
+  const failed = new URL(publicAppHref("/auth/login", requestOrigin));
   failed.searchParams.set("error", "auth_callback_failed");
   // Keep the deep link (e.g. /unirme) so the user resumes it after logging in.
   if (next !== "/") failed.searchParams.set("next", next);

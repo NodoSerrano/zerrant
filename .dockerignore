@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+.env
+.env.local
+supabase/.temp
+supabase/.branches
+_bmad
+_bmad-output

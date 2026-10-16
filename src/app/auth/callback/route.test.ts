@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 
 const authMock = vi.hoisted(() => ({
@@ -14,6 +14,11 @@ import { GET } from "./route";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.unstubAllEnvs();
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 function makeRequest(pathWithQuery: string): NextRequest {
@@ -151,5 +156,14 @@ describe("GET /auth/callback — keeps next on failure (Codex review)", () => {
     expect(result.headers.get("location")).toBe(
       "https://example.com/auth/login?error=auth_callback_failed",
     );
+  });
+
+  it("keeps the hosted base path when SITE_URL includes one", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://nogal-labs.com.ar/zerrant-test");
+    authMock.exchangeCodeForSession.mockResolvedValue({ error: null });
+
+    const result = await GET(makeRequest("/auth/callback?code=abc&next=%2Funirme"));
+
+    expect(result.headers.get("location")).toBe("https://nogal-labs.com.ar/zerrant-test/unirme");
   });
 });

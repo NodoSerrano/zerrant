@@ -137,9 +137,7 @@ describe("createEvent", () => {
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
     mocks.eventsSelect.mockResolvedValue({ error: null, data: [{ id: "evt-1" }] });
 
-    await expect(createEvent(null, makeFormData())).rejects.toThrow(
-      "NEXT_REDIRECT:/agenda?dia=2026-09-20",
-    );
+    await expect(createEvent(null, makeFormData())).rejects.toThrow("NEXT_REDIRECT:/agenda");
 
     expect(mocks.eventsInsertPayload).toEqual({
       titulo: "Asamblea de nodo",
@@ -181,6 +179,16 @@ describe("createEvent", () => {
     const result = await createEvent(null, fd);
 
     expect(result).toEqual({ error: "Indicá el inicio del evento." });
+    expect(mocks.eventsInsert).not.toHaveBeenCalled();
+  });
+
+  it("rejects a blank lugar without writing", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+
+    const result = await createEvent(null, makeFormData({ lugar: "   " }));
+
+    expect(result).toEqual({ error: "Indicá dónde es el evento." });
     expect(mocks.eventsInsert).not.toHaveBeenCalled();
   });
 
@@ -235,19 +243,19 @@ describe("createEvent", () => {
     expect(result).toEqual({ error: "No pudimos publicar el evento. Probá de nuevo." });
   });
 
-  it("stores empty descripcion and lugar as null", async () => {
+  it("stores empty descripcion as null", async () => {
     setupAuth("serrano-1");
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
     mocks.eventsSelect.mockResolvedValue({ error: null, data: [{ id: "evt-1" }] });
 
-    await expect(createEvent(null, makeFormData({ descripcion: "  ", lugar: "" }))).rejects.toThrow(
+    await expect(createEvent(null, makeFormData({ descripcion: "  " }))).rejects.toThrow(
       "NEXT_REDIRECT",
     );
 
     expect(mocks.eventsInsertPayload).toEqual(
       expect.objectContaining({
         descripcion: null,
-        lugar: null,
+        lugar: "Salón",
       }),
     );
   });

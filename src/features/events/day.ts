@@ -4,6 +4,8 @@
  * CI (UTC) and production match the node's wall clock.
  */
 
+import { formatAgendaDate } from "./dateOptions";
+import { formatMinutes } from "./timeOptions";
 import type { EventFormDefaults } from "./types";
 
 export const AGENDA_TIME_ZONE = "America/Argentina/Buenos_Aires";
@@ -178,6 +180,14 @@ export function hourMinuteFromFormatParts(parts: readonly ClockPart[]): string {
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
+export function formatEventDuration(inicio: string, fin: string | null): string | null {
+  if (!fin) return null;
+  const start = new Date(inicio);
+  const end = new Date(fin);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  return formatMinutes((end.getTime() - start.getTime()) / 60_000);
+}
+
 export function formatEventTimeRange(inicio: string, fin: string | null): string {
   const startLabel = wallClockHmFromIso(inicio);
   if (!startLabel) return "";
@@ -187,6 +197,13 @@ export function formatEventTimeRange(inicio: string, fin: string | null): string
   if (!endLabel) return startLabel;
 
   return `${startLabel} – ${endLabel}`;
+}
+
+/** "vie 23 oct" for an event start, in the agenda timezone. */
+export function formatAgendaDateLabel(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return formatAgendaDate(formatDayKey(date));
 }
 
 /** HH:MM wall clock in the agenda TZ for an ISO timestamp (edit form prefill). */
