@@ -225,19 +225,26 @@ describe("AgendaPage", () => {
       "href",
       "/solicitar",
     );
+    expect(resolveSerSerranoCtaVisibility).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({ tier: "tourist" }),
+    );
   });
 
-  it("hides Ser Serrano CTA for members (ZER-171)", async () => {
+  it("hides Ser Serrano CTA for members and passes their tier (ZER-171)", async () => {
     const { createClient } = await import("@/lib/supabase/server");
     const { resolveSerSerranoCtaVisibility } =
       await import("@/features/membership/ser-serrano-cta-server");
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
       mockSupabase({ profileTier: "standard" }),
     );
-    (resolveSerSerranoCtaVisibility as ReturnType<typeof vi.fn>).mockResolvedValueOnce(false);
 
     await renderPage();
 
+    expect(resolveSerSerranoCtaVisibility).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({ tier: "standard" }),
+    );
     expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
   });
 

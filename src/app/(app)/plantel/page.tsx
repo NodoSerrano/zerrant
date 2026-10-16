@@ -34,7 +34,17 @@ export default async function PlantelPage() {
     supabase.from("profile_skills").select("profile_id, skills(nombre)"),
     supabase.from("roles").select("nombre").order("nombre", { ascending: true }),
     supabase.from("skills").select("nombre").order("nombre", { ascending: true }),
-    resolveSerSerranoCtaVisibility(user.id, { client: supabase }),
+    supabase
+      .from("profiles")
+      .select("tier")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) =>
+        resolveSerSerranoCtaVisibility(user.id, {
+          client: supabase,
+          tier: data?.tier ?? null,
+        }),
+      ),
   ]);
 
   const members = buildSerranoMembers(
@@ -56,7 +66,7 @@ export default async function PlantelPage() {
   if (!showSerSerranoCta) return list;
 
   return (
-    <div className="flex flex-col gap-4" data-testid="ser-serrano-cta-stack">
+    <div className="flex flex-col gap-4">
       <SerSerranoCta />
       {list}
     </div>

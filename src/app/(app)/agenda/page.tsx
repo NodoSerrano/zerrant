@@ -25,18 +25,22 @@ export default async function AgendaPage() {
     return <p className="text-text-secondary">Iniciá sesión para ver la agenda.</p>;
   }
 
-  const [{ data: events }, { data: profile }, lumaResult] = await Promise.all([
+  const profileRead = supabase.from("profiles").select("tier").eq("id", user.id).single();
+
+  const [{ data: events }, { data: profile }, lumaResult, showSerSerranoCta] = await Promise.all([
     supabase
       .from("events")
       .select("id, titulo, descripcion, lugar, inicio, fin, creado_por")
       .order("inicio", { ascending: true }),
-    supabase.from("profiles").select("tier").eq("id", user.id).single(),
+    profileRead,
     fetchLumaCalendarEvents(),
+    profileRead.then(({ data }) =>
+      resolveSerSerranoCtaVisibility(user.id, {
+        client: supabase,
+        tier: data?.tier ?? null,
+      }),
+    ),
   ]);
-  const showSerSerranoCta = await resolveSerSerranoCtaVisibility(user.id, {
-    client: supabase,
-    tier: profile?.tier ?? null,
-  });
 
   const internal = ((events ?? []) as AgendaEvent[]).map(internalEventToAgendaItem);
   const lumaAll = lumaResult.ok ? lumaResult.events : [];
