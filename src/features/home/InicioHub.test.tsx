@@ -59,6 +59,7 @@ describe("InicioHub", () => {
           {
             id: "e1",
             title: "Asamblea",
+            dateLabel: "dom 20 sept",
             timeLabel: "18:00 – 20:00",
             place: "Salón",
             href: "/agenda/e1",
@@ -68,7 +69,9 @@ describe("InicioHub", () => {
       />,
     );
     expect(screen.getByText("Asamblea")).toBeInTheDocument();
-    expect(screen.getByText("Salón")).toBeInTheDocument();
+    expect(screen.getByText("20")).toBeInTheDocument();
+    expect(screen.getByText("sept")).toBeInTheDocument();
+    expect(screen.getByText(/Salón/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Asamblea/i })).toHaveAttribute("href", "/agenda/e1");
     expect(screen.queryByText("No hay eventos próximos")).not.toBeInTheDocument();
   });
@@ -123,5 +126,23 @@ describe("InicioHub", () => {
     render(<InicioHub events={[]} birthdays={[]} showCommunityHub={false} />);
     expect(screen.queryByRole("link", { name: /Tareas/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Proyectos/i })).not.toBeInTheDocument();
+  });
+
+  it("shows Ser Serrano CTA when enabled (ZER-171)", () => {
+    render(<InicioHub events={[]} birthdays={[]} showSerSerranoCta />);
+    expect(screen.getByRole("link", { name: /Solicitar ser Serrano/i })).toHaveAttribute(
+      "href",
+      "/solicitar",
+    );
+  });
+
+  it("hides Ser Serrano CTA by default", () => {
+    render(<InicioHub events={[]} birthdays={[]} />);
+    expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
+  });
+
+  it("confirms membership in copy, not only via the community hub", () => {
+    render(<InicioHub events={[]} birthdays={[]} showCommunityHub memberConfirmed />);
+    expect(screen.getByRole("heading", { name: "Ya sos miembro del Nodo" })).toBeInTheDocument();
   });
 });

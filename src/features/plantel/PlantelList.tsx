@@ -7,7 +7,7 @@ import { availableRoles, availableSkills, filterSerranos } from "./filter";
 import { MemberCard } from "./MemberCard";
 import type { SerranoMember } from "./types";
 
-type ChipId = "todos" | "disponibles" | "rol" | "skill";
+type ChipId = "todos" | "rol" | "skill";
 
 type PlantelListProps = {
   members: SerranoMember[];
@@ -21,7 +21,6 @@ function uniqueSorted(values: string[]): string[] {
 
 export function PlantelList({ members, roleOptions, skillOptions }: PlantelListProps) {
   const [q, setQ] = useState("");
-  const [soloDisponibles, setSoloDisponibles] = useState(false);
   const [rol, setRol] = useState<string | null>(null);
   const [skill, setSkill] = useState<string | null>(null);
   const [picker, setPicker] = useState<"rol" | "skill" | null>(null);
@@ -37,15 +36,14 @@ export function PlantelList({ members, roleOptions, skillOptions }: PlantelListP
   }, [members, skillOptions]);
 
   const filtered = useMemo(
-    () => filterSerranos(members, { q, soloDisponibles, rol, skill }),
-    [members, q, soloDisponibles, rol, skill],
+    () => filterSerranos(members, { q, rol, skill }),
+    [members, q, rol, skill],
   );
 
-  const hasActiveFilters = Boolean(q || soloDisponibles || rol || skill);
+  const hasActiveFilters = Boolean(q || rol || skill);
 
   function clearFilters() {
     setQ("");
-    setSoloDisponibles(false);
     setRol(null);
     setSkill(null);
     setPicker(null);
@@ -154,13 +152,11 @@ export function PlantelList({ members, roleOptions, skillOptions }: PlantelListP
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {chip("todos", "Todos", !rol && !skill && !soloDisponibles, () => {
+        {chip("todos", "Todos", !rol && !skill, () => {
           setRol(null);
           setSkill(null);
-          setSoloDisponibles(false);
           setPicker(null);
         })}
-        {chip("disponibles", "Disponibles", soloDisponibles, () => setSoloDisponibles((v) => !v))}
         {chip(
           "rol",
           rol ? `Rol: ${rol}` : "Por rol",

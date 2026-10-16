@@ -1,7 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AgendaPage from "./page";
-import { dayBoundsIso } from "@/features/events/day";
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
@@ -9,6 +8,10 @@ vi.mock("@/lib/supabase/server", () => ({
 
 vi.mock("@/features/events/luma-client", () => ({
   fetchLumaCalendarEvents: vi.fn(),
+}));
+
+vi.mock("@/features/membership/ser-serrano-cta-server", () => ({
+  resolveSerSerranoCtaVisibility: vi.fn().mockResolvedValue(false),
 }));
 
 vi.mock("next/link", () => ({
@@ -120,9 +123,8 @@ function mockSupabase(
   };
 }
 
-async function renderPage(searchParams: Record<string, string | undefined> = {}) {
-  const params = Promise.resolve(searchParams);
-  const element = await AgendaPage({ searchParams: params });
+async function renderPage(_searchParams: Record<string, string | undefined> = {}) {
+  const element = await AgendaPage();
   return render(element);
 }
 
@@ -175,17 +177,14 @@ describe("AgendaPage", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("renders the Agenda header and a day strip with today selected by default", async () => {
+  it("renders the Agenda header without a day strip", async () => {
     const { createClient } = await import("@/lib/supabase/server");
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
 
     await renderPage();
 
     expect(screen.getByRole("heading", { name: "Agenda" })).toBeInTheDocument();
-
-    const todayLink = screen.getByRole("link", { name: /dom\s*20/i });
-    expect(todayLink).toHaveAttribute("aria-current", "date");
-    expect(todayLink).toHaveAttribute("href", "/agenda?dia=2026-09-20");
+    expect(screen.queryByRole("link", { name: /dom\s*20/i })).not.toBeInTheDocument();
   });
 
   it("shows a create entry for serranos", async () => {
@@ -211,6 +210,44 @@ describe("AgendaPage", () => {
     expect(screen.queryByRole("link", { name: /Nuevo evento/i })).not.toBeInTheDocument();
   });
 
+  it("shows Ser Serrano CTA for tourists without an active request (ZER-171)", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    const { resolveSerSerranoCtaVisibility } =
+      await import("@/features/membership/ser-serrano-cta-server");
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockSupabase({ profileTier: "tourist" }),
+    );
+    (resolveSerSerranoCtaVisibility as ReturnType<typeof vi.fn>).mockResolvedValueOnce(true);
+
+    await renderPage();
+
+    expect(screen.getByRole("link", { name: /Solicitar ser Serrano/i })).toHaveAttribute(
+      "href",
+      "/solicitar",
+    );
+    expect(resolveSerSerranoCtaVisibility).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({ tier: "tourist" }),
+    );
+  });
+
+  it("hides Ser Serrano CTA for members and passes their tier (ZER-171)", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    const { resolveSerSerranoCtaVisibility } =
+      await import("@/features/membership/ser-serrano-cta-server");
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockSupabase({ profileTier: "standard" }),
+    );
+
+    await renderPage();
+
+    expect(resolveSerSerranoCtaVisibility).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({ tier: "standard" }),
+    );
+    expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
+  });
+
   it("lists events for the selected day from the events table", async () => {
     const { createClient } = await import("@/lib/supabase/server");
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
@@ -220,28 +257,22 @@ describe("AgendaPage", () => {
     await renderPage({ dia: "2026-09-20" });
 
     expect(screen.getByText("Asamblea")).toBeInTheDocument();
-    expect(screen.getByText("Salón")).toBeInTheDocument();
+    expect(screen.getByText(/Salón/)).toBeInTheDocument();
   });
 
-  it("lists only the events whose inicio falls on the selected day", async () => {
+  it("lists every event, not only the selected day, with the date on the card", async () => {
     const { createClient } = await import("@/lib/supabase/server");
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
       mockSupabase({ events: [EVENT_A, EVENT_B] }),
     );
 
     await renderPage({ dia: "2026-09-20" });
+
     expect(screen.getByText("Asamblea")).toBeInTheDocument();
-    expect(screen.queryByText("Cena comunitaria")).not.toBeInTheDocument();
-
-    cleanup();
-
-    // Re-render for day B with a fresh mock (new query chain)
-    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
-      mockSupabase({ events: [EVENT_A, EVENT_B] }),
-    );
-    await renderPage({ dia: "2026-09-21" });
     expect(screen.getByText("Cena comunitaria")).toBeInTheDocument();
-    expect(screen.queryByText("Asamblea")).not.toBeInTheDocument();
+    expect(screen.getByText("20")).toBeInTheDocument();
+    expect(screen.getByText("21")).toBeInTheDocument();
+    expect(screen.getAllByText("sept").length).toBeGreaterThan(0);
   });
 
   it("links event cards to the detail route", async () => {
@@ -256,7 +287,7 @@ describe("AgendaPage", () => {
     expect(link).toHaveAttribute("href", "/agenda/evt-a");
   });
 
-  it("queries events with ART-stable inicio bounds for the selected day", async () => {
+  it("loads events ordered by start, without a day window", async () => {
     const { createClient } = await import("@/lib/supabase/server");
     const client = mockSupabase();
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
@@ -265,18 +296,9 @@ describe("AgendaPage", () => {
 
     const chain = client.getEventsChain();
     expect(chain).toBeTruthy();
-    expect(chain!.gte).toHaveBeenCalled();
-    expect(chain!.lt).toHaveBeenCalled();
-
-    const expected = dayBoundsIso("2026-09-21");
-    const gteArgs = (chain!.gte as ReturnType<typeof vi.fn>).mock.calls[0];
-    const ltArgs = (chain!.lt as ReturnType<typeof vi.fn>).mock.calls[0];
-    expect(gteArgs[0]).toBe("inicio");
-    expect(ltArgs[0]).toBe("inicio");
-    expect(gteArgs[1]).toBe(expected.startIso);
-    expect(ltArgs[1]).toBe(expected.endIso);
-    expect(expected.startIso).toBe("2026-09-21T03:00:00.000Z");
-    expect(expected.endIso).toBe("2026-09-22T03:00:00.000Z");
+    expect(chain!.order).toHaveBeenCalledWith("inicio", { ascending: true });
+    expect(chain!.gte).not.toHaveBeenCalled();
+    expect(chain!.lt).not.toHaveBeenCalled();
   });
 
   it("renders the agenda empty state copy, not the tasks empty copy", async () => {
@@ -290,14 +312,17 @@ describe("AgendaPage", () => {
     expect(screen.getByText(/todavía no hay eventos/i)).toBeInTheDocument();
   });
 
-  it("defaults unparseable dia to today", async () => {
+  it("ignores the dia query and still shows the list", async () => {
     const { createClient } = await import("@/lib/supabase/server");
-    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockSupabase({ events: [EVENT_A, EVENT_B] }),
+    );
 
     await renderPage({ dia: "nope" });
 
-    const todayLink = screen.getByRole("link", { name: /dom\s*20/i });
-    expect(todayLink).toHaveAttribute("aria-current", "date");
+    expect(screen.getByText("Asamblea")).toBeInTheDocument();
+    expect(screen.getByText("Cena comunitaria")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Nuevo evento/i })).toBeInTheDocument();
   });
 
   it("asks unauthenticated users to sign in", async () => {
@@ -309,7 +334,7 @@ describe("AgendaPage", () => {
     expect(screen.getByText(/Iniciá sesión/i)).toBeInTheDocument();
   });
 
-  it("lists Luma calendar events for the selected day with external href", async () => {
+  it("lists Luma events even when they fall on another day", async () => {
     const { createClient } = await import("@/lib/supabase/server");
     const { fetchLumaCalendarEvents } = await import("@/features/events/luma-client");
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase({ events: [] }));
@@ -329,7 +354,7 @@ describe("AgendaPage", () => {
       ],
     });
 
-    await renderPage({ dia: "2026-09-20" });
+    await renderPage({ dia: "2026-09-21" });
 
     expect(screen.getByText("La fija de los jueves: pysap")).toBeInTheDocument();
     const link = screen.getByRole("link", { name: /La fija de los jueves/i });
@@ -338,7 +363,7 @@ describe("AgendaPage", () => {
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
-  it("marks strip days that have Luma or internal events", async () => {
+  it("lists internal and Luma events together without a day filter", async () => {
     const { createClient } = await import("@/lib/supabase/server");
     const { fetchLumaCalendarEvents } = await import("@/features/events/luma-client");
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
@@ -362,13 +387,9 @@ describe("AgendaPage", () => {
 
     await renderPage({ dia: "2026-09-20" });
 
-    const dayWithInternal = screen.getByRole("link", { name: /dom\s*20/i });
-    const dayWithLuma = screen.getByRole("link", { name: /jue\s*24/i });
-    const emptyDay = screen.getByRole("link", { name: /lun\s*21/i });
-
-    expect(dayWithInternal).toHaveAttribute("data-has-events", "true");
-    expect(dayWithLuma).toHaveAttribute("data-has-events", "true");
-    expect(emptyDay).not.toHaveAttribute("data-has-events");
+    expect(screen.getByText("Asamblea")).toBeInTheDocument();
+    expect(screen.getByText("La fija de los jueves: pysap")).toBeInTheDocument();
+    expect(screen.getByText("24")).toBeInTheDocument();
   });
 
   it("degrades when Luma fails and still shows internal events", async () => {

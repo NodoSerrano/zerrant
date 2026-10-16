@@ -161,4 +161,14 @@ describe("public table grants (live DB)", () => {
     expect(tableResult.ok).toBe(true);
     expect(defaultResult.ok).toBe(true);
   });
+
+  it("interview_notes grants authenticated select and no insert, update, or delete", () => {
+    const notes = loadTableSnapshots().find((table) => table.name === "interview_notes");
+    expect(notes).toMatchObject({
+      select: true,
+      insert: false,
+      update: false,
+      delete: false,
+    });
+  });
 });

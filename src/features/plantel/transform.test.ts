@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildSerranoMembers, availabilityLabel } from "./transform";
+import { buildSerranoMembers } from "./transform";
 
 const profiles = [
   {
@@ -10,7 +10,6 @@ const profiles = [
     nombre_visible: "nombre_apellido" as const,
     avatar_url: null,
     tier: "standard" as const,
-    disponibilidad: "disponible" as const,
     is_platform_admin: true,
   },
   {
@@ -21,7 +20,6 @@ const profiles = [
     nombre_visible: "apodo" as const,
     avatar_url: "https://x/ada.png",
     tier: "founder" as const,
-    disponibilidad: "ocupado" as const,
     is_platform_admin: false,
   },
   {
@@ -32,7 +30,6 @@ const profiles = [
     nombre_visible: "apellido_nombre" as const,
     avatar_url: null,
     tier: "tourist" as const,
-    disponibilidad: null,
     is_platform_admin: false,
   },
 ];
@@ -72,10 +69,10 @@ describe("buildSerranoMembers", () => {
     expect(result[1].skills).toEqual([]);
   });
 
-  it("maps avatar_url and disponibilidad", () => {
+  it("maps avatar_url and does not carry disponibilidad", () => {
     const result = buildSerranoMembers(profiles, roleAssignments, skillAssignments);
     expect(result[0].avatarUrl).toBeNull();
-    expect(result[0].disponibilidad).toBe("disponible");
+    expect(result[0]).not.toHaveProperty("disponibilidad");
     expect(result[1].avatarUrl).toBe("https://x/ada.png");
   });
 
@@ -89,14 +86,5 @@ describe("buildSerranoMembers", () => {
     const withoutAdmin = profiles.map(({ is_platform_admin: _ignored, ...row }) => row);
     const result = buildSerranoMembers(withoutAdmin, roleAssignments, skillAssignments);
     expect(result.every((m) => m.isPlatformAdmin === false)).toBe(true);
-  });
-});
-
-describe("availabilityLabel", () => {
-  it("maps the three states and null", () => {
-    expect(availabilityLabel("disponible")).toBe("Disponible");
-    expect(availabilityLabel("ocupado")).toBe("Ocupado");
-    expect(availabilityLabel("solo_eventos")).toBe("Solo eventos");
-    expect(availabilityLabel(null)).toBeNull();
   });
 });

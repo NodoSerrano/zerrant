@@ -107,7 +107,23 @@ describe("RequestCard", () => {
     expect(chip?.className).toContain(cls);
   });
 
-  it("never renders Rechazar", () => {
+  it("shows the booked slot and who it belongs to via the applicant card", () => {
+    render(
+      <RequestCard
+        request={{
+          ...mockRequest,
+          booking: {
+            starts_at: "2026-10-07T18:00:00.000Z",
+            ends_at: "2026-10-07T18:30:00.000Z",
+          },
+        }}
+      />,
+    );
+    expect(screen.getByText(/Entrevista:/)).toBeInTheDocument();
+    expect(screen.getByText("Sofía Vega")).toBeInTheDocument();
+  });
+
+  it("never shows reject copy", () => {
     for (const estado of MEMBERSHIP_REQUEST_ESTADOS) {
       const { container, unmount } = render(<RequestCard request={{ ...mockRequest, estado }} />);
       expect(container.textContent).not.toMatch(/rechaz/i);
@@ -120,7 +136,7 @@ describe("RequestCard", () => {
     ["entrevista_solicitada", ["Confirmar horario", "Reprogramar", "Cerrar solicitud"]],
     ["entrevista_coordinada", ["Marcar entrevista realizada", "Reprogramar", "Cerrar solicitud"]],
     ["reprogramacion", ["Confirmar horario", "Pedir otro horario", "Cerrar solicitud"]],
-    ["entrevista_realizada", ["Aprobar como miembro", "Cerrar solicitud"]],
+    ["entrevista_realizada", ["Convertir en miembro", "Cerrar solicitud"]],
   ] as const)("renders the %s actions", (estado, labels) => {
     render(<RequestCard request={{ ...mockRequest, estado }} />);
     for (const label of labels) {
@@ -162,12 +178,12 @@ describe("RequestCard", () => {
     render(<RequestCard request={{ ...mockRequest, estado: "entrevista_realizada" }} />);
     fireEvent.click(screen.getByRole("button", { name: "Cerrar solicitud" }));
 
-    expect(screen.queryByRole("button", { name: "Aprobar como miembro" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Convertir en miembro" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Cerrar solicitud" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sí, cerrar" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
-    expect(screen.getByRole("button", { name: "Aprobar como miembro" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Convertir en miembro" })).toBeInTheDocument();
   });
 
   it("Cerrar solicitud keeps a 44px minimum touch target", () => {

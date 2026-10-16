@@ -3,7 +3,7 @@ import { ChevronLeft, Clock, MapPin, Users } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { Chip } from "@/components/Chip";
 import { EmptyState } from "@/components/EmptyState";
-import { formatEventTimeRange } from "./day";
+import { formatEventTimeRange, formatEventDuration } from "./day";
 import { groupAttendance } from "./attendance";
 import { RsvpControl } from "./RsvpControl";
 import type { EventAttendee, EventCreator } from "./types";
@@ -47,6 +47,7 @@ export function EventDetail({
 }: EventDetailProps) {
   const groups = groupAttendance(attendees).filter((group) => group.attendees.length > 0);
   const timeLabel = formatEventTimeRange(inicio, fin);
+  const durationLabel = formatEventDuration(inicio, fin);
 
   return (
     <div className="flex flex-col gap-5">
@@ -88,13 +89,18 @@ export function EventDetail({
         ) : null}
         {timeLabel ? (
           <div className="flex items-center gap-2">
-            <Clock className="size-[15px] text-text-muted" aria-hidden="true" />
+            <Clock className="size-[15px] shrink-0 text-text-muted" aria-hidden="true" />
             <time
               dateTime={inicio}
               className="font-body text-[13px] font-normal text-text-secondary"
             >
               {timeLabel}
             </time>
+            {durationLabel ? (
+              <span className="ml-auto font-display text-[13px] font-medium text-text-primary">
+                Dura {durationLabel}
+              </span>
+            ) : null}
           </div>
         ) : null}
         <div className="flex items-center gap-2">

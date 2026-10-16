@@ -10,6 +10,8 @@ const CANCEL_ERROR = "No pudimos cancelar la tarea. Probá de nuevo.";
 const UPDATE_ERROR = "No pudimos guardar los cambios. Probá de nuevo.";
 const CREATE_ERROR = "No pudimos publicar la tarea. Probá de nuevo.";
 const TAKE_ERROR = "No pudimos tomar la tarea. Probá de nuevo.";
+const RELEASE_ERROR = "No pudimos liberar la tarea. Probá de nuevo.";
+const ASSIGN_ERROR = "No pudimos asignar la tarea. Probá de nuevo.";
 const MARK_DONE_ERROR = "No pudimos marcar la tarea como hecha. Probá de nuevo.";
 const VERIFY_ERROR = "No pudimos verificar la tarea. Probá de nuevo.";
 // When the filters match no rows, PostgREST doesn't return an error: the
@@ -18,6 +20,21 @@ const VERIFY_ERROR = "No pudimos verificar la tarea. Probá de nuevo.";
 const CANCEL_REJECTED = "No pudimos cancelar esta tarea.";
 const UPDATE_REJECTED = "No pudimos guardar los cambios.";
 const TAKE_REJECTED = "No pudimos tomar esta tarea.";
+const RELEASE_REJECTED = "No pudimos liberar esta tarea.";
+const ASSIGN_REJECTED = "No pudimos asignar esta tarea.";
+const ASSIGN_FORBIDDEN = "No podés asignar esta tarea.";
+const ASSIGNEE_BLOCKED = "Solo se puede asignar a un serrano.";
+const ASSIGN_INPUT = "Revisá a quién asignás la tarea.";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function uuidField(value: FormDataEntryValue | null): string | null {
+  return typeof value === "string" && UUID_RE.test(value) ? value : null;
+}
+
+function isRlsDenied(error: { code?: string }): boolean {
+  return error.code === "42501";
+}
 const MARK_DONE_REJECTED = "No pudimos marcar la tarea como hecha.";
 const VERIFY_REJECTED = "No pudimos verificar esta tarea.";
 const INVALID_INPUT = "Revisá los datos de la tarea.";
@@ -126,6 +143,126 @@ export async function takeTask(_prevState: { error: string } | null, formData: F
 
   if (!data || data.length === 0) {
     return { error: TAKE_REJECTED };
+  }
+
+  revalidatePath("/nodo", "layout");
+  redirect(`/nodo/tasks/${taskId}`);
+}
+
+export async function releaseTask(_prevState: { error: string } | null, formData: FormData) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "No autorizado" };
+  }
+
+  const taskId = trimmed(formData.get("taskId"));
+
+  if (!taskId) {
+    return { error: "No autorizado" };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tier")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || isTasksBlockedTier(profile.tier)) {
+    return { error: "Solo los serranos pueden liberar tareas" };
+  }
+
+  // Row filters are not the authorization check. A caller who is not the
+  // taker, the creator, or an admin is rejected in the database (42501).
+  const { data, error } = await supabase
+    .from("tasks")
+    .update({ tomada_por: null, estado: "abierta" })
+    .eq("id", taskId)
+    .eq("estado", "tomada")
+    .select("id");
+
+  if (error) {
+    return { error: isRlsDenied(error) ? RELEASE_REJECTED : RELEASE_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: RELEASE_REJECTED };
+  }
+
+  revalidatePath("/nodo", "layout");
+  redirect(`/nodo/tasks/${taskId}`);
+}
+
+export async function assignTask(_prevState: { error: string } | null, formData: FormData) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "No autorizado" };
+  }
+
+  const taskId = trimmed(formData.get("taskId"));
+  // tomada_por from the client is ignored. The only assignee input is assigneeId.
+  const assigneeId = uuidField(formData.get("assigneeId"));
+
+  if (!taskId || !assigneeId) {
+    return { error: ASSIGN_INPUT };
+  }
+
+  const { data: caller } = await supabase
+    .from("profiles")
+    .select("tier, is_platform_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (!caller || isTasksBlockedTier(caller.tier)) {
+    return { error: "Solo los serranos pueden asignar tareas" };
+  }
+
+  const { data: task } = await supabase
+    .from("tasks")
+    .select("creado_por")
+    .eq("id", taskId)
+    .single();
+
+  if (!task || (task.creado_por !== user.id && !caller.is_platform_admin)) {
+    return { error: ASSIGN_FORBIDDEN };
+  }
+
+  const { data: assignee, error: assigneeError } = await supabase
+    .from("profiles")
+    .select("tier")
+    .eq("id", assigneeId)
+    .single();
+
+  if (assigneeError || !assignee) {
+    return { error: "No encontramos a esa persona." };
+  }
+
+  if (isTasksBlockedTier(assignee.tier)) {
+    return { error: ASSIGNEE_BLOCKED };
+  }
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .update({ estado: "tomada", tomada_por: assigneeId })
+    .eq("id", taskId)
+    .in("estado", ["abierta", "tomada"])
+    .select("id");
+
+  if (error) {
+    return { error: isRlsDenied(error) ? ASSIGN_REJECTED : ASSIGN_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: ASSIGN_REJECTED };
   }
 
   revalidatePath("/nodo", "layout");

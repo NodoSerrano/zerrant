@@ -16,9 +16,9 @@ export default async function EditProfilePage() {
   }
 
   const { data: profile } = await supabase
-    .from("profiles_with_rate")
+    .from("profiles")
     .select(
-      "nombre, apellido, apodo, nombre_visible, fecha_nacimiento, bio, contacto_telegram, sitio_url, disponibilidad, visibilidad_tarifa, tarifa_hora, avatar_url",
+      "nombre, apellido, apodo, nombre_visible, fecha_nacimiento, bio, contacto_telegram, sitio_url, avatar_url",
     )
     .eq("id", user.id)
     .single();

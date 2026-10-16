@@ -17,46 +17,37 @@ import {
   validateAvatarFile,
 } from "./avatar";
 import { ensureWebSafeImage } from "./avatar-convert";
+import { isValidBirthDate } from "./birthdate";
+import { formatPersonName } from "./person-name";
 import type { ProfileUpdate } from "./types";
 
 /** What the user sees when Postgres fails: never the engine's message. */
 const DB_ERROR = "No pudimos guardar tus datos. Probá de nuevo.";
 
 const NOMBRE_VISIBLE_VALUES = ["apodo", "nombre_apellido", "apellido_nombre"] as const;
-const DISPONIBILIDAD_VALUES = ["disponible", "ocupado", "solo_eventos"] as const;
-const VISIBILIDAD_TARIFA_VALUES = ["publica", "privada"] as const;
 
 // Each action owns the fields its form actually renders: anything not listed is
 // ignored even if it arrives in the FormData.
-const STEP1_FIELDS = ["nombre", "apellido", "apodo", "fecha_nacimiento", "nombre_visible"] as const;
-const STEP2_FIELDS = ["bio", "contacto_telegram", "sitio_url"] as const;
+const STEP1_FIELDS = [
+  "nombre",
+  "apellido",
+  "apodo",
+  "fecha_nacimiento",
+  "nombre_visible",
+  "bio",
+  "contacto_telegram",
+  "sitio_url",
+] as const;
 const EDIT_PROFILE_FIELDS = [
   "nombre",
   "apellido",
   "apodo",
   "nombre_visible",
   "fecha_nacimiento",
-  "disponibilidad",
-  "tarifa_hora",
-  "visibilidad_tarifa",
 ] as const;
 
 function text(value: FormDataEntryValue | null): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
-}
-
-/** A real `YYYY-MM-DD`, not in the future and not absurd. The `type=date` input can degrade to free text. */
-function isValidBirthDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return false;
-  }
-
-  const date = new Date(`${value}T00:00:00Z`);
-  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
-    return false;
-  }
-
-  return date.getTime() <= Date.now() && date.getUTCFullYear() >= 1900;
 }
 
 /** The one guard the three NOT NULL enum columns share: unknown or blank values are dropped. */
@@ -77,10 +68,7 @@ type ProfileField =
   | "nombre_visible"
   | "bio"
   | "contacto_telegram"
-  | "sitio_url"
-  | "disponibilidad"
-  | "tarifa_hora"
-  | "visibilidad_tarifa";
+  | "sitio_url";
 
 type ProfileTextField =
   | "nombre"
@@ -92,7 +80,7 @@ type ProfileTextField =
   | "sitio_url";
 
 /**
- * Single source of truth for the profile update object: all three actions below
+ * Single source of truth for the profile update object: both actions below
  * build their `update` with this helper. `fields` is the ownership allowlist: a
  * field not listed is never read from the FormData, no matter what it contains.
  */
@@ -114,8 +102,20 @@ function buildProfileUpdate(
     }
   };
 
-  assignText("nombre", "nombre");
-  assignText("apellido", "apellido");
+  /** Nombre/apellido: trim then legible casing (particles preserved). */
+  const assignPersonName = (field: "nombre" | "apellido", key: string): void => {
+    if (!owns(field)) {
+      return;
+    }
+    const raw = formData.get(key);
+    if (raw !== null) {
+      const t = text(raw);
+      update[field] = t ? formatPersonName(t) : t;
+    }
+  };
+
+  assignPersonName("nombre", "nombre");
+  assignPersonName("apellido", "apellido");
   assignText("apodo", "apodo");
   assignText("fecha_nacimiento", "fecha_nacimiento");
   assignText("bio", "bio");
@@ -142,7 +142,7 @@ function buildProfileUpdate(
     return { error: "Ingresá una fecha de nacimiento válida" };
   }
 
-  // The enum columns are NOT NULL with a default: only overwrite them when the
+  // nombre_visible is NOT NULL with a default: only overwrite it when the
   // form sends a recognized value. Absent, blank or unknown => omitted.
   if (owns("nombre_visible")) {
     const nombreVisible = enumValue(formData.get("nombre_visible"), NOMBRE_VISIBLE_VALUES);
@@ -151,51 +151,7 @@ function buildProfileUpdate(
     }
   }
 
-  if (owns("disponibilidad")) {
-    const disponibilidad = enumValue(formData.get("disponibilidad"), DISPONIBILIDAD_VALUES);
-    if (disponibilidad) {
-      update.disponibilidad = disponibilidad;
-    }
-  }
-
-  if (owns("visibilidad_tarifa")) {
-    const visibilidadTarifa = enumValue(
-      formData.get("visibilidad_tarifa"),
-      VISIBILIDAD_TARIFA_VALUES,
-    );
-    if (visibilidadTarifa) {
-      update.visibilidad_tarifa = visibilidadTarifa;
-    }
-  }
-
-  if (owns("tarifa_hora")) {
-    const tarifa = formData.get("tarifa_hora");
-    if (tarifa !== null) {
-      const trimmed = text(tarifa);
-      if (trimmed === null) {
-        update.tarifa_hora = null;
-      } else {
-        // A rate is a plain decimal: no sign, exponent or hex that Number() would accept.
-        if (!/^\d+(\.\d+)?$/.test(trimmed)) {
-          return { error: "Ingresá una tarifa por hora válida" };
-        }
-        update.tarifa_hora = Number(trimmed);
-      }
-    }
-  }
-
   return { update };
-}
-
-/** The data the onboarding gate requires before letting the user out. */
-async function step1Data(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
-  const { data } = await supabase
-    .from("profiles")
-    .select("nombre, apellido, fecha_nacimiento")
-    .eq("id", userId)
-    .single();
-
-  return data;
 }
 
 export async function saveOnboardingStep1(
@@ -217,62 +173,21 @@ export async function saveOnboardingStep1(
     return result;
   }
 
-  const { update } = result;
-
-  // Step 1's three fields are what the onboarding gate checks before letting
-  // the user out, so this step requires them even when the form omits them.
-  if (!update.nombre || !update.apellido || !update.fecha_nacimiento) {
+  // nombre, apellido and fecha_nacimiento are what the gate requires before
+  // the interview. Optional fields may be omitted; they must not block close.
+  if (!result.update.nombre || !result.update.apellido || !result.update.fecha_nacimiento) {
     return { error: "Completá nombre, apellido y fecha de nacimiento" };
-  }
-
-  const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
-
-  if (error) {
-    console.error("[saveOnboardingStep1] update falló", error);
-    return { error: DB_ERROR };
-  }
-
-  revalidatePath("/", "layout");
-  redirect("/onboarding/step2");
-}
-
-export async function saveOnboardingStep2(
-  _prevState: { error: string } | null,
-  formData: FormData,
-) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "No autorizado" };
-  }
-
-  // Step 2 cannot close onboarding without step 1's required data: entering
-  // directly by URL would leave a "complete" profile with null first and last name.
-  const step1 = await step1Data(supabase, user.id);
-  if (!step1?.nombre || !step1?.apellido || !step1?.fecha_nacimiento) {
-    redirect("/onboarding/step1");
-  }
-
-  const result = buildProfileUpdate(formData, STEP2_FIELDS);
-  if ("error" in result) {
-    return result;
   }
 
   const update: ProfileUpdate = {
     ...result.update,
-    // Closes onboarding: it's the only piece of data proving step 2 was
-    // visited, because all of its fields are optional.
     onboarding_completado_en: new Date().toISOString(),
   };
 
   const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
 
   if (error) {
-    console.error("[saveOnboardingStep2] update falló", error);
+    console.error("[saveOnboardingStep1] update falló", error);
     return { error: DB_ERROR };
   }
 

@@ -5,8 +5,6 @@ import {
   Folder,
   Gift,
   Sparkles,
-  CircleCheck,
-  EyeOff,
   Moon,
   ShieldCheck,
   LogOut,
@@ -32,16 +30,12 @@ function ThemeToggleSwitch() {
 }
 
 interface SerranoMenuProps {
-  disponibilidad?: string | null;
-  visibilidadTarifa?: string | null;
   aportesCount?: number;
   proyectosCount?: number;
   isPlatformAdmin?: boolean;
 }
 
 export function SerranoMenu({
-  disponibilidad,
-  visibilidadTarifa,
   aportesCount = 0,
   proyectosCount = 0,
   isPlatformAdmin = false,
@@ -88,22 +82,6 @@ export function SerranoMenu({
           </span>
           <ChevronRight size={18} className="text-text-muted shrink-0" />
         </Link>
-
-        <div className="h-px bg-border w-full" />
-
-        <div className="flex items-center gap-3 px-4 py-[15px] w-full text-text-primary/40">
-          <CircleCheck size={20} className="text-brand-green/40 shrink-0" />
-          <span className="font-body text-[15px] text-left flex-1">Disponibilidad</span>
-          <span className="font-body text-sm text-text-muted/40">{disponibilidad ?? "—"}</span>
-        </div>
-
-        <div className="h-px bg-border w-full" />
-
-        <div className="flex items-center gap-3 px-4 py-[15px] w-full text-text-primary/40">
-          <EyeOff size={20} className="text-warm-orange/40 shrink-0" />
-          <span className="font-body text-[15px] text-left flex-1">Visibilidad de tarifa</span>
-          <span className="font-body text-sm text-text-muted/40">{visibilidadTarifa ?? "—"}</span>
-        </div>
       </div>
 
       <div className="rounded-[20px] bg-surface border border-border overflow-hidden flex flex-col">

@@ -11,7 +11,6 @@ function member(overrides: Partial<SerranoMember> = {}): SerranoMember {
     apodo: null,
     avatarUrl: null,
     tier: "standard",
-    disponibilidad: "disponible",
     roles: ["Infra"],
     skills: ["Solidity", "IA"],
     isPlatformAdmin: false,
@@ -27,7 +26,6 @@ const members: SerranoMember[] = [
     nombre: "Ada",
     apellido: "Lovelace",
     tier: "founder",
-    disponibilidad: "ocupado",
     roles: ["Tesorería"],
     skills: ["Diseño"],
   }),
@@ -37,14 +35,13 @@ const members: SerranoMember[] = [
     nombre: "Alan",
     apellido: "Turing",
     apodo: "turing",
-    disponibilidad: "solo_eventos",
     roles: ["Charlas", "Infra"],
     skills: [],
   }),
 ];
 
 function filters(overrides: Partial<PlantelFilters> = {}): PlantelFilters {
-  return { q: "", soloDisponibles: false, rol: null, skill: null, ...overrides };
+  return { q: "", rol: null, skill: null, ...overrides };
 }
 
 describe("filterSerranos", () => {
@@ -72,10 +69,6 @@ describe("filterSerranos", () => {
     expect(filterSerranos(members, filters({ q: "   " }))).toHaveLength(3);
   });
 
-  it("filters by disponibilidad when soloDisponibles is true", () => {
-    expect(filterSerranos(members, filters({ soloDisponibles: true }))).toEqual([members[0]]);
-  });
-
   it("filters by role (case-insensitive exact)", () => {
     expect(filterSerranos(members, filters({ rol: "infra" }))).toEqual([members[0], members[2]]);
   });
@@ -84,12 +77,9 @@ describe("filterSerranos", () => {
     expect(filterSerranos(members, filters({ skill: "diseño" }))).toEqual([members[1]]);
   });
 
-  it("combines search + role + disponibilidad filters", () => {
-    const result = filterSerranos(
-      members,
-      filters({ q: "a", rol: "infra", soloDisponibles: true }),
-    );
-    expect(result).toEqual([members[0]]);
+  it("combines search and role filters", () => {
+    const result = filterSerranos(members, filters({ q: "a", rol: "infra" }));
+    expect(result).toEqual([members[0], members[2]]);
   });
 
   it("returns empty array when nothing matches", () => {

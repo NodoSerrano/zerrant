@@ -13,7 +13,7 @@ describe("EnviadoConfirmation — Pencil D1hKT", () => {
     expect(title.className).toContain("text-text-primary");
 
     const subtitle = screen.getByText(
-      "Un admin va a revisar tu pedido. Te avisamos cuando te aprueben como Serrano.",
+      "Un administrador va a revisar tu solicitud. El próximo paso es coordinar una entrevista.",
     );
     expect(subtitle.className).toContain("font-body");
     expect(subtitle.className).toContain("text-[14px]");
@@ -36,7 +36,15 @@ describe("EnviadoConfirmation — Pencil D1hKT", () => {
     expect(circle?.className).toContain("bg-gradient-brand");
   });
 
-  it('links "Volver al inicio" to / as a primary CTA', () => {
+  it('links "Elegir horario de entrevista" into the booking step', () => {
+    render(<EnviadoConfirmation />);
+    expect(screen.getByRole("link", { name: "Elegir horario de entrevista" })).toHaveAttribute(
+      "href",
+      "/solicitar/entrevista",
+    );
+  });
+
+  it('links "Volver al inicio" to / as a secondary CTA', () => {
     render(<EnviadoConfirmation />);
 
     const cta = screen.getByRole("link", { name: "Volver al inicio" });
@@ -46,7 +54,7 @@ describe("EnviadoConfirmation — Pencil D1hKT", () => {
     expect(cta.className).toContain("w-full");
     expect(cta.className).toContain("font-display");
     expect(cta.className).toContain("text-[16px]");
-    expect(cta.className).toContain("bg-gradient-brand");
+    expect(cta.className).not.toContain("bg-gradient-brand");
     expect(cta.tagName).toBe("A");
   });
 

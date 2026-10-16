@@ -24,9 +24,16 @@ interface ProjectFormProps {
   submitLabel: string;
   pendingLabel: string;
   defaults?: ProjectFormDefaults;
+  hiddenFields?: Record<string, string>;
 }
 
-export function ProjectForm({ action, submitLabel, pendingLabel, defaults }: ProjectFormProps) {
+export function ProjectForm({
+  action,
+  submitLabel,
+  pendingLabel,
+  defaults,
+  hiddenFields,
+}: ProjectFormProps) {
   const [state, formAction, pending] = useGuardedActionState(action, null);
 
   const estado = defaults?.estado ?? "idea";
@@ -34,6 +41,11 @@ export function ProjectForm({ action, submitLabel, pendingLabel, defaults }: Pro
 
   return (
     <form action={formAction} className="flex flex-col gap-[18px]">
+      {hiddenFields
+        ? Object.entries(hiddenFields).map(([name, value]) => (
+            <input key={name} type="hidden" name={name} value={value} />
+          ))
+        : null}
       <div className="flex flex-col gap-4">
         <Input
           name="nombre"
