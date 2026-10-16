@@ -128,6 +128,19 @@ describe("InicioHub", () => {
     expect(screen.queryByRole("link", { name: /Proyectos/i })).not.toBeInTheDocument();
   });
 
+  it("shows Ser Serrano CTA when enabled (ZER-171)", () => {
+    render(<InicioHub events={[]} birthdays={[]} showSerSerranoCta />);
+    expect(screen.getByRole("link", { name: /Solicitar ser Serrano/i })).toHaveAttribute(
+      "href",
+      "/solicitar",
+    );
+  });
+
+  it("hides Ser Serrano CTA by default", () => {
+    render(<InicioHub events={[]} birthdays={[]} />);
+    expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
+  });
+
   it("confirms membership in copy, not only via the community hub", () => {
     render(<InicioHub events={[]} birthdays={[]} showCommunityHub memberConfirmed />);
     expect(screen.getByRole("heading", { name: "Ya sos miembro del Nodo" })).toBeInTheDocument();

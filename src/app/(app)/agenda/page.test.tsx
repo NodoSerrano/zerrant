@@ -10,6 +10,10 @@ vi.mock("@/features/events/luma-client", () => ({
   fetchLumaCalendarEvents: vi.fn(),
 }));
 
+vi.mock("@/features/membership/ser-serrano-cta-server", () => ({
+  resolveSerSerranoCtaVisibility: vi.fn().mockResolvedValue(false),
+}));
+
 vi.mock("next/link", () => ({
   default: ({
     href,
@@ -204,6 +208,44 @@ describe("AgendaPage", () => {
     await renderPage();
 
     expect(screen.queryByRole("link", { name: /Nuevo evento/i })).not.toBeInTheDocument();
+  });
+
+  it("shows Ser Serrano CTA for tourists without an active request (ZER-171)", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    const { resolveSerSerranoCtaVisibility } =
+      await import("@/features/membership/ser-serrano-cta-server");
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockSupabase({ profileTier: "tourist" }),
+    );
+    (resolveSerSerranoCtaVisibility as ReturnType<typeof vi.fn>).mockResolvedValueOnce(true);
+
+    await renderPage();
+
+    expect(screen.getByRole("link", { name: /Solicitar ser Serrano/i })).toHaveAttribute(
+      "href",
+      "/solicitar",
+    );
+    expect(resolveSerSerranoCtaVisibility).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({ tier: "tourist" }),
+    );
+  });
+
+  it("hides Ser Serrano CTA for members and passes their tier (ZER-171)", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    const { resolveSerSerranoCtaVisibility } =
+      await import("@/features/membership/ser-serrano-cta-server");
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockSupabase({ profileTier: "standard" }),
+    );
+
+    await renderPage();
+
+    expect(resolveSerSerranoCtaVisibility).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({ tier: "standard" }),
+    );
+    expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
   });
 
   it("lists events for the selected day from the events table", async () => {

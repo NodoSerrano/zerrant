@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   useActionState: vi.fn(),
@@ -18,7 +18,14 @@ import { EventForm } from "./EventForm";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Keep calendar day labels stable (day 15 ≠ "Hoy") across CI runs.
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-09-20T15:00:00-03:00"));
   mocks.useActionState.mockReturnValue([null, mocks.formAction, false]);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("EventForm", () => {

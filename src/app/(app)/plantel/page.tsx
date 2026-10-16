@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { PlantelList } from "@/features/plantel/PlantelList";
 import { buildSerranoMembers } from "@/features/plantel/transform";
+import { SerSerranoCta } from "@/features/membership/SerSerranoCta";
+import { resolveSerSerranoCtaVisibility } from "@/features/membership/ser-serrano-cta-server";
 
 const PLANTEL_PROFILE_COLUMNS =
   "id, nombre, apellido, apodo, nombre_visible, avatar_url, tier, disponibilidad, is_platform_admin";
@@ -21,6 +23,7 @@ export default async function PlantelPage() {
     { data: skillAssignments },
     { data: roleCatalog },
     { data: skillCatalog },
+    showSerSerranoCta,
   ] = await Promise.all([
     supabase
       .from("profiles")
@@ -31,6 +34,17 @@ export default async function PlantelPage() {
     supabase.from("profile_skills").select("profile_id, skills(nombre)"),
     supabase.from("roles").select("nombre").order("nombre", { ascending: true }),
     supabase.from("skills").select("nombre").order("nombre", { ascending: true }),
+    supabase
+      .from("profiles")
+      .select("tier")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) =>
+        resolveSerSerranoCtaVisibility(user.id, {
+          client: supabase,
+          tier: data?.tier ?? null,
+        }),
+      ),
   ]);
 
   const members = buildSerranoMembers(
@@ -46,5 +60,15 @@ export default async function PlantelPage() {
     .map((row) => row.nombre)
     .filter((nombre): nombre is string => Boolean(nombre));
 
-  return <PlantelList members={members} roleOptions={roleOptions} skillOptions={skillOptions} />;
+  const list = (
+    <PlantelList members={members} roleOptions={roleOptions} skillOptions={skillOptions} />
+  );
+  if (!showSerSerranoCta) return list;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <SerSerranoCta />
+      {list}
+    </div>
+  );
 }
