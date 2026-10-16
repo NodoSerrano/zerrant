@@ -1,15 +1,17 @@
 "use client";
 
-import { type InputHTMLAttributes, useId } from "react";
+import { type InputHTMLAttributes, type ReactNode, useId } from "react";
 import { cn } from "@/lib/utils";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   className?: string;
+  /** Rendered inside the field, pinned to its right edge (e.g. a visibility toggle). */
+  endAdornment?: ReactNode;
 }
 
-export function Input({ label, error, className, ...props }: InputProps) {
+export function Input({ label, error, className, endAdornment, ...props }: InputProps) {
   const id = useId();
 
   return (
@@ -29,18 +31,24 @@ export function Input({ label, error, className, ...props }: InputProps) {
           )}
         </div>
       )}
-      <input
-        id={id}
-        className={cn(
-          "h-[50px] rounded-2xl border border-border bg-surface px-4 text-[15px] text-text-primary",
-          "placeholder:text-text-muted",
-          "focus:outline-hidden focus:ring-2 focus:ring-primary/40",
-          "disabled:opacity-50 disabled:cursor-not-allowed",
-          error && "border-coral focus:ring-coral/40",
-          className,
+      <div className="relative flex flex-col">
+        <input
+          id={id}
+          className={cn(
+            "h-[50px] rounded-2xl border border-border bg-surface px-4 text-[15px] text-text-primary",
+            "placeholder:text-text-muted",
+            "focus:outline-hidden focus:ring-2 focus:ring-primary/40",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
+            error && "border-coral focus:ring-coral/40",
+            endAdornment != null && "pr-12",
+            className,
+          )}
+          {...props}
+        />
+        {endAdornment != null && (
+          <div className="absolute inset-y-0 right-0 flex items-center pr-2">{endAdornment}</div>
         )}
-        {...props}
-      />
+      </div>
       {error && <p className="text-sm text-coral">{error}</p>}
     </div>
   );

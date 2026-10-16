@@ -2,11 +2,12 @@
 
 export const dynamic = "force-dynamic";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Mountain } from "lucide-react";
 import { Input } from "@/components/Input";
+import { PasswordInput } from "@/components/PasswordInput";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { SecondaryButton } from "@/components/SecondaryButton";
 import { signInWithPassword, signInWithGoogle } from "@/features/auth/actions";
@@ -44,6 +45,8 @@ function LoginForm() {
   const shaRaw = process.env.NEXT_PUBLIC_GIT_SHA?.trim() ?? "";
   const sha = shaRaw.length > 12 ? shaRaw.slice(0, 7) : shaRaw;
   const showHistory = deployHistoryAllowed(channel) && Boolean(sha);
+  // Controlled so React 19 doesn't reset it after a failed sign-in.
+  const [email, setEmail] = useState("");
 
   return (
     <div className="px-[26px] py-6 flex flex-col justify-center gap-[22px] min-h-full">
@@ -66,14 +69,16 @@ function LoginForm() {
 
       <form action={action} className="flex flex-col gap-[14px]">
         <NextField next={next} />
-        <Input name="email" type="email" label="Email" placeholder="tu@email.com" required />
         <Input
-          name="password"
-          type="password"
-          label="Contraseña"
-          placeholder="Tu contraseña"
+          name="email"
+          type="email"
+          label="Email"
+          placeholder="tu@email.com"
           required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
+        <PasswordInput name="password" label="Contraseña" placeholder="Tu contraseña" required />
 
         <div className="flex justify-end">
           <Link
