@@ -52,12 +52,38 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
-import { saveOnboardingStep1, saveOnboardingStep2, updateProfile, uploadAvatar } from "./actions";
+import { saveOnboardingStep1, updateProfile, uploadAvatar } from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
   cookieJar.flow = undefined;
 });
+
+function redirectPath(error: unknown): string | undefined {
+  const digest = (error as { digest?: string } | undefined)?.digest;
+  if (!digest?.startsWith("NEXT_REDIRECT")) return undefined;
+  return digest.split(";")[2];
+}
+
+/** Step 1 closes onboarding: success is a redirect, not a returned state. */
+async function runStep1(fd: FormData): Promise<string> {
+  try {
+    const result = await saveOnboardingStep1(null, fd);
+    throw new Error(`expected redirect, got ${JSON.stringify(result)}`);
+  } catch (error) {
+    const path = redirectPath(error);
+    if (path) return path;
+    throw error;
+  }
+}
+
+function requiredIdentity(): FormData {
+  const fd = new FormData();
+  fd.set("nombre", "Juan");
+  fd.set("apellido", "Pérez");
+  fd.set("fecha_nacimiento", "1990-01-15");
+  return fd;
+}
 
 describe("saveOnboardingStep1", () => {
   it("updates profile and redirects on success", async () => {
@@ -71,11 +97,7 @@ describe("saveOnboardingStep1", () => {
     fd.set("nombre_visible", "nombre_apellido");
     fd.set("fecha_nacimiento", "1990-01-15");
 
-    try {
-      await saveOnboardingStep1(null, fd);
-    } catch {
-      // redirect throws
-    }
+    expect(await runStep1(fd)).toBe("/profile");
 
     expect(mocks.profilesUpdate).toHaveBeenCalledWith({
       nombre: "Juan",
@@ -83,8 +105,66 @@ describe("saveOnboardingStep1", () => {
       apodo: "juancito",
       nombre_visible: "nombre_apellido",
       fecha_nacimiento: "1990-01-15",
+      onboarding_completado_en: expect.any(String),
     });
     expect(mocks.profilesUpdateEq).toHaveBeenCalledWith("id", "test-user-id");
+  });
+
+  it("closes onboarding with only nombre, apellido and fecha de nacimiento", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    expect(await runStep1(requiredIdentity())).toBe("/profile");
+
+    const update = mocks.profilesUpdate.mock.calls[0][0];
+    expect(update).toMatchObject({
+      nombre: "Juan",
+      apellido: "Pérez",
+      fecha_nacimiento: "1990-01-15",
+    });
+    expect(Date.parse(update.onboarding_completado_en)).not.toBeNaN();
+    expect(update).not.toHaveProperty("bio");
+    expect(update).not.toHaveProperty("contacto_telegram");
+    expect(update).not.toHaveProperty("sitio_url");
+  });
+
+  it("accepts blank optional fields and stores them as null", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = requiredIdentity();
+    fd.set("bio", "   ");
+    fd.set("contacto_telegram", "");
+    fd.set("sitio_url", "  ");
+
+    expect(await runStep1(fd)).toBe("/profile");
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bio: null,
+        contacto_telegram: null,
+        sitio_url: null,
+        onboarding_completado_en: expect.any(String),
+      }),
+    );
+  });
+
+  it("persists optional fields when the form submits them", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = requiredIdentity();
+    fd.set("bio", "  Hola  ");
+    fd.set("contacto_telegram", "  @juan  ");
+    fd.set("sitio_url", "  https://example.com  ");
+
+    expect(await runStep1(fd)).toBe("/profile");
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bio: "Hola",
+        contacto_telegram: "@juan",
+        sitio_url: "https://example.com",
+      }),
+    );
   });
 
   it("omits nombre_visible when the form does not send it", async () => {
@@ -96,16 +176,13 @@ describe("saveOnboardingStep1", () => {
     fd.set("apellido", "Pérez");
     fd.set("fecha_nacimiento", "1990-01-15");
 
-    try {
-      await saveOnboardingStep1(null, fd);
-    } catch {
-      // redirect throws
-    }
+    expect(await runStep1(fd)).toBe("/profile");
 
     expect(mocks.profilesUpdate).toHaveBeenCalledWith({
       nombre: "Juan",
       apellido: "Pérez",
       fecha_nacimiento: "1990-01-15",
+      onboarding_completado_en: expect.any(String),
     });
   });
 
@@ -121,17 +198,15 @@ describe("saveOnboardingStep1", () => {
     fd.set("apodo", "   ");
     fd.set("fecha_nacimiento", "1990-01-15");
 
-    try {
-      await saveOnboardingStep1(null, fd);
-    } catch {
-      // redirect throws
-    }
+    expect(await runStep1(fd)).toBe("/profile");
 
-    expect(mocks.profilesUpdate).toHaveBeenCalledWith(expect.objectContaining({ apodo: null }));
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ apodo: null, onboarding_completado_en: expect.any(String) }),
+    );
   });
 
   it.each(["nombre", "apellido", "fecha_nacimiento"])(
-    "rejects without touching the DB when %s is missing",
+    "rejects without touching the DB or stamping onboarding when %s is missing",
     async (missing) => {
       mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
 
@@ -205,16 +280,13 @@ describe("saveOnboardingStep1", () => {
     },
   );
 
-  // Step 1's form has no tarifa, bio or contacto inputs: a handcrafted POST must
-  // not reach columns this step does not own.
+  // Identity, bio and contact belong here. A handcrafted POST must not reach
+  // columns this form does not render.
   it.each([
     ["tarifa_hora", "5000"],
-    ["bio", "inyectada"],
-    ["contacto_telegram", "@intruso"],
-    ["sitio_url", "https://intruso.com"],
     ["disponibilidad", "ocupado"],
     ["visibilidad_tarifa", "publica"],
-  ])("ignores %s, which does not belong to step 1", async (field, value) => {
+  ])("ignores %s, which does not belong to the profile step", async (field, value) => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
     mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
 
@@ -224,11 +296,7 @@ describe("saveOnboardingStep1", () => {
     fd.set("fecha_nacimiento", "1990-01-15");
     fd.set(field, value);
 
-    try {
-      await saveOnboardingStep1(null, fd);
-    } catch {
-      // redirect throws
-    }
+    expect(await runStep1(fd)).toBe("/profile");
 
     expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty(field);
   });
@@ -243,205 +311,20 @@ describe("saveOnboardingStep1", () => {
     fd.set("fecha_nacimiento", "1990-01-15");
     fd.set("nombre_visible", "drop table profiles");
 
-    try {
-      await saveOnboardingStep1(null, fd);
-    } catch {
-      // redirect throws
-    }
+    expect(await runStep1(fd)).toBe("/profile");
 
     expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty("nombre_visible");
   });
-});
 
-describe("saveOnboardingStep2", () => {
-  function step1Saved() {
-    mocks.profilesSelectSingle.mockResolvedValue({
-      data: { nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" },
-      error: null,
-    });
-  }
-
-  it("does not close the onboarding when step 1 was never saved", async () => {
+  it("does not fail when an unowned tarifa_hora is invalid", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    mocks.profilesSelectSingle.mockResolvedValue({
-      data: { nombre: null, apellido: null, fecha_nacimiento: null },
-      error: null,
-    });
-
-    try {
-      await saveOnboardingStep2(null, new FormData());
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate).not.toHaveBeenCalled();
-  });
-
-  it("updates profile and redirects on success", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
     mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
 
-    const fd = new FormData();
-    fd.set("bio", "Hello I am Juan");
-    fd.set("contacto_telegram", "@juan");
-    fd.set("sitio_url", "https://example.com");
-
-    try {
-      await saveOnboardingStep2(null, fd);
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate).toHaveBeenCalledWith({
-      bio: "Hello I am Juan",
-      contacto_telegram: "@juan",
-      sitio_url: "https://example.com",
-      onboarding_completado_en: expect.any(String),
-    });
-    expect(mocks.profilesUpdateEq).toHaveBeenCalledWith("id", "test-user-id");
-  });
-
-  it("closes the onboarding by stamping onboarding_completado_en", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    try {
-      await saveOnboardingStep2(null, new FormData());
-    } catch {
-      // redirect throws
-    }
-
-    const update = mocks.profilesUpdate.mock.calls[0][0];
-    expect(Date.parse(update.onboarding_completado_en)).not.toBeNaN();
-  });
-
-  it("returns error when supabase update fails", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
-    mocks.profilesUpdateEq.mockResolvedValue({
-      data: null,
-      error: { message: "DB error" },
-    });
-
-    const result = await saveOnboardingStep2(null, new FormData());
-
-    expect(result).toEqual({ error: "No pudimos guardar tus datos. Probá de nuevo." });
-  });
-
-  it("returns error when user is not authenticated", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: null } });
-
-    const result = await saveOnboardingStep2(null, new FormData());
-
-    expect(result).toEqual({ error: "No autorizado" });
-  });
-
-  it("trims the text fields before persisting", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    const fd = new FormData();
-    fd.set("bio", "  Hola  ");
-    fd.set("contacto_telegram", "  @juan  ");
-    fd.set("sitio_url", "  https://example.com  ");
-
-    try {
-      await saveOnboardingStep2(null, fd);
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        bio: "Hola",
-        contacto_telegram: "@juan",
-        sitio_url: "https://example.com",
-      }),
-    );
-  });
-
-  it("leaves out the fields the form does not send", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    const fd = new FormData();
-    fd.set("bio", "Hola");
-
-    try {
-      await saveOnboardingStep2(null, fd);
-    } catch {
-      // redirect throws
-    }
-
-    const update = mocks.profilesUpdate.mock.calls[0][0];
-    expect(update).not.toHaveProperty("contacto_telegram");
-    expect(update).not.toHaveProperty("sitio_url");
-  });
-
-  // Step 2's form only has bio, telegram and sitio: closing the onboarding must
-  // not become a way to rewrite the identity fields step 1 already validated.
-  it.each([
-    ["fecha_nacimiento", "2000-01-01"],
-    ["nombre", "Intruso"],
-    ["apellido", "Intruso"],
-    ["apodo", "intruso"],
-    ["tarifa_hora", "5000"],
-    ["nombre_visible", "apodo"],
-    ["disponibilidad", "ocupado"],
-    ["visibilidad_tarifa", "publica"],
-  ])("ignores %s, which does not belong to step 2", async (field, value) => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    const fd = new FormData();
-    fd.set("bio", "Hola");
-    fd.set(field, value);
-
-    try {
-      await saveOnboardingStep2(null, fd);
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty(field);
-  });
-
-  // A field step 2 does not own must not be able to fail the whole step.
-  it("does not fail the step over an invalid tarifa_hora it never asked for", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    const fd = new FormData();
-    fd.set("bio", "Hola");
+    const fd = requiredIdentity();
     fd.set("tarifa_hora", "abc");
 
-    try {
-      await saveOnboardingStep2(null, fd);
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate).toHaveBeenCalled();
-  });
-
-  it("never sends a null nombre_visible to the NOT NULL column", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    try {
-      await saveOnboardingStep2(null, new FormData());
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty("nombre_visible");
+    expect(await runStep1(fd)).toBe("/profile");
+    expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty("tarifa_hora");
   });
 });
 
@@ -849,20 +732,11 @@ describe("uploadAvatar", () => {
   });
 });
 
-describe("saveOnboardingStep2 — membership flow (ZER-136)", () => {
+describe("saveOnboardingStep1 — membership flow (ZER-136)", () => {
   async function redirectTarget(): Promise<string> {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    mocks.profilesSelectSingle.mockResolvedValue({
-      data: { nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" },
-      error: null,
-    });
     mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-    try {
-      await saveOnboardingStep2(null, new FormData());
-    } catch (e) {
-      return String((e as { digest?: string }).digest).split(";")[2];
-    }
-    throw new Error("expected a redirect");
+    return runStep1(requiredIdentity());
   }
 
   it("continues the pipeline straight to the resolved step, never via /unirme (bug-375)", async () => {

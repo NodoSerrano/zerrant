@@ -26,8 +26,16 @@ const NOMBRE_VISIBLE_VALUES = ["apodo", "nombre_apellido", "apellido_nombre"] as
 
 // Each action owns the fields its form actually renders: anything not listed is
 // ignored even if it arrives in the FormData.
-const STEP1_FIELDS = ["nombre", "apellido", "apodo", "fecha_nacimiento", "nombre_visible"] as const;
-const STEP2_FIELDS = ["bio", "contacto_telegram", "sitio_url"] as const;
+const STEP1_FIELDS = [
+  "nombre",
+  "apellido",
+  "apodo",
+  "fecha_nacimiento",
+  "nombre_visible",
+  "bio",
+  "contacto_telegram",
+  "sitio_url",
+] as const;
 const EDIT_PROFILE_FIELDS = [
   "nombre",
   "apellido",
@@ -84,7 +92,7 @@ type ProfileTextField =
   | "sitio_url";
 
 /**
- * Single source of truth for the profile update object: all three actions below
+ * Single source of truth for the profile update object: both actions below
  * build their `update` with this helper. `fields` is the ownership allowlist: a
  * field not listed is never read from the FormData, no matter what it contains.
  */
@@ -146,17 +154,6 @@ function buildProfileUpdate(
   return { update };
 }
 
-/** The data the onboarding gate requires before letting the user out. */
-async function step1Data(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
-  const { data } = await supabase
-    .from("profiles")
-    .select("nombre, apellido, fecha_nacimiento")
-    .eq("id", userId)
-    .single();
-
-  return data;
-}
-
 export async function saveOnboardingStep1(
   _prevState: { error: string } | null,
   formData: FormData,
@@ -176,62 +173,21 @@ export async function saveOnboardingStep1(
     return result;
   }
 
-  const { update } = result;
-
-  // Step 1's three fields are what the onboarding gate checks before letting
-  // the user out, so this step requires them even when the form omits them.
-  if (!update.nombre || !update.apellido || !update.fecha_nacimiento) {
+  // nombre, apellido and fecha_nacimiento are what the gate requires before
+  // the interview. Optional fields may be omitted; they must not block close.
+  if (!result.update.nombre || !result.update.apellido || !result.update.fecha_nacimiento) {
     return { error: "Completá nombre, apellido y fecha de nacimiento" };
-  }
-
-  const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
-
-  if (error) {
-    console.error("[saveOnboardingStep1] update falló", error);
-    return { error: DB_ERROR };
-  }
-
-  revalidatePath("/", "layout");
-  redirect("/onboarding/step2");
-}
-
-export async function saveOnboardingStep2(
-  _prevState: { error: string } | null,
-  formData: FormData,
-) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "No autorizado" };
-  }
-
-  // Step 2 cannot close onboarding without step 1's required data: entering
-  // directly by URL would leave a "complete" profile with null first and last name.
-  const step1 = await step1Data(supabase, user.id);
-  if (!step1?.nombre || !step1?.apellido || !step1?.fecha_nacimiento) {
-    redirect("/onboarding/step1");
-  }
-
-  const result = buildProfileUpdate(formData, STEP2_FIELDS);
-  if ("error" in result) {
-    return result;
   }
 
   const update: ProfileUpdate = {
     ...result.update,
-    // Closes onboarding: it's the only piece of data proving step 2 was
-    // visited, because all of its fields are optional.
     onboarding_completado_en: new Date().toISOString(),
   };
 
   const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
 
   if (error) {
-    console.error("[saveOnboardingStep2] update falló", error);
+    console.error("[saveOnboardingStep1] update falló", error);
     return { error: DB_ERROR };
   }
 

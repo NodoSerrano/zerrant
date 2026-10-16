@@ -167,7 +167,7 @@ describe("InicioPage (/)", () => {
       userId: "user-1",
     });
 
-    await expect(InicioPage()).rejects.toThrow("REDIRECT:/onboarding/step2");
+    await expect(InicioPage()).rejects.toThrow("REDIRECT:/onboarding/step1");
   });
 
   it("redirects missing step1 data to step1", async () => {

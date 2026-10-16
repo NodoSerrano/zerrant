@@ -54,6 +54,9 @@ export default async function OnboardingStep1() {
         apellido: profile?.apellido,
         apodo: profile?.apodo,
         fecha_nacimiento: profile?.fecha_nacimiento,
+        bio: profile?.bio,
+        contacto_telegram: profile?.contacto_telegram,
+        sitio_url: profile?.sitio_url,
       }}
       avatarUrl={profile?.avatar_url}
       progress={progress ?? undefined}

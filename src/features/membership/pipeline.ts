@@ -122,8 +122,9 @@ export const MEMBERSHIP_STATUS_PATH = "/solicitar/estado";
 export function resolveUnirmeTarget(input: UnirmeInput): string {
   if (!input.hasSession) return `/auth/signup?next=${encodeURIComponent(UNIRME_PATH)}`;
   if (input.profileError) return "/";
-  if (!isStep1Complete(input.profile)) return "/onboarding/step1";
-  if (!isOnboardingComplete(input.profile)) return "/onboarding/step2";
+  if (!isStep1Complete(input.profile) || !isOnboardingComplete(input.profile)) {
+    return "/onboarding/step1";
+  }
   if (isMember(input)) return MEMBERSHIP_STATUS_PATH;
   if (input.requestError) return "/";
   // Any request, including cerrada: no re-application for now (AC8, ZER-180).
