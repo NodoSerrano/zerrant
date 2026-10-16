@@ -140,4 +140,9 @@ describe("InicioHub", () => {
     render(<InicioHub events={[]} birthdays={[]} />);
     expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
   });
+
+  it("confirms membership in copy, not only via the community hub", () => {
+    render(<InicioHub events={[]} birthdays={[]} showCommunityHub memberConfirmed />);
+    expect(screen.getByRole("heading", { name: "Ya sos miembro del Nodo" })).toBeInTheDocument();
+  });
 });

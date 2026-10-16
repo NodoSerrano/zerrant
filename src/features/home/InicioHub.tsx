@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Cake, Calendar, FolderOpen, ListTodo } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { EmptyState } from "@/components/EmptyState";
+import { MemberConfirmedNotice } from "@/features/membership/MemberConfirmedNotice";
 import { EventCard } from "@/features/events/EventCard";
 import type { UpcomingBirthday } from "@/features/home/birthdays";
 import { SerSerranoCta } from "@/features/membership/SerSerranoCta";
@@ -24,6 +25,8 @@ export type InicioHubProps = {
   showCommunityHub?: boolean;
   /** Tourists without an active membership request (ZER-171). */
   showSerSerranoCta?: boolean;
+  /** Set when this member was converted within the confirmation window (ZER-146). */
+  memberConfirmed?: boolean;
 };
 
 function birthdaySubtitle(row: UpcomingBirthday): string {
@@ -41,12 +44,14 @@ export function InicioHub({
   birthdays,
   showCommunityHub = false,
   showSerSerranoCta = false,
+  memberConfirmed = false,
 }: InicioHubProps) {
   return (
     <div className="flex flex-col gap-6" data-pencil-frame="zTB9C">
       <h1 className="font-display text-[22px] font-bold text-text-primary">Inicio</h1>
 
       {showSerSerranoCta ? <SerSerranoCta /> : null}
+      {memberConfirmed ? <MemberConfirmedNotice /> : null}
 
       {showCommunityHub ? (
         <section className="flex flex-col gap-3" aria-labelledby="inicio-comunidad-heading">

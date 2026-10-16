@@ -70,7 +70,7 @@ describe("adminRequestActions", () => {
       },
     ]);
     expect(adminRequestActions("entrevista_realizada").actions).toEqual([
-      { to: "aprobado", label: "Aprobar como miembro", variant: "primary", icon: "check" },
+      { to: "aprobado", label: "Convertir en miembro", variant: "primary", icon: "check" },
     ]);
   });
 
