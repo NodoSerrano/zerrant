@@ -129,6 +129,27 @@ describe("LoginPage", () => {
     expect(await screen.findByText("Credenciales inválidas")).toBeInTheDocument();
   });
 
+  it("keeps the typed email after a failed submission", async () => {
+    mockSignInWithPassword.mockReturnValue({ error: "Credenciales inválidas" });
+    render(<LoginPage />);
+    const emailInput = screen.getByLabelText("Email") as HTMLInputElement;
+    fireEvent.change(emailInput, { target: { value: "user@test.com" } });
+    fireEvent.submit(document.querySelector("form")!);
+    expect(await screen.findByText("Credenciales inválidas")).toBeInTheDocument();
+    expect(emailInput.value).toBe("user@test.com");
+  });
+
+  it("reveals the password only while the eye button is held down", () => {
+    render(<LoginPage />);
+    const pwInput = screen.getByLabelText("Contraseña");
+    const eye = screen.getByRole("button", { name: /ver la contraseña/i });
+    expect(pwInput).toHaveAttribute("type", "password");
+    fireEvent.pointerDown(eye);
+    expect(pwInput).toHaveAttribute("type", "text");
+    fireEvent.pointerUp(eye);
+    expect(pwInput).toHaveAttribute("type", "password");
+  });
+
   it("renders callback failure from searchParams.error", () => {
     mockGet.mockImplementation((key?: string) => (key === "error" ? "auth_callback_failed" : null));
     render(<LoginPage />);
