@@ -99,6 +99,116 @@ export async function createProject(
   redirect("/nodo/projects");
 }
 
+const UPDATE_ERROR = "No pudimos guardar los cambios. Probá de nuevo.";
+const UPDATE_REJECTED = "No pudimos guardar los cambios.";
+const UPDATE_MISSING = "No encontramos ese proyecto.";
+const ARCHIVE_ERROR = "No pudimos archivar el proyecto. Probá de nuevo.";
+const ARCHIVE_REJECTED = "No pudimos archivar el proyecto.";
+
+/**
+ * Updates nombre, descripcion, estado, and ingreso.
+ * A zero-row update is a rejection: only a project admin passes the projects UPDATE policy.
+ */
+export async function updateProject(
+  _prevState: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "No autorizado" };
+  }
+
+  const projectId = trimmed(formData.get("projectId"));
+  if (!projectId) {
+    return { error: UPDATE_MISSING };
+  }
+
+  const nombre = trimmed(formData.get("nombre"));
+  if (!nombre) {
+    return { error: EMPTY_NOMBRE };
+  }
+
+  const estado = oneOf(formData.get("estado"), PROJECT_ESTADOS);
+  const ingreso = oneOf(formData.get("ingreso"), PROJECT_INGRESOS);
+  if (!estado || !ingreso) {
+    return { error: INVALID_INPUT };
+  }
+
+  const descripcion = formData.has("descripcion") ? trimmed(formData.get("descripcion")) : null;
+
+  const { data, error } = await supabase
+    .from("projects")
+    .update({
+      nombre,
+      descripcion,
+      estado,
+      ingreso,
+    })
+    .eq("id", projectId)
+    .select("id");
+
+  if (error) {
+    return { error: UPDATE_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: UPDATE_REJECTED };
+  }
+
+  revalidatePath(`/nodo/projects/${projectId}`);
+  revalidatePath("/nodo/projects");
+  revalidatePath("/nodo", "layout");
+  redirect(`/nodo/projects/${projectId}`);
+}
+
+/**
+ * Sets estado to terminado. The row stays, so members and pending join
+ * requests keep pointing at this project.
+ */
+export async function archiveProject(
+  _prevState: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "No autorizado" };
+  }
+
+  const projectId = trimmed(formData.get("projectId"));
+  if (!projectId) {
+    return { error: UPDATE_MISSING };
+  }
+
+  const { data, error } = await supabase
+    .from("projects")
+    .update({ estado: "terminado" })
+    .eq("id", projectId)
+    .select("id");
+
+  if (error) {
+    return { error: ARCHIVE_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: ARCHIVE_REJECTED };
+  }
+
+  revalidatePath(`/nodo/projects/${projectId}`);
+  revalidatePath("/nodo/projects");
+  revalidatePath("/nodo", "layout");
+  redirect(`/nodo/projects/${projectId}`);
+}
+
 const JOIN_ERROR = "No pudimos unirte al proyecto. Probá de nuevo.";
 const JOIN_REJECTED = "No pudimos unirte al proyecto.";
 const JOIN_UNAUTHORIZED = "No autorizado";

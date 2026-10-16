@@ -1,20 +1,12 @@
 import Link from "next/link";
-import { Briefcase, ChevronLeft, Eye } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { TierBadge } from "@/components/TierBadge";
 import { PlatformAdminBadge } from "@/components/PlatformAdminBadge";
 import { RoleChip } from "@/components/RoleChip";
-import { cn } from "@/lib/utils";
 import { BRAND_CTA_SHADOW_CLASS, BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 import { AporteItem } from "@/features/aportes/AporteItem";
-import { availabilityLabel } from "./transform";
-import type { Disponibilidad, SerranoMemberDetail } from "./types";
-
-const AVAILABILITY_DOT: Record<Disponibilidad, string> = {
-  disponible: "bg-brand-green",
-  ocupado: "bg-text-muted",
-  solo_eventos: "bg-text-muted",
-};
+import type { SerranoMemberDetail } from "./types";
 
 const CTA_CLASSES = [
   "inline-flex items-center justify-center rounded-pill font-display font-medium text-on-primary transition-all",
@@ -28,9 +20,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export function MemberDetail({ member }: { member: SerranoMemberDetail }) {
-  const label = availabilityLabel(member.disponibilidad);
-  const dot = member.disponibilidad ? AVAILABILITY_DOT[member.disponibilidad] : null;
-
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
@@ -53,12 +42,6 @@ export function MemberDetail({ member }: { member: SerranoMemberDetail }) {
           <div className="flex items-center gap-2 flex-wrap justify-center">
             <TierBadge tier={member.tier} />
             {member.isPlatformAdmin ? <PlatformAdminBadge /> : null}
-            {dot && label && (
-              <>
-                <span className={cn("size-2 rounded-full", dot)} />
-                <span className="font-body text-[13px] text-text-secondary">{label}</span>
-              </>
-            )}
           </div>
         </div>
       </div>
@@ -127,19 +110,6 @@ export function MemberDetail({ member }: { member: SerranoMemberDetail }) {
               </span>
             ))}
           </div>
-        </section>
-      )}
-
-      {member.tarifaHora !== null && (
-        <section className="rounded-[18px] bg-surface-inset p-[14px] flex items-center gap-3">
-          <Briefcase size={20} className="text-text-muted shrink-0" />
-          <div className="flex flex-col gap-[2px]">
-            <span className="font-body text-xs text-text-muted">Disponible para proyectos</span>
-            <span className="font-display text-[15px] font-semibold text-brand-green">
-              USD {member.tarifaHora} / hora
-            </span>
-          </div>
-          <Eye size={15} className="text-text-muted ml-auto shrink-0" />
         </section>
       )}
 

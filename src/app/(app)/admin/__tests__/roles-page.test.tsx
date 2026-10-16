@@ -20,7 +20,7 @@ vi.mock("@/lib/supabase/server", () => ({
       if (table === "membership_requests") {
         return {
           select: vi.fn().mockImplementation(() => ({
-            eq: vi.fn().mockResolvedValue({ count: 0 }),
+            in: vi.fn().mockResolvedValue({ count: 0 }),
           })),
         };
       }

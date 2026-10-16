@@ -1,5 +1,3 @@
-import { Mountain } from "lucide-react";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/Avatar";
 import { TierBadge } from "@/components/TierBadge";
@@ -9,11 +7,14 @@ import { redirect } from "next/navigation";
 import { TouristMenu } from "./TouristMenu";
 import { SerranoMenu } from "./SerranoMenu";
 import { PendingMembershipCard } from "./PendingMembershipCard";
-import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
-import { cn } from "@/lib/utils";
+import { MemberConfirmedNotice } from "@/features/membership/MemberConfirmedNotice";
+import { recentMemberConfirmation } from "@/features/membership/member-confirmed";
+import { SerSerranoCta } from "@/features/membership/SerSerranoCta";
+import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "@/features/membership/request-state";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
+  const now = new Date();
 
   const {
     data: { user },
@@ -26,7 +27,7 @@ export default async function ProfilePage() {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "id, email, nombre, apellido, apodo, nombre_visible, avatar_url, tier, disponibilidad, visibilidad_tarifa, is_platform_admin",
+      "id, email, nombre, apellido, apodo, nombre_visible, avatar_url, tier, is_platform_admin",
     )
     .eq("id", user.id)
     .single();
@@ -43,13 +44,13 @@ export default async function ProfilePage() {
     // Read errors fail closed (show CTA shell, never invent pending).
     const { data: pendingRequest, error: pendingError } = await supabase
       .from("membership_requests")
-      .select("id")
+      .select("id, estado")
       .eq("profile_id", user.id)
-      .eq("estado", "pendiente")
+      .in("estado", MEMBERSHIP_REQUEST_ACTIVE_ESTADOS)
       .limit(1)
       .maybeSingle();
 
-    const isPending = !pendingError && Boolean(pendingRequest);
+    const activeRequest = pendingError ? null : pendingRequest;
 
     return (
       <div className="flex flex-col gap-4">
@@ -78,29 +79,10 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        {isPending ? (
-          <PendingMembershipCard />
+        {activeRequest ? (
+          <PendingMembershipCard estado={activeRequest.estado} />
         ) : (
-          <div className={cn("rounded-[22px] p-[18px] flex flex-col gap-3", BRAND_GRADIENT_CLASS)}>
-            <div className="flex items-center gap-2.5">
-              <Mountain size={22} className="text-on-primary shrink-0" />
-              <span className="font-display text-[17px] font-bold text-on-primary">
-                Todavía sos Turista
-              </span>
-            </div>
-            <p className="font-body text-[13px] text-on-primary/[0.88] leading-relaxed">
-              Sumate como Serrano para aparecer en el plantel, crear eventos y participar de los
-              proyectos.
-            </p>
-            <Link
-              href="/solicitar"
-              className="rounded-pill bg-on-primary h-[46px] flex items-center justify-center w-full"
-            >
-              <span className="font-display text-[15px] font-semibold text-brand-blue">
-                Solicitar ser Serrano
-              </span>
-            </Link>
-          </div>
+          <SerSerranoCta />
         )}
 
         <TouristMenu />
@@ -108,24 +90,19 @@ export default async function ProfilePage() {
     );
   }
 
-  const dispMap: Record<string, string> = {
-    disponible: "Disponible",
-    ocupado: "Ocupado",
-    solo_eventos: "Solo eventos",
-  };
-  const visMap: Record<string, string> = {
-    publica: "Pública",
-    privada: "Privada",
-  };
-
-  const [{ count: aportesCount }, { count: proyectosCount }] = await Promise.all([
-    supabase.from("aportes").select("id", { count: "exact", head: true }).eq("profile_id", user.id),
-    supabase
-      .from("project_members")
-      .select("project_id", { count: "exact", head: true })
-      .eq("profile_id", user.id)
-      .eq("estado", "aprobado"),
-  ]);
+  const [{ count: aportesCount }, { count: proyectosCount }, { data: approvedRequest }] =
+    await Promise.all([
+      supabase
+        .from("aportes")
+        .select("id", { count: "exact", head: true })
+        .eq("profile_id", user.id),
+      supabase
+        .from("project_members")
+        .select("project_id", { count: "exact", head: true })
+        .eq("profile_id", user.id)
+        .eq("estado", "aprobado"),
+      recentMemberConfirmation(supabase, user.id, now),
+    ]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -154,9 +131,9 @@ export default async function ProfilePage() {
         </div>
       </div>
 
+      {approvedRequest ? <MemberConfirmedNotice /> : null}
+
       <SerranoMenu
-        disponibilidad={profile.disponibilidad ? dispMap[profile.disponibilidad] : null}
-        visibilidadTarifa={profile.visibilidad_tarifa ? visMap[profile.visibilidad_tarifa] : null}
         aportesCount={aportesCount ?? 0}
         proyectosCount={proyectosCount ?? 0}
         isPlatformAdmin={profile.is_platform_admin === true}

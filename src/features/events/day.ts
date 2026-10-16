@@ -4,6 +4,10 @@
  * CI (UTC) and production match the node's wall clock.
  */
 
+import { formatAgendaDate } from "./dateOptions";
+import { formatMinutes } from "./timeOptions";
+import type { EventFormDefaults } from "./types";
+
 export const AGENDA_TIME_ZONE = "America/Argentina/Buenos_Aires";
 
 const DAY_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -142,24 +146,64 @@ export function buildDayStrip(count: number, from: Date = new Date()): StripDay[
   return days;
 }
 
-export function formatEventTimeRange(inicio: string, fin: string | null): string {
+type ClockPart = { type: string; value: string };
+
+/**
+ * HH:MM on a 24-hour clock. A dayPeriod is applied only when the hour is 1–12,
+ * so a PM reading of 7 cannot be stored or shown as 07.
+ */
+export function hourMinuteFromFormatParts(parts: readonly ClockPart[]): string {
+  const hourPart = parts.find((part) => part.type === "hour")?.value;
+  const minutePart = parts.find((part) => part.type === "minute")?.value;
+  if (hourPart == null || minutePart == null) return "";
+
+  let hour = Number(hourPart);
+  const minute = Number(minutePart);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) return "";
+
+  const dayPeriod =
+    parts
+      .find((part) => part.type === "dayPeriod")
+      ?.value?.trim()
+      .toLowerCase() ?? "";
+  const isPm = dayPeriod.startsWith("p");
+  const isAm = dayPeriod.startsWith("a");
+
+  if ((isPm || isAm) && hour >= 1 && hour <= 12) {
+    if (hour === 12) hour = isPm ? 12 : 0;
+    else if (isPm) hour += 12;
+  } else if (hour === 24) {
+    hour = 0;
+  }
+
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return "";
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+export function formatEventDuration(inicio: string, fin: string | null): string | null {
+  if (!fin) return null;
   const start = new Date(inicio);
-  if (Number.isNaN(start.getTime())) return "";
+  const end = new Date(fin);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  return formatMinutes((end.getTime() - start.getTime()) / 60_000);
+}
 
-  const timeFmt = new Intl.DateTimeFormat("es-AR", {
-    timeZone: AGENDA_TIME_ZONE,
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-
-  const startLabel = timeFmt.format(start);
+export function formatEventTimeRange(inicio: string, fin: string | null): string {
+  const startLabel = wallClockHmFromIso(inicio);
+  if (!startLabel) return "";
   if (!fin) return startLabel;
 
-  const end = new Date(fin);
-  if (Number.isNaN(end.getTime())) return startLabel;
+  const endLabel = wallClockHmFromIso(fin);
+  if (!endLabel) return startLabel;
 
-  return `${startLabel} – ${timeFmt.format(end)}`;
+  return `${startLabel} – ${endLabel}`;
+}
+
+/** "vie 23 oct" for an event start, in the agenda timezone. */
+export function formatAgendaDateLabel(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return formatAgendaDate(formatDayKey(date));
 }
 
 /** HH:MM wall clock in the agenda TZ for an ISO timestamp (edit form prefill). */
@@ -167,19 +211,13 @@ export function wallClockHmFromIso(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
 
-  const dtf = new Intl.DateTimeFormat("en-US", {
+  const dtf = new Intl.DateTimeFormat("en-GB", {
     timeZone: AGENDA_TIME_ZONE,
     hourCycle: "h23",
     hour: "2-digit",
     minute: "2-digit",
   });
-  const map = Object.fromEntries(
-    dtf
-      .formatToParts(date)
-      .filter((p) => p.type !== "literal")
-      .map((p) => [p.type, p.value]),
-  );
-  return `${map.hour}:${map.minute}`;
+  return hourMinuteFromFormatParts(dtf.formatToParts(date));
 }
 
 /** Prefill bundle for EventForm from an events row. */
@@ -189,7 +227,8 @@ export function eventFormDefaultsFromRow(event: {
   lugar: string | null;
   inicio: string;
   fin: string | null;
-}): import("./types").EventFormDefaults {
+  cover_url?: string | null;
+}): EventFormDefaults {
   return {
     titulo: event.titulo,
     descripcion: event.descripcion ?? "",
@@ -197,5 +236,6 @@ export function eventFormDefaultsFromRow(event: {
     fecha: formatDayKey(new Date(event.inicio)),
     inicio: wallClockHmFromIso(event.inicio),
     fin: event.fin ? wallClockHmFromIso(event.fin) : undefined,
+    ...(event.cover_url ? { coverUrl: event.cover_url } : {}),
   };
 }

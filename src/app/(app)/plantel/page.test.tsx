@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({
   profilesSelect: vi.fn(),
   profilesNeq: vi.fn(),
   profilesOrder: vi.fn(),
+  viewerTierEq: vi.fn(),
+  viewerTierMaybeSingle: vi.fn(),
   profileRolesSelect: vi.fn(),
   profileRolesEq: vi.fn(),
   profileSkillsSelect: vi.fn(),
@@ -22,11 +24,20 @@ vi.mock("@/lib/supabase/server", () => ({
     from: vi.fn((table: string) => {
       if (table === "profiles") {
         return {
-          select: mocks.profilesSelect.mockImplementation(() => ({
-            neq: mocks.profilesNeq.mockImplementation(() => ({
-              order: mocks.profilesOrder,
-            })),
-          })),
+          select: mocks.profilesSelect.mockImplementation((columns: string) => {
+            if (columns === "tier") {
+              return {
+                eq: mocks.viewerTierEq.mockImplementation(() => ({
+                  maybeSingle: mocks.viewerTierMaybeSingle,
+                })),
+              };
+            }
+            return {
+              neq: mocks.profilesNeq.mockImplementation(() => ({
+                order: mocks.profilesOrder,
+              })),
+            };
+          }),
         };
       }
       if (table === "profile_roles") {
@@ -65,6 +76,10 @@ vi.mock("next/navigation", () => ({
   },
 }));
 
+vi.mock("@/features/membership/ser-serrano-cta-server", () => ({
+  resolveSerSerranoCtaVisibility: vi.fn().mockResolvedValue(false),
+}));
+
 vi.mock("@/features/plantel/PlantelList", () => ({
   PlantelList: ({
     members,
@@ -96,7 +111,6 @@ const serranoProfiles = [
     nombre_visible: "nombre_apellido",
     avatar_url: null,
     tier: "standard",
-    disponibilidad: "disponible",
   },
 ];
 
@@ -104,6 +118,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
   mocks.profilesOrder.mockResolvedValue({ data: serranoProfiles });
+  mocks.viewerTierMaybeSingle.mockResolvedValue({ data: { tier: "standard" }, error: null });
   mocks.profileRolesEq.mockResolvedValue({ data: [] });
   mocks.profileSkillsSelect.mockResolvedValue({ data: [] });
   mocks.rolesOrder.mockResolvedValue({ data: [{ nombre: "Infra" }, { nombre: "Charlas" }] });
@@ -125,7 +140,7 @@ describe("PlantelPage", () => {
     expect(selected).toContain("nombre_visible");
     expect(selected).toContain("avatar_url");
     expect(selected).toContain("tier");
-    expect(selected).toContain("disponibilidad");
+    expect(selected).not.toContain("disponibilidad");
     expect(selected).not.toContain("tarifa_hora");
     expect(selected).not.toContain("visibilidad_tarifa");
 
@@ -154,5 +169,38 @@ describe("PlantelPage", () => {
     expect(mocks.skillsSelect).toHaveBeenCalledWith("nombre");
     expect(screen.getByTestId("role-options")).toHaveTextContent("Infra,Charlas");
     expect(screen.getByTestId("skill-options")).toHaveTextContent("Solidity");
+  });
+
+  it("shows Ser Serrano CTA when visibility resolver says so (ZER-171)", async () => {
+    const { resolveSerSerranoCtaVisibility } =
+      await import("@/features/membership/ser-serrano-cta-server");
+    mocks.viewerTierMaybeSingle.mockResolvedValueOnce({ data: { tier: "tourist" }, error: null });
+    (resolveSerSerranoCtaVisibility as ReturnType<typeof vi.fn>).mockResolvedValueOnce(true);
+
+    const element = await PlantelPage();
+    render(element);
+
+    const link = screen.getByRole("link", { name: /Solicitar ser Serrano/i });
+    const list = screen.getByTestId("plantel-list");
+    expect(link).toHaveAttribute("href", "/solicitar");
+    expect(list.parentElement).toHaveClass("gap-4");
+    expect(list.parentElement).toContainElement(link);
+    expect(resolveSerSerranoCtaVisibility).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({ tier: "tourist" }),
+    );
+  });
+
+  it("hides Ser Serrano CTA by default for members (ZER-171)", async () => {
+    const { resolveSerSerranoCtaVisibility } =
+      await import("@/features/membership/ser-serrano-cta-server");
+    const element = await PlantelPage();
+    const { container } = render(element);
+    expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
+    expect(container.querySelector(".gap-4")).not.toBeInTheDocument();
+    expect(resolveSerSerranoCtaVisibility).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({ tier: "standard" }),
+    );
   });
 });

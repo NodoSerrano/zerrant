@@ -1,6 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 const mockSignUpWithPassword = vi.hoisted(() => vi.fn());
 const mockSignInWithGoogle = vi.hoisted(() => vi.fn());
 

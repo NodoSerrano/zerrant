@@ -1,3 +1,5 @@
+import { isTasksBlockedTier } from "./tier-guards";
+
 /**
  * ZER-42 — pure contract mirroring the DB trigger on public.tasks.
  * RLS row policies alone cannot restrict which columns change; the trigger
@@ -19,6 +21,8 @@ export type TaskGuardRow = {
 export type TaskGuardActor = {
   id: string;
   isAdmin: boolean;
+  /** Tier of the profile that would become the assignee. */
+  assigneeTier?: string | null;
 };
 
 export type TaskGuardResult = { ok: true } | { ok: false; reason: string };
@@ -95,6 +99,31 @@ export function assertTaskUpdateAllowed(
     newRow.estado === "abierta" &&
     newRow.tomada_por === oldRow.tomada_por
   ) {
+    return { ok: true };
+  }
+
+  // Release: taker, creator, or admin clears the assignee and reopens
+  if (
+    oldRow.estado === "tomada" &&
+    newRow.estado === "abierta" &&
+    newRow.tomada_por === null &&
+    !content &&
+    (actor.id === oldRow.tomada_por || actor.id === oldRow.creado_por || actor.isAdmin)
+  ) {
+    return { ok: true };
+  }
+
+  // Assign / reassign: creator or admin only. Self-claim stays the branch above.
+  if (
+    (actor.id === oldRow.creado_por || actor.isAdmin) &&
+    (oldRow.estado === "abierta" || oldRow.estado === "tomada") &&
+    newRow.estado === "tomada" &&
+    newRow.tomada_por !== null &&
+    !content
+  ) {
+    if (actor.assigneeTier === undefined || isTasksBlockedTier(actor.assigneeTier)) {
+      return { ok: false, reason: "assignee must be a serrano" };
+    }
     return { ok: true };
   }
 

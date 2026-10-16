@@ -2,7 +2,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -71,6 +71,9 @@ jobs:
 
       - name: Reset database (apply migrations)
         run: pnpm exec supabase db reset --yes
+
+      - name: Membership request state machine (DB tests)
+        run: pnpm exec vitest run --config vitest.db.config.ts
 
       - name: Install psql client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client

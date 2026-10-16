@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   profilesSelectSingle: vi.fn(),
   tasksInsert: vi.fn(),
   tasksUpdate: vi.fn(),
+  tasksSelectSingle: vi.fn(),
   // Every link of the PostgREST builder chain gets recorded in order, so the
   // tests can assert on the filters without being tied to how many there are
   // or how they nest. The previous mock was a fixed two-`.eq()` chain and
@@ -41,6 +42,15 @@ vi.mock("@/lib/supabase/server", () => ({
         return {
           insert: mocks.tasksInsert,
           update: mocks.tasksUpdate.mockImplementation(() => chain),
+          select: (...columns: unknown[]) => {
+            mocks.chainCalls.push(["taskSelect", ...columns]);
+            return {
+              eq: (...args: unknown[]) => {
+                mocks.chainCalls.push(["taskEq", ...args]);
+                return { single: mocks.tasksSelectSingle };
+              },
+            };
+          },
         };
       }
       return {};
@@ -48,7 +58,16 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
-import { createTask, takeTask, markTaskDone, verifyTask, cancelTask, updateTask } from "./actions";
+import {
+  assignTask,
+  cancelTask,
+  createTask,
+  markTaskDone,
+  releaseTask,
+  takeTask,
+  updateTask,
+  verifyTask,
+} from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -65,8 +84,8 @@ function updateMatchedNothing() {
   mocks.updateResult = { data: [], error: null };
 }
 
-function updateFailed(message: string) {
-  mocks.updateResult = { data: null, error: { message } };
+function updateFailed(message: string, code?: string) {
+  mocks.updateResult = { data: null, error: { message, code } };
 }
 
 function setupAuth(userId = "test-user-id") {
@@ -621,5 +640,151 @@ describe("updateTask", () => {
     expect(mocks.tasksUpdate).toHaveBeenCalledWith(
       expect.not.objectContaining({ descripcion: expect.anything() }),
     );
+  });
+});
+
+const ASSIGNEE_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+
+describe("releaseTask", () => {
+  const makeFormData = (taskId = "task-001") => {
+    const fd = new FormData();
+    fd.set("taskId", taskId);
+    return fd;
+  };
+
+  it("releases a taken task for the taker", async () => {
+    setupAuth("taker-user-id");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    updateMatched();
+
+    try {
+      await releaseTask(null, makeFormData());
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.tasksUpdate).toHaveBeenCalledWith({ tomada_por: null, estado: "abierta" });
+    expect(mocks.chainCalls).toContainEqual(["eq", "id", "task-001"]);
+    expect(mocks.chainCalls).toContainEqual(["eq", "estado", "tomada"]);
+    expect(mocks.chainCalls).toContainEqual(["select", "id"]);
+  });
+
+  it("returns a clear error when the update matches no row", async () => {
+    setupAuth("taker-user-id");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    updateMatchedNothing();
+
+    const result = await releaseTask(null, makeFormData());
+
+    expect(result).toEqual({ error: "No pudimos liberar esta tarea." });
+  });
+
+  it("returns a clear error when the trigger rejects the caller", async () => {
+    setupAuth("stranger-id");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    updateFailed("task update denied: transition not allowed", "42501");
+
+    const result = await releaseTask(null, makeFormData());
+
+    expect(result).toEqual({ error: "No pudimos liberar esta tarea." });
+  });
+});
+
+describe("assignTask", () => {
+  const makeFormData = (assigneeId = ASSIGNEE_ID) => {
+    const fd = new FormData();
+    fd.set("taskId", "task-001");
+    fd.set("assigneeId", assigneeId);
+    fd.set("tomada_por", "forged-client-id");
+    return fd;
+  };
+
+  it("rejects a non-creator non-admin before updating", async () => {
+    setupAuth("member-id");
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: { tier: "standard", is_platform_admin: false },
+    });
+    mocks.tasksSelectSingle.mockResolvedValue({
+      data: { creado_por: "creator-id", estado: "abierta" },
+      error: null,
+    });
+
+    const result = await assignTask(null, makeFormData());
+
+    expect(result).toEqual({ error: "No podés asignar esta tarea." });
+    expect(mocks.tasksUpdate).not.toHaveBeenCalled();
+  });
+
+  it("lets a platform admin assign even when they are not the creator", async () => {
+    setupAuth("admin-id");
+    mocks.profilesSelectSingle
+      .mockResolvedValueOnce({ data: { tier: "standard", is_platform_admin: true } })
+      .mockResolvedValueOnce({ data: { tier: "standard" }, error: null });
+    mocks.tasksSelectSingle.mockResolvedValue({
+      data: { creado_por: "creator-id", estado: "tomada" },
+      error: null,
+    });
+    updateMatched();
+
+    try {
+      await assignTask(null, makeFormData());
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.tasksUpdate).toHaveBeenCalledWith({
+      tomada_por: ASSIGNEE_ID,
+      estado: "tomada",
+    });
+  });
+
+  it("lets the creator assign a serrano", async () => {
+    setupAuth("creator-id");
+    mocks.profilesSelectSingle
+      .mockResolvedValueOnce({ data: { tier: "standard", is_platform_admin: false } })
+      .mockResolvedValueOnce({ data: { tier: "standard" }, error: null });
+    mocks.tasksSelectSingle.mockResolvedValue({
+      data: { creado_por: "creator-id", estado: "abierta" },
+      error: null,
+    });
+    updateMatched();
+
+    try {
+      await assignTask(null, makeFormData());
+    } catch {
+      // redirect throws
+    }
+
+    expect(mocks.tasksUpdate).toHaveBeenCalledWith({
+      tomada_por: ASSIGNEE_ID,
+      estado: "tomada",
+    });
+    expect(mocks.chainCalls).toContainEqual(["in", "estado", ["abierta", "tomada"]]);
+  });
+
+  it("rejects a tourist assignee without updating", async () => {
+    setupAuth("creator-id");
+    mocks.profilesSelectSingle
+      .mockResolvedValueOnce({ data: { tier: "standard", is_platform_admin: false } })
+      .mockResolvedValueOnce({ data: { tier: "tourist" }, error: null });
+    mocks.tasksSelectSingle.mockResolvedValue({
+      data: { creado_por: "creator-id", estado: "tomada" },
+      error: null,
+    });
+
+    const result = await assignTask(null, makeFormData());
+
+    expect(result).toEqual({ error: "Solo se puede asignar a un serrano." });
+    expect(mocks.tasksUpdate).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid assignee id before querying", async () => {
+    setupAuth("creator-id");
+
+    const result = await assignTask(null, makeFormData("not-a-uuid"));
+
+    expect(result).toEqual({ error: "Revisá a quién asignás la tarea." });
+    expect(mocks.profilesSelect).not.toHaveBeenCalled();
+    expect(mocks.tasksUpdate).not.toHaveBeenCalled();
   });
 });

@@ -195,6 +195,10 @@ describe("ProjectDetailPage", () => {
     );
     // ZER-84: promote on aprobado miembro only (u3), not admin creator (u1)
     expect(screen.getByRole("button", { name: "Designar admin" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Editar proyecto" })).toHaveAttribute(
+      "href",
+      "/nodo/projects/proj-1/edit",
+    );
   });
 
   it("does not offer promote to plain miembros", async () => {
@@ -205,5 +209,23 @@ describe("ProjectDetailPage", () => {
     const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
     render(ui);
     expect(screen.queryByRole("button", { name: "Designar admin" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Editar proyecto" })).not.toBeInTheDocument();
+  });
+
+  it("shows the archived estado on the detail view", async () => {
+    mockClient({
+      project: {
+        ...sampleProject,
+        descripcion: "Lote 3 ampliado",
+        estado: "terminado",
+        ingreso: "abierto",
+      },
+      viewerMembership: { estado: "aprobado", rol: "admin" },
+    });
+    const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
+    render(ui);
+    expect(screen.getByText("Lote 3 ampliado")).toBeInTheDocument();
+    expect(screen.getByText("Terminado")).toBeInTheDocument();
+    expect(screen.getByText("Abierto")).toBeInTheDocument();
   });
 });

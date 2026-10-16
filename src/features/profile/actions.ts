@@ -3,8 +3,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { isMembershipFlow } from "@/features/membership/flow-cookie";
+import { resolveUnirmeTarget } from "@/features/membership/pipeline";
+import { loadMembershipPipeline } from "@/features/membership/pipeline-server";
 import {
   AVATAR_BUCKET,
+  AVATAR_MAX_BYTES,
+  AVATAR_TOO_LARGE_ERROR,
   avatarObjectPath,
   avatarPathFromPublicUrl,
   sniffImageType,
@@ -19,22 +25,25 @@ import type { ProfileUpdate } from "./types";
 const DB_ERROR = "No pudimos guardar tus datos. Probá de nuevo.";
 
 const NOMBRE_VISIBLE_VALUES = ["apodo", "nombre_apellido", "apellido_nombre"] as const;
-const DISPONIBILIDAD_VALUES = ["disponible", "ocupado", "solo_eventos"] as const;
-const VISIBILIDAD_TARIFA_VALUES = ["publica", "privada"] as const;
 
 // Each action owns the fields its form actually renders: anything not listed is
 // ignored even if it arrives in the FormData.
-const STEP1_FIELDS = ["nombre", "apellido", "apodo", "fecha_nacimiento", "nombre_visible"] as const;
-const STEP2_FIELDS = ["bio", "contacto_telegram", "sitio_url"] as const;
+const STEP1_FIELDS = [
+  "nombre",
+  "apellido",
+  "apodo",
+  "fecha_nacimiento",
+  "nombre_visible",
+  "bio",
+  "contacto_telegram",
+  "sitio_url",
+] as const;
 const EDIT_PROFILE_FIELDS = [
   "nombre",
   "apellido",
   "apodo",
   "nombre_visible",
   "fecha_nacimiento",
-  "disponibilidad",
-  "tarifa_hora",
-  "visibilidad_tarifa",
 ] as const;
 
 function text(value: FormDataEntryValue | null): string | null {
@@ -59,10 +68,7 @@ type ProfileField =
   | "nombre_visible"
   | "bio"
   | "contacto_telegram"
-  | "sitio_url"
-  | "disponibilidad"
-  | "tarifa_hora"
-  | "visibilidad_tarifa";
+  | "sitio_url";
 
 type ProfileTextField =
   | "nombre"
@@ -74,7 +80,7 @@ type ProfileTextField =
   | "sitio_url";
 
 /**
- * Single source of truth for the profile update object: all three actions below
+ * Single source of truth for the profile update object: both actions below
  * build their `update` with this helper. `fields` is the ownership allowlist: a
  * field not listed is never read from the FormData, no matter what it contains.
  */
@@ -136,7 +142,7 @@ function buildProfileUpdate(
     return { error: "Ingresá una fecha de nacimiento válida" };
   }
 
-  // The enum columns are NOT NULL with a default: only overwrite them when the
+  // nombre_visible is NOT NULL with a default: only overwrite it when the
   // form sends a recognized value. Absent, blank or unknown => omitted.
   if (owns("nombre_visible")) {
     const nombreVisible = enumValue(formData.get("nombre_visible"), NOMBRE_VISIBLE_VALUES);
@@ -145,51 +151,7 @@ function buildProfileUpdate(
     }
   }
 
-  if (owns("disponibilidad")) {
-    const disponibilidad = enumValue(formData.get("disponibilidad"), DISPONIBILIDAD_VALUES);
-    if (disponibilidad) {
-      update.disponibilidad = disponibilidad;
-    }
-  }
-
-  if (owns("visibilidad_tarifa")) {
-    const visibilidadTarifa = enumValue(
-      formData.get("visibilidad_tarifa"),
-      VISIBILIDAD_TARIFA_VALUES,
-    );
-    if (visibilidadTarifa) {
-      update.visibilidad_tarifa = visibilidadTarifa;
-    }
-  }
-
-  if (owns("tarifa_hora")) {
-    const tarifa = formData.get("tarifa_hora");
-    if (tarifa !== null) {
-      const trimmed = text(tarifa);
-      if (trimmed === null) {
-        update.tarifa_hora = null;
-      } else {
-        // A rate is a plain decimal: no sign, exponent or hex that Number() would accept.
-        if (!/^\d+(\.\d+)?$/.test(trimmed)) {
-          return { error: "Ingresá una tarifa por hora válida" };
-        }
-        update.tarifa_hora = Number(trimmed);
-      }
-    }
-  }
-
   return { update };
-}
-
-/** The data the onboarding gate requires before letting the user out. */
-async function step1Data(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
-  const { data } = await supabase
-    .from("profiles")
-    .select("nombre, apellido, fecha_nacimiento")
-    .eq("id", userId)
-    .single();
-
-  return data;
 }
 
 export async function saveOnboardingStep1(
@@ -211,13 +173,16 @@ export async function saveOnboardingStep1(
     return result;
   }
 
-  const { update } = result;
-
-  // Step 1's three fields are what the onboarding gate checks before letting
-  // the user out, so this step requires them even when the form omits them.
-  if (!update.nombre || !update.apellido || !update.fecha_nacimiento) {
+  // nombre, apellido and fecha_nacimiento are what the gate requires before
+  // the interview. Optional fields may be omitted; they must not block close.
+  if (!result.update.nombre || !result.update.apellido || !result.update.fecha_nacimiento) {
     return { error: "Completá nombre, apellido y fecha de nacimiento" };
   }
+
+  const update: ProfileUpdate = {
+    ...result.update,
+    onboarding_completado_en: new Date().toISOString(),
+  };
 
   const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
 
@@ -227,50 +192,12 @@ export async function saveOnboardingStep1(
   }
 
   revalidatePath("/", "layout");
-  redirect("/onboarding/step2");
-}
-
-export async function saveOnboardingStep2(
-  _prevState: { error: string } | null,
-  formData: FormData,
-) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "No autorizado" };
+  // Entered through /unirme: continue to the next pipeline step instead of the
+  // tourist profile (ZER-136). Resolved here, never via /unirme, so the
+  // browser URL matches the screen and its forms post to the right route (bug-375).
+  if (isMembershipFlow(await cookies())) {
+    redirect(resolveUnirmeTarget(await loadMembershipPipeline(supabase)));
   }
-
-  // Step 2 cannot close onboarding without step 1's required data: entering
-  // directly by URL would leave a "complete" profile with null first and last name.
-  const step1 = await step1Data(supabase, user.id);
-  if (!step1?.nombre || !step1?.apellido || !step1?.fecha_nacimiento) {
-    redirect("/onboarding/step1");
-  }
-
-  const result = buildProfileUpdate(formData, STEP2_FIELDS);
-  if ("error" in result) {
-    return result;
-  }
-
-  const update: ProfileUpdate = {
-    ...result.update,
-    // Closes onboarding: it's the only piece of data proving step 2 was
-    // visited, because all of its fields are optional.
-    onboarding_completado_en: new Date().toISOString(),
-  };
-
-  const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
-
-  if (error) {
-    console.error("[saveOnboardingStep2] update falló", error);
-    return { error: DB_ERROR };
-  }
-
-  revalidatePath("/", "layout");
   redirect("/profile");
 }
 
@@ -316,6 +243,12 @@ export async function uploadAvatar(
     return { error: error instanceof Error ? error.message : "No pudimos procesar la imagen" };
   }
 
+  // HEIC→JPEG can grow the file: re-check against the bucket limit so Storage
+  // never answers with a generic failure.
+  if (image.bytes.byteLength > AVATAR_MAX_BYTES) {
+    return { error: AVATAR_TOO_LARGE_ERROR };
+  }
+
   const path = avatarObjectPath(user.id, image.mime);
 
   const { error: uploadError } = await supabase.storage
@@ -354,7 +287,8 @@ export async function uploadAvatar(
   }
 
   const previousPath = avatarPathFromPublicUrl(previous?.avatar_url ?? null);
-  if (previousPath && previousPath !== path) {
+  // Only ever clean up inside the user's own folder, whatever avatar_url says.
+  if (previousPath?.startsWith(`${user.id}/`) && previousPath !== path) {
     await supabase.storage.from(AVATAR_BUCKET).remove([previousPath]);
   }
 

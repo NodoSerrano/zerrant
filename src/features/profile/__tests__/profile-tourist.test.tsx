@@ -26,7 +26,7 @@ vi.mock("@/lib/supabase/server", () => ({
         return {
           select: () => ({
             eq: () => ({
-              eq: () => ({ limit: () => ({ maybeSingle: mocks.requestsMaybeSingle }) }),
+              in: () => ({ limit: () => ({ maybeSingle: mocks.requestsMaybeSingle }) }),
             }),
           }),
         };
@@ -81,6 +81,26 @@ describe("ProfilePage (tourist)", () => {
     expect(screen.queryByText(/Modo lectura/)).toBeNull();
   });
 
+  it("does not show availability or rates", async () => {
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: {
+        ...touristProfile,
+        disponibilidad: "disponible",
+        visibilidad_tarifa: "publica",
+        tarifa_hora: 40,
+      },
+      error: null,
+    });
+
+    render(await ProfilePage());
+
+    expect(screen.queryByText("Disponibilidad")).not.toBeInTheDocument();
+    expect(screen.queryByText("Visibilidad de tarifa")).not.toBeInTheDocument();
+    expect(screen.queryByText("Disponible")).not.toBeInTheDocument();
+    expect(screen.queryByText(/tarifa/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/USD/)).not.toBeInTheDocument();
+  });
+
   it("renders the identity card with Avatar, name, email, and TierBadge", async () => {
     render(await ProfilePage());
 
@@ -123,7 +143,10 @@ describe("ProfilePage (tourist)", () => {
 
   describe("pending membership request (ZER-110)", () => {
     beforeEach(() => {
-      mocks.requestsMaybeSingle.mockResolvedValue({ data: { id: "req-1" }, error: null });
+      mocks.requestsMaybeSingle.mockResolvedValue({
+        data: { id: "req-1", estado: "pendiente_coordinacion" },
+        error: null,
+      });
     });
 
     it("keeps the tourist profile shell while the request is pending", async () => {
@@ -143,16 +166,27 @@ describe("ProfilePage (tourist)", () => {
     it("swaps only the membership card to pending review state", async () => {
       render(await ProfilePage());
 
-      expect(screen.getByText("Solicitud en revisión")).toBeInTheDocument();
+      expect(screen.getByText("Tu solicitud de membresía")).toBeInTheDocument();
+      expect(screen.getByText("Pendiente de coordinación")).toBeInTheDocument();
       expect(
         screen.getByText(
-          "Un admin de Nodo va a revisar tu solicitud pronto. Cuando te aprueben, pasás de Turista a Serrano y vas a aparecer en el plantel.",
+          "Recibimos tu solicitud. Un admin de Nodo te va a contactar para coordinar una entrevista.",
         ),
       ).toBeInTheDocument();
       expect(screen.queryByText("Todavía sos Turista")).toBeNull();
       expect(screen.queryByText("Solicitar ser Serrano")).toBeNull();
       expect(screen.queryByRole("link", { name: "Solicitar ser Serrano" })).toBeNull();
       expect(screen.queryByRole("link", { name: "Explorar Nodo" })).toBeNull();
+    });
+
+    it("passes the estado of the active request to the card", async () => {
+      mocks.requestsMaybeSingle.mockResolvedValue({
+        data: { id: "req-1", estado: "reprogramacion" },
+        error: null,
+      });
+      render(await ProfilePage());
+
+      expect(screen.getByText("Reprogramación requerida")).toBeInTheDocument();
     });
 
     it("does not render a full-screen post-request replacement title as page chrome", async () => {
@@ -170,7 +204,7 @@ describe("ProfilePage (tourist)", () => {
     render(await ProfilePage());
 
     expect(screen.getByText("Todavía sos Turista")).toBeInTheDocument();
-    expect(screen.queryByText("Solicitud en revisión")).toBeNull();
+    expect(screen.queryByText("Tu solicitud de membresía")).toBeNull();
   });
 
   it("renders Editar perfil menu row linking to /profile/edit", async () => {

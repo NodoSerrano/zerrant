@@ -67,6 +67,7 @@ const baseProject: ProjectDetailViewModel = {
   affordance: { kind: "join", label: "Solicitar ingreso" },
   showRequestsQueue: false,
   canPromoteMembers: false,
+  canEdit: false,
 };
 
 describe("ProjectDetail", () => {
@@ -189,6 +190,17 @@ describe("ProjectDetail", () => {
     const header = screen.getByText("Proyecto").parentElement!;
     expect(header.children).toHaveLength(3);
     expect(header.children[2]).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("offers edit only to a project admin", () => {
+    const { rerender } = render(<ProjectDetail project={{ ...baseProject, canEdit: true }} />);
+    expect(screen.getByRole("link", { name: "Editar proyecto" })).toHaveAttribute(
+      "href",
+      "/nodo/projects/proj-1/edit",
+    );
+
+    rerender(<ProjectDetail project={{ ...baseProject, canEdit: false }} />);
+    expect(screen.queryByRole("link", { name: "Editar proyecto" })).not.toBeInTheDocument();
   });
 
   it("links back to the projects hub", () => {

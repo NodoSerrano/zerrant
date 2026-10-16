@@ -39,11 +39,51 @@ vi.mock("./avatar-convert", () => ({ ensureWebSafeImage: mocks.ensureWebSafeImag
 // revalidatePath needs Next's store, which doesn't exist outside a request.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-import { saveOnboardingStep1, saveOnboardingStep2, updateProfile, uploadAvatar } from "./actions";
+const pipelineMock = vi.hoisted(() => ({ load: vi.fn() }));
+vi.mock("@/features/membership/pipeline-server", () => ({
+  loadMembershipPipeline: pipelineMock.load,
+}));
+
+const cookieJar = vi.hoisted(() => ({ flow: undefined as string | undefined }));
+vi.mock("next/headers", () => ({
+  cookies: async () => ({
+    get: (name: string) =>
+      name === "ns_flujo" && cookieJar.flow ? { value: cookieJar.flow } : undefined,
+  }),
+}));
+
+import { saveOnboardingStep1, updateProfile, uploadAvatar } from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  cookieJar.flow = undefined;
 });
+
+function redirectPath(error: unknown): string | undefined {
+  const digest = (error as { digest?: string } | undefined)?.digest;
+  if (!digest?.startsWith("NEXT_REDIRECT")) return undefined;
+  return digest.split(";")[2];
+}
+
+/** Step 1 closes onboarding: success is a redirect, not a returned state. */
+async function runStep1(fd: FormData): Promise<string> {
+  try {
+    const result = await saveOnboardingStep1(null, fd);
+    throw new Error(`expected redirect, got ${JSON.stringify(result)}`);
+  } catch (error) {
+    const path = redirectPath(error);
+    if (path) return path;
+    throw error;
+  }
+}
+
+function requiredIdentity(): FormData {
+  const fd = new FormData();
+  fd.set("nombre", "Juan");
+  fd.set("apellido", "Pérez");
+  fd.set("fecha_nacimiento", "1990-01-15");
+  return fd;
+}
 
 describe("saveOnboardingStep1", () => {
   it("updates profile and redirects on success", async () => {
@@ -57,11 +97,7 @@ describe("saveOnboardingStep1", () => {
     fd.set("nombre_visible", "nombre_apellido");
     fd.set("fecha_nacimiento", "1990-01-15");
 
-    try {
-      await saveOnboardingStep1(null, fd);
-    } catch {
-      // redirect throws
-    }
+    expect(await runStep1(fd)).toBe("/profile");
 
     expect(mocks.profilesUpdate).toHaveBeenCalledWith({
       nombre: "Juan",
@@ -69,8 +105,66 @@ describe("saveOnboardingStep1", () => {
       apodo: "juancito",
       nombre_visible: "nombre_apellido",
       fecha_nacimiento: "1990-01-15",
+      onboarding_completado_en: expect.any(String),
     });
     expect(mocks.profilesUpdateEq).toHaveBeenCalledWith("id", "test-user-id");
+  });
+
+  it("closes onboarding with only nombre, apellido and fecha de nacimiento", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    expect(await runStep1(requiredIdentity())).toBe("/profile");
+
+    const update = mocks.profilesUpdate.mock.calls[0][0];
+    expect(update).toMatchObject({
+      nombre: "Juan",
+      apellido: "Pérez",
+      fecha_nacimiento: "1990-01-15",
+    });
+    expect(Date.parse(update.onboarding_completado_en)).not.toBeNaN();
+    expect(update).not.toHaveProperty("bio");
+    expect(update).not.toHaveProperty("contacto_telegram");
+    expect(update).not.toHaveProperty("sitio_url");
+  });
+
+  it("accepts blank optional fields and stores them as null", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = requiredIdentity();
+    fd.set("bio", "   ");
+    fd.set("contacto_telegram", "");
+    fd.set("sitio_url", "  ");
+
+    expect(await runStep1(fd)).toBe("/profile");
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bio: null,
+        contacto_telegram: null,
+        sitio_url: null,
+        onboarding_completado_en: expect.any(String),
+      }),
+    );
+  });
+
+  it("persists optional fields when the form submits them", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+
+    const fd = requiredIdentity();
+    fd.set("bio", "  Hola  ");
+    fd.set("contacto_telegram", "  @juan  ");
+    fd.set("sitio_url", "  https://example.com  ");
+
+    expect(await runStep1(fd)).toBe("/profile");
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bio: "Hola",
+        contacto_telegram: "@juan",
+        sitio_url: "https://example.com",
+      }),
+    );
   });
 
   it("omits nombre_visible when the form does not send it", async () => {
@@ -82,16 +176,13 @@ describe("saveOnboardingStep1", () => {
     fd.set("apellido", "Pérez");
     fd.set("fecha_nacimiento", "1990-01-15");
 
-    try {
-      await saveOnboardingStep1(null, fd);
-    } catch {
-      // redirect throws
-    }
+    expect(await runStep1(fd)).toBe("/profile");
 
     expect(mocks.profilesUpdate).toHaveBeenCalledWith({
       nombre: "Juan",
       apellido: "Pérez",
       fecha_nacimiento: "1990-01-15",
+      onboarding_completado_en: expect.any(String),
     });
   });
 
@@ -107,17 +198,15 @@ describe("saveOnboardingStep1", () => {
     fd.set("apodo", "   ");
     fd.set("fecha_nacimiento", "1990-01-15");
 
-    try {
-      await saveOnboardingStep1(null, fd);
-    } catch {
-      // redirect throws
-    }
+    expect(await runStep1(fd)).toBe("/profile");
 
-    expect(mocks.profilesUpdate).toHaveBeenCalledWith(expect.objectContaining({ apodo: null }));
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ apodo: null, onboarding_completado_en: expect.any(String) }),
+    );
   });
 
   it.each(["nombre", "apellido", "fecha_nacimiento"])(
-    "rejects without touching the DB when %s is missing",
+    "rejects without touching the DB or stamping onboarding when %s is missing",
     async (missing) => {
       mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
 
@@ -236,16 +325,13 @@ describe("saveOnboardingStep1", () => {
     );
   });
 
-  // Step 1's form has no tarifa, bio or contacto inputs: a handcrafted POST must
-  // not reach columns this step does not own.
+  // Identity, bio and contact belong here. A handcrafted POST must not reach
+  // columns this form does not render.
   it.each([
     ["tarifa_hora", "5000"],
-    ["bio", "inyectada"],
-    ["contacto_telegram", "@intruso"],
-    ["sitio_url", "https://intruso.com"],
     ["disponibilidad", "ocupado"],
     ["visibilidad_tarifa", "publica"],
-  ])("ignores %s, which does not belong to step 1", async (field, value) => {
+  ])("ignores %s, which does not belong to the profile step", async (field, value) => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
     mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
 
@@ -255,11 +341,7 @@ describe("saveOnboardingStep1", () => {
     fd.set("fecha_nacimiento", "1990-01-15");
     fd.set(field, value);
 
-    try {
-      await saveOnboardingStep1(null, fd);
-    } catch {
-      // redirect throws
-    }
+    expect(await runStep1(fd)).toBe("/profile");
 
     expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty(field);
   });
@@ -274,210 +356,25 @@ describe("saveOnboardingStep1", () => {
     fd.set("fecha_nacimiento", "1990-01-15");
     fd.set("nombre_visible", "drop table profiles");
 
-    try {
-      await saveOnboardingStep1(null, fd);
-    } catch {
-      // redirect throws
-    }
+    expect(await runStep1(fd)).toBe("/profile");
 
     expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty("nombre_visible");
   });
-});
 
-describe("saveOnboardingStep2", () => {
-  function step1Saved() {
-    mocks.profilesSelectSingle.mockResolvedValue({
-      data: { nombre: "Juan", apellido: "Pérez", fecha_nacimiento: "1990-01-15" },
-      error: null,
-    });
-  }
-
-  it("does not close the onboarding when step 1 was never saved", async () => {
+  it("does not fail when an unowned tarifa_hora is invalid", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    mocks.profilesSelectSingle.mockResolvedValue({
-      data: { nombre: null, apellido: null, fecha_nacimiento: null },
-      error: null,
-    });
-
-    try {
-      await saveOnboardingStep2(null, new FormData());
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate).not.toHaveBeenCalled();
-  });
-
-  it("updates profile and redirects on success", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
     mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
 
-    const fd = new FormData();
-    fd.set("bio", "Hello I am Juan");
-    fd.set("contacto_telegram", "@juan");
-    fd.set("sitio_url", "https://example.com");
-
-    try {
-      await saveOnboardingStep2(null, fd);
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate).toHaveBeenCalledWith({
-      bio: "Hello I am Juan",
-      contacto_telegram: "@juan",
-      sitio_url: "https://example.com",
-      onboarding_completado_en: expect.any(String),
-    });
-    expect(mocks.profilesUpdateEq).toHaveBeenCalledWith("id", "test-user-id");
-  });
-
-  it("closes the onboarding by stamping onboarding_completado_en", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    try {
-      await saveOnboardingStep2(null, new FormData());
-    } catch {
-      // redirect throws
-    }
-
-    const update = mocks.profilesUpdate.mock.calls[0][0];
-    expect(Date.parse(update.onboarding_completado_en)).not.toBeNaN();
-  });
-
-  it("returns error when supabase update fails", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
-    mocks.profilesUpdateEq.mockResolvedValue({
-      data: null,
-      error: { message: "DB error" },
-    });
-
-    const result = await saveOnboardingStep2(null, new FormData());
-
-    expect(result).toEqual({ error: "No pudimos guardar tus datos. Probá de nuevo." });
-  });
-
-  it("returns error when user is not authenticated", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: null } });
-
-    const result = await saveOnboardingStep2(null, new FormData());
-
-    expect(result).toEqual({ error: "No autorizado" });
-  });
-
-  it("trims the text fields before persisting", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    const fd = new FormData();
-    fd.set("bio", "  Hola  ");
-    fd.set("contacto_telegram", "  @juan  ");
-    fd.set("sitio_url", "  https://example.com  ");
-
-    try {
-      await saveOnboardingStep2(null, fd);
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        bio: "Hola",
-        contacto_telegram: "@juan",
-        sitio_url: "https://example.com",
-      }),
-    );
-  });
-
-  it("leaves out the fields the form does not send", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    const fd = new FormData();
-    fd.set("bio", "Hola");
-
-    try {
-      await saveOnboardingStep2(null, fd);
-    } catch {
-      // redirect throws
-    }
-
-    const update = mocks.profilesUpdate.mock.calls[0][0];
-    expect(update).not.toHaveProperty("contacto_telegram");
-    expect(update).not.toHaveProperty("sitio_url");
-  });
-
-  // Step 2's form only has bio, telegram and sitio: closing the onboarding must
-  // not become a way to rewrite the identity fields step 1 already validated.
-  it.each([
-    ["fecha_nacimiento", "2000-01-01"],
-    ["nombre", "Intruso"],
-    ["apellido", "Intruso"],
-    ["apodo", "intruso"],
-    ["tarifa_hora", "5000"],
-    ["nombre_visible", "apodo"],
-    ["disponibilidad", "ocupado"],
-    ["visibilidad_tarifa", "publica"],
-  ])("ignores %s, which does not belong to step 2", async (field, value) => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    const fd = new FormData();
-    fd.set("bio", "Hola");
-    fd.set(field, value);
-
-    try {
-      await saveOnboardingStep2(null, fd);
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty(field);
-  });
-
-  // A field step 2 does not own must not be able to fail the whole step.
-  it("does not fail the step over an invalid tarifa_hora it never asked for", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    const fd = new FormData();
-    fd.set("bio", "Hola");
+    const fd = requiredIdentity();
     fd.set("tarifa_hora", "abc");
 
-    try {
-      await saveOnboardingStep2(null, fd);
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate).toHaveBeenCalled();
-  });
-
-  it("never sends a null nombre_visible to the NOT NULL column", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    step1Saved();
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    try {
-      await saveOnboardingStep2(null, new FormData());
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty("nombre_visible");
+    expect(await runStep1(fd)).toBe("/profile");
+    expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty("tarifa_hora");
   });
 });
 
 describe("updateProfile", () => {
-  it("updates profile with numeric tarifa_hora and redirects on success", async () => {
+  it("updates the identity fields and does not write availability or rates", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
     mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
 
@@ -490,6 +387,7 @@ describe("updateProfile", () => {
     fd.set("disponibilidad", "disponible");
     fd.set("visibilidad_tarifa", "publica");
     fd.set("tarifa_hora", "50");
+    fd.set("tarifa_dia", "400");
 
     try {
       await updateProfile(null, fd);
@@ -503,10 +401,12 @@ describe("updateProfile", () => {
       apodo: "juancito",
       nombre_visible: "nombre_apellido",
       fecha_nacimiento: "1990-01-15",
-      disponibilidad: "disponible",
-      visibilidad_tarifa: "publica",
-      tarifa_hora: 50,
     });
+    const update = mocks.profilesUpdate.mock.calls[0][0];
+    expect(update).not.toHaveProperty("disponibilidad");
+    expect(update).not.toHaveProperty("visibilidad_tarifa");
+    expect(update).not.toHaveProperty("tarifa_hora");
+    expect(update).not.toHaveProperty("tarifa_dia");
     expect(mocks.profilesUpdateEq).toHaveBeenCalledWith("id", "test-user-id");
   });
 
@@ -669,12 +569,11 @@ describe("updateProfile", () => {
     expect(mocks.profilesUpdate).not.toHaveBeenCalled();
   });
 
-  // `Number()` would silently turn these into 16, 1000 and 1e21: a tarifa is a
-  // plain decimal, so anything else is rejected instead of transformed.
-  it.each(["abc", "-5", "0x10", "1e3", "Infinity", "1,5"])(
-    "rejects %s as tarifa_hora without touching the DB",
+  it.each(["abc", "-5", "0x10", "1e3", "Infinity", "1,5", "50", ""])(
+    "ignores tarifa_hora value %s and still saves the profile",
     async (tarifa) => {
       mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+      mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
 
       const fd = new FormData();
       fd.set("nombre", "Juan");
@@ -682,54 +581,16 @@ describe("updateProfile", () => {
       fd.set("fecha_nacimiento", "1990-01-15");
       fd.set("tarifa_hora", tarifa);
 
-      const result = await updateProfile(null, fd);
+      try {
+        await updateProfile(null, fd);
+      } catch {
+        // redirect throws
+      }
 
-      expect(result).toEqual({ error: "Ingresá una tarifa por hora válida" });
-      expect(mocks.profilesUpdate).not.toHaveBeenCalled();
+      expect(mocks.profilesUpdate).toHaveBeenCalled();
+      expect(mocks.profilesUpdate.mock.calls[0][0]).not.toHaveProperty("tarifa_hora");
     },
   );
-
-  it.each(["50", "50.5", "0"])("accepts %s as tarifa_hora", async (tarifa) => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    const fd = new FormData();
-    fd.set("nombre", "Juan");
-    fd.set("apellido", "Pérez");
-    fd.set("fecha_nacimiento", "1990-01-15");
-    fd.set("tarifa_hora", tarifa);
-
-    try {
-      await updateProfile(null, fd);
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ tarifa_hora: Number(tarifa) }),
-    );
-  });
-
-  it("clears tarifa_hora when the field is sent empty", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
-    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
-
-    const fd = new FormData();
-    fd.set("nombre", "Juan");
-    fd.set("apellido", "Pérez");
-    fd.set("fecha_nacimiento", "1990-01-15");
-    fd.set("tarifa_hora", "");
-
-    try {
-      await updateProfile(null, fd);
-    } catch {
-      // redirect throws
-    }
-
-    expect(mocks.profilesUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ tarifa_hora: null }),
-    );
-  });
 });
 
 const PNG_BYTES = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
@@ -792,6 +653,43 @@ describe("uploadAvatar", () => {
     const result = await uploadAvatar(null, avatarForm(notAnImage, "virus.png", "image/png"));
 
     expect(result).toEqual({ error: "El archivo no es una imagen válida" });
+    expect(mocks.storageUpload).not.toHaveBeenCalled();
+  });
+
+  it("rejects a file over 5 MiB without touching storage", async () => {
+    happyPath();
+    const oversized = new Uint8Array(5 * 1024 * 1024 + 1);
+    oversized.set(PNG_BYTES);
+
+    const result = await uploadAvatar(null, avatarForm(oversized, "foto.png", "image/png"));
+
+    expect(result).toEqual({ error: "La imagen no puede superar los 5 MB" });
+    expect(mocks.storageUpload).not.toHaveBeenCalled();
+  });
+
+  it("stores the type sniffed from the bytes, not the one the client declares", async () => {
+    happyPath();
+    const jpegBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+    await uploadAvatar(null, avatarForm(jpegBytes, "foto.png", "image/png"));
+
+    expect(mocks.storageUpload).toHaveBeenCalledWith(
+      expect.stringMatching(/\.jpg$/),
+      expect.any(Uint8Array),
+      expect.objectContaining({ contentType: "image/jpeg" }),
+    );
+  });
+
+  it("rejects a converted image that ends up over 5 MiB without touching storage", async () => {
+    happyPath();
+    mocks.ensureWebSafeImage.mockResolvedValue({
+      bytes: new Uint8Array(5 * 1024 * 1024 + 1),
+      mime: "image/jpeg",
+    });
+
+    const result = await uploadAvatar(null, avatarForm(HEIC_BYTES, "foto.heic", "image/heic"));
+
+    expect(result).toEqual({ error: "La imagen no puede superar los 5 MB" });
     expect(mocks.storageUpload).not.toHaveBeenCalled();
   });
 
@@ -884,5 +782,60 @@ describe("uploadAvatar", () => {
     await uploadAvatar(null, avatarForm(PNG_BYTES, "foto.png", "image/png"));
 
     expect(mocks.storageRemove).not.toHaveBeenCalled();
+  });
+
+  it("never tries to delete an object outside the user's own folder", async () => {
+    happyPath();
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: {
+        avatar_url:
+          "https://proj.supabase.co/storage/v1/object/public/avatars/other-user-id/theirs.png",
+      },
+      error: null,
+    });
+
+    await uploadAvatar(null, avatarForm(PNG_BYTES, "foto.png", "image/png"));
+
+    expect(mocks.storageRemove).not.toHaveBeenCalled();
+  });
+});
+
+describe("saveOnboardingStep1 — membership flow (ZER-136)", () => {
+  async function redirectTarget(): Promise<string> {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+    return runStep1(requiredIdentity());
+  }
+
+  it("continues the pipeline straight to the resolved step, never via /unirme (bug-375)", async () => {
+    cookieJar.flow = "membresia";
+    pipelineMock.load.mockResolvedValue({
+      hasSession: true,
+      emailConfirmed: true,
+      profile: {
+        nombre: "Juan",
+        apellido: "Pérez",
+        fecha_nacimiento: "1990-01-15",
+        onboarding_completado_en: "2026-10-06T00:00:00Z",
+        tier: "tourist",
+      },
+      request: null,
+      profileError: false,
+      requestError: false,
+    });
+
+    const target = await redirectTarget();
+
+    expect(target).toBe("/solicitar");
+    expect(target).not.toBe("/unirme");
+  });
+
+  it("keeps the tourist path to /profile without the cookie", async () => {
+    expect(await redirectTarget()).toBe("/profile");
+  });
+
+  it("ignores an unexpected cookie value", async () => {
+    cookieJar.flow = "otra-cosa";
+    expect(await redirectTarget()).toBe("/profile");
   });
 });

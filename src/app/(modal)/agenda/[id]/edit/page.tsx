@@ -5,7 +5,7 @@ import { EditEventForm } from "./EditEventForm";
 
 export const dynamic = "force-dynamic";
 
-const EVENT_SELECT = "id, titulo, descripcion, lugar, inicio, fin, creado_por";
+const EVENT_SELECT = "id, titulo, descripcion, lugar, inicio, fin, creado_por, cover_url";
 
 export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

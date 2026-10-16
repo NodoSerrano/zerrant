@@ -14,6 +14,11 @@ import { isGoogleAuthEnabled } from "@/features/auth/google-auth-enabled";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 import { cn } from "@/lib/utils";
+import { safeInternalPath, withNext } from "@/lib/safe-next";
+import { NextField } from "@/features/auth/NextField";
+import { readBuildStamp } from "@/features/auth/build-stamp";
+import { deployHistoryAllowed } from "@/features/auth/deploy-history";
+import { TestDeployHistory } from "@/features/auth/TestDeployHistory";
 
 const LOGIN_ERROR_COPY: Record<string, string> = {
   auth_callback_failed: "No pudimos confirmar el enlace. Pedí uno nuevo o intentá de nuevo.",
@@ -29,8 +34,16 @@ function LoginForm() {
   const [state, action, pending] = useGuardedActionState(signInWithPassword, null);
   const searchParams = useSearchParams();
   const urlError = loginErrorMessage(searchParams.get("error"));
+  const next = safeInternalPath(searchParams.get("next"));
   const error = state?.error ?? urlError;
   const showGoogleAuth = isGoogleAuthEnabled();
+  const buildStamp = readBuildStamp();
+  const channel = process.env.NEXT_PUBLIC_APP_CHANNEL?.trim() ?? "";
+  const refRaw = process.env.NEXT_PUBLIC_GIT_REF?.trim() ?? "";
+  const refName = refRaw && refRaw !== "HEAD" ? refRaw : "";
+  const shaRaw = process.env.NEXT_PUBLIC_GIT_SHA?.trim() ?? "";
+  const sha = shaRaw.length > 12 ? shaRaw.slice(0, 7) : shaRaw;
+  const showHistory = deployHistoryAllowed(channel) && Boolean(sha);
 
   return (
     <div className="px-[26px] py-6 flex flex-col justify-center gap-[22px] min-h-full">
@@ -52,6 +65,7 @@ function LoginForm() {
       </div>
 
       <form action={action} className="flex flex-col gap-[14px]">
+        <NextField next={next} />
         <Input name="email" type="email" label="Email" placeholder="tu@email.com" required />
         <Input
           name="password"
@@ -90,6 +104,7 @@ function LoginForm() {
           </div>
 
           <form action={signInWithGoogle}>
+            <NextField next={next} />
             <SecondaryButton type="submit" className="w-full">
               Continuar con Google
             </SecondaryButton>
@@ -99,10 +114,21 @@ function LoginForm() {
 
       <div className="flex items-center justify-center gap-[5px]">
         <span className="text-[13px] text-text-secondary">¿Primera vez?</span>
-        <Link href="/auth/signup" className="text-[13px] font-semibold text-coral hover:underline">
+        <Link
+          href={withNext("/auth/signup", next)}
+          className="text-[13px] font-semibold text-coral hover:underline"
+        >
           Creá tu cuenta
         </Link>
       </div>
+
+      {showHistory ? (
+        <TestDeployHistory channel={channel} refName={refName} sha={sha} />
+      ) : buildStamp ? (
+        <p className="text-center font-body text-[11px] text-text-muted" data-testid="build-stamp">
+          {buildStamp}
+        </p>
+      ) : null}
     </div>
   );
 }

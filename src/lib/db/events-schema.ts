@@ -15,10 +15,18 @@ export const EVENTS_INSERT_COLUMNS = [
   "inicio",
   "fin",
   "creado_por",
+  "cover_url",
 ] as const;
 
 /** Columns PostgREST may UPDATE on public.events (creado_por immutable via grant + RLS). */
-export const EVENTS_UPDATE_COLUMNS = ["titulo", "descripcion", "lugar", "inicio", "fin"] as const;
+export const EVENTS_UPDATE_COLUMNS = [
+  "titulo",
+  "descripcion",
+  "lugar",
+  "inicio",
+  "fin",
+  "cover_url",
+] as const;
 
 export const EVENT_ATTENDANCE_INSERT_COLUMNS = ["event_id", "profile_id", "estado"] as const;
 

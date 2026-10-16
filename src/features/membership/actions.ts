@@ -4,12 +4,20 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { parseMembershipScreening } from "./screening";
+import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "./request-state";
 
 const DB_ERROR = "No pudimos enviar tu solicitud. Probá de nuevo.";
 const NOT_TOURIST = "Solo los tourists pueden solicitar membresía.";
-const ALREADY_PENDING = "Ya tenes una solicitud pendiente.";
+const ALREADY_ACTIVE = "Ya tenés una solicitud en curso.";
+const ALREADY_CLOSED = "Tu solicitud anterior fue cerrada. Por ahora no podés enviar una nueva.";
+/**
+ * States that block a new request: any active one, plus `cerrada` because
+ * re-application is not allowed yet (ZER-136; enabling it is ZER-180). App
+ * layer only: the DB index enforces one active request, not this rule.
+ */
+const BLOCKING_ESTADOS = [...MEMBERSHIP_REQUEST_ACTIVE_ESTADOS, "cerrada" as const];
 const NO_ROWS = "PGRST116";
-/** Partial unique index membership_requests_one_pending_per_profile. */
+/** Partial unique index membership_requests_one_active_per_profile. */
 const UNIQUE_VIOLATION = "23505";
 
 export async function createMembershipRequest(
@@ -43,15 +51,22 @@ export async function createMembershipRequest(
     return { error: NOT_TOURIST };
   }
 
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from("membership_requests")
-    .select("id")
+    .select("estado")
     .eq("profile_id", user.id)
-    .eq("estado", "pendiente")
+    .in("estado", BLOCKING_ESTADOS)
+    .limit(1)
     .maybeSingle();
 
+  if (existingError) {
+    // Fail closed: without this read the cerrada rule could be bypassed.
+    console.error("[createMembershipRequest] existing request read failed", existingError);
+    return { error: DB_ERROR };
+  }
+
   if (existing) {
-    return { error: ALREADY_PENDING };
+    return { error: existing.estado === "cerrada" ? ALREADY_CLOSED : ALREADY_ACTIVE };
   }
 
   const screening = parseMembershipScreening(formData);
@@ -68,10 +83,10 @@ export async function createMembershipRequest(
     console.error("[createMembershipRequest] insert failed", error);
     // The maybeSingle pre-check above and the insert are two statements: a
     // concurrent submit can land between them. The partial unique index is what
-    // actually enforces one-pending-per-profile, so its violation is the pending
-    // case, not an unknown failure.
+    // actually enforces one-active-request-per-profile, so its violation is the
+    // already-in-progress case, not an unknown failure.
     if (error.code === UNIQUE_VIOLATION) {
-      return { error: ALREADY_PENDING };
+      return { error: ALREADY_ACTIVE };
     }
     return { error: DB_ERROR };
   }

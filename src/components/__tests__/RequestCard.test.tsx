@@ -1,16 +1,15 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { RequestCard, type RequestCardData } from "../RequestCard";
+import { MEMBERSHIP_REQUEST_ESTADOS, estadoLabel } from "@/features/membership/request-state";
 import type { Profile } from "@/features/profile/types";
 
 const mocks = vi.hoisted(() => ({
-  approveRequest: vi.fn(),
-  rejectRequest: vi.fn(),
+  transitionRequest: vi.fn(),
 }));
 
 vi.mock("@/features/admin/actions", () => ({
-  approveRequest: mocks.approveRequest,
-  rejectRequest: mocks.rejectRequest,
+  transitionRequest: mocks.transitionRequest,
 }));
 
 const mockProfile = {
@@ -28,6 +27,7 @@ const mockRequest: RequestCardData = {
   profile: mockProfile,
   mensaje: "Quiero ayudar con la huerta",
   created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+  estado: "pendiente_coordinacion",
 };
 
 const mockRequestNoMessage: RequestCardData = {
@@ -54,14 +54,18 @@ const mockRequestWithScreening: RequestCardData = {
 };
 
 describe("RequestCard", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("renders the requester name via displayName", () => {
     render(<RequestCard request={mockRequest} />);
     expect(screen.getByText("Sofía Vega")).toBeInTheDocument();
   });
 
-  it("renders relative time meta text", () => {
+  it("renders relative time meta text next to the chip", () => {
     render(<RequestCard request={mockRequest} />);
-    expect(screen.getByText(/Solicitó hace/)).toBeInTheDocument();
+    expect(screen.getByText("hace 5 horas")).toBeInTheDocument();
   });
 
   it("renders the mensaje when present", () => {
@@ -79,64 +83,139 @@ describe("RequestCard", () => {
     expect(screen.getByText("SV")).toBeInTheDocument();
   });
 
-  it("renders Aprobar button", () => {
+  it("meta row wraps the relative date whole onto the next line instead of breaking it", () => {
     render(<RequestCard request={mockRequest} />);
-    expect(screen.getByText("Aprobar")).toBeInTheDocument();
+    const date = screen.getByText("hace 5 horas");
+    expect(date.className).toMatch(/\bwhitespace-nowrap\b/);
+    expect(date.parentElement?.className).toMatch(/\bflex-wrap\b/);
   });
 
-  it("renders Rechazar button", () => {
+  it("renders the estado chip with its label", () => {
     render(<RequestCard request={mockRequest} />);
-    expect(screen.getByText("Rechazar")).toBeInTheDocument();
+    expect(screen.getByText("Pendiente de coordinación")).toBeInTheDocument();
   });
 
-  it("has hidden input with request id in approve form", () => {
-    render(<RequestCard request={mockRequest} />);
-    const approveForm = screen.getByText("Aprobar").closest("form");
-    expect(approveForm).toBeInTheDocument();
-    const input = approveForm?.querySelector('input[name="requestId"]');
-    expect(input).toHaveAttribute("value", "req-001");
+  it.each([
+    ["reprogramacion", "border-warm-yellow"],
+    ["entrevista_coordinada", "border-brand-blue"],
+    ["entrevista_realizada", "border-brand-green"],
+    ["pendiente_coordinacion", "border-border"],
+    ["entrevista_solicitada", "border-border"],
+  ] as const)("tones the %s chip with %s", (estado, cls) => {
+    render(<RequestCard request={{ ...mockRequest, estado }} />);
+    const chip = screen.getByText(estadoLabel(estado)).closest("[data-estado-chip]");
+    expect(chip?.className).toContain(cls);
   });
 
-  it("has hidden input with request id in reject form", () => {
+  it("never renders Rechazar", () => {
+    for (const estado of MEMBERSHIP_REQUEST_ESTADOS) {
+      const { container, unmount } = render(<RequestCard request={{ ...mockRequest, estado }} />);
+      expect(container.textContent).not.toMatch(/rechaz/i);
+      unmount();
+    }
+  });
+
+  it.each([
+    ["pendiente_coordinacion", ["Solicitar entrevista", "Cerrar solicitud"]],
+    ["entrevista_solicitada", ["Confirmar horario", "Reprogramar", "Cerrar solicitud"]],
+    ["entrevista_coordinada", ["Marcar entrevista realizada", "Reprogramar", "Cerrar solicitud"]],
+    ["reprogramacion", ["Confirmar horario", "Pedir otro horario", "Cerrar solicitud"]],
+    ["entrevista_realizada", ["Convertir en miembro", "Cerrar solicitud"]],
+  ] as const)("renders the %s actions", (estado, labels) => {
+    render(<RequestCard request={{ ...mockRequest, estado }} />);
+    for (const label of labels) {
+      expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
+    }
+    expect(screen.getAllByRole("button")).toHaveLength(labels.length);
+  });
+
+  it("renders no action buttons for terminal estados", () => {
+    render(<RequestCard request={{ ...mockRequest, estado: "cerrada" }} />);
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+  });
+
+  it("submits transitionRequest with requestId and target estado", async () => {
+    mocks.transitionRequest.mockResolvedValue(null);
     render(<RequestCard request={mockRequest} />);
-    const rejectForm = screen.getByText("Rechazar").closest("form");
-    expect(rejectForm).toBeInTheDocument();
-    const input = rejectForm?.querySelector('input[name="requestId"]');
-    expect(input).toHaveAttribute("value", "req-001");
+
+    fireEvent.click(screen.getByRole("button", { name: "Solicitar entrevista" }));
+
+    await waitFor(() => expect(mocks.transitionRequest).toHaveBeenCalled());
+    const fd = mocks.transitionRequest.mock.calls[0][1] as FormData;
+    expect(fd.get("requestId")).toBe("req-001");
+    expect(fd.get("to")).toBe("entrevista_solicitada");
+  });
+
+  it("asks for confirmation before closing; Cancelar does not submit", async () => {
+    render(<RequestCard request={mockRequest} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar solicitud" }));
+    expect(screen.getByText("¿Cerrar la solicitud de Sofía Vega?")).toBeInTheDocument();
+    expect(mocks.transitionRequest).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(screen.queryByText("¿Cerrar la solicitud de Sofía Vega?")).not.toBeInTheDocument();
+    expect(mocks.transitionRequest).not.toHaveBeenCalled();
+  });
+
+  it("the close confirmation replaces the whole actions zone (frame tihjN)", () => {
+    render(<RequestCard request={{ ...mockRequest, estado: "entrevista_realizada" }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar solicitud" }));
+
+    expect(screen.queryByRole("button", { name: "Convertir en miembro" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cerrar solicitud" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sí, cerrar" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(screen.getByRole("button", { name: "Convertir en miembro" })).toBeInTheDocument();
+  });
+
+  it("Cerrar solicitud keeps a 44px minimum touch target", () => {
+    render(<RequestCard request={mockRequest} />);
+    expect(screen.getByRole("button", { name: "Cerrar solicitud" }).className).toMatch(
+      /\bmin-h-\[44px\]|\bh-\[44px\]|\bh-11\b|\bmin-h-11\b/,
+    );
+  });
+
+  it("Sí, cerrar submits to=cerrada", async () => {
+    mocks.transitionRequest.mockResolvedValue(null);
+    render(<RequestCard request={mockRequest} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar solicitud" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sí, cerrar" }));
+
+    await waitFor(() => expect(mocks.transitionRequest).toHaveBeenCalledTimes(1));
+    const fd = mocks.transitionRequest.mock.calls[0][1] as FormData;
+    expect(fd.get("requestId")).toBe("req-001");
+    expect(fd.get("to")).toBe("cerrada");
+  });
+
+  it("shows the success message returned by the action", async () => {
+    mocks.transitionRequest.mockResolvedValue({
+      success: "Estado actualizado: Entrevista solicitada",
+    });
+    render(<RequestCard request={mockRequest} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Solicitar entrevista" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Estado actualizado: Entrevista solicitada")).toBeInTheDocument(),
+    );
+  });
+
+  it("shows the error message returned by the action", async () => {
+    mocks.transitionRequest.mockResolvedValue({ error: "Transición no permitida" });
+    render(<RequestCard request={mockRequest} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Solicitar entrevista" }));
+
+    await waitFor(() => expect(screen.getByText("Transición no permitida")).toBeInTheDocument());
   });
 
   it("renders with Pencil border radius 24px", () => {
     const { container } = render(<RequestCard request={mockRequest} />);
     const card = container.firstElementChild as HTMLElement;
     expect(card.className).toContain("rounded-[24px]");
-  });
-
-  it("shows approve error message when action returns error", async () => {
-    mocks.approveRequest.mockResolvedValue({ error: "Error al aprobar" });
-    mocks.rejectRequest.mockResolvedValue(null);
-
-    render(<RequestCard request={mockRequest} />);
-
-    const approveBtn = screen.getByText("Aprobar");
-    fireEvent.click(approveBtn);
-
-    await waitFor(() => {
-      expect(screen.getByText("Error al aprobar")).toBeInTheDocument();
-    });
-  });
-
-  it("shows reject error message when action returns error", async () => {
-    mocks.approveRequest.mockResolvedValue(null);
-    mocks.rejectRequest.mockResolvedValue({ error: "Error al rechazar" });
-
-    render(<RequestCard request={mockRequest} />);
-
-    const rejectBtn = screen.getByText("Rechazar");
-    fireEvent.click(rejectBtn);
-
-    await waitFor(() => {
-      expect(screen.getByText("Error al rechazar")).toBeInTheDocument();
-    });
   });
 });
 

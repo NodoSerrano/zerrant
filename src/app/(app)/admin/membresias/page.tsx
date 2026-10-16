@@ -6,16 +6,53 @@ import {
   type RequestProfileData,
   type RequestScreeningData,
 } from "@/components/RequestCard";
+import { InterviewNoteForm } from "@/features/admin/InterviewNoteForm";
+import { displayName } from "@/features/profile/displayName";
 import type { Tier } from "@/features/profile/types";
 import Link from "next/link";
+import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "@/features/membership/request-state";
 
 export const dynamic = "force-dynamic";
 
 const SCREENING_SELECT =
-  "id, mensaje, created_at, contacto_whatsapp, frecuencia_uso, duracion_visita, aporte_actitud, reunion_disponibilidad, situacion_actual, ocupacion_detalle, entrevista_items, aporte_otro, aporte_mayor, profiles!membership_requests_profile_id_fkey(nombre, apellido, apodo, nombre_visible, avatar_url, tier, id)";
+  "id, estado, mensaje, created_at, contacto_whatsapp, frecuencia_uso, duracion_visita, aporte_actitud, reunion_disponibilidad, situacion_actual, ocupacion_detalle, entrevista_items, aporte_otro, aporte_mayor, profiles!membership_requests_profile_id_fkey(nombre, apellido, apodo, nombre_visible, avatar_url, tier, id)";
+
+const NOTES_SELECT =
+  "id, request_id, author_id, body, created_at, profiles!interview_notes_author_id_fkey(nombre, apellido, apodo, nombre_visible)";
+
+type NoteAuthor = {
+  nombre: string | null;
+  apellido: string | null;
+  apodo: string | null;
+  nombre_visible: RequestProfileData["nombre_visible"];
+};
+
+type NoteRow = {
+  id: string;
+  request_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+  profiles: NoteAuthor | NoteAuthor[] | null;
+};
+
+function noteAuthor(profiles: NoteRow["profiles"]): NoteAuthor | null {
+  if (!profiles) return null;
+  return Array.isArray(profiles) ? (profiles[0] ?? null) : profiles;
+}
+
+function formatNoteDate(iso: string): string {
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(iso));
+}
 
 type RequestRow = {
   id: string;
+  estado: RequestCardData["estado"];
   mensaje: string | null;
   created_at: string;
   contacto_whatsapp: string | null;
@@ -50,19 +87,27 @@ function toScreening(row: RequestRow): RequestScreeningData {
 export default async function AdminMembresiasPage() {
   const supabase = await createClient();
 
-  const [{ count: pendingCount, data: pendingRequests }, { count: rolesCount }] = await Promise.all(
-    [
-      supabase
-        .from("membership_requests")
-        .select(SCREENING_SELECT, { count: "exact" })
-        .eq("estado", "pendiente")
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("profile_roles")
-        .select("id", { count: "exact", head: true })
-        .eq("confirmado", false),
-    ],
-  );
+  const [
+    {
+      data: { user },
+    },
+    { count: pendingCount, data: pendingRequests },
+    { count: rolesCount },
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase
+      .from("membership_requests")
+      .select(SCREENING_SELECT, { count: "exact" })
+      .in("estado", MEMBERSHIP_REQUEST_ACTIVE_ESTADOS)
+      .order("created_at", { ascending: false })
+      // Tiebreaker: equal created_at would otherwise fall back to physical row
+      // order, and an UPDATE (every transition) moves the row to the end.
+      .order("id", { ascending: true }),
+    supabase
+      .from("profile_roles")
+      .select("id", { count: "exact", head: true })
+      .eq("confirmado", false),
+  ]);
 
   const requests: RequestCardData[] = (Array.isArray(pendingRequests) ? pendingRequests : [])
     .filter(
@@ -75,6 +120,7 @@ export default async function AdminMembresiasPage() {
     )
     .map((row) => ({
       id: row.id,
+      estado: row.estado,
       mensaje: row.mensaje,
       created_at: row.created_at,
       screening: toScreening(row),
@@ -87,6 +133,25 @@ export default async function AdminMembresiasPage() {
         avatar_url: row.profiles.avatar_url,
       } satisfies RequestProfileData,
     }));
+
+  const requestIds = requests.map((request) => request.id);
+  let notes: NoteRow[] = [];
+  let notesError = false;
+  if (requestIds.length > 0) {
+    const { data, error } = await supabase
+      .from("interview_notes")
+      .select(NOTES_SELECT)
+      .in("request_id", requestIds)
+      .order("created_at", { ascending: true });
+    notesError = Boolean(error);
+    notes = (data ?? []) as NoteRow[];
+  }
+  const notesByRequest = new Map<string, NoteRow[]>();
+  for (const note of notes) {
+    const list = notesByRequest.get(note.request_id) ?? [];
+    list.push(note);
+    notesByRequest.set(note.request_id, list);
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-bg">
@@ -133,12 +198,51 @@ export default async function AdminMembresiasPage() {
         </div>
 
         <div className="flex flex-col gap-3">
+          {notesError ? (
+            <p className="font-body text-[13px] text-coral">No pudimos cargar las notas internas</p>
+          ) : null}
           {requests.length === 0 ? (
             <p className="font-body text-[14px] text-text-muted text-center py-8">
               No hay solicitudes pendientes
             </p>
           ) : (
-            requests.map((r) => <RequestCard key={r.id} request={r} />)
+            requests.map((r) => (
+              <div key={r.id} className="flex flex-col gap-2">
+                <RequestCard request={r} />
+                <section className="rounded-[24px] border border-border bg-surface px-4 py-3 flex flex-col gap-3">
+                  <h2 className="font-display text-[13px] font-semibold text-text-primary">
+                    Notas internas
+                  </h2>
+                  {(notesByRequest.get(r.id) ?? []).map((note) => {
+                    const author = noteAuthor(note.profiles);
+                    const authorName = author
+                      ? displayName({
+                          nombre: author.nombre,
+                          apellido: author.apellido,
+                          apodo: author.apodo,
+                          nombre_visible: author.nombre_visible ?? "nombre_apellido",
+                        })
+                      : "Admin";
+                    const own = user?.id === note.author_id;
+                    return (
+                      <div key={note.id} className="flex flex-col gap-1.5">
+                        <p className="font-body text-[11px] text-text-muted">
+                          {authorName} · {formatNoteDate(note.created_at)}
+                        </p>
+                        {own ? (
+                          <InterviewNoteForm requestId={r.id} noteId={note.id} body={note.body} />
+                        ) : (
+                          <p className="font-body text-[13px] text-text-secondary whitespace-pre-wrap">
+                            {note.body}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <InterviewNoteForm requestId={r.id} />
+                </section>
+              </div>
+            ))
           )}
         </div>
       </div>

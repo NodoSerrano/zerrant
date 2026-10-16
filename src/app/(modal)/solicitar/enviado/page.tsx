@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getFlowProgress } from "@/features/membership/flow-progress";
 import { EnviadoConfirmation } from "./EnviadoConfirmation";
+import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "@/features/membership/request-state";
 
 export const dynamic = "force-dynamic";
 
@@ -29,12 +31,14 @@ export default async function EnviadoPage() {
     .from("membership_requests")
     .select("id")
     .eq("profile_id", user.id)
-    .eq("estado", "pendiente")
+    .in("estado", MEMBERSHIP_REQUEST_ACTIVE_ESTADOS)
     .maybeSingle();
 
   if (pendingError || !pending) {
     redirect("/profile");
   }
 
-  return <EnviadoConfirmation />;
+  const progress = await getFlowProgress("horario");
+
+  return <EnviadoConfirmation progress={progress ?? undefined} />;
 }

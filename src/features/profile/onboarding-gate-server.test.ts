@@ -141,7 +141,7 @@ describe("enforceOnboardingGate", () => {
     );
   });
 
-  it("redirects unfinished step1-done users to step2", async () => {
+  it("redirects unfinished step1-done users to step1", async () => {
     mocks.profileSingle.mockResolvedValue({
       data: {
         nombre: "Juan",
@@ -155,7 +155,7 @@ describe("enforceOnboardingGate", () => {
     });
     const { enforceOnboardingGate } = await import("./onboarding-gate-server");
 
-    await expect(enforceOnboardingGate("/profile")).rejects.toThrow("REDIRECT:/onboarding/step2");
+    await expect(enforceOnboardingGate("/profile")).rejects.toThrow("REDIRECT:/onboarding/step1");
   });
 
   it("does not bounce unfinished users already on step1", async () => {

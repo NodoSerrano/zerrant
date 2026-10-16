@@ -28,8 +28,17 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
           <ChevronLeft size={24} className="text-text-primary" />
         </Link>
         <span className="font-display text-base font-medium text-text-primary">Proyecto</span>
-        {/* Spacer keeps the title optically centered (Pencil shows ellipsis; dead affordance out). */}
-        <span aria-hidden="true" className="size-[22px]" />
+        {project.canEdit ? (
+          <Link
+            href={`/nodo/projects/${project.id}/edit`}
+            aria-label="Editar proyecto"
+            className="font-display text-sm font-medium text-primary"
+          >
+            Editar
+          </Link>
+        ) : (
+          <span aria-hidden="true" className="size-[22px]" />
+        )}
       </div>
 
       <div className="flex flex-col gap-2.5 w-full">

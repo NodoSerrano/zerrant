@@ -87,6 +87,7 @@ function makeEvent(overrides: Record<string, unknown> = {}) {
     inicio: "2026-09-20T22:00:00.000Z",
     fin: "2026-09-21T00:00:00.000Z",
     creado_por: CREATOR,
+    cover_url: "https://images.lumacdn.com/uploads/cover.png",
     ...overrides,
   };
 }
@@ -140,6 +141,9 @@ describe("EditEventPage", () => {
     expect(screen.getByLabelText("Fecha")).toHaveValue("2026-09-20");
     expect(screen.getByLabelText("Inicio")).toHaveValue("19:00");
     expect(screen.getByLabelText("Fin")).toHaveValue("21:00");
+    expect(screen.getByLabelText("Imagen")).toHaveValue(
+      "https://images.lumacdn.com/uploads/cover.png",
+    );
     expect(container.querySelector('input[name="eventId"]')).toHaveValue("evt-1");
     expect(screen.getByRole("button", { name: "Guardar cambios" })).toBeTruthy();
     expect(screen.getByRole("button", { name: /Eliminar evento/i })).toBeTruthy();

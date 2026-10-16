@@ -36,7 +36,7 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mocks.getUser },
     from: vi.fn((table: string) => {
-      expect(table).toBe("profiles_with_rate");
+      expect(table).toBe("profiles");
       return {
         select: mocks.select.mockImplementation(() => ({
           eq: vi.fn(() => ({ single: mocks.profilesSelectSingle })),
@@ -91,7 +91,7 @@ describe("EditProfilePage", () => {
   it("renders the AvatarPicker", async () => {
     render(await EditProfilePage());
 
-    expect(screen.getByText("Agregar foto")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Subir foto" })).toBeInTheDocument();
   });
 
   it("prefills form fields from profile", async () => {
@@ -116,22 +116,20 @@ describe("EditProfilePage", () => {
     expect(screen.getByText(/Los roles nuevos los confirma un admin/)).toBeInTheDocument();
   });
 
-  it("renders disponibilidad as segmented control", async () => {
+  it("does not show availability or rates", async () => {
     render(await EditProfilePage());
 
-    expect(screen.getByText("Disponibilidad")).toBeInTheDocument();
-  });
+    expect(screen.queryByText("Disponibilidad")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Tarifa por hora")).not.toBeInTheDocument();
+    expect(screen.queryByText("Visibilidad de tarifa")).not.toBeInTheDocument();
+    expect(screen.queryByText(/tarifa/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: "Disponible" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: "Pública" })).not.toBeInTheDocument();
 
-  it("renders tarifa por hora field", async () => {
-    render(await EditProfilePage());
-
-    expect(screen.getByLabelText("Tarifa por hora")).toBeInTheDocument();
-  });
-
-  it("renders visibilidad de tarifa segmented control", async () => {
-    render(await EditProfilePage());
-
-    expect(screen.getByText("Visibilidad de tarifa")).toBeInTheDocument();
+    const selected = String(mocks.select.mock.calls[0]?.[0] ?? "");
+    expect(selected).not.toContain("disponibilidad");
+    expect(selected).not.toContain("tarifa_hora");
+    expect(selected).not.toContain("visibilidad_tarifa");
   });
 
   it("shows exactly one save control: bottom Guardar cambios", async () => {

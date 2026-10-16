@@ -57,3 +57,18 @@ describe("Modal shell layout (focused screens without TabBar)", () => {
     expect(content?.className).not.toContain("p-5");
   });
 });
+
+describe("Modal shell height chain (bug-375 #2)", () => {
+  it("grows from the body flex column down to the content slot, so centered screens can use the full viewport", () => {
+    const { container } = render(
+      <ModalLayout>
+        <div data-testid="child">x</div>
+      </ModalLayout>,
+    );
+    const shell = container.firstElementChild as HTMLElement;
+    const slot = screen.getByTestId("child").parentElement as HTMLElement;
+
+    expect(shell).toHaveClass("flex-1", "flex", "flex-col");
+    expect(slot).toHaveClass("flex-1", "flex", "flex-col");
+  });
+});

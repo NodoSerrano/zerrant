@@ -8,6 +8,7 @@ export type AgendaEvent = {
   inicio: string;
   fin: string | null;
   creado_por: string;
+  cover_url?: string | null;
 };
 
 /** Shared create/edit form defaults (edit story 6.10 reuses EventForm). */
@@ -21,6 +22,8 @@ export type EventFormDefaults = {
   inicio?: string;
   /** HH:MM wall clock */
   fin?: string;
+  /** https cover URL. Omitted when the event has no image. */
+  coverUrl?: string;
 };
 
 export type EventAttendee = {
