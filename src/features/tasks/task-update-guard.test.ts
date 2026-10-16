@@ -130,4 +130,113 @@ describe("assertTaskUpdateAllowed (ZER-42)", () => {
       reason: "creado_por is immutable",
     });
   });
+
+  it("allows the taker to release a taken task", () => {
+    const oldRow = takenTask();
+    const newRow = { ...oldRow, estado: "abierta" as const, tomada_por: null };
+
+    expect(assertTaskUpdateAllowed(oldRow, newRow, { id: taker, isAdmin: false })).toEqual({
+      ok: true,
+    });
+  });
+
+  it("allows the creator to release a taken task", () => {
+    const oldRow = takenTask();
+    const newRow = { ...oldRow, estado: "abierta" as const, tomada_por: null };
+
+    expect(assertTaskUpdateAllowed(oldRow, newRow, { id: creator, isAdmin: false })).toEqual({
+      ok: true,
+    });
+  });
+
+  it("allows an admin to release a taken task", () => {
+    const oldRow = takenTask();
+    const newRow = { ...oldRow, estado: "abierta" as const, tomada_por: null };
+
+    expect(assertTaskUpdateAllowed(oldRow, newRow, { id: stranger, isAdmin: true })).toEqual({
+      ok: true,
+    });
+  });
+
+  it("denies a stranger releasing a taken task", () => {
+    const oldRow = takenTask();
+    const newRow = { ...oldRow, estado: "abierta" as const, tomada_por: null };
+
+    expect(assertTaskUpdateAllowed(oldRow, newRow, { id: stranger, isAdmin: false }).ok).toBe(
+      false,
+    );
+  });
+
+  it("denies a release that also rewrites content", () => {
+    const oldRow = takenTask();
+    const newRow = { ...oldRow, estado: "abierta" as const, tomada_por: null, titulo: "Otro" };
+
+    expect(assertTaskUpdateAllowed(oldRow, newRow, { id: taker, isAdmin: false }).ok).toBe(false);
+  });
+
+  it("allows the creator to assign someone else from an open task", () => {
+    const oldRow = openTask();
+    const newRow = { ...oldRow, estado: "tomada" as const, tomada_por: stranger };
+
+    expect(
+      assertTaskUpdateAllowed(oldRow, newRow, {
+        id: creator,
+        isAdmin: false,
+        assigneeTier: "standard",
+      }),
+    ).toEqual({ ok: true });
+  });
+
+  it("denies assigning a tourist", () => {
+    const oldRow = openTask();
+    const newRow = { ...oldRow, estado: "tomada" as const, tomada_por: stranger };
+
+    expect(
+      assertTaskUpdateAllowed(oldRow, newRow, {
+        id: creator,
+        isAdmin: false,
+        assigneeTier: "tourist",
+      }).ok,
+    ).toBe(false);
+  });
+
+  it("allows the creator to reassign a taken task", () => {
+    const oldRow = takenTask();
+    const newRow = { ...oldRow, tomada_por: stranger };
+
+    expect(
+      assertTaskUpdateAllowed(oldRow, newRow, {
+        id: creator,
+        isAdmin: false,
+        assigneeTier: "standard",
+      }),
+    ).toEqual({ ok: true });
+  });
+
+  it("allows an admin to assign someone else", () => {
+    const oldRow = takenTask();
+    const newRow = { ...oldRow, tomada_por: stranger };
+
+    expect(
+      assertTaskUpdateAllowed(oldRow, newRow, {
+        id: "admin-1",
+        isAdmin: true,
+        assigneeTier: "standard",
+      }),
+    ).toEqual({ ok: true });
+  });
+
+  it("denies a member who is neither creator nor admin assigning someone else", () => {
+    const oldRow = openTask();
+    const newRow = { ...oldRow, estado: "tomada" as const, tomada_por: stranger };
+
+    expect(assertTaskUpdateAllowed(oldRow, newRow, { id: taker, isAdmin: false }).ok).toBe(false);
+  });
+
+  it("denies the taker reassigning to someone else", () => {
+    const oldRow = takenTask();
+    const newRow = { ...oldRow, tomada_por: stranger };
+
+    expect(assertTaskUpdateAllowed(oldRow, newRow, { id: taker, isAdmin: false }).ok).toBe(false);
+  });
 });

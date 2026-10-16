@@ -259,6 +259,22 @@ describe("TaskCard", () => {
     expect(screen.getByText("Tomar").className).toContain("text-brand-green");
   });
 
+  it("renders the taker display name when assigneeName is set", () => {
+    render(<TaskCard {...defaultProps} estado="tomada" assigneeName="Ana Sosa" />);
+
+    const line = screen.getByText("Tomada por Ana Sosa");
+    expect(line.className).toContain("text-text-muted");
+    expect(line.className).toContain("font-body");
+  });
+
+  it("does not render a uuid when a taken task has no assignee name", () => {
+    const uuid = "11111111-1111-4111-8111-111111111111";
+    render(<TaskCard {...defaultProps} estado="tomada" title={uuid} />);
+
+    expect(screen.queryByText(/Tomada por/)).not.toBeInTheDocument();
+    expect(screen.getByText(uuid)).toBeInTheDocument();
+  });
+
   it("falls back to 'Urgencia media' for an urgencia it does not know", () => {
     const unknownUrgencia = "critica" as unknown as typeof defaultProps.urgencia;
     render(<TaskCard {...defaultProps} urgencia={unknownUrgencia} />);

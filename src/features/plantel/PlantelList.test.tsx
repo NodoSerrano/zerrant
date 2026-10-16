@@ -28,7 +28,6 @@ function member(overrides: Partial<SerranoMember> = {}): SerranoMember {
     apodo: null,
     avatarUrl: null,
     tier: "standard",
-    disponibilidad: "disponible",
     roles: ["Infra"],
     skills: ["Solidity"],
     isPlatformAdmin: false,
@@ -44,7 +43,6 @@ const members: SerranoMember[] = [
     nombre: "Ada",
     apellido: "Lovelace",
     tier: "founder",
-    disponibilidad: "ocupado",
     roles: ["Tesorería"],
     skills: ["Diseño"],
   }),
@@ -54,7 +52,6 @@ const members: SerranoMember[] = [
     nombre: "Alan",
     apellido: "Turing",
     apodo: "turing",
-    disponibilidad: "solo_eventos",
     roles: ["Charlas"],
     skills: [],
   }),
@@ -108,13 +105,12 @@ describe("PlantelList", () => {
     expect(screen.getByRole("button", { name: "Todos" })).toHaveClass("bg-primary");
   });
 
-  it("Disponibles chip toggles the disponibilidad filter", () => {
+  it("does not render a Disponibles chip or availability on cards", () => {
     render(<PlantelList members={members} />);
-    fireEvent.click(screen.getByRole("button", { name: "Disponibles" }));
-    expect(screen.getByRole("button", { name: "Disponibles" })).toHaveClass("bg-primary");
-    expect(screen.getByText("Nóbel Dam")).toBeInTheDocument();
-    expect(screen.queryByText("Ada Lovelace")).not.toBeInTheDocument();
-    expect(screen.queryByText("Alan Turing")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Disponibles" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Disponible")).not.toBeInTheDocument();
+    expect(screen.queryByText("Ocupado")).not.toBeInTheDocument();
+    expect(screen.queryByText("Solo eventos")).not.toBeInTheDocument();
   });
 
   it("Por rol chip is selected while the role picker is open without a value", () => {

@@ -17,6 +17,7 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_BASE: ${{ github.event.pull_request.base.ref }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_FILES: ${{ github.event.pull_request.changed_files }}
           PR_ADDITIONS: ${{ github.event.pull_request.additions }}
@@ -31,11 +32,12 @@ jobs:
             --arg body "$PR_BODY" \
             --arg author "$PR_AUTHOR" \
             --arg branch "$PR_BRANCH" \
+            --arg base "$PR_BASE" \
             --argjson number "$PR_NUMBER" \
             --argjson files "$PR_FILES" \
             --argjson additions "$PR_ADDITIONS" \
             --argjson deletions "$PR_DELETIONS" \
-            '{repo: $repo, number: $number, title: $title, body: $body, author: $author, branch: $branch, files_changed: $files, additions: $additions, deletions: $deletions}' \
+            '{repo: $repo, number: $number, title: $title, body: $body, author: $author, branch: $branch, base: $base, files_changed: $files, additions: $additions, deletions: $deletions}' \
             > /tmp/pr.json
           echo "ok=1" >> "$GITHUB_OUTPUT"
 

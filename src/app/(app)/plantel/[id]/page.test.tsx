@@ -11,9 +11,6 @@ const mocks = vi.hoisted(() => ({
   profileRolesEqConfirmado: vi.fn(),
   profileSkillsSelect: vi.fn(),
   profileSkillsEq: vi.fn(),
-  viewerProfilesSelect: vi.fn(),
-  viewerProfilesEq: vi.fn(),
-  viewerProfilesSingle: vi.fn(),
   aportesSelect: vi.fn(),
   aportesEq: vi.fn(),
   aportesOrder: vi.fn(),
@@ -30,20 +27,11 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mocks.getUser },
     from: mocks.from.mockImplementation((table: string) => {
-      if (table === "profiles_with_rate") {
+      if (table === "profiles") {
         return {
           select: mocks.profilesSelect.mockImplementation(() => ({
             eq: mocks.profilesEq.mockImplementation(() => ({
               maybeSingle: mocks.profileMaybeSingle,
-            })),
-          })),
-        };
-      }
-      if (table === "profiles") {
-        return {
-          select: mocks.viewerProfilesSelect.mockImplementation(() => ({
-            eq: mocks.viewerProfilesEq.mockImplementation(() => ({
-              single: mocks.viewerProfilesSingle,
             })),
           })),
         };
@@ -116,11 +104,8 @@ const serranoRow = {
   nombre_visible: "nombre_apellido",
   avatar_url: null,
   tier: "standard",
-  disponibilidad: "disponible",
   bio: "Construyo infraestructura.",
   contacto_telegram: "@nobel",
-  tarifa_hora: 40,
-  visibilidad_tarifa: "privada",
 };
 
 beforeEach(() => {
@@ -129,9 +114,6 @@ beforeEach(() => {
   mocks.profileMaybeSingle.mockResolvedValue({ data: serranoRow });
   mocks.profileRolesEqConfirmado.mockResolvedValue({ data: [{ roles: { nombre: "Infra" } }] });
   mocks.profileSkillsEq.mockResolvedValue({ data: [{ skills: { nombre: "Solidity" } }] });
-  mocks.viewerProfilesSingle.mockResolvedValue({
-    data: { id: "viewer-1", is_platform_admin: false, tier: "standard" },
-  });
   mocks.aportesOrder.mockResolvedValue({ data: [], error: null });
   mocks.projectMembersOrder.mockResolvedValue({ data: [], error: null });
 });
@@ -161,17 +143,19 @@ describe("PlantelMemberPage", () => {
     expect(mocks.notFound).toHaveBeenCalled();
   });
 
-  it("reads detail from profiles_with_rate and renders MemberDetail", async () => {
+  it("reads detail from profiles without availability or rates and renders MemberDetail", async () => {
     const element = await PlantelMemberPage({ params: Promise.resolve({ id: "p1" }) });
     render(element);
 
-    expect(mocks.from).toHaveBeenCalledWith("profiles_with_rate");
+    expect(mocks.from).toHaveBeenCalledWith("profiles");
+    expect(mocks.from).not.toHaveBeenCalledWith("profiles_with_rate");
     const selected = mocks.profilesSelect.mock.calls[0][0] as string;
     expect(selected).toContain("bio");
     expect(selected).toContain("contacto_telegram");
-    expect(selected).toContain("tarifa_hora");
-    expect(selected).toContain("visibilidad_tarifa");
     expect(selected).toContain("is_platform_admin");
+    expect(selected).not.toContain("disponibilidad");
+    expect(selected).not.toContain("tarifa_hora");
+    expect(selected).not.toContain("visibilidad_tarifa");
 
     expect(screen.getByTestId("member-detail")).toBeInTheDocument();
   });
@@ -183,12 +167,6 @@ describe("PlantelMemberPage", () => {
     expect(mocks.profileRolesEqConfirmado).toHaveBeenCalledWith("confirmado", true);
     expect(mocks.profileSkillsSelect).toHaveBeenCalledWith("skills(nombre)");
     expect(mocks.profileSkillsEq).toHaveBeenCalledWith("profile_id", "p1");
-  });
-
-  it("resolves the viewer profile for admin/tarifa visibility", async () => {
-    await PlantelMemberPage({ params: Promise.resolve({ id: "p1" }) });
-    expect(mocks.viewerProfilesSelect).toHaveBeenCalledWith("id, is_platform_admin, tier");
-    expect(mocks.viewerProfilesEq).toHaveBeenCalledWith("id", "viewer-1");
   });
 
   it("queries that member's aportes ordered by fecha", async () => {

@@ -1,0 +1,55 @@
+name: Deploy
+
+on:
+  push:
+    branches: [develop, main]
+
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: deploy ${{ github.ref_name == 'main' && 'prod' || 'test' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Deploy on VPS
+        env:
+          ENV_NAME: ${{ github.ref_name == 'main' && 'prod' || 'test' }}
+          BRANCH: ${{ github.ref_name }}
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: 2.24.69.47
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: ENV_NAME,BRANCH
+          script_stop: true
+          command_timeout: 30m
+          script: |
+            set -euo pipefail
+            if [ ! -d /opt/zerrant/app/.git ]; then
+              sudo rm -rf /opt/zerrant/app
+              sudo git clone --branch "$BRANCH" git@github.com:NodoSerrano/zerrant.git /opt/zerrant/app
+            fi
+            sudo git config --global --add safe.directory /opt/zerrant/app || true
+            sudo git -C /opt/zerrant/app fetch origin "$BRANCH"
+            sudo git -C /opt/zerrant/app checkout "$BRANCH"
+            sudo git -C /opt/zerrant/app reset --hard "origin/$BRANCH"
+            SHA=$(sudo git -C /opt/zerrant/app rev-parse --short=7 HEAD)
+            sudo GIT_SHA="$SHA" GIT_REF="$BRANCH" APP_CHANNEL="$ENV_NAME" docker compose -p "zerrant-${ENV_NAME}-app" \
+              -f /opt/zerrant/app/docker-compose.app.yml \
+              --env-file "/opt/zerrant/${ENV_NAME}/app.env" \
+              up -d --build
+            PORT=$(grep '^APP_PORT=' "/opt/zerrant/${ENV_NAME}/app.env" | cut -d= -f2)
+            BASE=$(grep '^NEXT_PUBLIC_BASE_PATH=' "/opt/zerrant/${ENV_NAME}/app.env" | cut -d= -f2)
+            for i in 1 2 3 4 5 6 7 8 9 10; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:${PORT}${BASE}/auth/login" || true)
+              if [ "$code" = "200" ]; then
+                echo "ok ${ENV_NAME} ${code}"
+                exit 0
+              fi
+              sleep 3
+            done
+            echo "health failed for ${ENV_NAME}" >&2
+            exit 1

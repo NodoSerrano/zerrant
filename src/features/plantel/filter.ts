@@ -17,7 +17,6 @@ export function filterSerranos(members: SerranoMember[], filters: PlantelFilters
 
   return members.filter((member) => {
     if (!matchesQuery(member, filters.q)) return false;
-    if (filters.soloDisponibles && member.disponibilidad !== "disponible") return false;
     if (rol && !member.roles.some((item) => item.toLowerCase() === rol)) return false;
     if (skill && !member.skills.some((item) => item.toLowerCase() === skill)) return false;
     return true;

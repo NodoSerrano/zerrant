@@ -61,6 +61,15 @@ describe("parseAgendaWallClockIso", () => {
     expect(parseAgendaWallClockIso("2026-09-20", "23:30")).toBe("2026-09-21T02:30:00.000Z");
   });
 
+  it("maps a 12-hour PM label onto the same instant as 19:00 and 21:00", () => {
+    expect(parseAgendaWallClockIso("2026-09-20", "7:00 PM")).toBe(
+      parseAgendaWallClockIso("2026-09-20", "19:00"),
+    );
+    expect(parseAgendaWallClockIso("2026-09-20", "9:00 p. m.")).toBe(
+      parseAgendaWallClockIso("2026-09-20", "21:00"),
+    );
+  });
+
   it("rejects unparseable day or time", () => {
     expect(parseAgendaWallClockIso("nope", "19:00")).toBeNull();
     expect(parseAgendaWallClockIso("2026-09-20", "25:99")).toBeNull();

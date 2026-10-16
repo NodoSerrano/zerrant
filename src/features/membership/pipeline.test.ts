@@ -148,9 +148,9 @@ describe("resolveUnirmeTarget", () => {
     expect(resolveUnirmeTarget({ ...base, ...ok, profile: null })).toBe("/onboarding/step1");
   });
 
-  it("sends a user with step1 but onboarding open to step2", () => {
+  it("sends a user with step1 fields but onboarding open to step1", () => {
     expect(resolveUnirmeTarget({ ...base, ...ok, profile: step1Profile })).toBe(
-      "/onboarding/step2",
+      "/onboarding/step1",
     );
   });
 

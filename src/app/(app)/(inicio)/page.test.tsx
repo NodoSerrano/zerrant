@@ -14,6 +14,10 @@ vi.mock("@/features/profile/onboarding-gate-server", () => ({
   getOnboardingGateProfile: vi.fn(),
 }));
 
+vi.mock("@/features/membership/ser-serrano-cta-server", () => ({
+  resolveSerSerranoCtaVisibility: vi.fn().mockResolvedValue(false),
+}));
+
 vi.mock("next/navigation", () => ({
   redirect: (path: string) => {
     throw new Error(`REDIRECT:${path}`);
@@ -90,6 +94,14 @@ function mockSupabase(
     then: (cb: (v: unknown) => void) => cb({ data: profiles, error: null }),
   };
 
+  const membershipChain = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+  };
+
   return {
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1" } }, error: null }),
@@ -97,10 +109,12 @@ function mockSupabase(
     from: vi.fn().mockImplementation((table: string) => {
       if (table === "events") return eventsChain;
       if (table === "profiles") return profilesChain;
+      if (table === "membership_requests") return membershipChain;
       return eventsChain;
     }),
     eventsChain,
     profilesChain,
+    membershipChain,
   };
 }
 
@@ -153,7 +167,7 @@ describe("InicioPage (/)", () => {
       userId: "user-1",
     });
 
-    await expect(InicioPage()).rejects.toThrow("REDIRECT:/onboarding/step2");
+    await expect(InicioPage()).rejects.toThrow("REDIRECT:/onboarding/step1");
   });
 
   it("redirects missing step1 data to step1", async () => {
@@ -251,10 +265,46 @@ describe("InicioPage (/)", () => {
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
 
     render(await InicioPage());
+    expect(screen.getByRole("heading", { name: "Próximos cumpleaños" })).toBeInTheDocument();
     expect(screen.getByText("Ana García")).toBeInTheDocument();
     expect(screen.queryByText("Lejos X")).not.toBeInTheDocument();
     expect(client.from).toHaveBeenCalledWith("profiles");
     expect(client.profilesChain.neq).toHaveBeenCalledWith("tier", "tourist");
+  });
+
+  it("does not query or render member birthdays for a tourist session", async () => {
+    const { getOnboardingGateProfile } = await import("@/features/profile/onboarding-gate-server");
+    const { createClient } = await import("@/lib/supabase/server");
+    (getOnboardingGateProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      profile: { ...completeProfile, tier: "tourist" },
+      error: null,
+      userId: "user-1",
+    });
+    const client = mockSupabase({
+      profiles: [
+        {
+          id: "p-ok",
+          nombre: "Ana",
+          apellido: "García",
+          apodo: null,
+          nombre_visible: "nombre_apellido",
+          fecha_nacimiento: "1990-09-25",
+          avatar_url: null,
+          tier: "standard",
+        },
+      ],
+    });
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
+
+    render(await InicioPage());
+
+    expect(client.from).not.toHaveBeenCalledWith("profiles");
+    expect(client.profilesChain.select).not.toHaveBeenCalled();
+    expect(screen.queryByRole("heading", { name: "Próximos cumpleaños" })).not.toBeInTheDocument();
+    expect(screen.queryByText("No hay cumpleaños próximos")).not.toBeInTheDocument();
+    expect(screen.queryByText("Ana García")).not.toBeInTheDocument();
+    expect(document.body.innerHTML).not.toContain("1990-09-25");
+    expect(document.body.innerHTML).not.toContain("Ana García");
   });
 
   it("shows honest empty sections when there are no rows", async () => {
@@ -303,5 +353,39 @@ describe("InicioPage (/)", () => {
       "href",
       "https://luma.com/abc",
     );
+  });
+
+  it("shows Ser Serrano CTA when resolver returns true (ZER-171)", async () => {
+    const { getOnboardingGateProfile } = await import("@/features/profile/onboarding-gate-server");
+    const { createClient } = await import("@/lib/supabase/server");
+    const { resolveSerSerranoCtaVisibility } =
+      await import("@/features/membership/ser-serrano-cta-server");
+    (getOnboardingGateProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      profile: { ...completeProfile, tier: "tourist" },
+      error: null,
+      userId: "user-1",
+    });
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+    (resolveSerSerranoCtaVisibility as ReturnType<typeof vi.fn>).mockResolvedValueOnce(true);
+
+    render(await InicioPage());
+    expect(screen.getByRole("link", { name: /Solicitar ser Serrano/i })).toHaveAttribute(
+      "href",
+      "/solicitar",
+    );
+  });
+
+  it("hides Ser Serrano CTA when resolver returns false (ZER-171)", async () => {
+    const { getOnboardingGateProfile } = await import("@/features/profile/onboarding-gate-server");
+    const { createClient } = await import("@/lib/supabase/server");
+    (getOnboardingGateProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      profile: completeProfile,
+      error: null,
+      userId: "user-1",
+    });
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+
+    render(await InicioPage());
+    expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
   });
 });

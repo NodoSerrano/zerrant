@@ -37,6 +37,9 @@ describe("OnboardingStep1 page", () => {
         apellido: "Pérez",
         apodo: "juancito",
         fecha_nacimiento: "1990-01-15",
+        bio: "Hago luces",
+        contacto_telegram: "@juan",
+        sitio_url: "https://juan.dev",
         avatar_url: "https://sb.test/storage/v1/object/public/avatars/u/a.jpg",
         onboarding_completado_en: null,
       },
@@ -50,6 +53,9 @@ describe("OnboardingStep1 page", () => {
     expect(screen.getByLabelText("Apellido")).toHaveValue("Pérez");
     expect(screen.getByLabelText("Apodo (opcional)")).toHaveValue("juancito");
     expect(screen.getByLabelText("Fecha de nacimiento")).toHaveValue("1990-01-15");
+    expect(screen.getByLabelText("Bio")).toHaveValue("Hago luces");
+    expect(screen.getByLabelText("Telegram / contacto")).toHaveValue("@juan");
+    expect(screen.getByLabelText("Sitio o portfolio (opcional)")).toHaveValue("https://juan.dev");
     expect(screen.getByRole("img", { name: "Foto de perfil" })).toBeInTheDocument();
   });
 
@@ -95,7 +101,7 @@ describe("OnboardingStep1 page", () => {
     render(await OnboardingStep1());
 
     expect(screen.getByLabelText("Nombre")).toHaveValue("");
-    expect(screen.getByRole("button", { name: "Guardar y continuar" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Guardar perfil" })).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
@@ -116,7 +122,7 @@ describe("OnboardingStep1 page", () => {
       "/onboarding/step1",
     );
     expect(screen.queryByLabelText("Nombre")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Guardar y continuar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Guardar perfil" })).not.toBeInTheDocument();
   });
 
   it("still renders the form when there is no session (auth redirect is proxy-owned)", async () => {
@@ -128,6 +134,6 @@ describe("OnboardingStep1 page", () => {
 
     render(await OnboardingStep1());
 
-    expect(screen.getByRole("button", { name: "Guardar y continuar" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Guardar perfil" })).toBeInTheDocument();
   });
 });

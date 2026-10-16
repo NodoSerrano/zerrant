@@ -31,6 +31,24 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const creador = task.creador as unknown as Profile | null;
   const tomador = task.tomador as unknown as Profile | null;
 
+  const canAssign =
+    (task.creado_por === user.id || Boolean(currentProfile?.is_platform_admin)) &&
+    (task.estado === "abierta" || task.estado === "tomada") &&
+    Boolean(currentProfile && (currentProfile.tier !== "tourist" || currentProfile.is_platform_admin));
+
+  let assignees: { id: string; name: string }[] = [];
+  if (canAssign) {
+    const { data: people } = await supabase
+      .from("profiles")
+      .select("id, nombre, apellido, apodo, nombre_visible")
+      .neq("tier", "tourist");
+    assignees = (people ?? [])
+      .flatMap((person) => {
+        const name = displayName(person);
+        return name ? [{ id: person.id, name }] : [];
+      });
+  }
+
   return (
     <TaskDetailView
       taskId={task.id}
@@ -46,6 +64,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
       isTaker={task.tomada_por === user.id}
       isAdmin={currentProfile?.is_platform_admin ?? false}
       isSerrano={Boolean(currentProfile && currentProfile.tier !== "tourist")}
+      assignees={assignees}
     />
   );
 }
