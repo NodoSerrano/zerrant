@@ -11,6 +11,7 @@ import { MemberConfirmedNotice } from "@/features/membership/MemberConfirmedNoti
 import { recentMemberConfirmation } from "@/features/membership/member-confirmed";
 import { SerSerranoCta } from "@/features/membership/SerSerranoCta";
 import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "@/features/membership/request-state";
+import { formatDayKey, formatEventTimeRange } from "@/features/events/day";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -51,6 +52,19 @@ export default async function ProfilePage() {
       .maybeSingle();
 
     const activeRequest = pendingError ? null : pendingRequest;
+    const { data: booking } = activeRequest
+      ? await supabase
+          .from("interview_bookings")
+          .select("id, interview_slots(starts_at, ends_at)")
+          .eq("request_id", activeRequest.id)
+          .maybeSingle()
+      : { data: null };
+
+    const slotEmbed = booking?.interview_slots;
+    const bookedSlot = Array.isArray(slotEmbed) ? slotEmbed[0] : slotEmbed;
+    const bookingLabel = bookedSlot
+      ? `${formatDayKey(new Date(bookedSlot.starts_at))} · ${formatEventTimeRange(bookedSlot.starts_at, bookedSlot.ends_at)}`
+      : null;
 
     return (
       <div className="flex flex-col gap-4">
@@ -80,7 +94,7 @@ export default async function ProfilePage() {
         </div>
 
         {activeRequest ? (
-          <PendingMembershipCard estado={activeRequest.estado} />
+          <PendingMembershipCard estado={activeRequest.estado} bookingLabel={bookingLabel} />
         ) : (
           <SerSerranoCta />
         )}

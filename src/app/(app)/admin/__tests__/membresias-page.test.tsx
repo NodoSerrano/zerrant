@@ -40,6 +40,22 @@ vi.mock("@/lib/supabase/server", () => ({
           })),
         };
       }
+      if (table === "interview_bookings") {
+        return {
+          select: vi.fn(() => Promise.resolve({ data: [] })),
+        };
+      }
+      if (table === "interview_slot_availability") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              gt: vi.fn(() => ({
+                order: vi.fn(() => Promise.resolve({ data: [] })),
+              })),
+            })),
+          })),
+        };
+      }
       if (table === "interview_notes") {
         const chain = {
           in: vi.fn(),

@@ -107,7 +107,23 @@ describe("RequestCard", () => {
     expect(chip?.className).toContain(cls);
   });
 
-  it("never renders Rechazar", () => {
+  it("shows the booked slot and who it belongs to via the applicant card", () => {
+    render(
+      <RequestCard
+        request={{
+          ...mockRequest,
+          booking: {
+            starts_at: "2026-10-07T18:00:00.000Z",
+            ends_at: "2026-10-07T18:30:00.000Z",
+          },
+        }}
+      />,
+    );
+    expect(screen.getByText(/Entrevista:/)).toBeInTheDocument();
+    expect(screen.getByText("Sofía Vega")).toBeInTheDocument();
+  });
+
+  it("never shows reject copy", () => {
     for (const estado of MEMBERSHIP_REQUEST_ESTADOS) {
       const { container, unmount } = render(<RequestCard request={{ ...mockRequest, estado }} />);
       expect(container.textContent).not.toMatch(/rechaz/i);

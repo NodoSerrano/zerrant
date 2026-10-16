@@ -1,7 +1,9 @@
 import { CalendarCheck, CalendarClock, CalendarPlus, Hourglass, UserCheck } from "lucide-react";
 import type { ComponentType } from "react";
+import Link from "next/link";
 import { MembershipEstadoChip } from "@/components/MembershipEstadoChip";
 import { type MembershipRequestEstado } from "@/features/membership/request-state";
+import { isBookableInterviewEstado } from "@/features/membership/interview-slots";
 
 type StateCopy = {
   Icon: ComponentType<{ size?: number; className?: string }>;
@@ -39,7 +41,13 @@ const COPY: Partial<Record<MembershipRequestEstado, StateCopy>> = {
 };
 
 /** Tourist membership card while a request is in progress (ZER-110, ZER-143). */
-export function PendingMembershipCard({ estado }: { estado: MembershipRequestEstado }) {
+export function PendingMembershipCard({
+  estado,
+  bookingLabel,
+}: {
+  estado: MembershipRequestEstado;
+  bookingLabel?: string | null;
+}) {
   const { Icon, description } = COPY[estado] ?? PENDIENTE;
 
   return (
@@ -56,6 +64,16 @@ export function PendingMembershipCard({ estado }: { estado: MembershipRequestEst
         </div>
       </div>
       <p className="font-body text-[13px] text-text-secondary leading-relaxed">{description}</p>
+      {bookingLabel ? (
+        <p className="font-body text-[13px] text-text-primary">Reservaste {bookingLabel}</p>
+      ) : isBookableInterviewEstado(estado) ? (
+        <Link
+          href="/solicitar/entrevista"
+          className="font-display text-[14px] font-semibold text-brand-blue"
+        >
+          Elegir horario
+        </Link>
+      ) : null}
     </div>
   );
 }

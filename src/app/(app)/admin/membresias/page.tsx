@@ -11,6 +11,8 @@ import { displayName } from "@/features/profile/displayName";
 import type { Tier } from "@/features/profile/types";
 import Link from "next/link";
 import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "@/features/membership/request-state";
+import { PublishInterviewSlotForm } from "@/features/membership/PublishInterviewSlotForm";
+import { formatDayKey, formatEventTimeRange } from "@/features/events/day";
 
 export const dynamic = "force-dynamic";
 
@@ -93,6 +95,8 @@ export default async function AdminMembresiasPage() {
     },
     { count: pendingCount, data: pendingRequests },
     { count: rolesCount },
+    { data: bookings },
+    { data: openSlots },
   ] = await Promise.all([
     supabase.auth.getUser(),
     supabase
@@ -107,7 +111,22 @@ export default async function AdminMembresiasPage() {
       .from("profile_roles")
       .select("id", { count: "exact", head: true })
       .eq("confirmado", false),
+    supabase.from("interview_bookings").select("request_id, interview_slots(starts_at, ends_at)"),
+    supabase
+      .from("interview_slot_availability")
+      .select("id, starts_at, ends_at, booked")
+      .eq("booked", false)
+      .gt("starts_at", new Date().toISOString())
+      .order("starts_at", { ascending: true }),
   ]);
+
+  const bookingByRequest = new Map<string, { starts_at: string; ends_at: string }>();
+  for (const row of bookings ?? []) {
+    const slot = Array.isArray(row.interview_slots) ? row.interview_slots[0] : row.interview_slots;
+    if (slot?.starts_at && slot.ends_at) {
+      bookingByRequest.set(row.request_id, { starts_at: slot.starts_at, ends_at: slot.ends_at });
+    }
+  }
 
   const requests: RequestCardData[] = (Array.isArray(pendingRequests) ? pendingRequests : [])
     .filter(
@@ -124,6 +143,7 @@ export default async function AdminMembresiasPage() {
       mensaje: row.mensaje,
       created_at: row.created_at,
       screening: toScreening(row),
+      booking: bookingByRequest.get(row.id) ?? null,
       profile: {
         id: row.profiles.id,
         nombre: row.profiles.nombre,
@@ -245,6 +265,30 @@ export default async function AdminMembresiasPage() {
             ))
           )}
         </div>
+
+        <section className="flex flex-col gap-3 pt-2">
+          <h2 className="font-display text-[16px] font-semibold text-text-primary">
+            Horarios de entrevista
+          </h2>
+          <PublishInterviewSlotForm />
+          {(openSlots ?? []).filter((slot) => slot.id && slot.starts_at && slot.ends_at).length ===
+          0 ? (
+            <p className="font-body text-[13px] text-text-muted">
+              No hay horarios libres publicados.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-1">
+              {(openSlots ?? []).map((slot) =>
+                slot.id && slot.starts_at && slot.ends_at ? (
+                  <li key={slot.id} className="font-body text-[13px] text-text-secondary">
+                    {formatDayKey(new Date(slot.starts_at))} ·{" "}
+                    {formatEventTimeRange(slot.starts_at, slot.ends_at)}
+                  </li>
+                ) : null,
+              )}
+            </ul>
+          )}
+        </section>
       </div>
     </div>
   );

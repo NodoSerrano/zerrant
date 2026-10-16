@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   profilesSelectSingle: vi.fn(),
   requestsMaybeSingle: vi.fn(),
+  bookingMaybeSingle: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -28,6 +29,13 @@ vi.mock("@/lib/supabase/server", () => ({
             eq: () => ({
               in: () => ({ limit: () => ({ maybeSingle: mocks.requestsMaybeSingle }) }),
             }),
+          }),
+        };
+      }
+      if (table === "interview_bookings") {
+        return {
+          select: () => ({
+            eq: () => ({ maybeSingle: mocks.bookingMaybeSingle }),
           }),
         };
       }
@@ -63,6 +71,7 @@ beforeEach(() => {
   mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
   mocks.profilesSelectSingle.mockResolvedValue({ data: touristProfile, error: null });
   mocks.requestsMaybeSingle.mockResolvedValue({ data: null, error: null });
+  mocks.bookingMaybeSingle.mockResolvedValue({ data: null, error: null });
   vi.mocked(useTheme).mockReturnValue({ dark: false, toggle: mockToggle });
 });
 

@@ -9,6 +9,7 @@ import { MembershipEstadoChip } from "./MembershipEstadoChip";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { Avatar } from "./Avatar";
 import { type Profile } from "@/features/profile/types";
+import { formatDayKey, formatEventTimeRange } from "@/features/events/day";
 import {
   APORTE_ACTITUD_LABELS,
   APORTE_MAYOR_LABELS,
@@ -45,6 +46,11 @@ export interface RequestScreeningData {
   mensaje: string | null;
 }
 
+export interface RequestCardBooking {
+  starts_at: string;
+  ends_at: string;
+}
+
 export interface RequestCardData {
   id: string;
   profile: RequestProfileData;
@@ -52,6 +58,7 @@ export interface RequestCardData {
   created_at: string;
   estado: MembershipRequestEstado;
   screening?: RequestScreeningData | null;
+  booking?: RequestCardBooking | null;
 }
 
 function timeAgo(date: string): string {
@@ -317,6 +324,13 @@ export function RequestCard({ request }: { request: RequestCardData }) {
           </div>
         </div>
       </div>
+
+      {request.booking ? (
+        <p className="font-body text-[13px] text-text-secondary">
+          Entrevista: {formatDayKey(new Date(request.booking.starts_at))} ·{" "}
+          {formatEventTimeRange(request.booking.starts_at, request.booking.ends_at)}
+        </p>
+      ) : null}
 
       {hasScreeningObject ? (
         <ScreeningDetails screening={screening} />

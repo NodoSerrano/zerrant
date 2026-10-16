@@ -28,13 +28,19 @@ export function EnviadoConfirmation({ progress }: { progress?: PipelineProgressD
       </div>
 
       <Link
-        href={progress ? MEMBERSHIP_STATUS_PATH : "/"}
+        href="/solicitar/entrevista"
         className={cn(
           "inline-flex items-center justify-center rounded-pill font-display text-[16px] font-medium text-on-primary",
           BRAND_GRADIENT_CLASS,
           BRAND_CTA_SHADOW_CLASS,
           "h-[54px] px-6 w-full",
         )}
+      >
+        Elegir horario de entrevista
+      </Link>
+      <Link
+        href={progress ? MEMBERSHIP_STATUS_PATH : "/"}
+        className="inline-flex items-center justify-center rounded-pill font-display text-[16px] font-medium text-text-secondary h-[54px] px-6 w-full"
       >
         {progress ? "Ver mi proceso" : "Volver al inicio"}
       </Link>
