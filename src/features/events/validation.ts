@@ -12,6 +12,27 @@ const PARSE_ERROR = "Revisá la fecha y la hora del evento.";
 
 const DAY_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
+const MERIDIEM_RE = /^(\d{1,2}):([0-5]\d)(?::[0-5]\d)?\s*([ap])\.?\s*m\.?$/i;
+
+/** 24-hour HH:MM. A 12-hour label is converted so PM cannot be stored as the morning hour. */
+function normalizeAgendaTimeHm(raw: string): string | null {
+  const value = raw.trim().replace(/\s+/g, " ");
+  const h24 = TIME_RE.exec(value);
+  if (h24) return `${h24[1]}:${h24[2]}`;
+
+  const h12 = MERIDIEM_RE.exec(value);
+  if (!h12) return null;
+
+  let hour = Number(h12[1]);
+  const minute = h12[2];
+  if (hour < 1 || hour > 12) return null;
+
+  const pm = h12[3]!.toLowerCase() === "p";
+  if (hour === 12) hour = pm ? 12 : 0;
+  else if (pm) hour += 12;
+
+  return `${String(hour).padStart(2, "0")}:${minute}`;
+}
 
 type ZoneParts = {
   year: number;
@@ -77,12 +98,9 @@ function isValidCalendarDay(dayKey: string): boolean {
  */
 export function parseAgendaWallClockIso(dayKey: string, timeHm: string): string | null {
   if (!DAY_KEY_RE.test(dayKey) || !isValidCalendarDay(dayKey)) return null;
-  const match = TIME_RE.exec(timeHm.trim());
-  if (!match) return null;
-  const hh = match[1];
-  const mm = match[2];
-  const ss = match[3] ?? "00";
-  const iso = zonedTimeToUtc(dayKey, `${hh}:${mm}:${ss}`).toISOString();
+  const hm = normalizeAgendaTimeHm(timeHm);
+  if (!hm) return null;
+  const iso = zonedTimeToUtc(dayKey, `${hm}:00`).toISOString();
   return iso;
 }
 

@@ -15,7 +15,9 @@ const mocks = vi.hoisted(() => ({
   eventsDeleteEq: vi.fn(),
   eventsDeleteSelect: vi.fn(),
   eventsInsertPayload: null as unknown,
+  eventMaybeSingle: vi.fn(),
   attendanceUpsert: vi.fn(),
+  attendanceDelete: vi.fn(),
   attendanceSelect: vi.fn(),
   attendanceUpsertPayload: null as unknown,
   attendanceUpsertOptions: null as unknown,
@@ -59,6 +61,11 @@ vi.mock("@/lib/supabase/server", () => ({
               select: mocks.eventsDeleteSelect,
             })),
           })),
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              maybeSingle: mocks.eventMaybeSingle,
+            })),
+          })),
         };
       }
       if (table === "event_attendance") {
@@ -72,6 +79,7 @@ vi.mock("@/lib/supabase/server", () => ({
               };
             },
           ),
+          delete: mocks.attendanceDelete,
         };
       }
       return {};
@@ -95,6 +103,14 @@ beforeEach(() => {
   mocks.eventsUpdatePayload = null;
   mocks.attendanceUpsertPayload = null;
   mocks.attendanceUpsertOptions = null;
+  mocks.eventMaybeSingle.mockResolvedValue({
+    data: { creado_por: "serrano-1", cover_url: null },
+    error: null,
+  });
+  mocks.profilesSelectSingle.mockResolvedValue({
+    data: { tier: "standard", is_platform_admin: false },
+    error: null,
+  });
 });
 
 function setupAuth(userId = "serrano-1") {
@@ -321,6 +337,69 @@ describe("updateEvent", () => {
     expect(result).toEqual({ error: "No encontramos el evento." });
     expect(mocks.eventsUpdate).not.toHaveBeenCalled();
   });
+
+  it("rejects a member who is neither the creator nor a platform admin", async () => {
+    setupAuth("other-member");
+    mocks.eventMaybeSingle.mockResolvedValue({
+      data: { creado_por: "creator-1", cover_url: "https://images.lumacdn.com/uploads/cover.png" },
+      error: null,
+    });
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: { is_platform_admin: false },
+      error: null,
+    });
+
+    const result = await updateEvent(null, makeUpdateForm());
+
+    expect(result).toEqual({ error: "No podés modificar este evento." });
+    expect(mocks.eventsUpdate).not.toHaveBeenCalled();
+  });
+
+  it("lets a platform admin update an event they did not create", async () => {
+    setupAuth("admin-1");
+    mocks.eventMaybeSingle.mockResolvedValue({
+      data: { creado_por: "creator-1" },
+      error: null,
+    });
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: { is_platform_admin: true },
+      error: null,
+    });
+    mocks.eventsUpdateSelect.mockResolvedValue({ error: null, data: [{ id: "evt-1" }] });
+
+    await expect(updateEvent(null, makeUpdateForm())).rejects.toThrow(
+      "NEXT_REDIRECT:/agenda/evt-1",
+    );
+    expect(mocks.eventsUpdate).toHaveBeenCalled();
+  });
+
+  it("updates only titulo and does not clear descripcion, schedule, or cover", async () => {
+    setupAuth("serrano-1");
+    mocks.eventMaybeSingle.mockResolvedValue({
+      data: {
+        creado_por: "serrano-1",
+        descripcion: "Se mantiene",
+        lugar: "Salón",
+        inicio: "2026-09-20T22:00:00.000Z",
+        fin: "2026-09-21T00:00:00.000Z",
+        cover_url: "https://images.lumacdn.com/uploads/cover.png",
+      },
+      error: null,
+    });
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: { is_platform_admin: false },
+      error: null,
+    });
+    mocks.eventsUpdateSelect.mockResolvedValue({ error: null, data: [{ id: "evt-1" }] });
+
+    const fd = new FormData();
+    fd.set("eventId", "evt-1");
+    fd.set("titulo", "Solo título");
+
+    await expect(updateEvent(null, fd)).rejects.toThrow("NEXT_REDIRECT:/agenda/evt-1");
+
+    expect(mocks.eventsUpdatePayload).toEqual({ titulo: "Solo título" });
+  });
 });
 
 describe("deleteEvent", () => {
@@ -337,6 +416,7 @@ describe("deleteEvent", () => {
     await expect(deleteEvent(null, makeDeleteForm())).rejects.toThrow("NEXT_REDIRECT:/agenda");
 
     expect(mocks.eventsDeleteEq).toHaveBeenCalledWith("id", "evt-1");
+    expect(mocks.attendanceDelete).not.toHaveBeenCalled();
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/agenda");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/agenda/evt-1");
   });
@@ -349,6 +429,24 @@ describe("deleteEvent", () => {
 
     expect(result).toEqual({ error: "No pudimos eliminar el evento." });
     expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("rejects a member who is neither the creator nor a platform admin", async () => {
+    setupAuth("other-member");
+    mocks.eventMaybeSingle.mockResolvedValue({
+      data: { creado_por: "creator-1" },
+      error: null,
+    });
+    mocks.profilesSelectSingle.mockResolvedValue({
+      data: { is_platform_admin: false },
+      error: null,
+    });
+
+    const result = await deleteEvent(null, makeDeleteForm());
+
+    expect(result).toEqual({ error: "No podés eliminar este evento." });
+    expect(mocks.eventsDelete).not.toHaveBeenCalled();
+    expect(mocks.attendanceUpsert).not.toHaveBeenCalled();
   });
 
   it("returns unauthorized when there is no session", async () => {

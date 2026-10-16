@@ -30,7 +30,7 @@ export default async function AgendaPage() {
   const [{ data: events }, { data: profile }, lumaResult, showSerSerranoCta] = await Promise.all([
     supabase
       .from("events")
-      .select("id, titulo, descripcion, lugar, inicio, fin, creado_por")
+      .select("id, titulo, descripcion, lugar, inicio, fin, creado_por, cover_url")
       .order("inicio", { ascending: true }),
     profileRead,
     fetchLumaCalendarEvents(),

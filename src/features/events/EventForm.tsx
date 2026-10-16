@@ -110,6 +110,15 @@ export function EventForm({
           onChange={(event) => setLugar(event.target.value)}
           required
         />
+
+        <Input
+          name="cover_url"
+          label="Imagen"
+          type="url"
+          inputMode="url"
+          placeholder="https://..."
+          defaultValue={defaults?.coverUrl}
+        />
       </div>
 
       {state?.error ? (
