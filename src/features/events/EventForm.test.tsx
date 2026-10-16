@@ -92,7 +92,8 @@ describe("EventForm", () => {
 
     fireEvent.change(screen.getByLabelText("Título"), { target: { value: "Charla" } });
     fireEvent.click(screen.getByLabelText("Fecha"));
-    fireEvent.click(screen.getByRole("button", { name: "15" }));
+    // Today is labeled "Hoy, 15", not "15". Exact name fails on the 15th.
+    fireEvent.click(screen.getByRole("button", { name: /^(Hoy, )?15$/ }));
     fireEvent.click(screen.getByLabelText("Inicio"));
     fireEvent.click(screen.getByRole("button", { name: "Hora 18" }));
     fireEvent.click(screen.getByRole("button", { name: "Minuto 30" }));
