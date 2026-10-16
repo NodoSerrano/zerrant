@@ -2,27 +2,48 @@ import { createClient } from "@/lib/supabase/server";
 import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "./request-state";
 import { shouldShowSerSerranoCta } from "./ser-serrano-cta";
 
+type ServerClient = Awaited<ReturnType<typeof createClient>>;
+
+export type ResolveSerSerranoCtaOptions = {
+  /** Page client. Omit only when the caller has not opened one yet. */
+  client?: ServerClient;
+  /**
+   * Tier already loaded by the page. Omit to read `profiles`.
+   * Null or unknown fails closed and does not query membership requests.
+   */
+  tier?: string | null;
+};
+
 /**
  * Server-side gate for the persistent Ser Serrano CTA (ZER-171).
- * Fail closed on infra errors: never invent pending, never show CTA on unknown tier.
+ * Fail closed on profile errors, unknown tier, and membership_requests read errors.
+ * A failed request read must not send a tourist who may already be pending back to /solicitar.
  */
-export async function resolveSerSerranoCtaVisibility(userId: string): Promise<boolean> {
-  const supabase = await createClient();
+export async function resolveSerSerranoCtaVisibility(
+  userId: string,
+  options?: ResolveSerSerranoCtaOptions,
+): Promise<boolean> {
+  const supabase = options?.client ?? (await createClient());
+  const tierProvided = options != null && "tier" in options;
+  let tier = tierProvided ? options.tier : undefined;
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("tier")
-    .eq("id", userId)
-    .maybeSingle();
+  if (!tierProvided) {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("tier")
+      .eq("id", userId)
+      .maybeSingle();
 
-  if (profileError || !profile) {
-    if (profileError) {
-      console.error("[ser-serrano-cta] profile read failed", profileError);
+    if (profileError || !profile) {
+      if (profileError) {
+        console.error("[ser-serrano-cta] profile read failed", profileError);
+      }
+      return false;
     }
-    return false;
+    tier = profile.tier;
   }
 
-  if (profile.tier !== "tourist") {
+  if (tier !== "tourist") {
     return false;
   }
 
@@ -36,15 +57,11 @@ export async function resolveSerSerranoCtaVisibility(userId: string): Promise<bo
 
   if (pendingError) {
     console.error("[ser-serrano-cta] membership_requests read failed", pendingError);
-    // Soft-allow CTA when request status is unknown (same spirit as profile shell).
-    return shouldShowSerSerranoCta({
-      tier: profile.tier,
-      hasActiveMembershipRequest: false,
-    });
+    return false;
   }
 
   return shouldShowSerSerranoCta({
-    tier: profile.tier,
+    tier,
     hasActiveMembershipRequest: Boolean(pendingRequest),
   });
 }

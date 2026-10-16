@@ -172,11 +172,13 @@ describe("PlantelPage", () => {
       "href",
       "/solicitar",
     );
+    expect(screen.getByTestId("ser-serrano-cta-stack")).toBeInTheDocument();
   });
 
   it("hides Ser Serrano CTA by default for members (ZER-171)", async () => {
     const element = await PlantelPage();
-    render(element);
+    const { container } = render(element);
     expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
+    expect(container.querySelector("[data-testid=ser-serrano-cta-stack]")).not.toBeInTheDocument();
   });
 });

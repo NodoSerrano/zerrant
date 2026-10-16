@@ -48,18 +48,27 @@ export default async function InicioPage() {
   const nowIso = now.toISOString();
   const today = formatDayKey(now);
 
-  const [{ data: events }, { data: profiles }, lumaResult, { data: approvedRequest }] =
-    await Promise.all([
-      supabase
-        .from("events")
-        .select("id, titulo, descripcion, lugar, inicio, fin, creado_por")
-        .gte("inicio", nowIso)
-        .order("inicio", { ascending: true })
-        .limit(UPCOMING_EVENTS_LIMIT),
-      supabase.from("profiles").select(BIRTHDAY_PROFILE_COLUMNS).neq("tier", "tourist"),
-      fetchLumaCalendarEvents(),
-      recentMemberConfirmation(supabase, userId, now),
-    ]);
+  const [
+    { data: events },
+    { data: profiles },
+    lumaResult,
+    { data: approvedRequest },
+    showSerSerranoCta,
+  ] = await Promise.all([
+    supabase
+      .from("events")
+      .select("id, titulo, descripcion, lugar, inicio, fin, creado_por")
+      .gte("inicio", nowIso)
+      .order("inicio", { ascending: true })
+      .limit(UPCOMING_EVENTS_LIMIT),
+    supabase.from("profiles").select(BIRTHDAY_PROFILE_COLUMNS).neq("tier", "tourist"),
+    fetchLumaCalendarEvents(),
+    recentMemberConfirmation(supabase, userId, now),
+    resolveSerSerranoCtaVisibility(userId, {
+      client: supabase,
+      tier: profile?.tier ?? null,
+    }),
+  ]);
 
   const internal = ((events ?? []) as AgendaEvent[]).map(internalEventToAgendaItem);
   const luma = lumaResult.ok ? lumaResult.events : [];
@@ -83,7 +92,6 @@ export default async function InicioPage() {
   });
 
   const showCommunityHub = Boolean(profile && profile.tier !== "tourist");
-  const showSerSerranoCta = userId ? await resolveSerSerranoCtaVisibility(userId) : false;
 
   return (
     <InicioHub

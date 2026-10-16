@@ -34,7 +34,7 @@ export default async function PlantelPage() {
     supabase.from("profile_skills").select("profile_id, skills(nombre)"),
     supabase.from("roles").select("nombre").order("nombre", { ascending: true }),
     supabase.from("skills").select("nombre").order("nombre", { ascending: true }),
-    resolveSerSerranoCtaVisibility(user.id),
+    resolveSerSerranoCtaVisibility(user.id, { client: supabase }),
   ]);
 
   const members = buildSerranoMembers(
@@ -50,10 +50,15 @@ export default async function PlantelPage() {
     .map((row) => row.nombre)
     .filter((nombre): nombre is string => Boolean(nombre));
 
+  const list = (
+    <PlantelList members={members} roleOptions={roleOptions} skillOptions={skillOptions} />
+  );
+  if (!showSerSerranoCta) return list;
+
   return (
-    <div className="flex flex-col gap-4">
-      {showSerSerranoCta ? <SerSerranoCta /> : null}
-      <PlantelList members={members} roleOptions={roleOptions} skillOptions={skillOptions} />
+    <div className="flex flex-col gap-4" data-testid="ser-serrano-cta-stack">
+      <SerSerranoCta />
+      {list}
     </div>
   );
 }

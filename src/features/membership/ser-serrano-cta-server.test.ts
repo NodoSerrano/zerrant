@@ -59,10 +59,39 @@ describe("resolveSerSerranoCtaVisibility (ZER-171)", () => {
     await expect(resolveSerSerranoCtaVisibility("u1")).resolves.toBe(false);
   });
 
-  it("soft-allows CTA when request read fails for a tourist", async () => {
+  it("fails closed when request read fails for a tourist", async () => {
     mocks.profileMaybeSingle.mockResolvedValue({ data: { tier: "tourist" }, error: null });
     mocks.requestMaybeSingle.mockResolvedValue({ data: null, error: { message: "db" } });
 
-    await expect(resolveSerSerranoCtaVisibility("u1")).resolves.toBe(true);
+    await expect(resolveSerSerranoCtaVisibility("u1")).resolves.toBe(false);
+  });
+
+  it("reuses a page client and a known tier instead of opening another client", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    const client = await createClient();
+    (createClient as ReturnType<typeof vi.fn>).mockClear();
+    mocks.requestMaybeSingle.mockResolvedValue({ data: null, error: null });
+
+    await expect(resolveSerSerranoCtaVisibility("u1", { client, tier: "tourist" })).resolves.toBe(
+      true,
+    );
+
+    expect(createClient).not.toHaveBeenCalled();
+    expect(mocks.profileMaybeSingle).not.toHaveBeenCalled();
+    expect(mocks.requestMaybeSingle).toHaveBeenCalled();
+  });
+
+  it("skips the request read when the page already knows a non-tourist tier", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    const client = await createClient();
+    (createClient as ReturnType<typeof vi.fn>).mockClear();
+
+    await expect(resolveSerSerranoCtaVisibility("u1", { client, tier: "member" })).resolves.toBe(
+      false,
+    );
+
+    expect(createClient).not.toHaveBeenCalled();
+    expect(mocks.profileMaybeSingle).not.toHaveBeenCalled();
+    expect(mocks.requestMaybeSingle).not.toHaveBeenCalled();
   });
 });
