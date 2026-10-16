@@ -192,6 +192,55 @@ export type Database = {
           },
         ];
       };
+      interview_notes: {
+        Row: {
+          author_id: string;
+          body: string;
+          created_at: string;
+          id: string;
+          request_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          author_id: string;
+          body: string;
+          created_at?: string;
+          id?: string;
+          request_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          author_id?: string;
+          body?: string;
+          created_at?: string;
+          id?: string;
+          request_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "interview_notes_author_id_fkey";
+            columns: ["author_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "interview_notes_author_id_fkey";
+            columns: ["author_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles_with_rate";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "interview_notes_request_id_fkey";
+            columns: ["request_id"];
+            isOneToOne: false;
+            referencedRelation: "membership_requests";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       membership_request_events: {
         Row: {
           actor_id: string | null;
@@ -801,6 +850,21 @@ export type Database = {
             | "unsupported_tier"
             | "invalid_motivo"
             | "conflict";
+        };
+      };
+      upsert_interview_note: {
+        Args: {
+          p_body: string;
+          p_note_id?: string;
+          p_request_id?: string;
+        };
+        Returns: {
+          author_id: string;
+          body: string;
+          created_at: string;
+          id: string;
+          request_id: string;
+          updated_at: string;
         };
       };
     };
