@@ -81,6 +81,46 @@ describe("LoginPage", () => {
     expect(cuentaLink.closest("a")).toHaveAttribute("href", "/auth/signup");
   });
 
+  it("shows the git stamp when the build baked channel, branch and sha", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_CHANNEL", "prod");
+    vi.stubEnv("NEXT_PUBLIC_GIT_REF", "main");
+    vi.stubEnv("NEXT_PUBLIC_GIT_SHA", "694ef9b");
+    vi.resetModules();
+    const { default: StampedLoginPage } = await import("@/app/auth/login/page");
+    render(<StampedLoginPage />);
+    expect(screen.getByTestId("build-stamp")).toHaveTextContent("prod · main · 694ef9b");
+    expect(screen.queryByRole("button", { name: "694ef9b" })).not.toBeInTheDocument();
+  });
+
+  it("opens merged PR history when the test sha is clicked", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_CHANNEL", "test");
+    vi.stubEnv("NEXT_PUBLIC_GIT_REF", "develop");
+    vi.stubEnv("NEXT_PUBLIC_GIT_SHA", "7151799");
+    vi.stubEnv("NEXT_PUBLIC_BASE_PATH", "/zerrant-test");
+    vi.resetModules();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        versions: [
+          {
+            sha: "7151799",
+            title: "feat(auth): stamp channel, branch and sha on the login",
+            pr: 124,
+            url: "https://github.com/NodoSerrano/zerrant/pull/124",
+            date: "2026-10-16T02:38:33Z",
+          },
+        ],
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { default: StampedLoginPage } = await import("@/app/auth/login/page");
+    render(<StampedLoginPage />);
+    fireEvent.click(screen.getByRole("button", { name: "7151799" }));
+    const link = await screen.findByRole("link", { name: "PR #124" });
+    expect(link).toHaveAttribute("href", "https://github.com/NodoSerrano/zerrant/pull/124");
+    expect(fetchMock).toHaveBeenCalledWith("/zerrant-test/api/deploy-history");
+  });
+
   it("shows error message after failed submission", async () => {
     mockSignInWithPassword.mockReturnValue({ error: "Credenciales inválidas" });
     render(<LoginPage />);

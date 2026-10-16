@@ -18,13 +18,14 @@ export function getSupabaseAvatarRemotePatterns(): AvatarRemotePattern[] {
   }
 
   try {
-    const { protocol, hostname, port } = new URL(url);
+    const { protocol, hostname, port, pathname } = new URL(url);
+    const prefix = pathname.replace(/\/$/, "");
     return [
       {
         protocol: protocol.replace(":", "") as "http" | "https",
         hostname,
         port,
-        pathname: "/storage/v1/object/public/avatars/**",
+        pathname: `${prefix}/storage/v1/object/public/avatars/**`,
       },
     ];
   } catch {
@@ -69,7 +70,7 @@ function matchesAvatarRemotePattern(pattern: AvatarRemotePattern, url: URL): boo
   if (pattern.port !== url.port) return false;
   if (pattern.hostname !== url.hostname) return false;
 
-  // next.config uses pathname `/storage/v1/object/public/avatars/**`
-  const base = "/storage/v1/object/public/avatars";
+  // next.config pathname is `{supabase path}/storage/v1/object/public/avatars/**`
+  const base = pattern.pathname.replace(/\/\*\*$/, "");
   return url.pathname === base || url.pathname.startsWith(`${base}/`);
 }

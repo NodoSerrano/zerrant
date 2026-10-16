@@ -4,6 +4,7 @@ import {
   buildDayStrip,
   dayBoundsIso,
   formatDayKey,
+  formatEventDuration,
   formatEventTimeRange,
   parseDayKey,
   wallClockHmFromIso,
@@ -69,6 +70,18 @@ describe("buildDayStrip", () => {
     expect(strip.map((d) => d.key)).toEqual(["2026-09-20", "2026-09-21", "2026-09-22"]);
     expect(strip[0]?.weekdayShort).toBe("dom");
     expect(strip[0]?.dayNumber).toBe("20");
+  });
+});
+
+describe("formatEventDuration", () => {
+  it("returns a Spanish length when both ends exist", () => {
+    expect(formatEventDuration("2026-09-20T19:00:00-03:00", "2026-09-20T21:30:00-03:00")).toBe(
+      "2 h 30 min",
+    );
+  });
+
+  it("is null without an end", () => {
+    expect(formatEventDuration("2026-09-20T19:00:00-03:00", null)).toBeNull();
   });
 });
 
