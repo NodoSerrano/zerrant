@@ -16,6 +16,7 @@ import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 import { cn } from "@/lib/utils";
 import { safeInternalPath, withNext } from "@/lib/safe-next";
 import { NextField } from "@/features/auth/NextField";
+import { readBuildStamp } from "@/features/auth/build-stamp";
 
 const LOGIN_ERROR_COPY: Record<string, string> = {
   auth_callback_failed: "No pudimos confirmar el enlace. Pedí uno nuevo o intentá de nuevo.",
@@ -34,6 +35,7 @@ function LoginForm() {
   const next = safeInternalPath(searchParams.get("next"));
   const error = state?.error ?? urlError;
   const showGoogleAuth = isGoogleAuthEnabled();
+  const buildStamp = readBuildStamp();
 
   return (
     <div className="px-[26px] py-6 flex flex-col justify-center gap-[22px] min-h-full">
@@ -111,6 +113,12 @@ function LoginForm() {
           Creá tu cuenta
         </Link>
       </div>
+
+      {buildStamp ? (
+        <p className="text-center font-body text-[11px] text-text-muted" data-testid="build-stamp">
+          {buildStamp}
+        </p>
+      ) : null}
     </div>
   );
 }
