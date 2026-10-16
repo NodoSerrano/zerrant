@@ -11,6 +11,11 @@ const mocks = vi.hoisted(() => ({
   projectsReadSelect: vi.fn(),
   projectsEq: vi.fn(),
   projectsMaybeSingle: vi.fn(),
+  projectsUpdate: vi.fn(),
+  projectsUpdatePayload: null as unknown,
+  projectsUpdateEq: vi.fn(),
+  projectsUpdateSelect: vi.fn(),
+  projectsDelete: vi.fn(),
   membersInsert: vi.fn(),
   membersSelect: vi.fn(),
   membersInsertPayload: null as unknown,
@@ -53,6 +58,15 @@ vi.mock("@/lib/supabase/server", () => ({
               maybeSingle: mocks.projectsMaybeSingle,
             })),
           })),
+          update: mocks.projectsUpdate.mockImplementation((payload: unknown) => {
+            mocks.projectsUpdatePayload = payload;
+            return {
+              eq: mocks.projectsUpdateEq.mockImplementation(() => ({
+                select: mocks.projectsUpdateSelect,
+              })),
+            };
+          }),
+          delete: mocks.projectsDelete,
         };
       }
       if (table === "project_members") {
@@ -95,15 +109,18 @@ vi.mock("next/navigation", () => ({
 
 import {
   approveProjectJoin,
+  archiveProject,
   createProject,
   joinProject,
   promoteProjectMember,
   rejectProjectJoin,
+  updateProject,
 } from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.projectsInsertPayload = null;
+  mocks.projectsUpdatePayload = null;
   mocks.membersInsertPayload = null;
   mocks.membersUpdatePayload = null;
 });
@@ -247,6 +264,113 @@ describe("createProject", () => {
     const result = await createProject(null, makeFormData());
 
     expect(result).toEqual({ error: "No pudimos crear el proyecto." });
+  });
+});
+
+function makeUpdateForm(overrides: Record<string, string> = {}) {
+  const fd = makeFormData({
+    nombre: "Huerta comun",
+    descripcion: "Lote 3 ampliado",
+    estado: "en_curso",
+    ingreso: "abierto",
+    ...overrides,
+  });
+  fd.set("projectId", overrides.projectId ?? "proj-1");
+  return fd;
+}
+
+describe("updateProject", () => {
+  it("updates description and existing metadata and returns to the detail view", async () => {
+    setupAuth("serrano-1");
+    mocks.projectsUpdateSelect.mockResolvedValue({ error: null, data: [{ id: "proj-1" }] });
+
+    await expect(updateProject(null, makeUpdateForm())).rejects.toThrow(
+      "NEXT_REDIRECT:/nodo/projects/proj-1",
+    );
+
+    expect(mocks.projectsUpdatePayload).toEqual({
+      nombre: "Huerta comun",
+      descripcion: "Lote 3 ampliado",
+      estado: "en_curso",
+      ingreso: "abierto",
+    });
+    expect(mocks.projectsUpdatePayload).not.toHaveProperty("creado_por");
+    expect(mocks.projectsUpdateEq).toHaveBeenCalledWith("id", "proj-1");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects/proj-1");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects");
+  });
+
+  it("rejects a non-admin update when RLS returns zero rows", async () => {
+    setupAuth("miembro-2");
+    mocks.projectsUpdateSelect.mockResolvedValue({ error: null, data: [] });
+
+    const result = await updateProject(null, makeUpdateForm());
+
+    expect(result).toEqual({ error: "No pudimos guardar los cambios." });
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("rejects a blank nombre without writing", async () => {
+    setupAuth();
+    const result = await updateProject(null, makeUpdateForm({ nombre: "   " }));
+    expect(result).toEqual({ error: "El nombre no puede estar vacío" });
+    expect(mocks.projectsUpdate).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid estado without writing", async () => {
+    setupAuth();
+    const result = await updateProject(null, makeUpdateForm({ estado: "archivado" }));
+    expect(result).toEqual({ error: "Revisá los datos del proyecto." });
+    expect(mocks.projectsUpdate).not.toHaveBeenCalled();
+  });
+
+  it("returns unauthorized when there is no session", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+    const result = await updateProject(null, makeUpdateForm());
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.projectsUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe("archiveProject", () => {
+  function makeArchiveForm(projectId = "proj-1") {
+    const fd = new FormData();
+    fd.set("projectId", projectId);
+    return fd;
+  }
+
+  it("marks the project terminado and leaves members and join requests on the live row", async () => {
+    setupAuth("serrano-1");
+    mocks.projectsUpdateSelect.mockResolvedValue({ error: null, data: [{ id: "proj-1" }] });
+
+    await expect(archiveProject(null, makeArchiveForm())).rejects.toThrow(
+      "NEXT_REDIRECT:/nodo/projects/proj-1",
+    );
+
+    expect(mocks.projectsUpdatePayload).toEqual({ estado: "terminado" });
+    expect(mocks.projectsUpdateEq).toHaveBeenCalledWith("id", "proj-1");
+    expect(mocks.projectsDelete).not.toHaveBeenCalled();
+    expect(mocks.membersDelete).not.toHaveBeenCalled();
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects/proj-1");
+  });
+
+  it("rejects a non-admin archive when RLS returns zero rows", async () => {
+    setupAuth("miembro-2");
+    mocks.projectsUpdateSelect.mockResolvedValue({ error: null, data: [] });
+
+    const result = await archiveProject(null, makeArchiveForm());
+
+    expect(result).toEqual({ error: "No pudimos archivar el proyecto." });
+    expect(mocks.projectsDelete).not.toHaveBeenCalled();
+    expect(mocks.membersDelete).not.toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("returns unauthorized when there is no session", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+    const result = await archiveProject(null, makeArchiveForm());
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.projectsUpdate).not.toHaveBeenCalled();
   });
 });
 

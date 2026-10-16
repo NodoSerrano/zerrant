@@ -81,6 +81,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     affordance,
     showRequestsQueue: viewerIsAdmin,
     canPromoteMembers: viewerIsAdmin,
+    canEdit: viewerIsAdmin,
   };
 
   return <ProjectDetail project={viewModel} />;
