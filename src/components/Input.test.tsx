@@ -69,4 +69,18 @@ describe("Input", () => {
     const label = screen.getByText("Email");
     expect(label).toHaveClass("text-text-secondary");
   });
+
+  it("does not wrap the native input when endAdornment is omitted", () => {
+    render(<Input label="Email" />);
+    const input = screen.getByLabelText("Email");
+    expect(input.parentElement).not.toHaveClass("relative");
+  });
+
+  it("wraps the native input when endAdornment is set", () => {
+    render(<Input label="Email" endAdornment={<span>ojo</span>} />);
+    const input = screen.getByLabelText("Email");
+    expect(input.parentElement).toHaveClass("relative");
+    expect(input).toHaveClass("pr-12");
+    expect(screen.getByText("ojo").parentElement).toHaveClass("absolute");
+  });
 });
