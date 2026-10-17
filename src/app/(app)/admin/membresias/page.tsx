@@ -13,6 +13,16 @@ import Link from "next/link";
 import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "@/features/membership/request-state";
 import { PublishInterviewSlotForm } from "@/features/membership/PublishInterviewSlotForm";
 import { formatDayKey, formatEventTimeRange } from "@/features/events/day";
+import {
+  groupEventsByRequest,
+  historyEstados,
+  lastChangeOf,
+  MEMBERSHIP_REQUEST_EVENTS_SELECT,
+  parseHistoryFilter,
+  parseVista,
+  type RequestEventRow,
+} from "@/features/membership/request-history";
+import { RequestHistoryList, type RequestHistoryItem } from "@/features/admin/RequestHistoryList";
 
 export const dynamic = "force-dynamic";
 
@@ -86,7 +96,40 @@ function toScreening(row: RequestRow): RequestScreeningData {
   };
 }
 
-export default async function AdminMembresiasPage() {
+const HISTORY_SELECT =
+  "id, estado, created_at, profiles!membership_requests_profile_id_fkey(nombre, apellido, apodo, nombre_visible, avatar_url, id)";
+
+/** The newest final requests; older history is out of scope until someone needs paging. */
+const HISTORY_LIMIT = 100;
+
+type HistoryRow = {
+  id: string;
+  estado: RequestHistoryItem["estado"];
+  created_at: string;
+  profiles: RequestProfileData | RequestProfileData[] | null;
+};
+
+async function loadEvents(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  requestIds: string[],
+): Promise<{ rows: RequestEventRow[]; error: boolean }> {
+  if (requestIds.length === 0) return { rows: [], error: false };
+  const { data, error } = await supabase
+    .from("membership_request_events")
+    .select(MEMBERSHIP_REQUEST_EVENTS_SELECT)
+    .in("request_id", requestIds)
+    .order("created_at", { ascending: true });
+  return { rows: (data ?? []) as RequestEventRow[], error: Boolean(error) };
+}
+
+export default async function AdminMembresiasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ vista?: string; estado?: string }>;
+}) {
+  const params = await searchParams;
+  const vista = parseVista(params.vista);
+  const historyFilter = parseHistoryFilter(params.estado);
   const supabase = await createClient();
 
   const [
@@ -119,6 +162,43 @@ export default async function AdminMembresiasPage() {
       .gt("starts_at", new Date().toISOString())
       .order("starts_at", { ascending: true }),
   ]);
+
+  let historyItems: RequestHistoryItem[] = [];
+  let historyEventsError = false;
+  if (vista === "historial") {
+    const { data: historyRows } = await supabase
+      .from("membership_requests")
+      .select(HISTORY_SELECT)
+      .in("estado", historyEstados(historyFilter))
+      .order("actualizado_en", { ascending: false })
+      .order("id", { ascending: true })
+      .limit(HISTORY_LIMIT);
+    const rows = (historyRows ?? []) as HistoryRow[];
+    const events = await loadEvents(
+      supabase,
+      rows.map((row) => row.id),
+    );
+    historyEventsError = events.error;
+    const eventsByRequest = groupEventsByRequest(events.rows);
+    historyItems = rows.map((row) => {
+      const profile = Array.isArray(row.profiles) ? (row.profiles[0] ?? null) : row.profiles;
+      return {
+        id: row.id,
+        estado: row.estado,
+        createdAt: row.created_at,
+        name: profile
+          ? displayName({
+              nombre: profile.nombre,
+              apellido: profile.apellido,
+              apodo: profile.apodo,
+              nombre_visible: profile.nombre_visible ?? "nombre_apellido",
+            })
+          : "",
+        avatarUrl: profile?.avatar_url ?? null,
+        events: eventsByRequest.get(row.id) ?? [],
+      };
+    });
+  }
 
   const bookingByRequest = new Map<string, { starts_at: string; ends_at: string }>();
   for (const row of bookings ?? []) {
@@ -157,14 +237,23 @@ export default async function AdminMembresiasPage() {
   const requestIds = requests.map((request) => request.id);
   let notes: NoteRow[] = [];
   let notesError = false;
-  if (requestIds.length > 0) {
-    const { data, error } = await supabase
-      .from("interview_notes")
-      .select(NOTES_SELECT)
-      .in("request_id", requestIds)
-      .order("created_at", { ascending: true });
-    notesError = Boolean(error);
-    notes = (data ?? []) as NoteRow[];
+  let activeEventsError = false;
+  if (vista === "en_curso" && requestIds.length > 0) {
+    const [notesResult, events] = await Promise.all([
+      supabase
+        .from("interview_notes")
+        .select(NOTES_SELECT)
+        .in("request_id", requestIds)
+        .order("created_at", { ascending: true }),
+      loadEvents(supabase, requestIds),
+    ]);
+    notesError = Boolean(notesResult.error);
+    notes = (notesResult.data ?? []) as NoteRow[];
+    activeEventsError = events.error;
+    const eventsByRequest = groupEventsByRequest(events.rows);
+    for (const request of requests) {
+      request.lastChange = lastChangeOf(eventsByRequest.get(request.id) ?? []);
+    }
   }
   const notesByRequest = new Map<string, NoteRow[]>();
   for (const note of notes) {
@@ -188,10 +277,12 @@ export default async function AdminMembresiasPage() {
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-[3px]">
             <h1 className="font-display text-[22px] font-bold text-text-primary">
-              Solicitudes pendientes
+              {vista === "historial" ? "Historial de solicitudes" : "Solicitudes pendientes"}
             </h1>
             <p className="font-body text-[13px] text-text-secondary">
-              Turistas esperando ser Serranos
+              {vista === "historial"
+                ? "Aprobadas y cerradas, con quién, cuándo y por qué"
+                : "Turistas esperando ser Serranos"}
             </p>
           </div>
           <div className="rounded-pill bg-coral px-[13px] py-[7px]">
@@ -217,78 +308,121 @@ export default async function AdminMembresiasPage() {
           </Link>
         </div>
 
-        <div className="flex flex-col gap-3">
-          {notesError ? (
-            <p className="font-body text-[13px] text-coral">No pudimos cargar las notas internas</p>
-          ) : null}
-          {requests.length === 0 ? (
-            <p className="font-body text-[14px] text-text-muted text-center py-8">
-              No hay solicitudes pendientes
-            </p>
-          ) : (
-            requests.map((r) => (
-              <div key={r.id} className="flex flex-col gap-2">
-                <RequestCard request={r} />
-                <section className="rounded-[24px] border border-border bg-surface px-4 py-3 flex flex-col gap-3">
-                  <h2 className="font-display text-[13px] font-semibold text-text-primary">
-                    Notas internas
-                  </h2>
-                  {(notesByRequest.get(r.id) ?? []).map((note) => {
-                    const author = noteAuthor(note.profiles);
-                    const authorName = author
-                      ? displayName({
-                          nombre: author.nombre,
-                          apellido: author.apellido,
-                          apodo: author.apodo,
-                          nombre_visible: author.nombre_visible ?? "nombre_apellido",
-                        })
-                      : "Admin";
-                    const own = user?.id === note.author_id;
-                    return (
-                      <div key={note.id} className="flex flex-col gap-1.5">
-                        <p className="font-body text-[11px] text-text-muted">
-                          {authorName} · {formatNoteDate(note.created_at)}
-                        </p>
-                        {own ? (
-                          <InterviewNoteForm requestId={r.id} noteId={note.id} body={note.body} />
-                        ) : (
-                          <p className="font-body text-[13px] text-text-secondary whitespace-pre-wrap">
-                            {note.body}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                  <InterviewNoteForm requestId={r.id} />
-                </section>
-              </div>
-            ))
-          )}
-        </div>
+        <nav aria-label="Vista de solicitudes" className="flex gap-2">
+          {(
+            [
+              ["en_curso", `En curso · ${pendingCount ?? 0}`, "/admin/membresias"],
+              ["historial", "Historial", "/admin/membresias?vista=historial"],
+            ] as const
+          ).map(([key, label, href]) => (
+            <Link
+              key={key}
+              href={href}
+              aria-current={vista === key ? "page" : undefined}
+              className={`rounded-pill border px-4 min-h-[36px] flex items-center font-display text-[13px] font-medium ${
+                vista === key
+                  ? "bg-text-primary border-text-primary text-bg"
+                  : "bg-surface border-border text-text-secondary"
+              }`}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
 
-        <section className="flex flex-col gap-3 pt-2">
-          <h2 className="font-display text-[16px] font-semibold text-text-primary">
-            Horarios de entrevista
-          </h2>
-          <PublishInterviewSlotForm />
-          {(openSlots ?? []).filter((slot) => slot.id && slot.starts_at && slot.ends_at).length ===
-          0 ? (
-            <p className="font-body text-[13px] text-text-muted">
-              No hay horarios libres publicados.
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-1">
-              {(openSlots ?? []).map((slot) =>
-                slot.id && slot.starts_at && slot.ends_at ? (
-                  <li key={slot.id} className="font-body text-[13px] text-text-secondary">
-                    {formatDayKey(new Date(slot.starts_at))} ·{" "}
-                    {formatEventTimeRange(slot.starts_at, slot.ends_at)}
-                  </li>
-                ) : null,
+        {vista === "historial" ? (
+          <RequestHistoryList
+            items={historyItems}
+            filter={historyFilter}
+            eventsError={historyEventsError}
+          />
+        ) : (
+          <>
+            <div className="flex flex-col gap-3">
+              {activeEventsError ? (
+                <p className="font-body text-[13px] text-coral">
+                  No pudimos cargar quién hizo el último cambio
+                </p>
+              ) : null}
+              {notesError ? (
+                <p className="font-body text-[13px] text-coral">
+                  No pudimos cargar las notas internas
+                </p>
+              ) : null}
+              {requests.length === 0 ? (
+                <p className="font-body text-[14px] text-text-muted text-center py-8">
+                  No hay solicitudes pendientes
+                </p>
+              ) : (
+                requests.map((r) => (
+                  <div key={r.id} className="flex flex-col gap-2">
+                    <RequestCard request={r} />
+                    <section className="rounded-[24px] border border-border bg-surface px-4 py-3 flex flex-col gap-3">
+                      <h2 className="font-display text-[13px] font-semibold text-text-primary">
+                        Notas internas
+                      </h2>
+                      {(notesByRequest.get(r.id) ?? []).map((note) => {
+                        const author = noteAuthor(note.profiles);
+                        const authorName = author
+                          ? displayName({
+                              nombre: author.nombre,
+                              apellido: author.apellido,
+                              apodo: author.apodo,
+                              nombre_visible: author.nombre_visible ?? "nombre_apellido",
+                            })
+                          : "Admin";
+                        const own = user?.id === note.author_id;
+                        return (
+                          <div key={note.id} className="flex flex-col gap-1.5">
+                            <p className="font-body text-[11px] text-text-muted">
+                              {authorName} · {formatNoteDate(note.created_at)}
+                            </p>
+                            {own ? (
+                              <InterviewNoteForm
+                                requestId={r.id}
+                                noteId={note.id}
+                                body={note.body}
+                              />
+                            ) : (
+                              <p className="font-body text-[13px] text-text-secondary whitespace-pre-wrap">
+                                {note.body}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                      <InterviewNoteForm requestId={r.id} />
+                    </section>
+                  </div>
+                ))
               )}
-            </ul>
-          )}
-        </section>
+            </div>
+
+            <section className="flex flex-col gap-3 pt-2">
+              <h2 className="font-display text-[16px] font-semibold text-text-primary">
+                Horarios de entrevista
+              </h2>
+              <PublishInterviewSlotForm />
+              {(openSlots ?? []).filter((slot) => slot.id && slot.starts_at && slot.ends_at)
+                .length === 0 ? (
+                <p className="font-body text-[13px] text-text-muted">
+                  No hay horarios libres publicados.
+                </p>
+              ) : (
+                <ul className="flex flex-col gap-1">
+                  {(openSlots ?? []).map((slot) =>
+                    slot.id && slot.starts_at && slot.ends_at ? (
+                      <li key={slot.id} className="font-body text-[13px] text-text-secondary">
+                        {formatDayKey(new Date(slot.starts_at))} ·{" "}
+                        {formatEventTimeRange(slot.starts_at, slot.ends_at)}
+                      </li>
+                    ) : null,
+                  )}
+                </ul>
+              )}
+            </section>
+          </>
+        )}
       </div>
     </div>
   );

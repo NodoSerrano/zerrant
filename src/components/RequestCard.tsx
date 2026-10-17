@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Check, CalendarCheck, CalendarClock, CalendarPlus } from "lucide-react";
 import { transitionRequest } from "@/features/admin/actions";
 import { adminRequestActions } from "@/features/membership/admin-request-actions";
-import { type MembershipRequestEstado } from "@/features/membership/request-state";
+import {
+  isMotivoRequired,
+  MEMBERSHIP_TRANSITION_MOTIVO_MAX,
+  type MembershipRequestEstado,
+} from "@/features/membership/request-state";
 import { MembershipEstadoChip } from "./MembershipEstadoChip";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { Avatar } from "./Avatar";
@@ -59,6 +63,14 @@ export interface RequestCardData {
   estado: MembershipRequestEstado;
   screening?: RequestScreeningData | null;
   booking?: RequestCardBooking | null;
+  /** Latest estado change, so admins see what a colleague already did. */
+  lastChange?: RequestLastChange | null;
+}
+
+export interface RequestLastChange {
+  actorName: string;
+  at: string;
+  motivo: string | null;
 }
 
 function timeAgo(date: string): string {
@@ -96,6 +108,26 @@ const ACTION_ICONS = {
   check: Check,
 } as const;
 
+type ConfirmTarget = "cerrada" | "reprogramacion";
+
+const CONFIRM_COPY: Record<
+  ConfirmTarget,
+  { question: (name: string) => string; hint: string; motivoLabel: string; submit: string }
+> = {
+  cerrada: {
+    question: (name) => `¿Cerrar la solicitud de ${name}?`,
+    hint: "Deja de estar en curso y queda en el historial. Si el problema es el horario, usá Reprogramar.",
+    motivoLabel: "Motivo del cierre",
+    submit: "Sí, cerrar",
+  },
+  reprogramacion: {
+    question: (name) => `¿Reprogramar la entrevista de ${name}?`,
+    hint: "La solicitud sigue en curso y queda pendiente un nuevo horario.",
+    motivoLabel: "Motivo (opcional)",
+    submit: "Sí, reprogramar",
+  },
+};
+
 function RequestCardActions({
   requestId,
   estado,
@@ -109,7 +141,8 @@ function RequestCardActions({
     transitionRequest as (s: ActionState, f: FormData) => Promise<ActionState>,
     null,
   );
-  const [confirmingClose, setConfirmingClose] = useState(false);
+  const [confirming, setConfirming] = useState<ConfirmTarget | null>(null);
+  const motivoId = useId();
   const { actions, canClose } = adminRequestActions(estado);
 
   if (actions.length === 0 && !canClose) {
@@ -117,21 +150,26 @@ function RequestCardActions({
   }
 
   const feedback = state?.error ?? state?.success;
+  const copy = confirming ? CONFIRM_COPY[confirming] : null;
 
   return (
     <div className="flex flex-col gap-2">
       <form action={formAction} className="flex flex-col gap-2">
         <input type="hidden" name="requestId" value={requestId} />
-        {!confirmingClose &&
+        {/* Lets the server detect that another admin changed the request meanwhile. */}
+        <input type="hidden" name="from" value={estado} />
+        {!confirming &&
           actions.map((action) => {
             const Icon = ACTION_ICONS[action.icon];
             const primary = action.variant === "primary";
+            const needsConfirm = action.to === "reprogramacion";
             return (
               <button
                 key={`${action.to}-${action.label}`}
-                type="submit"
-                name="to"
-                value={action.to}
+                type={needsConfirm ? "button" : "submit"}
+                {...(needsConfirm
+                  ? { onClick: () => setConfirming("reprogramacion") }
+                  : { name: "to", value: action.to })}
                 disabled={pending}
                 className={
                   primary
@@ -151,11 +189,11 @@ function RequestCardActions({
               </button>
             );
           })}
-        {canClose && !confirmingClose && (
+        {canClose && !confirming && (
           <button
             type="button"
             disabled={pending}
-            onClick={() => setConfirmingClose(true)}
+            onClick={() => setConfirming("cerrada")}
             className="min-h-[44px] w-full flex items-center justify-center disabled:opacity-50"
           >
             <span className="font-display text-[13px] font-medium text-text-muted">
@@ -163,20 +201,37 @@ function RequestCardActions({
             </span>
           </button>
         )}
-        {canClose && confirmingClose && (
+        {confirming && copy && (
           <div className="flex flex-col gap-3 rounded-2xl bg-surface-inset p-3.5">
             <p className="font-display text-[15px] font-medium text-text-primary">
-              ¿Cerrar la solicitud de {name}?
+              {copy.question(name)}
             </p>
-            <p className="font-body text-xs leading-[1.4] text-text-secondary">
-              Deja de estar en curso y queda en el historial. Si el problema es el horario, usá
-              Reprogramar.
-            </p>
+            <p className="font-body text-xs leading-[1.4] text-text-secondary">{copy.hint}</p>
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor={`${motivoId}-input`}
+                className="font-body text-xs font-medium text-text-secondary"
+              >
+                {copy.motivoLabel}
+              </label>
+              <textarea
+                id={`${motivoId}-input`}
+                name="motivo"
+                rows={3}
+                required={isMotivoRequired(confirming)}
+                maxLength={MEMBERSHIP_TRANSITION_MOTIVO_MAX}
+                aria-describedby={`${motivoId}-hint`}
+                className="rounded-2xl border border-border bg-surface px-3 py-2 font-body text-[13px] text-text-primary placeholder:text-text-muted focus:outline-hidden focus:ring-2 focus:ring-primary/40"
+              />
+              <p id={`${motivoId}-hint`} className="font-body text-[11px] text-text-muted">
+                Solo lo ven los admins, en el historial de la solicitud.
+              </p>
+            </div>
             <div className="flex gap-2.5">
               <button
                 type="button"
                 disabled={pending}
-                onClick={() => setConfirmingClose(false)}
+                onClick={() => setConfirming(null)}
                 className="rounded-pill h-[44px] flex-1 flex items-center justify-center disabled:opacity-50"
               >
                 <span className="font-display text-[15px] font-medium text-text-secondary">
@@ -186,12 +241,12 @@ function RequestCardActions({
               <button
                 type="submit"
                 name="to"
-                value="cerrada"
+                value={confirming}
                 disabled={pending}
                 className="rounded-pill bg-surface border border-text-primary h-[44px] flex-1 flex items-center justify-center disabled:opacity-50"
               >
                 <span className="font-display text-[15px] font-medium text-text-primary">
-                  Sí, cerrar
+                  {copy.submit}
                 </span>
               </button>
             </div>
@@ -324,6 +379,13 @@ export function RequestCard({ request }: { request: RequestCardData }) {
           </div>
         </div>
       </div>
+
+      {request.lastChange ? (
+        <p className="font-body text-[12px] text-text-muted">
+          Último cambio: {request.lastChange.actorName} · {timeAgo(request.lastChange.at)}
+          {request.lastChange.motivo ? ` — «${request.lastChange.motivo}»` : null}
+        </p>
+      ) : null}
 
       {request.booking ? (
         <p className="font-body text-[13px] text-text-secondary">

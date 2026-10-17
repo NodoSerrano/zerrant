@@ -198,12 +198,75 @@ describe("RequestCard", () => {
     render(<RequestCard request={mockRequest} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Cerrar solicitud" }));
+    fireEvent.change(screen.getByLabelText("Motivo del cierre"), {
+      target: { value: "No respondió" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Sí, cerrar" }));
 
     await waitFor(() => expect(mocks.transitionRequest).toHaveBeenCalledTimes(1));
     const fd = mocks.transitionRequest.mock.calls[0][1] as FormData;
     expect(fd.get("requestId")).toBe("req-001");
     expect(fd.get("to")).toBe("cerrada");
+    expect(fd.get("motivo")).toBe("No respondió");
+  });
+
+  it("the close confirmation asks for a required motivo, capped at 500 characters", () => {
+    render(<RequestCard request={mockRequest} />);
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar solicitud" }));
+
+    const motivo = screen.getByLabelText("Motivo del cierre");
+    expect(motivo).toBeRequired();
+    expect(motivo).toHaveAttribute("maxLength", "500");
+    expect(screen.getByText(/Solo lo ven los admins/)).toBeInTheDocument();
+  });
+
+  it("sends the estado the admin was looking at, so concurrent changes are detected", async () => {
+    mocks.transitionRequest.mockResolvedValue(null);
+    render(<RequestCard request={{ ...mockRequest, estado: "entrevista_solicitada" }} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar horario" }));
+
+    await waitFor(() => expect(mocks.transitionRequest).toHaveBeenCalled());
+    const fd = mocks.transitionRequest.mock.calls[0][1] as FormData;
+    expect(fd.get("from")).toBe("entrevista_solicitada");
+  });
+
+  it("Reprogramar asks for confirmation with an optional motivo", async () => {
+    mocks.transitionRequest.mockResolvedValue(null);
+    render(<RequestCard request={{ ...mockRequest, estado: "entrevista_coordinada" }} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reprogramar" }));
+    expect(mocks.transitionRequest).not.toHaveBeenCalled();
+    expect(screen.getByText("¿Reprogramar la entrevista de Sofía Vega?")).toBeInTheDocument();
+    const motivo = screen.getByLabelText("Motivo (opcional)");
+    expect(motivo).not.toBeRequired();
+
+    fireEvent.change(motivo, { target: { value: "Se enfermó" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sí, reprogramar" }));
+
+    await waitFor(() => expect(mocks.transitionRequest).toHaveBeenCalledTimes(1));
+    const fd = mocks.transitionRequest.mock.calls[0][1] as FormData;
+    expect(fd.get("to")).toBe("reprogramacion");
+    expect(fd.get("motivo")).toBe("Se enfermó");
+  });
+
+  it("shows who made the last change and when, for coordination between admins", () => {
+    render(
+      <RequestCard
+        request={{
+          ...mockRequest,
+          estado: "reprogramacion",
+          lastChange: {
+            actorName: "Ana Admin",
+            at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+            motivo: "Se enfermó",
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText(/Último cambio: Ana Admin · hace 2 horas/)).toBeInTheDocument();
+    expect(screen.getByText(/Se enfermó/)).toBeInTheDocument();
   });
 
   it("shows the success message returned by the action", async () => {
