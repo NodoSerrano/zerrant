@@ -11,23 +11,8 @@ import {
   ChevronRight,
   UserRound,
 } from "lucide-react";
-import { useTheme } from "@/lib/useTheme";
+import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { signOut } from "@/features/auth/actions";
-
-function ThemeToggleSwitch() {
-  const { dark, toggle } = useTheme();
-
-  return (
-    <button
-      onClick={toggle}
-      className="w-[46px] h-7 rounded-pill bg-primary p-[3px] transition-colors flex"
-      style={{ justifyContent: dark ? "flex-end" : "flex-start" }}
-      aria-label={dark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-    >
-      <div className="size-[22px] rounded-full bg-surface" />
-    </button>
-  );
-}
 
 interface SerranoMenuProps {
   aportesCount?: number;
@@ -87,10 +72,13 @@ export function SerranoMenu({
       <div className="rounded-[20px] bg-surface border border-border overflow-hidden flex flex-col">
         <label className="flex items-center gap-3 px-4 py-[13px] w-full cursor-pointer">
           <Moon size={20} className="text-brand-blue shrink-0" />
-          <span className="font-body text-[15px] text-text-primary text-left flex-1">
+          <span
+            id="serrano-dark-mode-label"
+            className="font-body text-[15px] text-text-primary text-left flex-1"
+          >
             Modo oscuro
           </span>
-          <ThemeToggleSwitch />
+          <ThemeSwitch labelledBy="serrano-dark-mode-label" />
         </label>
 
         {isPlatformAdmin ? (

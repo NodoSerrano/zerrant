@@ -11,10 +11,13 @@ vi.mock("@/features/auth/actions", () => ({
 }));
 
 describe("TouristMenu theme toggle (ZER-103)", () => {
-  it("uses surface token for the switch knob, not bg-white", () => {
+  it("names the dark-mode switch from the visible Modo oscuro text", () => {
     render(<TouristMenu />);
-    const toggle = screen.getByRole("button", { name: /modo oscuro|modo claro/i });
-    expect(toggle.innerHTML).not.toMatch(/\bbg-white\b/);
-    expect(toggle.innerHTML).toMatch(/\bbg-surface\b/);
+    const label = screen.getByText("Modo oscuro");
+    const toggle = screen.getByRole("switch");
+    expect(label).toHaveAttribute("id", "tourist-dark-mode-label");
+    expect(toggle).toHaveAttribute("aria-labelledby", label.id);
+    expect(toggle).not.toHaveAttribute("aria-label");
+    expect(toggle).toHaveAccessibleName("Modo oscuro");
   });
 });
