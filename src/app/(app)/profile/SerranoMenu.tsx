@@ -70,7 +70,7 @@ export function SerranoMenu({
       </div>
 
       <div className="rounded-[20px] bg-surface border border-border overflow-hidden flex flex-col">
-        <label className="flex items-center gap-3 px-4 py-[13px] w-full cursor-pointer">
+        <div className="flex items-center gap-3 px-4 py-[13px] w-full">
           <Moon size={20} className="text-brand-blue shrink-0" />
           <span
             id="serrano-dark-mode-label"
@@ -79,7 +79,7 @@ export function SerranoMenu({
             Modo oscuro
           </span>
           <ThemeSwitch labelledBy="serrano-dark-mode-label" />
-        </label>
+        </div>
 
         {isPlatformAdmin ? (
           <>

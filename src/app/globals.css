@@ -42,6 +42,8 @@
   --color-text-primary: #1a1614;
   --color-text-secondary: #5a5550;
   --color-text-muted: #8a847c;
+  /* Off state of on/off switches; >= 3:1 against surface in both themes. */
+  --color-switch-track: #8a847c;
 }
 
 /* Brand ramps — Figma web grad-primary / grad-warm (landing parity, ZER-120) */
@@ -77,6 +79,7 @@
   --color-text-primary: #f8f4ed;
   --color-text-secondary: #c4bdb2;
   --color-text-muted: #8a847c;
+  --color-switch-track: #8a847c;
   --color-border: #37302a;
 }
 
