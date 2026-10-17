@@ -150,6 +150,66 @@ describe("LoginPage", () => {
     expect(pwInput).toHaveAttribute("type", "password");
   });
 
+  it("keeps the password visible if another key is released while Space is held", () => {
+    render(<LoginPage />);
+    const pwInput = screen.getByLabelText("Contraseña");
+    const eye = screen.getByRole("button", { name: /ver la contraseña/i });
+    fireEvent.keyDown(eye, { key: " " });
+    expect(pwInput).toHaveAttribute("type", "text");
+    fireEvent.keyUp(eye, { key: "a" });
+    expect(pwInput).toHaveAttribute("type", "text");
+    fireEvent.keyUp(eye, { key: " " });
+    expect(pwInput).toHaveAttribute("type", "password");
+  });
+
+  it("hides the eye icon from screen readers", () => {
+    render(<LoginPage />);
+    const eye = screen.getByRole("button", { name: /ver la contraseña/i });
+    expect(eye.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    fireEvent.pointerDown(eye);
+    expect(eye.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("reveals the password while Space is held and hides it on release", () => {
+    render(<LoginPage />);
+    const pwInput = screen.getByLabelText("Contraseña");
+    const eye = screen.getByRole("button", { name: /ver la contraseña/i });
+    fireEvent.keyDown(eye, { key: " " });
+    expect(pwInput).toHaveAttribute("type", "text");
+    fireEvent.keyUp(eye, { key: " " });
+    expect(pwInput).toHaveAttribute("type", "password");
+  });
+
+  it("reveals the password while Enter is held and hides it on release", () => {
+    render(<LoginPage />);
+    const pwInput = screen.getByLabelText("Contraseña");
+    const eye = screen.getByRole("button", { name: /ver la contraseña/i });
+    fireEvent.keyDown(eye, { key: "Enter" });
+    expect(pwInput).toHaveAttribute("type", "text");
+    fireEvent.keyUp(eye, { key: "Enter" });
+    expect(pwInput).toHaveAttribute("type", "password");
+  });
+
+  it("hides the password when the pointer leaves the eye button", () => {
+    render(<LoginPage />);
+    const pwInput = screen.getByLabelText("Contraseña");
+    const eye = screen.getByRole("button", { name: /ver la contraseña/i });
+    fireEvent.pointerDown(eye);
+    expect(pwInput).toHaveAttribute("type", "text");
+    fireEvent.pointerLeave(eye);
+    expect(pwInput).toHaveAttribute("type", "password");
+  });
+
+  it("hides the password when the pointer gesture is cancelled", () => {
+    render(<LoginPage />);
+    const pwInput = screen.getByLabelText("Contraseña");
+    const eye = screen.getByRole("button", { name: /ver la contraseña/i });
+    fireEvent.pointerDown(eye);
+    expect(pwInput).toHaveAttribute("type", "text");
+    fireEvent.pointerCancel(eye);
+    expect(pwInput).toHaveAttribute("type", "password");
+  });
+
   it("renders callback failure from searchParams.error", () => {
     mockGet.mockImplementation((key?: string) => (key === "error" ? "auth_callback_failed" : null));
     render(<LoginPage />);

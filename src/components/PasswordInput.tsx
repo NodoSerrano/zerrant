@@ -37,11 +37,13 @@ export function PasswordInput(props: PasswordInputProps) {
               show();
             }
           }}
-          onKeyUp={hide}
+          onKeyUp={(e) => {
+            if (e.key === " " || e.key === "Enter") hide();
+          }}
           onBlur={hide}
           onContextMenu={(e) => e.preventDefault()}
         >
-          {visible ? <EyeOff size={20} /> : <Eye size={20} />}
+          {visible ? <EyeOff size={20} aria-hidden="true" /> : <Eye size={20} aria-hidden="true" />}
         </button>
       }
     />
