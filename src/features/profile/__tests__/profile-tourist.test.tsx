@@ -227,13 +227,13 @@ describe("ProfilePage (tourist)", () => {
     render(await ProfilePage());
 
     expect(screen.getByText("Modo oscuro")).toBeInTheDocument();
-    expect(screen.getByLabelText("Cambiar a modo oscuro")).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: "Modo oscuro" })).toBeInTheDocument();
   });
 
   it("calls toggle when theme switch is clicked", async () => {
     render(await ProfilePage());
 
-    fireEvent.click(screen.getByLabelText("Cambiar a modo oscuro"));
+    fireEvent.click(screen.getByRole("switch", { name: "Modo oscuro" }));
     expect(mockToggle).toHaveBeenCalledOnce();
   });
 

@@ -205,7 +205,7 @@ describe("ProfilePage (serrano)", () => {
   it("calls toggle when theme switch is clicked", async () => {
     render(await ProfilePage());
 
-    fireEvent.click(screen.getByLabelText("Cambiar a modo oscuro"));
+    fireEvent.click(screen.getByRole("switch", { name: "Modo oscuro" }));
     expect(mockToggle).toHaveBeenCalledOnce();
   });
 

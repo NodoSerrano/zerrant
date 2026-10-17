@@ -31,10 +31,13 @@ export function TouristMenu() {
 
       <label className="flex items-center gap-3 px-4 py-[13px] w-full cursor-pointer">
         <Moon size={20} className="text-brand-blue shrink-0" />
-        <span className="font-body text-[15px] text-text-primary text-left flex-1">
+        <span
+          id="tourist-dark-mode-label"
+          className="font-body text-[15px] text-text-primary text-left flex-1"
+        >
           Modo oscuro
         </span>
-        <ThemeSwitch />
+        <ThemeSwitch labelledBy="tourist-dark-mode-label" />
       </label>
 
       <div className="h-px bg-border w-full" />

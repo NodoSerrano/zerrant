@@ -73,11 +73,14 @@ describe("SerranoMenu Mis proyectos row", () => {
 });
 
 describe("SerranoMenu theme toggle (ZER-103)", () => {
-  it("uses the on-primary token for the switch knob, not bg-white", () => {
+  it("names the dark-mode switch from the visible Modo oscuro text", () => {
     render(<SerranoMenu />);
-    const toggle = screen.getByRole("switch", { name: /modo oscuro|modo claro/i });
-    expect(toggle.innerHTML).not.toMatch(/\bbg-white\b/);
-    expect(toggle.innerHTML).toMatch(/\bbg-on-primary\b/);
+    const label = screen.getByText("Modo oscuro");
+    const toggle = screen.getByRole("switch");
+    expect(label).toHaveAttribute("id", "serrano-dark-mode-label");
+    expect(toggle).toHaveAttribute("aria-labelledby", label.id);
+    expect(toggle).not.toHaveAttribute("aria-label");
+    expect(toggle).toHaveAccessibleName("Modo oscuro");
   });
 });
 
