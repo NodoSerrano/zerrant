@@ -4,6 +4,7 @@ import { bookInterviewSlot } from "@/features/membership/interview-actions";
 import { formatDayKey, formatEventTimeRange } from "@/features/events/day";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { FormFeedback } from "@/components/FormFeedback";
 
 export type OpenInterviewSlot = {
   id: string;
@@ -42,12 +43,7 @@ export function InterviewSlotPicker({ slots }: { slots: OpenInterviewSlot[] }) {
           );
         })}
       </fieldset>
-      {state?.error ? (
-        <p className="font-body text-xs text-coral text-center">{state.error}</p>
-      ) : null}
-      {state?.success ? (
-        <p className="font-body text-xs text-brand-green text-center">{state.success}</p>
-      ) : null}
+      <FormFeedback error={state?.error} success={state?.success} />
       <PrimaryButton type="submit" disabled={pending}>
         {pending ? "Reservando..." : "Reservar horario"}
       </PrimaryButton>

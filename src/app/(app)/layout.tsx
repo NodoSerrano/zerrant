@@ -1,6 +1,7 @@
 import { TabBarClient } from "@/components/TabBarClient";
 import { TabBarPin } from "@/components/TabBarPin";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
+import { ActionNotice } from "@/components/ActionNotice";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
@@ -11,7 +12,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         live shell uses [20,20,20,20] (pt-5 px-5 pb-5): sides/bottom stay on Pencil,
         top matches the 20px lateral inset so titles are not flush with the viewport.
       */}
-      <div className="flex-1 w-full max-w-lg mx-auto pt-5 px-5 pb-5">{children}</div>
+      <div className="flex-1 w-full max-w-lg mx-auto pt-5 px-5 pb-5">
+        {/* useSearchParams needs a Suspense boundary to keep pages prerenderable. */}
+        <Suspense fallback={null}>
+          <ActionNotice />
+        </Suspense>
+        {children}
+      </div>
       {/* Pencil TabBar nMDGY: pt 21 + pill 62 + pb 21 = 104px reserved so lists clear the fixed bar */}
       <div data-testid="tab-bar-spacer" className="h-[104px] shrink-0" aria-hidden />
       <TabBarPin>

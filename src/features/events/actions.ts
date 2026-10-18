@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { EVENT_ATTENDANCE_ESTADOS, type EventAttendanceEstado } from "@/lib/db/events-schema";
 import type { Database } from "@/lib/supabase/database.types";
 import { parseAgendaWallClockIso, validateEventRange } from "./validation";
+import { withActionNotice } from "@/lib/action-notice";
 
 const CREATE_ERROR = "No pudimos publicar el evento. Probá de nuevo.";
 const CREATE_REJECTED = "No pudimos publicar el evento.";
@@ -177,7 +178,7 @@ export async function createEvent(
   }
 
   revalidatePath("/agenda");
-  redirect(`/agenda`);
+  redirect(withActionNotice("/agenda", "evento-creado"));
 }
 
 export async function updateEvent(
@@ -275,7 +276,7 @@ export async function updateEvent(
 
   revalidatePath("/agenda");
   revalidatePath(`/agenda/${eventId}`);
-  redirect(`/agenda/${eventId}`);
+  redirect(withActionNotice(`/agenda/${eventId}`, "evento-actualizado"));
 }
 
 export async function deleteEvent(
@@ -316,7 +317,7 @@ export async function deleteEvent(
 
   revalidatePath("/agenda");
   revalidatePath(`/agenda/${eventId}`);
-  redirect("/agenda");
+  redirect(withActionNotice("/agenda", "evento-eliminado"));
 }
 
 export async function setRsvp(

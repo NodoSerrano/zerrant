@@ -4,6 +4,7 @@ import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { cn } from "@/lib/utils";
+import { FormFeedback } from "@/components/FormFeedback";
 
 // Create and edit share the same form: Pencil frames `V0ODk` and `H3BY0u`
 // differ only in the header and the CTA label. It lives here so a design
@@ -155,11 +156,7 @@ export function TaskForm({
         </fieldset>
       </div>
 
-      {state?.error && (
-        <p role="alert" className="rounded-md bg-coral/10 px-3 py-2 text-sm text-coral">
-          {state.error}
-        </p>
-      )}
+      <FormFeedback error={state?.error} />
 
       <PrimaryButton type="submit" disabled={pending} className="w-full">
         {pending ? pendingLabel : submitLabel}

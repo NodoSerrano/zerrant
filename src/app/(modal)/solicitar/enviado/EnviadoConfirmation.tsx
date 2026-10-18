@@ -18,7 +18,8 @@ export function EnviadoConfirmation({ progress }: { progress?: PipelineProgressD
         <Check className="size-12 text-on-gradient" />
       </div>
 
-      <div className="flex flex-col items-center gap-2.5">
+      {/* Announced on arrival: this page is the success state of the request (ZER-177). */}
+      <div role="status" className="flex flex-col items-center gap-2.5">
         <h1 className="font-display text-[22px] font-bold text-text-primary">
           ¡Solicitud enviada!
         </h1>

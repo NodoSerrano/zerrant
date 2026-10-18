@@ -1,6 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+vi.mock("@/components/ActionNotice", () => ({
+  ActionNotice: () => <div data-testid="action-notice" />,
+}));
+
 vi.mock("@/components/TabBarClient", () => ({
   TabBarClient: () => <nav data-testid="tab-bar" aria-label="TabBar" />,
 }));
@@ -91,5 +95,17 @@ describe("App shell layout (navigation destinations)", () => {
 
     unmount();
     trap.remove();
+  });
+
+  it("hosts the post-redirect success notice above the page content (ZER-177)", () => {
+    render(
+      <AppLayout>
+        <p>contenido</p>
+      </AppLayout>,
+    );
+    const notice = screen.getByTestId("action-notice");
+    expect(notice.compareDocumentPosition(screen.getByText("contenido"))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
   });
 });

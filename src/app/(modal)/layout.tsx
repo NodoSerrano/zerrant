@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
+import { ActionNotice } from "@/components/ActionNotice";
 
 export default function ModalLayout({ children }: { children: ReactNode }) {
   return (
@@ -7,6 +8,10 @@ export default function ModalLayout({ children }: { children: ReactNode }) {
           chain, so screens that center vertically (enviado) grow with flex-1 (bug-375). */}
       {/* Pencil focused wrappers (ZqSLW create, KG95R detail, vPUkG edit): [6,20,24,20] */}
       <div className="flex flex-1 flex-col w-full max-w-lg mx-auto pt-1.5 px-5 pb-6">
+        {/* useSearchParams needs a Suspense boundary to keep pages prerenderable. */}
+        <Suspense fallback={null}>
+          <ActionNotice />
+        </Suspense>
         {children}
       </div>
     </div>

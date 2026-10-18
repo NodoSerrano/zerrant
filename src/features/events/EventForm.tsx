@@ -9,6 +9,7 @@ import { DateField } from "./DateField";
 import { TimeField } from "./TimeField";
 import { clampEnd, formatDuration } from "./timeOptions";
 import type { EventFormDefaults } from "./types";
+import { FormFeedback } from "@/components/FormFeedback";
 
 const GROUP_LABEL = "text-[13px] font-medium text-text-secondary";
 
@@ -121,11 +122,7 @@ export function EventForm({
         />
       </div>
 
-      {state?.error ? (
-        <p role="alert" className="rounded-md bg-coral/10 px-3 py-2 text-sm text-coral">
-          {state.error}
-        </p>
-      ) : null}
+      <FormFeedback error={state?.error} />
 
       <PrimaryButton
         type="submit"

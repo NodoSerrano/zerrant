@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { deleteEvent } from "./actions";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
+import { FormFeedback } from "@/components/FormFeedback";
 
 interface EventDeleteControlProps {
   eventId: string;
@@ -37,11 +38,7 @@ export function EventDeleteControl({ eventId }: EventDeleteControlProps) {
       <p className="font-body text-sm text-text-primary">
         ¿Eliminar este evento? Se borra de la agenda y se pierden las confirmaciones de asistencia.
       </p>
-      {state?.error ? (
-        <p role="alert" className="font-body text-xs text-coral">
-          {state.error}
-        </p>
-      ) : null}
+      <FormFeedback error={state?.error} />
       <div className="flex gap-2">
         <button
           type="submit"

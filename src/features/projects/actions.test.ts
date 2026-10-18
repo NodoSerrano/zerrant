@@ -148,7 +148,7 @@ describe("createProject", () => {
     mocks.projectsInsertSelect.mockResolvedValue({ error: null, data: [{ id: "proj-1" }] });
 
     await expect(createProject(null, makeFormData())).rejects.toThrow(
-      "NEXT_REDIRECT:/nodo/projects",
+      "NEXT_REDIRECT:/nodo/projects?ok=proyecto-creado",
     );
 
     expect(mocks.projectsInsertPayload).toEqual({
@@ -285,7 +285,7 @@ describe("updateProject", () => {
     mocks.projectsUpdateSelect.mockResolvedValue({ error: null, data: [{ id: "proj-1" }] });
 
     await expect(updateProject(null, makeUpdateForm())).rejects.toThrow(
-      "NEXT_REDIRECT:/nodo/projects/proj-1",
+      "NEXT_REDIRECT:/nodo/projects/proj-1?ok=proyecto-actualizado",
     );
 
     expect(mocks.projectsUpdatePayload).toEqual({
@@ -344,7 +344,7 @@ describe("archiveProject", () => {
     mocks.projectsUpdateSelect.mockResolvedValue({ error: null, data: [{ id: "proj-1" }] });
 
     await expect(archiveProject(null, makeArchiveForm())).rejects.toThrow(
-      "NEXT_REDIRECT:/nodo/projects/proj-1",
+      "NEXT_REDIRECT:/nodo/projects/proj-1?ok=proyecto-archivado",
     );
 
     expect(mocks.projectsUpdatePayload).toEqual({ estado: "terminado" });
