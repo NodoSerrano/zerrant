@@ -137,7 +137,7 @@ export function TimeField({
         <div className="relative mx-auto h-[220px] w-[148px]">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-1/2 h-11 -translate-y-1/2 rounded-full bg-[#d7e6ff]/15"
+            className="pointer-events-none absolute inset-x-0 top-1/2 h-11 -translate-y-1/2 rounded-full bg-picker-selected/15"
           />
           <div
             ref={wheelRef}
@@ -154,7 +154,7 @@ export function TimeField({
                 aria-label={`Hora ${String(item).padStart(2, "0")}`}
                 className={cn(
                   "snap-center flex h-11 w-full items-center justify-center rounded-full font-display text-[22px]",
-                  item === hour ? "bg-[#d7e6ff] text-[#1a1614]" : "text-text-muted",
+                  item === hour ? "bg-picker-selected text-on-picker-selected" : "text-text-muted",
                   "disabled:cursor-not-allowed disabled:opacity-30",
                 )}
                 onClick={() => selectHour(item)}
@@ -172,7 +172,11 @@ export function TimeField({
               type="button"
               disabled={isMinuteDisabled(hour, item, notBefore, pickingEnd)}
               aria-label={`Minuto ${String(item).padStart(2, "0")}`}
-              className={cn(CELL, "flex-1", item === minute && "bg-[#d7e6ff] text-[#1a1614]")}
+              className={cn(
+                CELL,
+                "flex-1",
+                item === minute && "bg-picker-selected text-on-picker-selected",
+              )}
               onClick={() => setMinute(item)}
             >
               {String(item).padStart(2, "0")}

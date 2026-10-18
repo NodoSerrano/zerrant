@@ -44,11 +44,11 @@ export function EmptyState({
           className={cn(
             "flex items-center justify-center gap-2 rounded-pill h-12 px-[22px]",
             BRAND_GRADIENT_CLASS,
-            "font-display text-[15px] font-medium text-on-primary",
+            "font-display text-[15px] font-medium text-on-gradient",
             "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40",
           )}
         >
-          <Plus className="size-[18px] text-on-primary" aria-hidden="true" />
+          <Plus className="size-[18px] text-on-gradient" aria-hidden="true" />
           {actionLabel || defaultLabel}
         </Link>
       ) : actionLabel && onAction ? (
@@ -58,11 +58,11 @@ export function EmptyState({
           className={cn(
             "flex items-center justify-center gap-2 rounded-pill h-12 px-[22px]",
             BRAND_GRADIENT_CLASS,
-            "font-display text-[15px] font-medium text-on-primary",
+            "font-display text-[15px] font-medium text-on-gradient",
             "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40",
           )}
         >
-          <Plus className="size-[18px] text-on-primary" aria-hidden="true" />
+          <Plus className="size-[18px] text-on-gradient" aria-hidden="true" />
           {actionLabel}
         </button>
       ) : null}

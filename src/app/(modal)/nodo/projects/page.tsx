@@ -142,7 +142,7 @@ export default async function ProjectsPage() {
           )}
           aria-label="Crear proyecto"
         >
-          <Plus className="size-6 text-on-primary" strokeWidth={2.5} />
+          <Plus className="size-6 text-on-gradient" strokeWidth={2.5} />
         </Link>
       ) : null}
     </div>

@@ -19,7 +19,7 @@ export function PrimaryButton({ className, size = "md", children, ...props }: Pr
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center rounded-pill font-display font-medium text-on-primary transition-all",
+        "inline-flex items-center justify-center rounded-pill font-display font-medium text-on-gradient transition-all",
         BRAND_GRADIENT_CLASS,
         BRAND_CTA_SHADOW_CLASS,
         "hover:opacity-90",

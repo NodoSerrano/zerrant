@@ -110,13 +110,13 @@ describe("SolicitarForm — icon circle", () => {
     expect(container?.className).toContain("bg-gradient-brand");
   });
 
-  it("renders the user-plus icon at 36×36 in on-primary", () => {
+  it("renders the user-plus icon at 36×36 in on-gradient (ZER-175)", () => {
     render(<SolicitarForm />);
 
     const icon = document.querySelector(".lucide-user-plus");
     expect(icon).toBeTruthy();
     expect(icon!.classList.contains("size-9")).toBe(true);
-    expect(icon!.classList.contains("text-on-primary")).toBe(true);
+    expect(icon!.classList.contains("text-on-gradient")).toBe(true);
   });
 });
 

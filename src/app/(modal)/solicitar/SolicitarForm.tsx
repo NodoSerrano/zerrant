@@ -230,7 +230,7 @@ export function SolicitarForm({ progress }: { progress?: PipelineProgressData })
                 BRAND_GRADIENT_CLASS,
               )}
             >
-              <UserPlus className="size-9 text-on-primary" />
+              <UserPlus className="size-9 text-on-gradient" />
             </div>
           </div>
           <h1 className="font-display text-[24px] font-bold text-text-primary">

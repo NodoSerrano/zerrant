@@ -181,7 +181,7 @@ export default async function TasksPage({
           )}
           aria-label="Crear tarea"
         >
-          <Plus className="size-6 text-on-primary" strokeWidth={2.5} />
+          <Plus className="size-6 text-on-gradient" strokeWidth={2.5} />
         </Link>
       )}
     </div>

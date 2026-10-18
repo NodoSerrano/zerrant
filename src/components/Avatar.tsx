@@ -56,7 +56,7 @@ function InitialsFallback({
     <div
       aria-hidden={decorative ? true : undefined}
       className={cn(
-        "rounded-full text-on-primary flex items-center justify-center font-display font-bold",
+        "rounded-full text-on-gradient flex items-center justify-center font-display font-bold",
         BRAND_GRADIENT_CLASS,
         sizeClasses[size],
         className,

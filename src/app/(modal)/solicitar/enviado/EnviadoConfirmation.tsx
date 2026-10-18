@@ -15,7 +15,7 @@ export function EnviadoConfirmation({ progress }: { progress?: PipelineProgressD
           BRAND_GRADIENT_CLASS,
         )}
       >
-        <Check className="size-12 text-on-primary" />
+        <Check className="size-12 text-on-gradient" />
       </div>
 
       <div className="flex flex-col items-center gap-2.5">
@@ -30,7 +30,7 @@ export function EnviadoConfirmation({ progress }: { progress?: PipelineProgressD
       <Link
         href="/solicitar/entrevista"
         className={cn(
-          "inline-flex items-center justify-center rounded-pill font-display text-[16px] font-medium text-on-primary",
+          "inline-flex items-center justify-center rounded-pill font-display text-[16px] font-medium text-on-gradient",
           BRAND_GRADIENT_CLASS,
           BRAND_CTA_SHADOW_CLASS,
           "h-[54px] px-6 w-full",

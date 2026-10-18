@@ -10,10 +10,11 @@
 
   /* Pencil solids (chips, TabBar, solid fills) */
   --color-brand-mint: #0a8268;
-  --color-brand-green: #0c8a5e;
+  /* ZER-175: green deepened from #0c8a5e so green text and cream-on-green CTAs meet AA. */
+  --color-brand-green: #0b7a53;
   --color-brand-blue: #1158b0;
   --color-brand-violet: #6b3fa8;
-  --color-primary: #0c8a5e;
+  --color-primary: #0b7a53;
   --color-on-primary: #f8f4ed;
 
   /* Figma web / landing gradient stops (grad-primary) */
@@ -41,9 +42,18 @@
   --color-surface-inset: #f1ebe0;
   --color-text-primary: #1a1614;
   --color-text-secondary: #5a5550;
-  --color-text-muted: #8a847c;
+  /* ZER-175: darkened from #8a847c to meet AA (4.5:1) on every surface. */
+  --color-text-muted: #6f6a64;
   /* Off state of on/off switches; >= 3:1 against surface in both themes. */
   --color-switch-track: #8a847c;
+
+  /* Date/time picker selection: light blue with dark text in both themes. */
+  --color-picker-selected: #d7e6ff;
+  --color-on-picker-selected: #1a1614;
+
+  /* ZER-175: text and icons on bg-gradient-brand. Cream measured 1.4–2.6:1 on
+     the mint/blue/violet stops; dark text clears AA on all of them, in both themes. */
+  --color-on-gradient: #1a1614;
 }
 
 /* Brand ramps — Figma web grad-primary / grad-warm (landing parity, ZER-120) */
@@ -78,9 +88,19 @@
   --color-surface-inset: #201b17;
   --color-text-primary: #f8f4ed;
   --color-text-secondary: #c4bdb2;
-  --color-text-muted: #8a847c;
+  --color-text-muted: #8d877f;
   --color-switch-track: #8a847c;
   --color-border: #37302a;
+
+  /* ZER-175 AA on dark surfaces. Green has to work as text on the dark
+     background and as a CTA fill, so it gets lighter and text drawn on fills
+     turns dark. Coral, blue and violet are lightened for the same reason. */
+  --color-primary: #2a9972;
+  --color-brand-green: #2a9972;
+  --color-on-primary: #1a1614;
+  --color-coral: #db599c;
+  --color-brand-blue: #588ac8;
+  --color-brand-violet: #987ac3;
 }
 
 body {

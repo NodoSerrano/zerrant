@@ -139,11 +139,11 @@ export function DateField({ name, label, required, value, onChange }: DateFieldP
                 className={cn(
                   "flex h-10 flex-col items-center justify-center rounded-xl text-[15px] leading-none",
                   value === dayKey(cursor.year, cursor.month, day)
-                    ? "bg-[#d7e6ff] text-[#1a1614]"
+                    ? "bg-picker-selected text-on-picker-selected"
                     : "text-text-primary",
                   dayKey(cursor.year, cursor.month, day) === todayKey &&
                     value !== dayKey(cursor.year, cursor.month, day) &&
-                    "ring-1 ring-inset ring-[#4fe6c3]",
+                    "ring-1 ring-inset ring-mint-raw",
                 )}
               >
                 {day}
@@ -153,8 +153,8 @@ export function DateField({ name, label, required, value, onChange }: DateFieldP
                     "mt-0.5 size-1 rounded-full",
                     dayKey(cursor.year, cursor.month, day) === todayKey
                       ? value === dayKey(cursor.year, cursor.month, day)
-                        ? "bg-[#1a1614]"
-                        : "bg-[#4fe6c3]"
+                        ? "bg-on-picker-selected"
+                        : "bg-mint-raw"
                       : "bg-transparent",
                   )}
                 />

@@ -95,13 +95,13 @@ describe("EmptyState", () => {
     expect(btn).toBeInTheDocument();
     expect(btn.className).toContain("rounded-pill");
     expect(btn.className).toContain("bg-gradient-brand");
-    expect(btn.className).toContain("text-on-primary");
+    expect(btn.className).toContain("text-on-gradient");
     expect(btn.className).toContain("h-12");
 
     // plus icon inside button
     const svgs = btn.querySelectorAll("svg");
     expect(svgs.length).toBe(1);
-    expect(svgs[0].classList.contains("text-on-primary")).toBe(true);
+    expect(svgs[0].classList.contains("text-on-gradient")).toBe(true);
   });
 
   it("renders custom action label", () => {
