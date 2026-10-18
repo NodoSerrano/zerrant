@@ -35,19 +35,27 @@ describe("ThemeSwitch", () => {
     expect(sw.className).toContain("bg-primary");
   });
 
-  it("is unchecked with the muted track in light mode", () => {
+  it("is unchecked with the dedicated off-track token in light mode", () => {
     const sw = renderSwitch(false);
     expect(sw).toHaveAttribute("aria-checked", "false");
     expect(sw).toHaveAttribute("aria-labelledby", "modo-oscuro-label");
     expect(sw).not.toHaveAttribute("aria-label");
     expect(sw).toHaveAccessibleName("Modo oscuro");
-    expect(sw.className).toContain("bg-text-muted");
+    expect(sw.className).toContain("bg-switch-track");
+    // A text token is not a fill: the track has its own token.
+    expect(sw.className).not.toContain("bg-text-muted");
   });
 
   it("uses the on-primary token for the knob, not bg-white", () => {
     const sw = renderSwitch(true);
     expect(sw.innerHTML).not.toMatch(/\bbg-white\b/);
     expect(sw.innerHTML).toMatch(/\bbg-on-primary\b/);
+  });
+
+  it("extends its hit area to a 44px touch target without growing the visual track", () => {
+    const sw = renderSwitch(false);
+    expect(sw.className.split(" ")).toContain("relative");
+    expect(sw.className.split(" ")).toContain("before:-inset-2");
   });
 
   it("calls toggle when clicked", () => {
