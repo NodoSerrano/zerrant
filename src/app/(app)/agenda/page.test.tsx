@@ -221,9 +221,9 @@ describe("AgendaPage", () => {
 
     await renderPage();
 
-    expect(screen.getByRole("link", { name: /Solicitar ser Serrano/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Ver beneficios" })).toHaveAttribute(
       "href",
-      "/solicitar",
+      "/ser-serrano",
     );
     expect(resolveSerSerranoCtaVisibility).toHaveBeenCalledWith(
       "user-1",
@@ -245,7 +245,7 @@ describe("AgendaPage", () => {
       "user-1",
       expect.objectContaining({ tier: "standard" }),
     );
-    expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Ver beneficios" })).not.toBeInTheDocument();
   });
 
   it("lists events for the selected day from the events table", async () => {
