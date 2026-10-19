@@ -6,6 +6,7 @@ import { NodoTabs } from "@/components/NodoTabs";
 import { ProjectCard } from "@/components/ProjectCard";
 import { cn } from "@/lib/utils";
 import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
+import { resolveJoinAffordance, type ViewerMembership } from "@/features/projects/membership";
 
 type MemberProfile = {
   nombre: string | null;
@@ -17,6 +18,8 @@ type MemberProfile = {
 
 type ProjectMemberRow = {
   estado: string;
+  rol: string;
+  profile_id: string;
   profiles: MemberProfile | MemberProfile[] | null;
 };
 
@@ -49,6 +52,14 @@ function normalizeMembers(raw: ProjectMemberRow[] | null | undefined) {
   return { members, memberCount: members.length };
 }
 
+function viewerMembershipOf(
+  raw: ProjectMemberRow[] | null | undefined,
+  viewerId: string,
+): ViewerMembership | null {
+  const row = (raw ?? []).find((m) => m.profile_id === viewerId);
+  return row ? ({ estado: row.estado, rol: row.rol } as ViewerMembership) : null;
+}
+
 export default async function ProjectsPage() {
   const supabase = await createClient();
 
@@ -63,7 +74,7 @@ export default async function ProjectsPage() {
   const { data: projects } = await supabase
     .from("projects")
     .select(
-      "id, nombre, descripcion, estado, ingreso, project_members(estado, profiles:profile_id(nombre, apellido, apodo, nombre_visible, avatar_url))",
+      "id, nombre, descripcion, estado, ingreso, project_members(estado, rol, profile_id, profiles:profile_id(nombre, apellido, apodo, nombre_visible, avatar_url))",
     )
     .order("created_at", { ascending: false });
 
@@ -116,11 +127,15 @@ export default async function ProjectsPage() {
             return (
               <ProjectCard
                 key={project.id}
+                projectId={project.id}
                 href={`/nodo/projects/${project.id}`}
                 name={project.nombre}
                 description={project.descripcion}
                 estado={project.estado}
-                ingreso={project.ingreso}
+                affordance={resolveJoinAffordance({
+                  ingreso: project.ingreso,
+                  viewerMembership: viewerMembershipOf(project.project_members, user.id),
+                })}
                 members={members}
                 memberCount={memberCount}
               />

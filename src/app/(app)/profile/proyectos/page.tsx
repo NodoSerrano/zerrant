@@ -91,11 +91,13 @@ export default async function MisProyectosPage() {
             {projects.map((project) => (
               <ProjectCard
                 key={project.id}
+                projectId={project.id}
                 href={`/nodo/projects/${project.id}`}
                 name={project.nombre}
                 description={project.descripcion}
                 estado={project.estado}
-                ingreso={project.ingreso}
+                // Only approved memberships are listed here.
+                affordance={{ kind: "none" }}
               />
             ))}
           </div>
