@@ -19,21 +19,21 @@ describe("Chip", () => {
     render(<Chip label="Mint" variant="mint" />);
     const chip = screen.getByText("Mint");
     expect(chip).toHaveClass("bg-mint-raw/20");
-    expect(chip).toHaveClass("text-brand-mint");
+    expect(chip).toHaveClass("text-on-mint-tint");
   });
 
   it("renders blue variant with correct classes", () => {
     render(<Chip label="Blue" variant="blue" />);
     const chip = screen.getByText("Blue");
     expect(chip).toHaveClass("bg-blue-raw/20");
-    expect(chip).toHaveClass("text-brand-blue");
+    expect(chip).toHaveClass("text-on-blue-tint");
   });
 
   it("renders violet variant with correct classes", () => {
     render(<Chip label="Violet" variant="violet" />);
     const chip = screen.getByText("Violet");
     expect(chip).toHaveClass("bg-violet-raw/20");
-    expect(chip).toHaveClass("text-brand-violet");
+    expect(chip).toHaveClass("text-on-violet-tint");
   });
 
   it("accepts custom className", () => {

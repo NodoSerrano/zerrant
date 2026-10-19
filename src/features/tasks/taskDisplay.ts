@@ -43,10 +43,10 @@ export function getCategoriaIcon(categoria: string): LucideIcon {
 // `abierta` comes verbatim from Pencil frame `dyDLm`. The other four are
 // derived from the design system: Pencil only designed the open-state chip.
 export const ESTADO_BADGE = {
-  abierta: { label: "Abierta", bg: "bg-blue-raw/20", text: "text-brand-blue" },
-  tomada: { label: "Tomada", bg: "bg-coral/20", text: "text-coral" },
-  hecha: { label: "Hecha", bg: "bg-mint-raw/20", text: "text-brand-mint" },
-  verificada: { label: "Verificada", bg: "bg-brand-green/20", text: "text-brand-green" },
+  abierta: { label: "Abierta", bg: "bg-blue-raw/20", text: "text-on-blue-tint" },
+  tomada: { label: "Tomada", bg: "bg-coral/20", text: "text-on-coral-tint" },
+  hecha: { label: "Hecha", bg: "bg-mint-raw/20", text: "text-on-mint-tint" },
+  verificada: { label: "Verificada", bg: "bg-brand-green/20", text: "text-on-green-tint" },
   cancelada: { label: "Cancelada", bg: "bg-surface-inset", text: "text-text-muted" },
 } as const;
 

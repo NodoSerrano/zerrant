@@ -197,10 +197,10 @@ describe("TaskDetailPage — title block (AC2)", () => {
 
 describe("TaskDetailPage — estado badge (AC3)", () => {
   it.each([
-    ["abierta", "Abierta", "bg-blue-raw/20", "text-brand-blue"],
-    ["tomada", "Tomada", "bg-coral/20", "text-coral"],
-    ["hecha", "Hecha", "bg-mint-raw/20", "text-brand-mint"],
-    ["verificada", "Verificada", "bg-brand-green/20", "text-brand-green"],
+    ["abierta", "Abierta", "bg-blue-raw/20", "text-on-blue-tint"],
+    ["tomada", "Tomada", "bg-coral/20", "text-on-coral-tint"],
+    ["hecha", "Hecha", "bg-mint-raw/20", "text-on-mint-tint"],
+    ["verificada", "Verificada", "bg-brand-green/20", "text-on-green-tint"],
     ["cancelada", "Cancelada", "bg-surface-inset", "text-text-muted"],
   ])("renders the %s badge", async (estado, label, bg, text) => {
     await renderDetail({ task: makeTask({ estado }) });

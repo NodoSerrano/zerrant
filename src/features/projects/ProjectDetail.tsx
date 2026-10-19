@@ -95,7 +95,7 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
                 </span>
               </div>
               {member.rol === "admin" ? (
-                <span className="shrink-0 rounded-pill bg-blue-raw/20 px-2.5 py-1 font-display text-[11px] font-semibold text-brand-blue">
+                <span className="shrink-0 rounded-pill bg-blue-raw/20 px-2.5 py-1 font-display text-[11px] font-semibold text-on-blue-tint">
                   Admin
                 </span>
               ) : project.canPromoteMembers ? (

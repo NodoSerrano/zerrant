@@ -25,9 +25,9 @@ export function SupabaseHealthcheck() {
   }, []);
 
   const classes = {
-    loading: "bg-warm-yellow/20 text-warm-yellow",
-    ok: "bg-mint-raw/20 text-brand-mint",
-    error: "bg-coral/20 text-coral",
+    loading: "bg-warm-yellow/20 text-on-yellow-tint",
+    ok: "bg-mint-raw/20 text-on-mint-tint",
+    error: "bg-coral/20 text-on-coral-tint",
   };
 
   const labels = {

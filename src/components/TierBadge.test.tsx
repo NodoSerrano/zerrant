@@ -31,17 +31,17 @@ describe("TierBadge", () => {
 
     render(<TierBadge tier="scholar" />);
     expect(screen.getByText("Scholar")).toHaveClass("bg-blue-raw/20");
-    expect(screen.getByText("Scholar")).toHaveClass("text-brand-blue");
+    expect(screen.getByText("Scholar")).toHaveClass("text-on-blue-tint");
     unmount();
 
     render(<TierBadge tier="standard" />);
     expect(screen.getByText("Miembro")).toHaveClass("bg-mint-raw/20");
-    expect(screen.getByText("Miembro")).toHaveClass("text-brand-mint");
+    expect(screen.getByText("Miembro")).toHaveClass("text-on-mint-tint");
     unmount();
 
     render(<TierBadge tier="founder" />);
     expect(screen.getByText("Founder")).toHaveClass("bg-warm-yellow/20");
-    expect(screen.getByText("Founder")).toHaveClass("text-warm-yellow");
+    expect(screen.getByText("Founder")).toHaveClass("text-on-yellow-tint");
   });
 
   it("accepts custom className", () => {

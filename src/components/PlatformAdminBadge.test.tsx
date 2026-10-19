@@ -13,7 +13,7 @@ describe("PlatformAdminBadge", () => {
     const badge = screen.getByText("Admin");
     expect(badge).toHaveClass("rounded-pill");
     expect(badge).toHaveClass("bg-blue-raw/20");
-    expect(badge).toHaveClass("text-brand-blue");
+    expect(badge).toHaveClass("text-on-blue-tint");
     expect(badge).toHaveClass("font-display");
   });
 

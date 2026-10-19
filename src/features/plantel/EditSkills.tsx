@@ -87,7 +87,7 @@ export function EditSkills({ initialSkills, catalog }: EditSkillsProps) {
               type="button"
               onClick={() => remove(skill)}
               aria-label={`Quitar ${skill}`}
-              className="inline-flex items-center gap-1.5 rounded-pill bg-brand-green/10 px-3 py-[7px] font-body text-[13px] font-medium text-brand-green"
+              className="inline-flex items-center gap-1.5 rounded-pill bg-brand-green/10 px-3 py-[7px] font-body text-[13px] font-medium text-on-green-tint"
             >
               {skill}
               <X size={13} className="text-brand-green" aria-hidden />

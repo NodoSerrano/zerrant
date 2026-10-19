@@ -58,10 +58,10 @@ describe("getEstadoBadge", () => {
   // `abierta` comes verbatim from Pencil frame dyDLm. The rest is derived from
   // the design system, because Pencil didn't design a chip per state.
   it.each([
-    ["abierta", "Abierta", "bg-blue-raw/20", "text-brand-blue"],
-    ["tomada", "Tomada", "bg-coral/20", "text-coral"],
-    ["hecha", "Hecha", "bg-mint-raw/20", "text-brand-mint"],
-    ["verificada", "Verificada", "bg-brand-green/20", "text-brand-green"],
+    ["abierta", "Abierta", "bg-blue-raw/20", "text-on-blue-tint"],
+    ["tomada", "Tomada", "bg-coral/20", "text-on-coral-tint"],
+    ["hecha", "Hecha", "bg-mint-raw/20", "text-on-mint-tint"],
+    ["verificada", "Verificada", "bg-brand-green/20", "text-on-green-tint"],
     ["cancelada", "Cancelada", "bg-surface-inset", "text-text-muted"],
   ])("maps %s to its badge", (estado, label, bg, text) => {
     expect(getEstadoBadge(estado)).toEqual({ label, bg, text });
