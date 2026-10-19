@@ -1,9 +1,18 @@
 /**
  * ZER-171 — visibility for the persistent "Ser Serrano" CTA.
- * Pipeline entry stays `/solicitar` (same as the tourist profile shell).
+ * ZER-191 — the CTA opens the benefits page first; only that page links to
+ * the application form (`/solicitar`, the pipeline entry).
  */
 
-export const SER_SERRANO_CTA_HREF = "/solicitar" as const;
+export const SER_SERRANO_CTA_HREF = "/ser-serrano" as const;
+export const SER_SERRANO_APPLY_HREF = "/solicitar" as const;
+
+/** What membership unlocks, as the original CTA copy put it (ZER-171). */
+export const SER_SERRANO_BENEFICIOS = [
+  "Aparecer en el plantel",
+  "Crear eventos",
+  "Participar de los proyectos",
+] as const;
 
 export type SerSerranoCtaInput = {
   /** Profile tier; only tourists may see the CTA. */

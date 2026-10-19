@@ -219,8 +219,8 @@ describe("ProfilePage (serrano)", () => {
   it("does not render membership CTA banner", async () => {
     render(await ProfilePage());
 
-    expect(screen.queryByText("Todavía sos Turista")).toBeNull();
-    expect(screen.queryByText("Solicitar ser Serrano")).toBeNull();
+    expect(screen.queryByText("¿Querés conocer los beneficios de ser Serrano?")).toBeNull();
+    expect(screen.queryByText("Ver beneficios")).toBeNull();
   });
 
   it("does not render old 'Modo lectura' badge", async () => {

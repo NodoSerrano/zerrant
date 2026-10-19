@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { SER_SERRANO_CTA_HREF, shouldShowSerSerranoCta } from "./ser-serrano-cta";
+import {
+  SER_SERRANO_APPLY_HREF,
+  SER_SERRANO_CTA_HREF,
+  shouldShowSerSerranoCta,
+} from "./ser-serrano-cta";
 
 describe("shouldShowSerSerranoCta (ZER-171)", () => {
   it("shows for tourist without active membership request", () => {
@@ -29,7 +33,8 @@ describe("shouldShowSerSerranoCta (ZER-171)", () => {
     expect(shouldShowSerSerranoCta({ tier: "", hasActiveMembershipRequest: false })).toBe(false);
   });
 
-  it("keeps the pipeline href on /solicitar (not a loose form)", () => {
-    expect(SER_SERRANO_CTA_HREF).toBe("/solicitar");
+  it("sends the banner to the benefits page, and only that page to the form (ZER-191)", () => {
+    expect(SER_SERRANO_CTA_HREF).toBe("/ser-serrano");
+    expect(SER_SERRANO_APPLY_HREF).toBe("/solicitar");
   });
 });
