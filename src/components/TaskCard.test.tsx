@@ -62,21 +62,21 @@ describe("TaskCard", () => {
     render(<TaskCard {...defaultProps} estado="abierta" />);
     const chip = screen.getByText("Abierta");
     expect(chip).toHaveClass("bg-blue-raw/20");
-    expect(chip).toHaveClass("text-brand-blue");
+    expect(chip).toHaveClass("text-on-blue-tint");
   });
 
   it("estado tomada has correct chip colors", () => {
     render(<TaskCard {...defaultProps} estado="tomada" />);
     const chip = screen.getByText("Tomada");
     expect(chip).toHaveClass("bg-coral/20");
-    expect(chip).toHaveClass("text-coral");
+    expect(chip).toHaveClass("text-on-coral-tint");
   });
 
   it("estado hecha has correct chip colors", () => {
     render(<TaskCard {...defaultProps} estado="hecha" />);
     const chip = screen.getByText("Hecha");
     expect(chip).toHaveClass("bg-mint-raw/20");
-    expect(chip).toHaveClass("text-brand-mint");
+    expect(chip).toHaveClass("text-on-mint-tint");
   });
 
   it("renders urgencia alta with correct colors and label", () => {
@@ -218,7 +218,7 @@ describe("TaskCard", () => {
 
     const badge = screen.getByText("Abierta");
     expect(badge.className).toContain("bg-blue-raw/20");
-    expect(badge.className).toContain("text-brand-blue");
+    expect(badge.className).toContain("text-on-blue-tint");
   });
 
   // Pencil didn't design a chip for "cancelada". The DS's neutral pair

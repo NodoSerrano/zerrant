@@ -10,7 +10,7 @@ export function PlatformAdminBadge({ className }: PlatformAdminBadgeProps) {
     <span
       className={cn(
         "inline-flex items-center rounded-pill px-[11px] py-[5px] text-xs font-semibold font-display",
-        "bg-blue-raw/20 text-brand-blue",
+        "bg-blue-raw/20 text-on-blue-tint",
         className,
       )}
     >

@@ -54,6 +54,17 @@
   /* ZER-175: text and icons on bg-gradient-brand. Cream measured 1.4–2.6:1 on
      the mint/blue/violet stops; dark text clears AA on all of them, in both themes. */
   --color-on-gradient: #1a1614;
+
+  /* ZER-175: text on translucent brand tints (chips, badges: bg-<fill>/20).
+     The brand color itself is too light on its own tint (1.6–3.7:1); these
+     clear AA over every surface at /10 and /20. */
+  --color-on-mint-tint: #09735c;
+  --color-on-blue-tint: #1158b0;
+  --color-on-violet-tint: #6b3fa8;
+  --color-on-coral-tint: #a60056;
+  --color-on-yellow-tint: #8e5416;
+  --color-on-orange-tint: #a73216;
+  --color-on-green-tint: #096646;
 }
 
 /* Brand ramps — Figma web grad-primary / grad-warm (landing parity, ZER-120) */
@@ -101,6 +112,14 @@
   --color-coral: #db599c;
   --color-brand-blue: #588ac8;
   --color-brand-violet: #987ac3;
+
+  --color-on-mint-tint: #79bbac;
+  --color-on-blue-tint: #7ba2d3;
+  --color-on-violet-tint: #ae96cf;
+  --color-on-coral-tint: #e279af;
+  --color-on-yellow-tint: #ff9728;
+  --color-on-orange-tint: #ff6e4a;
+  --color-on-green-tint: #52ac8c;
 }
 
 body {

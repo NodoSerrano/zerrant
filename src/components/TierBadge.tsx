@@ -9,9 +9,9 @@ interface TierBadgeProps {
 
 const tierStyles: Record<Tier, string> = {
   tourist: "bg-surface-inset text-text-muted",
-  scholar: "bg-blue-raw/20 text-brand-blue",
-  standard: "bg-mint-raw/20 text-brand-mint",
-  founder: "bg-warm-yellow/20 text-warm-yellow",
+  scholar: "bg-blue-raw/20 text-on-blue-tint",
+  standard: "bg-mint-raw/20 text-on-mint-tint",
+  founder: "bg-warm-yellow/20 text-on-yellow-tint",
 };
 
 /** Display labels only — DB enums stay tourist/standard/scholar/founder. */

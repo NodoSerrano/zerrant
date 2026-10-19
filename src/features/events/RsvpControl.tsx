@@ -8,8 +8,8 @@ import { setRsvp } from "./actions";
 import { RSVP_LABELS } from "./attendance";
 
 const SELECTED_CLASS: Record<EventAttendanceEstado, string> = {
-  voy: "bg-mint-raw/20 text-brand-mint border-brand-mint/30",
-  quizas: "bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30",
+  voy: "bg-mint-raw/20 text-on-mint-tint border-brand-mint/30",
+  quizas: "bg-warm-yellow/20 text-on-yellow-tint border-warm-yellow/30",
   no: "bg-surface-inset text-text-primary",
 };
 
