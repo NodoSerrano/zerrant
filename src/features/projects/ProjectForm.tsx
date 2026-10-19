@@ -5,6 +5,7 @@ import { PrimaryButton } from "@/components/PrimaryButton";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { cn } from "@/lib/utils";
 import { PROJECT_ESTADO_OPTIONS, PROJECT_INGRESO_OPTIONS } from "./types";
+import { FormFeedback } from "@/components/FormFeedback";
 
 const GROUP_LABEL = "text-[13px] font-medium text-text-secondary";
 const FOCUS_RING = "has-focus-visible:ring-2 has-focus-visible:ring-primary/40";
@@ -141,11 +142,7 @@ export function ProjectForm({
         </fieldset>
       </div>
 
-      {state?.error ? (
-        <p role="alert" className="rounded-md bg-coral/10 px-3 py-2 text-sm text-coral">
-          {state.error}
-        </p>
-      ) : null}
+      <FormFeedback error={state?.error} />
 
       <PrimaryButton type="submit" disabled={pending} className="w-full">
         {pending ? pendingLabel : submitLabel}

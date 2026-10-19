@@ -1,8 +1,15 @@
 "use client";
 
 import { PrimaryButton } from "@/components/PrimaryButton";
-import { assignTask, markTaskDone, releaseTask, takeTask, verifyTask } from "@/features/tasks/actions";
+import {
+  assignTask,
+  markTaskDone,
+  releaseTask,
+  takeTask,
+  verifyTask,
+} from "@/features/tasks/actions";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
+import { FormFeedback } from "@/components/FormFeedback";
 
 export function TakeTaskButton({ taskId }: { taskId: string }) {
   const [state, action, pending] = useGuardedActionState(takeTask, null);
@@ -10,7 +17,7 @@ export function TakeTaskButton({ taskId }: { taskId: string }) {
   return (
     <form action={action}>
       <input type="hidden" name="taskId" value={taskId} />
-      {state?.error && <p className="text-sm text-coral mb-2">{state.error}</p>}
+      <FormFeedback error={state?.error} className="mb-2" />
       <PrimaryButton type="submit" disabled={pending} className="w-full">
         {pending ? "Tomando..." : "Tomar esta tarea"}
       </PrimaryButton>
@@ -24,7 +31,7 @@ export function ReleaseTaskButton({ taskId }: { taskId: string }) {
   return (
     <form action={action}>
       <input type="hidden" name="taskId" value={taskId} />
-      {state?.error && <p className="text-sm text-coral mb-2">{state.error}</p>}
+      <FormFeedback error={state?.error} className="mb-2" />
       <PrimaryButton type="submit" disabled={pending} className="w-full">
         {pending ? "Liberando..." : "Liberar tarea"}
       </PrimaryButton>
@@ -63,7 +70,7 @@ export function AssignTaskForm({
           </option>
         ))}
       </select>
-      {state?.error && <p className="text-sm text-coral">{state.error}</p>}
+      <FormFeedback error={state?.error} />
       <PrimaryButton type="submit" disabled={pending} className="w-full">
         {pending ? "Asignando..." : "Asignar"}
       </PrimaryButton>
@@ -77,7 +84,7 @@ export function MarkDoneButton({ taskId }: { taskId: string }) {
   return (
     <form action={action}>
       <input type="hidden" name="taskId" value={taskId} />
-      {state?.error && <p className="text-sm text-coral mb-2">{state.error}</p>}
+      <FormFeedback error={state?.error} className="mb-2" />
       <PrimaryButton type="submit" disabled={pending} className="w-full">
         {pending ? "Guardando..." : "Marcar como hecha"}
       </PrimaryButton>
@@ -91,7 +98,7 @@ export function VerifyTaskButton({ taskId }: { taskId: string }) {
   return (
     <form action={action}>
       <input type="hidden" name="taskId" value={taskId} />
-      {state?.error && <p className="text-sm text-coral mb-2">{state.error}</p>}
+      <FormFeedback error={state?.error} className="mb-2" />
       <PrimaryButton type="submit" disabled={pending} className="w-full">
         {pending ? "Verificando..." : "Verificar tarea"}
       </PrimaryButton>

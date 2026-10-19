@@ -6,6 +6,7 @@ import { ChevronLeft } from "lucide-react";
 import { ProjectForm } from "@/features/projects/ProjectForm";
 import { archiveProject, updateProject } from "@/features/projects/actions";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
+import { FormFeedback } from "@/components/FormFeedback";
 
 interface EditProjectFormProps {
   projectId: string;
@@ -65,11 +66,7 @@ export function EditProjectForm({ projectId, defaults }: EditProjectFormProps) {
               este proyecto. Terminado no bloquea el proyecto: un admin puede volver a Idea o En
               curso.
             </p>
-            {archiveState?.error ? (
-              <p role="alert" className="font-body text-xs text-coral">
-                {archiveState.error}
-              </p>
-            ) : null}
+            <FormFeedback error={archiveState?.error} />
             <div className="flex gap-2">
               <button
                 type="submit"

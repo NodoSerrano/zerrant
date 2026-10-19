@@ -137,7 +137,9 @@ describe("createEvent", () => {
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
     mocks.eventsSelect.mockResolvedValue({ error: null, data: [{ id: "evt-1" }] });
 
-    await expect(createEvent(null, makeFormData())).rejects.toThrow("NEXT_REDIRECT:/agenda");
+    await expect(createEvent(null, makeFormData())).rejects.toThrow(
+      "NEXT_REDIRECT:/agenda?ok=evento-creado",
+    );
 
     expect(mocks.eventsInsertPayload).toEqual({
       titulo: "Asamblea de nodo",
@@ -290,7 +292,7 @@ describe("updateEvent", () => {
     mocks.eventsUpdateSelect.mockResolvedValue({ error: null, data: [{ id: "evt-1" }] });
 
     await expect(updateEvent(null, makeUpdateForm())).rejects.toThrow(
-      "NEXT_REDIRECT:/agenda/evt-1",
+      "NEXT_REDIRECT:/agenda/evt-1?ok=evento-actualizado",
     );
 
     expect(mocks.eventsUpdatePayload).toEqual({
@@ -368,7 +370,7 @@ describe("updateEvent", () => {
     mocks.eventsUpdateSelect.mockResolvedValue({ error: null, data: [{ id: "evt-1" }] });
 
     await expect(updateEvent(null, makeUpdateForm())).rejects.toThrow(
-      "NEXT_REDIRECT:/agenda/evt-1",
+      "NEXT_REDIRECT:/agenda/evt-1?ok=evento-actualizado",
     );
     expect(mocks.eventsUpdate).toHaveBeenCalled();
   });
@@ -396,7 +398,9 @@ describe("updateEvent", () => {
     fd.set("eventId", "evt-1");
     fd.set("titulo", "Solo título");
 
-    await expect(updateEvent(null, fd)).rejects.toThrow("NEXT_REDIRECT:/agenda/evt-1");
+    await expect(updateEvent(null, fd)).rejects.toThrow(
+      "NEXT_REDIRECT:/agenda/evt-1?ok=evento-actualizado",
+    );
 
     expect(mocks.eventsUpdatePayload).toEqual({ titulo: "Solo título" });
   });
@@ -413,7 +417,9 @@ describe("deleteEvent", () => {
     setupAuth("serrano-1");
     mocks.eventsDeleteSelect.mockResolvedValue({ error: null, data: [{ id: "evt-1" }] });
 
-    await expect(deleteEvent(null, makeDeleteForm())).rejects.toThrow("NEXT_REDIRECT:/agenda");
+    await expect(deleteEvent(null, makeDeleteForm())).rejects.toThrow(
+      "NEXT_REDIRECT:/agenda?ok=evento-eliminado",
+    );
 
     expect(mocks.eventsDeleteEq).toHaveBeenCalledWith("id", "evt-1");
     expect(mocks.attendanceDelete).not.toHaveBeenCalled();

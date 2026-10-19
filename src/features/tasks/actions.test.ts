@@ -16,6 +16,10 @@ const mocks = vi.hoisted(() => ({
   updateResult: { data: null, error: null } as { data: unknown; error: unknown },
 }));
 
+// Without this, revalidatePath throws outside a request before the action
+// reaches its redirect, so success paths were never really asserted.
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mocks.getUser },
@@ -69,6 +73,13 @@ import {
   verifyTask,
 } from "./actions";
 
+/** Destination of the real next/navigation redirect, from its digest. */
+function redirectTarget(error: unknown): string | null {
+  const digest = (error as { digest?: unknown } | undefined)?.digest;
+  if (typeof digest !== "string" || !digest.startsWith("NEXT_REDIRECT;")) return null;
+  return digest.split(";").slice(2, -2).join(";");
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.chainCalls.length = 0;
@@ -108,11 +119,13 @@ describe("createTask", () => {
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
     mocks.tasksInsert.mockResolvedValue({ error: null });
 
+    let redirectError: unknown;
     try {
       await createTask(null, makeFormData());
-    } catch {
-      // redirect throws
+    } catch (error) {
+      redirectError = error;
     }
+    expect(redirectTarget(redirectError)).toBe("/nodo/tasks?ok=tarea-creada");
 
     expect(mocks.profilesSelect).toHaveBeenCalledWith("tier");
     expect(mocks.profilesSelectEq).toHaveBeenCalledWith("id", "test-user-id");
@@ -251,11 +264,13 @@ describe("takeTask", () => {
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
     updateMatched();
 
+    let redirectError: unknown;
     try {
       await takeTask(null, makeFormData());
-    } catch {
-      // redirect throws
+    } catch (error) {
+      redirectError = error;
     }
+    expect(redirectTarget(redirectError)).toBe("/nodo/tasks/task-001?ok=tarea-tomada");
 
     expect(mocks.profilesSelect).toHaveBeenCalledWith("tier");
     expect(mocks.profilesSelectEq).toHaveBeenCalledWith("id", "test-user-id");
@@ -312,11 +327,13 @@ describe("markTaskDone", () => {
     setupAuth("taker-user-id");
     updateMatched();
 
+    let redirectError: unknown;
     try {
       await markTaskDone(null, makeFormData());
-    } catch {
-      // redirect throws
+    } catch (error) {
+      redirectError = error;
     }
+    expect(redirectTarget(redirectError)).toBe("/nodo/tasks/task-001?ok=tarea-completada");
 
     expect(mocks.tasksUpdate).toHaveBeenCalledWith({ estado: "hecha" });
     expect(mocks.chainCalls).toContainEqual(["eq", "id", "task-001"]);
@@ -358,11 +375,13 @@ describe("verifyTask", () => {
     mocks.profilesSelectSingle.mockResolvedValue({ data: { is_platform_admin: true } });
     updateMatched();
 
+    let redirectError: unknown;
     try {
       await verifyTask(null, makeFormData());
-    } catch {
-      // redirect throws
+    } catch (error) {
+      redirectError = error;
     }
+    expect(redirectTarget(redirectError)).toBe("/nodo/tasks/task-001?ok=tarea-verificada");
 
     expect(mocks.profilesSelect).toHaveBeenCalledWith("is_platform_admin");
     expect(mocks.profilesSelectEq).toHaveBeenCalledWith("id", "admin-user-id");

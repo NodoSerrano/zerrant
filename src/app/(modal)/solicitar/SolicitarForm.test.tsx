@@ -158,6 +158,16 @@ describe("SolicitarForm — multi-step (ZER-109)", () => {
     expect(screen.getByRole("button", { name: "Siguiente" })).toBeInTheDocument();
   });
 
+  it("shows a server rejection of the request as an alert (ZER-177)", () => {
+    mocks.useActionState.mockReturnValue([
+      { error: "Ya tenés una solicitud en curso" },
+      mocks.formAction,
+      false,
+    ]);
+    render(<SolicitarForm />);
+    expect(screen.getByRole("alert")).toHaveTextContent("Ya tenés una solicitud en curso");
+  });
+
   it("advances to step 2 and shows the reference aporte guide before attitude", () => {
     render(<SolicitarForm />);
     goToStep2();

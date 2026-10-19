@@ -25,6 +25,7 @@ import {
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { cn } from "@/lib/utils";
 import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
+import { FormFeedback } from "@/components/FormFeedback";
 
 const TOTAL_STEPS = 3;
 
@@ -403,11 +404,7 @@ export function SolicitarForm({ progress }: { progress?: PipelineProgressData })
           </div>
         </div>
 
-        {(stepError || state?.error) && (
-          <p role="alert" className="rounded-md bg-coral/10 px-3 py-2 text-sm text-coral">
-            {stepError ?? state?.error}
-          </p>
-        )}
+        <FormFeedback error={stepError ?? state?.error} />
 
         {step < TOTAL_STEPS ? (
           <PrimaryButton type="button" onClick={onNext} className="w-full">

@@ -6,6 +6,7 @@ import { Ellipsis } from "lucide-react";
 import { cancelTask } from "./actions";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { cn } from "@/lib/utils";
+import { FormFeedback } from "@/components/FormFeedback";
 
 // Each action lives in its own window of states. Cancelling still makes sense
 // once the task is taken; editing doesn't, because it would change the work of
@@ -118,11 +119,7 @@ export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskM
             <form action={action} className="flex flex-col gap-2 p-3">
               <input type="hidden" name="taskId" value={taskId} />
               <p className="font-body text-sm text-text-primary">¿Cancelar esta tarea?</p>
-              {state?.error && (
-                <p role="alert" className="font-body text-xs text-coral">
-                  {state.error}
-                </p>
-              )}
+              <FormFeedback error={state?.error} />
               <div className="flex gap-2">
                 <button
                   type="submit"

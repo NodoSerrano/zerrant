@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isTasksBlockedTier } from "./tier-guards";
 import type { TaskCategoria, TaskUpdate, TaskUrgencia } from "./types";
+import { withActionNotice } from "@/lib/action-notice";
 
 const CANCEL_ERROR = "No pudimos cancelar la tarea. Probá de nuevo.";
 const UPDATE_ERROR = "No pudimos guardar los cambios. Probá de nuevo.";
@@ -104,7 +105,7 @@ export async function createTask(_prevState: { error: string } | null, formData:
   }
 
   revalidatePath("/nodo", "layout");
-  redirect("/nodo/tasks");
+  redirect(withActionNotice("/nodo/tasks", "tarea-creada"));
 }
 
 export async function takeTask(_prevState: { error: string } | null, formData: FormData) {
@@ -146,7 +147,7 @@ export async function takeTask(_prevState: { error: string } | null, formData: F
   }
 
   revalidatePath("/nodo", "layout");
-  redirect(`/nodo/tasks/${taskId}`);
+  redirect(withActionNotice(`/nodo/tasks/${taskId}`, "tarea-tomada"));
 }
 
 export async function releaseTask(_prevState: { error: string } | null, formData: FormData) {
@@ -194,7 +195,7 @@ export async function releaseTask(_prevState: { error: string } | null, formData
   }
 
   revalidatePath("/nodo", "layout");
-  redirect(`/nodo/tasks/${taskId}`);
+  redirect(withActionNotice(`/nodo/tasks/${taskId}`, "tarea-liberada"));
 }
 
 export async function assignTask(_prevState: { error: string } | null, formData: FormData) {
@@ -266,7 +267,7 @@ export async function assignTask(_prevState: { error: string } | null, formData:
   }
 
   revalidatePath("/nodo", "layout");
-  redirect(`/nodo/tasks/${taskId}`);
+  redirect(withActionNotice(`/nodo/tasks/${taskId}`, "tarea-asignada"));
 }
 
 export async function markTaskDone(_prevState: { error: string } | null, formData: FormData) {
@@ -299,7 +300,7 @@ export async function markTaskDone(_prevState: { error: string } | null, formDat
   }
 
   revalidatePath("/nodo", "layout");
-  redirect(`/nodo/tasks/${taskId}`);
+  redirect(withActionNotice(`/nodo/tasks/${taskId}`, "tarea-completada"));
 }
 
 export async function verifyTask(_prevState: { error: string } | null, formData: FormData) {
@@ -341,7 +342,7 @@ export async function verifyTask(_prevState: { error: string } | null, formData:
   }
 
   revalidatePath("/nodo", "layout");
-  redirect(`/nodo/tasks/${taskId}`);
+  redirect(withActionNotice(`/nodo/tasks/${taskId}`, "tarea-verificada"));
 }
 
 export async function cancelTask(_prevState: { error: string } | null, formData: FormData) {
@@ -385,7 +386,7 @@ export async function cancelTask(_prevState: { error: string } | null, formData:
   }
 
   revalidatePath("/nodo", "layout");
-  redirect(`/nodo/tasks/${taskId}`);
+  redirect(withActionNotice(`/nodo/tasks/${taskId}`, "tarea-cancelada"));
 }
 
 export async function updateTask(_prevState: { error: string } | null, formData: FormData) {
@@ -449,5 +450,5 @@ export async function updateTask(_prevState: { error: string } | null, formData:
   }
 
   revalidatePath("/nodo", "layout");
-  redirect(`/nodo/tasks/${taskId}`);
+  redirect(withActionNotice(`/nodo/tasks/${taskId}`, "tarea-actualizada"));
 }

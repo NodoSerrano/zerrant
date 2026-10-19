@@ -76,4 +76,9 @@ describe("EnviadoConfirmation — Pencil D1hKT", () => {
     expect(wrapper?.className).toMatch(/\bmin-h-full\b/);
     expect(wrapper?.className).toContain("justify-center");
   });
+
+  it("announces that the request was sent (ZER-177)", () => {
+    render(<EnviadoConfirmation />);
+    expect(screen.getByRole("status")).toHaveTextContent("¡Solicitud enviada!");
+  });
 });

@@ -10,6 +10,7 @@ import {
   type ProjectEstado,
   type ProjectIngreso,
 } from "./types";
+import { withActionNotice } from "@/lib/action-notice";
 
 const CREATE_ERROR = "No pudimos crear el proyecto. Probá de nuevo.";
 const CREATE_REJECTED = "No pudimos crear el proyecto.";
@@ -96,7 +97,7 @@ export async function createProject(
 
   revalidatePath("/nodo/projects");
   revalidatePath("/nodo", "layout");
-  redirect("/nodo/projects");
+  redirect(withActionNotice("/nodo/projects", "proyecto-creado"));
 }
 
 const UPDATE_ERROR = "No pudimos guardar los cambios. Probá de nuevo.";
@@ -163,7 +164,7 @@ export async function updateProject(
   revalidatePath(`/nodo/projects/${projectId}`);
   revalidatePath("/nodo/projects");
   revalidatePath("/nodo", "layout");
-  redirect(`/nodo/projects/${projectId}`);
+  redirect(withActionNotice(`/nodo/projects/${projectId}`, "proyecto-actualizado"));
 }
 
 /**
@@ -206,7 +207,7 @@ export async function archiveProject(
   revalidatePath(`/nodo/projects/${projectId}`);
   revalidatePath("/nodo/projects");
   revalidatePath("/nodo", "layout");
-  redirect(`/nodo/projects/${projectId}`);
+  redirect(withActionNotice(`/nodo/projects/${projectId}`, "proyecto-archivado"));
 }
 
 const JOIN_ERROR = "No pudimos unirte al proyecto. Probá de nuevo.";
