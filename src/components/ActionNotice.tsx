@@ -10,9 +10,11 @@ import { ACTION_NOTICE_PARAM, actionNoticeMessage } from "@/lib/action-notice";
  * `?ok=<code>` (see withActionNotice). Lives in the route-group layouts.
  */
 export function ActionNotice() {
+  // Both are null without a router context (e.g. the precached offline page,
+  // which reuses the (app) layout): there is simply no notice to show then.
   const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const fromUrl = actionNoticeMessage(searchParams.get(ACTION_NOTICE_PARAM));
+  const pathname = usePathname() ?? "";
+  const fromUrl = actionNoticeMessage(searchParams?.get(ACTION_NOTICE_PARAM));
   // Tied to the page it arrived on: the layout outlives navigations.
   const [shown, setShown] = useState<{ pathname: string; message: string } | null>(null);
   // The code already turned into a notice, so dismissing it sticks while the
@@ -26,7 +28,7 @@ export function ActionNotice() {
   }
 
   useEffect(() => {
-    if (!fromUrl) return;
+    if (!fromUrl || !searchParams) return;
     // Drop the code so a reload or a shared link does not repeat the notice.
     const rest = new URLSearchParams(searchParams.toString());
     rest.delete(ACTION_NOTICE_PARAM);

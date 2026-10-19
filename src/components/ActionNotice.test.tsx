@@ -2,8 +2,8 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const nav = vi.hoisted(() => ({
-  params: new URLSearchParams(),
-  pathname: "/agenda",
+  params: new URLSearchParams() as URLSearchParams | null,
+  pathname: "/agenda" as string | null,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -83,5 +83,14 @@ describe("ActionNotice", () => {
     nav.params = new URLSearchParams("ok=evento-creado");
     rerender(<ActionNotice />);
     expect(screen.getByRole("status")).toHaveTextContent("Evento creado");
+  });
+
+  it("renders nothing outside a Next router, e.g. the precached offline page", () => {
+    // useSearchParams/usePathname return null when there is no router context.
+    nav.params = null;
+    nav.pathname = null;
+    const { container } = render(<ActionNotice />);
+    expect(container).toBeEmptyDOMElement();
+    expect(replaceState).not.toHaveBeenCalled();
   });
 });
