@@ -31,7 +31,7 @@ function SignupForm() {
             BRAND_GRADIENT_CLASS,
           )}
         >
-          <Mountain size={36} className="text-on-primary" />
+          <Mountain size={36} className="text-on-gradient" />
         </div>
         <div className="flex flex-col items-center gap-1.5">
           <h1 className="font-display text-[26px] font-bold text-text-primary">Nodo Serrano</h1>

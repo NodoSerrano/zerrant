@@ -44,7 +44,7 @@ export function SystemStateView({
   const ctaClass = cn(
     "inline-flex items-center justify-center gap-2 rounded-pill h-[52px] px-6",
     BRAND_GRADIENT_CLASS,
-    "font-display text-base font-medium text-on-primary",
+    "font-display text-base font-medium text-on-gradient",
     BRAND_CTA_SHADOW_CLASS,
     "hover:opacity-90 active:scale-[0.98]",
     "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40",
@@ -81,12 +81,12 @@ export function SystemStateView({
 
       {action.type === "link" ? (
         <Link href={action.href} className={ctaClass}>
-          {ActionIcon ? <ActionIcon className="size-[18px] text-on-primary" aria-hidden /> : null}
+          {ActionIcon ? <ActionIcon className="size-[18px] text-on-gradient" aria-hidden /> : null}
           {action.label}
         </Link>
       ) : (
         <button type="button" onClick={action.onClick} className={ctaClass}>
-          {ActionIcon ? <ActionIcon className="size-[18px] text-on-primary" aria-hidden /> : null}
+          {ActionIcon ? <ActionIcon className="size-[18px] text-on-gradient" aria-hidden /> : null}
           {action.label}
         </button>
       )}

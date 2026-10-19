@@ -20,12 +20,12 @@ export function SerSerranoCta({ className }: SerSerranoCtaProps) {
       data-testid="ser-serrano-cta"
     >
       <div className="flex items-center gap-2.5">
-        <Mountain size={22} className="text-on-primary shrink-0" aria-hidden />
-        <span className="font-display text-[17px] font-bold text-on-primary">
+        <Mountain size={22} className="text-on-gradient shrink-0" aria-hidden />
+        <span className="font-display text-[17px] font-bold text-on-gradient">
           Todavía sos Turista
         </span>
       </div>
-      <p className="font-body text-[13px] text-on-primary/[0.88] leading-relaxed">
+      <p className="font-body text-[13px] text-on-gradient/[0.88] leading-relaxed">
         Sumate como Serrano para aparecer en el plantel, crear eventos y participar de los
         proyectos.
       </p>

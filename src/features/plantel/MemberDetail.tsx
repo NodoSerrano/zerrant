@@ -9,7 +9,7 @@ import { AporteItem } from "@/features/aportes/AporteItem";
 import type { SerranoMemberDetail } from "./types";
 
 const CTA_CLASSES = [
-  "inline-flex items-center justify-center rounded-pill font-display font-medium text-on-primary transition-all",
+  "inline-flex items-center justify-center rounded-pill font-display font-medium text-on-gradient transition-all",
   BRAND_GRADIENT_CLASS,
   BRAND_CTA_SHADOW_CLASS,
   "hover:opacity-90 active:scale-[0.98] h-[54px] px-6 text-base w-full",

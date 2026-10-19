@@ -99,11 +99,11 @@ describe("Avatar", () => {
     expect(el).not.toHaveClass("bg-primary");
   });
 
-  it("has font-bold and text-on-primary on fallback", () => {
+  it("has font-bold and text-on-gradient on fallback", () => {
     render(<Avatar name="Juan Pérez" />);
     const el = screen.getByText("JP");
     expect(el).toHaveClass("font-bold");
-    expect(el).toHaveClass("text-on-primary");
+    expect(el).toHaveClass("text-on-gradient");
   });
 
   it("uses proportional text sizes per size", () => {

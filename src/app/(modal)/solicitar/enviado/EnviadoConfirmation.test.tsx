@@ -28,7 +28,7 @@ describe("EnviadoConfirmation — Pencil D1hKT", () => {
     const icon = document.querySelector(".lucide-check");
     expect(icon).toBeTruthy();
     expect(icon!.classList.contains("size-12")).toBe(true);
-    expect(icon!.classList.contains("text-on-primary")).toBe(true);
+    expect(icon!.classList.contains("text-on-gradient")).toBe(true);
 
     const circle = icon!.closest("div");
     expect(circle?.className).toContain("size-[104px]");

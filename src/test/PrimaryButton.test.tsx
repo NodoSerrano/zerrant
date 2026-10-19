@@ -27,11 +27,11 @@ describe("PrimaryButton", () => {
     expect(btn.className).toMatch(/shadow-\[0_4px_14px_rgba/);
   });
 
-  it("has pill shape and on-primary text", () => {
+  it("has pill shape and on-gradient text (ZER-175)", () => {
     render(<PrimaryButton>Pill</PrimaryButton>);
     const btn = screen.getByRole("button");
     expect(btn).toHaveClass("rounded-pill");
-    expect(btn).toHaveClass("text-on-primary");
+    expect(btn).toHaveClass("text-on-gradient");
   });
 
   it("has default height 54px", () => {

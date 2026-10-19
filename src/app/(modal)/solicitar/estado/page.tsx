@@ -59,7 +59,7 @@ export default async function EstadoPage() {
           href="/"
           className={cn(
             BUTTON,
-            "text-on-primary hover:opacity-90",
+            "text-on-gradient hover:opacity-90",
             BRAND_GRADIENT_CLASS,
             BRAND_CTA_SHADOW_CLASS,
           )}
