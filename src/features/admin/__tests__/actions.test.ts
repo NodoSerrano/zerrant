@@ -50,7 +50,14 @@ beforeEach(() => {
 function setupAdmin() {
   mocks.getUser.mockResolvedValue({ data: { user: { id: "admin-user-id" } } });
   mocks.profilesSelectSingle.mockResolvedValue({ data: { is_platform_admin: true } });
+  // The request is still where the form says it was, unless a test says otherwise.
+  mocks.requestSingle.mockImplementation(async () => ({
+    data: { estado: lastFrom },
+    error: null,
+  }));
 }
+
+let lastFrom = "pendiente_coordinacion";
 
 const VALID_UUID = "11111111-1111-4111-8111-111111111111";
 
@@ -62,8 +69,20 @@ const makeFormData = (
   const fd = new FormData();
   fd.set("requestId", requestId);
   fd.set("to", to);
+  // Every real form sends the estado the admin was looking at (RequestCard).
+  fd.set("from", FROM_FOR[to] ?? "pendiente_coordinacion");
   for (const [key, value] of Object.entries(extra)) fd.set(key, value);
+  lastFrom = String(fd.get("from"));
   return fd;
+};
+
+const FROM_FOR: Record<string, string> = {
+  entrevista_solicitada: "pendiente_coordinacion",
+  entrevista_coordinada: "entrevista_solicitada",
+  reprogramacion: "entrevista_coordinada",
+  entrevista_realizada: "entrevista_coordinada",
+  aprobado: "entrevista_realizada",
+  cerrada: "pendiente_coordinacion",
 };
 
 describe("transitionRequest", () => {
@@ -259,6 +278,29 @@ describe("transitionRequest", () => {
   });
 
   describe("concurrent admins (ZER-169)", () => {
+    it("rejects a form without the estado the admin saw, so the stale check cannot be skipped", async () => {
+      setupAdmin();
+      const fd = makeFormData("entrevista_coordinada");
+      fd.delete("from");
+
+      const result = await transitionRequest(null, fd);
+
+      expect(result).toEqual({ error: "Solicitud inválida" });
+      expect(mocks.rpc).not.toHaveBeenCalled();
+    });
+
+    it("rejects a from that is not a real estado", async () => {
+      setupAdmin();
+
+      const result = await transitionRequest(
+        null,
+        makeFormData("entrevista_coordinada", VALID_UUID, { from: "pendiente" }),
+      );
+
+      expect(result).toEqual({ error: "Solicitud inválida" });
+      expect(mocks.rpc).not.toHaveBeenCalled();
+    });
+
     it("refuses the change when another admin already moved the request", async () => {
       setupAdmin();
       mocks.requestSingle.mockResolvedValue({

@@ -335,6 +335,7 @@ export default async function AdminMembresiasPage({
             items={historyItems}
             filter={historyFilter}
             eventsError={historyEventsError}
+            limit={HISTORY_LIMIT}
           />
         ) : (
           <>

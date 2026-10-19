@@ -82,21 +82,20 @@ export async function transitionRequest(
 
   const requestId = getRequestId(formData);
   const to = formData.get("to");
-  if (!requestId || !isMembershipRequestEstado(to)) {
+  // The estado the admin was looking at. Required: without it the check for a
+  // change made meanwhile by another admin would silently not run.
+  const from = formData.get("from");
+  if (!requestId || !isMembershipRequestEstado(to) || !isMembershipRequestEstado(from)) {
     return { error: "Solicitud inválida" };
   }
 
   const parsedMotivo = transitionMotivo(formData, to);
   if ("error" in parsedMotivo) return parsedMotivo;
 
-  // The estado the admin was looking at. If another admin moved the request
-  // meanwhile, say so instead of applying a decision made on stale data.
-  const rawFrom = formData.get("from");
-  const from = isMembershipRequestEstado(rawFrom) ? rawFrom : null;
-  if (from) {
-    const estado = await currentEstado(supabase, requestId);
-    if (estado && estado !== from) return changedByAnotherAdmin(estado);
-  }
+  // If another admin moved the request meanwhile, say so instead of applying a
+  // decision made on stale data.
+  const estadoNow = await currentEstado(supabase, requestId);
+  if (estadoNow && estadoNow !== from) return changedByAnotherAdmin(estadoNow);
 
   const { data, error: rpcError } = await supabase.rpc("transition_membership_request", {
     p_request_id: requestId,
@@ -115,7 +114,7 @@ export async function transitionRequest(
 
   if (data?.error || !data?.estado) {
     // Lost the race between our check and the RPC's row lock.
-    if (from && data?.code === "invalid_transition") {
+    if (data?.code === "invalid_transition") {
       const estado = await currentEstado(supabase, requestId);
       if (estado && estado !== from) return changedByAnotherAdmin(estado);
     }

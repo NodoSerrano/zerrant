@@ -52,10 +52,10 @@ describe("TabBarClient", () => {
     expect(screen.getByRole("link", { name: /AGENDA/i })).toHaveClass("bg-primary");
   });
 
-  it.each(["/admin/membresias", "/admin/membresias?vista=historial", "/admin/roles"])(
+  it.each(["/admin/membresias", "/admin/roles"])(
     "marks perfil, not inicio, on %s (the admin panel opens from Perfil)",
     (pathname) => {
-      (usePathname as ReturnType<typeof vi.fn>).mockReturnValue(pathname.split("?")[0]);
+      (usePathname as ReturnType<typeof vi.fn>).mockReturnValue(pathname);
       render(<TabBarClient />);
       expect(screen.getByRole("link", { name: /PERFIL/i })).toHaveClass("bg-primary");
       expect(screen.getByRole("link", { name: /INICIO/i })).not.toHaveClass("bg-primary");

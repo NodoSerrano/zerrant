@@ -488,12 +488,33 @@ describe("AdminMembresiasPage — history view (ZER-169)", () => {
     expect(screen.getByText("Martín Pérez")).toBeInTheDocument();
     expect(screen.getAllByText("Solicitud cerrada").length).toBeGreaterThan(0);
     expect(screen.getByText(/Cerrada por/)).toHaveTextContent(
-      /Ana Admin · 12 de oct de 2026, 03:30/,
+      /Ana Admin · 12 de oct de 2026, 15:30/,
     );
     expect(screen.getByText("No respondió en 3 semanas")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Cerradas" })).toHaveAttribute("aria-current", "page");
     expect(screen.queryAllByTestId("request-card")).toHaveLength(0);
     expect(screen.queryByText("Horarios de entrevista")).not.toBeInTheDocument();
+  });
+
+  it("says when only the newest 100 requests are shown", async () => {
+    setEmptyMembership();
+    mocks.historyResponse = Promise.resolve({
+      data: Array.from({ length: 100 }, (_, i) => ({ ...closedRequest, id: `req-${i}` })),
+    });
+
+    render(await historial());
+
+    expect(mocks.historyOrder).toHaveBeenCalled();
+    expect(screen.getByText(/Se muestran las 100 más recientes/)).toBeInTheDocument();
+  });
+
+  it("does not mention the cap below 100 requests", async () => {
+    setEmptyMembership();
+    mocks.historyResponse = Promise.resolve({ data: [closedRequest] });
+
+    render(await historial());
+
+    expect(screen.queryByText(/más recientes/)).not.toBeInTheDocument();
   });
 
   it("shows every final estado by default", async () => {

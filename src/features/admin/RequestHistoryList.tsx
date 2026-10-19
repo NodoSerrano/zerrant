@@ -46,6 +46,8 @@ function formatDateTime(iso: string): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    // 24-hour clock, like the rest of the app (agenda, events).
+    hourCycle: "h23",
     timeZone: AGENDA_TIME_ZONE,
   }).format(new Date(iso));
 }
@@ -125,10 +127,13 @@ export function RequestHistoryList({
   items,
   filter,
   eventsError,
+  limit,
 }: {
   items: RequestHistoryItem[];
   filter: HistoryFilter;
   eventsError: boolean;
+  /** Max rows the page loads; reaching it means older requests are not listed. */
+  limit: number;
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -158,6 +163,12 @@ export function RequestHistoryList({
 
       {eventsError ? (
         <p className="font-body text-[13px] text-coral">No pudimos cargar quién hizo cada cambio</p>
+      ) : null}
+
+      {items.length >= limit ? (
+        <p className="font-body text-[13px] text-text-secondary">
+          Se muestran las {limit} más recientes. Las anteriores no aparecen en esta lista.
+        </p>
       ) : null}
 
       {items.length === 0 ? (
