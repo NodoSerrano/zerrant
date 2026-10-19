@@ -88,7 +88,19 @@ export function normalizeLumaCalendarEntries(entries: unknown[]): AgendaListItem
 }
 
 function normalizeTitleKey(title: string): string {
-  return title.trim().toLowerCase().replace(/\s+/g, " ");
+  return title
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/** Same event across sources: same normalized title on the same agenda day (ZER-157). */
+function dedupeKey(item: AgendaListItem): string {
+  const start = new Date(item.inicio);
+  const day = Number.isNaN(start.getTime()) ? item.inicio : formatDayKey(start);
+  return `${normalizeTitleKey(item.title)}|${day}`;
 }
 
 function sortKey(item: AgendaListItem): number {
@@ -96,7 +108,7 @@ function sortKey(item: AgendaListItem): number {
   return Number.isNaN(t) ? Number.POSITIVE_INFINITY : t;
 }
 
-/** Prefer internal when title+start collide with a Luma row. */
+/** Prefer internal when the same event (title + day) also comes from Luma. */
 export function mergeAgendaListItems(
   luma: AgendaListItem[],
   internal: AgendaListItem[],
@@ -105,12 +117,12 @@ export function mergeAgendaListItems(
   const out: AgendaListItem[] = [];
 
   for (const item of internal) {
-    const key = `${normalizeTitleKey(item.title)}|${item.inicio}`;
+    const key = dedupeKey(item);
     seen.add(key);
     out.push(item);
   }
   for (const item of luma) {
-    const key = `${normalizeTitleKey(item.title)}|${item.inicio}`;
+    const key = dedupeKey(item);
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(item);

@@ -12,7 +12,7 @@ export const AGENDA_TIME_ZONE = "America/Argentina/Buenos_Aires";
 
 const DAY_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-const WEEKDAY_SHORT_ES = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"] as const;
+export const WEEKDAY_SHORT_ES = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"] as const;
 
 type ZoneParts = {
   year: number;
@@ -84,23 +84,6 @@ function isValidCalendarDay(dayKey: string): boolean {
   return probe.getUTCFullYear() === y && probe.getUTCMonth() === m - 1 && probe.getUTCDate() === d;
 }
 
-function weekdayIndexInAgendaZone(date: Date): number {
-  const label = new Intl.DateTimeFormat("en-US", {
-    timeZone: AGENDA_TIME_ZONE,
-    weekday: "short",
-  }).format(date);
-  const map: Record<string, number> = {
-    Sun: 0,
-    Mon: 1,
-    Tue: 2,
-    Wed: 3,
-    Thu: 4,
-    Fri: 5,
-    Sat: 6,
-  };
-  return map[label] ?? 0;
-}
-
 /** YYYY-MM-DD for `date` in the agenda timezone. */
 export function formatDayKey(date: Date = new Date()): string {
   const p = partsInZone(date);
@@ -120,30 +103,6 @@ export function dayBoundsIso(dayKey: string): { startIso: string; endIso: string
   const start = zonedTimeToUtc(dayKey, "00:00:00");
   const end = zonedTimeToUtc(addCalendarDays(dayKey, 1), "00:00:00");
   return { startIso: start.toISOString(), endIso: end.toISOString() };
-}
-
-export type StripDay = {
-  key: string;
-  weekdayShort: string;
-  dayNumber: string;
-};
-
-/** Consecutive agenda-TZ days starting at `from` (default: now). */
-export function buildDayStrip(count: number, from: Date = new Date()): StripDay[] {
-  let key = formatDayKey(from);
-  const days: StripDay[] = [];
-
-  for (let i = 0; i < count; i += 1) {
-    const noon = zonedTimeToUtc(key, "12:00:00");
-    days.push({
-      key,
-      weekdayShort: WEEKDAY_SHORT_ES[weekdayIndexInAgendaZone(noon)],
-      dayNumber: String(Number(key.slice(8, 10))),
-    });
-    key = addCalendarDays(key, 1);
-  }
-
-  return days;
 }
 
 type ClockPart = { type: string; value: string };

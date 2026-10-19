@@ -123,8 +123,8 @@ function mockSupabase(
   };
 }
 
-async function renderPage(_searchParams: Record<string, string | undefined> = {}) {
-  const element = await AgendaPage();
+async function renderPage(searchParams: Record<string, string | undefined> = {}) {
+  const element = await AgendaPage({ searchParams: Promise.resolve(searchParams) });
   return render(element);
 }
 
@@ -307,9 +307,9 @@ describe("AgendaPage", () => {
 
     await renderPage({ dia: "2026-09-20" });
 
-    expect(screen.getByText("No hay eventos")).toBeInTheDocument();
+    expect(screen.getByText("No hay eventos próximos")).toBeInTheDocument();
     expect(screen.queryByText("No hay tareas")).not.toBeInTheDocument();
-    expect(screen.getByText(/todavía no hay eventos/i)).toBeInTheDocument();
+    expect(screen.getByText(/todavía no hay eventos en la agenda/i)).toBeInTheDocument();
   });
 
   it("ignores the dia query and still shows the list", async () => {
@@ -409,5 +409,105 @@ describe("AgendaPage", () => {
     expect(
       screen.getByText(/No se pudieron cargar los eventos públicos de Luma/i),
     ).toBeInTheDocument();
+  });
+
+  describe("ZER-157: readable agenda", () => {
+    const PAST: EventRow = {
+      id: "evt-past",
+      titulo: "Feria pasada",
+      descripcion: null,
+      lugar: null,
+      inicio: "2026-09-10T18:00:00-03:00",
+      fin: "2026-09-10T20:00:00-03:00",
+      creado_por: "user-1",
+    };
+
+    it("shows upcoming events grouped by month and day, past ones left out", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ events: [PAST, EVENT_A, EVENT_B] }),
+      );
+      await renderPage();
+
+      expect(screen.getByRole("heading", { name: "Septiembre 2026" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Hoy · dom 20 sep" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Mañana · lun 21 sep" })).toBeInTheDocument();
+      expect(screen.getByText("Asamblea")).toBeInTheDocument();
+      expect(screen.queryByText("Feria pasada")).not.toBeInTheDocument();
+    });
+
+    it("lists past events under Pasados, most recent first", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ events: [PAST, EVENT_A, EVENT_B] }),
+      );
+      await renderPage({ vista: "pasados" });
+
+      expect(screen.getByText("Feria pasada")).toBeInTheDocument();
+      expect(screen.queryByText("Cena comunitaria")).not.toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Pasados" })).toHaveAttribute("aria-current", "page");
+    });
+
+    it("switches between Próximos and Pasados with links, not horizontal scrolling", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase({ events: [] }));
+      await renderPage();
+
+      expect(screen.getByRole("link", { name: "Próximos" })).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
+      expect(screen.getByRole("link", { name: "Pasados" })).toHaveAttribute(
+        "href",
+        "/agenda?vista=pasados",
+      );
+    });
+
+    it("marks events that come from Luma", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      const { fetchLumaCalendarEvents } = await import("@/features/events/luma-client");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase({ events: [] }));
+      (fetchLumaCalendarEvents as ReturnType<typeof vi.fn>).mockResolvedValue({
+        ok: true,
+        events: [
+          {
+            id: "luma:1",
+            title: "Meetup público",
+            inicio: "2026-09-22T21:00:00.000Z",
+            fin: null,
+            place: null,
+            href: "https://luma.com/x",
+            source: "luma",
+            coverUrl: null,
+          },
+        ],
+      });
+      await renderPage();
+
+      expect(screen.getByText("Meetup público")).toBeInTheDocument();
+      expect(screen.getByText("Luma")).toBeInTheDocument();
+    });
+
+    it("says there are no upcoming events and points to past ones", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ events: [PAST] }),
+      );
+      await renderPage();
+
+      expect(screen.getByText("No hay eventos próximos")).toBeInTheDocument();
+      expect(screen.getAllByRole("link", { name: /pasados/i })[0]).toHaveAttribute(
+        "href",
+        "/agenda?vista=pasados",
+      );
+    });
+
+    it("says when nothing has happened yet under Pasados", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase({ events: [] }));
+      await renderPage({ vista: "pasados" });
+
+      expect(screen.getByText("Todavía no hubo eventos")).toBeInTheDocument();
+    });
   });
 });
