@@ -2,7 +2,13 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { estadoLabel, isMembershipRequestEstado } from "@/features/membership/request-state";
+import {
+  estadoLabel,
+  isMembershipRequestEstado,
+  isMotivoRequired,
+  MEMBERSHIP_TRANSITION_MOTIVO_MAX,
+  type MembershipRequestEstado,
+} from "@/features/membership/request-state";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -15,6 +21,40 @@ function getRequestId(formData: FormData): string | null {
 }
 
 export type TransitionRequestState = { error?: string; success?: string } | null;
+
+function transitionMotivo(
+  formData: FormData,
+  to: MembershipRequestEstado,
+): { motivo: string | null } | { error: string } {
+  const raw = formData.get("motivo");
+  const motivo = typeof raw === "string" ? raw.trim() : "";
+  if (!motivo) {
+    return isMotivoRequired(to) ? { error: "Escribí el motivo del cierre" } : { motivo: null };
+  }
+  if (motivo.length > MEMBERSHIP_TRANSITION_MOTIVO_MAX) {
+    return { error: `El motivo puede tener hasta ${MEMBERSHIP_TRANSITION_MOTIVO_MAX} caracteres` };
+  }
+  return { motivo };
+}
+
+function changedByAnotherAdmin(estado: MembershipRequestEstado): TransitionRequestState {
+  revalidatePath("/admin/membresias");
+  return {
+    error: `Otro admin ya cambió esta solicitud a «${estadoLabel(estado)}». Actualizamos la vista para que veas el estado actual.`,
+  };
+}
+
+async function currentEstado(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  requestId: string,
+): Promise<MembershipRequestEstado | null> {
+  const { data } = await supabase
+    .from("membership_requests")
+    .select("estado")
+    .eq("id", requestId)
+    .single();
+  return isMembershipRequestEstado(data?.estado) ? data.estado : null;
+}
 
 export async function transitionRequest(
   _prevState: TransitionRequestState,
@@ -42,13 +82,25 @@ export async function transitionRequest(
 
   const requestId = getRequestId(formData);
   const to = formData.get("to");
-  if (!requestId || !isMembershipRequestEstado(to)) {
+  // The estado the admin was looking at. Required: without it the check for a
+  // change made meanwhile by another admin would silently not run.
+  const from = formData.get("from");
+  if (!requestId || !isMembershipRequestEstado(to) || !isMembershipRequestEstado(from)) {
     return { error: "Solicitud inválida" };
   }
+
+  const parsedMotivo = transitionMotivo(formData, to);
+  if ("error" in parsedMotivo) return parsedMotivo;
+
+  // If another admin moved the request meanwhile, say so instead of applying a
+  // decision made on stale data.
+  const estadoNow = await currentEstado(supabase, requestId);
+  if (estadoNow && estadoNow !== from) return changedByAnotherAdmin(estadoNow);
 
   const { data, error: rpcError } = await supabase.rpc("transition_membership_request", {
     p_request_id: requestId,
     p_to: to,
+    ...(parsedMotivo.motivo ? { p_motivo: parsedMotivo.motivo } : {}),
   });
 
   if (rpcError) {
@@ -61,6 +113,11 @@ export async function transitionRequest(
   }
 
   if (data?.error || !data?.estado) {
+    // Lost the race between our check and the RPC's row lock.
+    if (data?.code === "invalid_transition") {
+      const estado = await currentEstado(supabase, requestId);
+      if (estado && estado !== from) return changedByAnotherAdmin(estado);
+    }
     return { error: data?.error ?? "No pudimos actualizar la solicitud" };
   }
 

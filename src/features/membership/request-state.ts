@@ -91,3 +91,13 @@ export function nextEstados(
     (t) => t.to,
   );
 }
+
+/** Matches the CHECK on membership_request_events.motivo. */
+export const MEMBERSHIP_TRANSITION_MOTIVO_MAX = 500;
+
+/** Estados that cannot be reached without a motivo (product decision, ZER-169). */
+const MOTIVO_REQUIRED: ReadonlySet<MembershipRequestEstado> = new Set(["cerrada"]);
+
+export function isMotivoRequired(to: MembershipRequestEstado): boolean {
+  return MOTIVO_REQUIRED.has(to);
+}
