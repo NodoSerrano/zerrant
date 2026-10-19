@@ -158,6 +158,31 @@ describe("mergeAgendaListItems", () => {
     expect(merged).toHaveLength(1);
     expect(merged[0].source).toBe("internal");
   });
+
+  it("treats the same title on the same day as one event, even if the minutes or punctuation differ (ZER-157)", () => {
+    const dup: AgendaListItem = {
+      ...luma,
+      id: "luma:dup",
+      title: "  ASAMBLÉA! ",
+      inicio: "2026-09-24T18:30:00.000Z",
+    };
+    const merged = mergeAgendaListItems([dup], [internal]);
+    expect(merged.map((i) => i.id)).toEqual(["int-1"]);
+  });
+
+  it("keeps two events with the same title on different days", () => {
+    const nextWeek: AgendaListItem = {
+      ...luma,
+      id: "luma:next",
+      title: "Asamblea",
+      inicio: "2026-10-01T18:00:00.000Z",
+    };
+    expect(mergeAgendaListItems([nextWeek], [internal])).toHaveLength(2);
+  });
+
+  it("keeps different titles on the same day", () => {
+    expect(mergeAgendaListItems([luma], [internal])).toHaveLength(2);
+  });
 });
 
 describe("filterAgendaItemsByDay", () => {

@@ -19,6 +19,8 @@ type EventCardProps = {
   place: string | null;
   href?: string;
   coverUrl?: string | null;
+  /** Luma events get a small label so the two sources never blur together (ZER-157). */
+  source?: "internal" | "luma";
   className?: string;
 };
 
@@ -30,6 +32,7 @@ export function EventCard({
   place,
   href,
   coverUrl = null,
+  source = "internal",
   className,
 }: EventCardProps) {
   const baseClasses = cn(
@@ -80,6 +83,11 @@ export function EventCard({
           {timeLabel}
           {place ? ` · ${place}` : ""}
         </span>
+        {source === "luma" ? (
+          <span className="w-fit rounded-pill border border-border px-2 py-px font-body text-[11px] font-medium text-text-secondary">
+            Luma
+          </span>
+        ) : null}
       </div>
       {durationLabel ? (
         <span className="shrink-0 font-display text-[13px] font-medium text-text-primary">

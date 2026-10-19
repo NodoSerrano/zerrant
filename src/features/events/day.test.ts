@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { parseAgendaWallClockIso } from "./validation";
 import {
   addCalendarDays,
-  buildDayStrip,
   dayBoundsIso,
   eventFormDefaultsFromRow,
   formatDayKey,
@@ -63,15 +62,6 @@ describe("dayBoundsIso", () => {
 describe("addCalendarDays", () => {
   it("rolls month boundaries", () => {
     expect(addCalendarDays("2026-09-30", 1)).toBe("2026-10-01");
-  });
-});
-
-describe("buildDayStrip", () => {
-  it("returns consecutive agenda-TZ days starting from the given instant", () => {
-    const strip = buildDayStrip(3, new Date("2026-09-20T12:00:00-03:00"));
-    expect(strip.map((d) => d.key)).toEqual(["2026-09-20", "2026-09-21", "2026-09-22"]);
-    expect(strip[0]?.weekdayShort).toBe("dom");
-    expect(strip[0]?.dayNumber).toBe("20");
   });
 });
 
