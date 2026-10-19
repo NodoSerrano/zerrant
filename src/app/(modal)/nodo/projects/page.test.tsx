@@ -34,6 +34,10 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("@/features/projects/ProjectJoinButton", () => ({
+  ProjectJoinButton: ({ label }: { label: string }) => <button type="submit">{label}</button>,
+}));
+
 vi.mock("@/components/Avatar", () => ({
   Avatar: ({ name }: { name: string }) => <div data-testid={`avatar-${name}`}>{name}</div>,
 }));
@@ -121,6 +125,8 @@ describe("ProjectsPage", () => {
             project_members: [
               {
                 estado: "aprobado",
+                rol: "admin",
+                profile_id: "ana-1",
                 profiles: {
                   nombre: "Ana",
                   apellido: "Diaz",
@@ -138,12 +144,45 @@ describe("ProjectsPage", () => {
     expect(screen.getByText("Sitio web de Nodo")).toBeInTheDocument();
     expect(screen.getByText("Landing y backoffice")).toBeInTheDocument();
     expect(screen.getByText("En curso")).toBeInTheDocument();
-    expect(screen.getByText("Por aprobación")).toBeInTheDocument();
+    // ZER-154: the card offers the action, not the entry rule.
+    expect(screen.queryByText("Por aprobación")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Solicitar unirme" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Sitio web de Nodo/i })).toHaveAttribute(
       "href",
       "/nodo/projects/p1",
     );
   });
+
+  it.each([
+    ["pendiente", "Solicitud pendiente"],
+    ["aprobado", "Participás"],
+  ])(
+    "reads the viewer's own %s membership to pick the card action (ZER-154)",
+    async (estado, text) => {
+      const { createClient } = await import("@/lib/supabase/server");
+      const client = mockSupabase({
+        projects: [
+          {
+            id: "p1",
+            nombre: "Huerta",
+            descripcion: null,
+            estado: "idea",
+            ingreso: "aprobacion",
+            project_members: [{ estado, rol: "miembro", profile_id: "user-1", profiles: null }],
+          },
+        ],
+      });
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
+      await renderPage();
+
+      const select = client.getProjectsChain()?.select as ReturnType<typeof vi.fn>;
+      expect(select.mock.calls[0][0]).toContain("profile_id");
+      expect(screen.getByText(text)).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /Unirme|Solicitar unirme/ }),
+      ).not.toBeInTheDocument();
+    },
+  );
 
   it("renders empty state copy from frame 7.3 when there are no projects", async () => {
     const { createClient } = await import("@/lib/supabase/server");

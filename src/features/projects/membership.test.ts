@@ -2,22 +2,22 @@ import { describe, expect, it } from "vitest";
 import { isProjectAdmin, resolveJoinAffordance } from "./membership";
 
 describe("resolveJoinAffordance", () => {
-  it("returns Unirse for abierto projects when the viewer has no membership row", () => {
+  it("returns Unirme for abierto projects when the viewer has no membership row", () => {
     expect(
       resolveJoinAffordance({
         ingreso: "abierto",
         viewerMembership: null,
       }),
-    ).toEqual({ kind: "join", label: "Unirse" });
+    ).toEqual({ kind: "join", label: "Unirme" });
   });
 
-  it("returns Solicitar ingreso for aprobacion projects when the viewer has no membership row", () => {
+  it("returns Solicitar unirme for aprobacion projects when the viewer has no membership row", () => {
     expect(
       resolveJoinAffordance({
         ingreso: "aprobacion",
         viewerMembership: null,
       }),
-    ).toEqual({ kind: "join", label: "Solicitar ingreso" });
+    ).toEqual({ kind: "join", label: "Solicitar unirme" });
   });
 
   it("returns a pending indicator when the viewer already has a pendiente row", () => {

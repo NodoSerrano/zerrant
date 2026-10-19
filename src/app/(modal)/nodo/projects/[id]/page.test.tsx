@@ -156,18 +156,18 @@ describe("ProjectDetailPage", () => {
     expect(screen.getAllByText("Lucía Morales").length).toBeGreaterThan(0);
     expect(screen.queryByText("Pending User")).not.toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Solicitar ingreso" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Solicitar unirme" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Solicitudes de ingreso" })).not.toBeInTheDocument();
   });
 
-  it("shows Unirse when ingreso is abierto and the viewer is not a member", async () => {
+  it("shows Unirme when ingreso is abierto and the viewer is not a member", async () => {
     mockClient({
       project: { ...sampleProject, ingreso: "abierto" },
       viewerMembership: null,
     });
     const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
     render(ui);
-    expect(screen.getByRole("button", { name: "Unirse" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Unirme" })).toBeInTheDocument();
   });
 
   it("shows pending state without a join CTA", async () => {
@@ -178,7 +178,7 @@ describe("ProjectDetailPage", () => {
     const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
     render(ui);
     expect(screen.getByText("Solicitud pendiente")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Solicitar ingreso" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Solicitar unirme" })).not.toBeInTheDocument();
   });
 
   it("hides join CTA for approved members and shows queue for project admins", async () => {
@@ -188,7 +188,7 @@ describe("ProjectDetailPage", () => {
     });
     const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
     render(ui);
-    expect(screen.queryByRole("button", { name: "Solicitar ingreso" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Solicitar unirme" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Solicitudes de ingreso" })).toHaveAttribute(
       "href",
       "/nodo/projects/proj-1/requests",

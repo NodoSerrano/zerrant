@@ -64,7 +64,7 @@ const baseProject: ProjectDetailViewModel = {
       isCreator: false,
     },
   ],
-  affordance: { kind: "join", label: "Solicitar ingreso" },
+  affordance: { kind: "join", label: "Solicitar unirme" },
   showRequestsQueue: false,
   canPromoteMembers: false,
   canEdit: false,
@@ -98,21 +98,21 @@ describe("ProjectDetail", () => {
         project={{
           ...baseProject,
           ingreso: "abierto",
-          affordance: { kind: "join", label: "Unirse" },
+          affordance: { kind: "join", label: "Unirme" },
         }}
       />,
     );
-    const join = screen.getByRole("button", { name: "Unirse" });
+    const join = screen.getByRole("button", { name: "Unirme" });
     expect(join).toBeInTheDocument();
     expect(join).not.toBeDisabled();
     expect(join).toHaveAttribute("data-project-id", "proj-1");
-    expect(screen.queryByRole("button", { name: "Solicitar ingreso" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Solicitar unirme" })).not.toBeInTheDocument();
   });
 
-  it("renders Solicitar ingreso for non-members on aprobacion projects", () => {
+  it("renders Solicitar unirme for non-members on aprobacion projects", () => {
     render(<ProjectDetail project={baseProject} />);
-    expect(screen.getByRole("button", { name: "Solicitar ingreso" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Unirse" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Solicitar unirme" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Unirme" })).not.toBeInTheDocument();
   });
 
   it("shows a pending indicator and no join CTA when the viewer is pendiente", () => {
@@ -125,8 +125,8 @@ describe("ProjectDetail", () => {
       />,
     );
     expect(screen.getByText("Solicitud pendiente")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Unirse" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Solicitar ingreso" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Unirme" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Solicitar unirme" })).not.toBeInTheDocument();
   });
 
   it("hides the join affordance for approved members", () => {
@@ -138,8 +138,8 @@ describe("ProjectDetail", () => {
         }}
       />,
     );
-    expect(screen.queryByRole("button", { name: "Unirse" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Solicitar ingreso" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Unirme" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Solicitar unirme" })).not.toBeInTheDocument();
     expect(screen.queryByText("Solicitud pendiente")).not.toBeInTheDocument();
   });
 

@@ -10,7 +10,7 @@ export type ViewerMembership = {
 };
 
 export type JoinAffordance =
-  | { kind: "join"; label: "Unirse" | "Solicitar ingreso" }
+  | { kind: "join"; label: "Unirme" | "Solicitar unirme" }
   | { kind: "pending"; label: "Solicitud pendiente" }
   | { kind: "none" };
 
@@ -30,10 +30,10 @@ export function resolveJoinAffordance({
   }
 
   if (ingreso === "aprobacion") {
-    return { kind: "join", label: "Solicitar ingreso" };
+    return { kind: "join", label: "Solicitar unirme" };
   }
 
-  return { kind: "join", label: "Unirse" };
+  return { kind: "join", label: "Unirme" };
 }
 
 export function isProjectAdmin({
