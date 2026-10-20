@@ -72,6 +72,16 @@ describe("SerranoMenu Mis proyectos row", () => {
   });
 });
 
+describe("SerranoMenu Donaciones del Nodo row (ZER-166)", () => {
+  it("links to /donaciones with a numeric count", () => {
+    render(<SerranoMenu donacionesCount={2} />);
+
+    const link = screen.getByRole("link", { name: /Donaciones del Nodo/i });
+    expect(link).toHaveAttribute("href", "/donaciones");
+    expect(link).toHaveTextContent("2");
+  });
+});
+
 describe("SerranoMenu theme toggle (ZER-103)", () => {
   it("names the dark-mode switch from the visible Modo oscuro text", () => {
     render(<SerranoMenu />);
