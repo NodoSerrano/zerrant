@@ -3,6 +3,7 @@ import { ChevronLeft, Lock } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { ProjectJoinButton } from "@/features/projects/ProjectJoinButton";
 import { DemoteMemberButton } from "@/features/projects/DemoteMemberButton";
+import { LeaveProjectButton } from "@/features/projects/LeaveProjectButton";
 import { PromoteMemberButton } from "@/features/projects/PromoteMemberButton";
 import {
   getProjectEstadoBadge,
@@ -70,6 +71,17 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
         </p>
       ) : null}
 
+      {/* The viewer's own next step comes first, before the member list (ZER-200). */}
+      {project.affordance.kind === "join" ? (
+        <ProjectJoinButton projectId={project.id} label={project.affordance.label} />
+      ) : null}
+
+      {project.affordance.kind === "pending" ? (
+        <p className="font-body text-sm text-text-muted text-center w-full">
+          {project.affordance.label}
+        </p>
+      ) : null}
+
       <section className="flex flex-col gap-2.5 w-full">
         <div className="flex items-center justify-between w-full">
           <h2 className="font-display text-[17px] font-medium text-text-primary">Miembros</h2>
@@ -127,14 +139,15 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
         </Link>
       ) : null}
 
-      {project.affordance.kind === "join" ? (
-        <ProjectJoinButton projectId={project.id} label={project.affordance.label} />
-      ) : null}
-
-      {project.affordance.kind === "pending" ? (
-        <p className="font-body text-sm text-text-muted text-center w-full">
-          {project.affordance.label}
-        </p>
+      {project.canLeave ? (
+        project.canPromoteMembers && adminCount === 1 ? (
+          // The project always keeps one admin (ZER-199): the only one can't leave.
+          <p className="font-body text-sm text-text-muted text-center w-full">
+            Para salir del proyecto, primero designá a otra persona como admin.
+          </p>
+        ) : (
+          <LeaveProjectButton projectId={project.id} />
+        )
       ) : null}
     </div>
   );

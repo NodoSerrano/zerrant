@@ -201,6 +201,24 @@ describe("ProjectDetailPage", () => {
     );
   });
 
+  // ZER-200: only someone already in the project can leave it.
+  it("offers Salir del proyecto to an approved member", async () => {
+    mockClient({
+      project: sampleProject,
+      viewerMembership: { estado: "aprobado", rol: "miembro" },
+    });
+    const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
+    render(ui);
+    expect(screen.getByRole("button", { name: "Salir del proyecto" })).toBeInTheDocument();
+  });
+
+  it("does not offer Salir del proyecto to someone outside it", async () => {
+    mockClient({ project: sampleProject, viewerMembership: null });
+    const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
+    render(ui);
+    expect(screen.queryByRole("button", { name: "Salir del proyecto" })).not.toBeInTheDocument();
+  });
+
   it("does not offer promote to plain miembros", async () => {
     mockClient({
       project: sampleProject,

@@ -49,6 +49,14 @@ vi.mock("@/features/projects/DemoteMemberButton", () => ({
   ),
 }));
 
+vi.mock("@/features/projects/LeaveProjectButton", () => ({
+  LeaveProjectButton: ({ projectId }: { projectId: string }) => (
+    <button type="button" data-testid={`leave-${projectId}`}>
+      Salir del proyecto
+    </button>
+  ),
+}));
+
 const baseProject: ProjectDetailViewModel = {
   id: "proj-1",
   nombre: "Sitio web de Nodo",
@@ -76,6 +84,7 @@ const baseProject: ProjectDetailViewModel = {
   showRequestsQueue: false,
   canPromoteMembers: false,
   canEdit: false,
+  canLeave: false,
 };
 
 describe("ProjectDetail", () => {
@@ -243,6 +252,54 @@ describe("ProjectDetail", () => {
       render(<ProjectDetail project={{ ...twoAdmins, canPromoteMembers: false }} />);
 
       expect(screen.queryByRole("button", { name: "Quitar admin" })).not.toBeInTheDocument();
+    });
+  });
+
+  describe("salir del proyecto (ZER-200)", () => {
+    it("offers to leave to a member of the project", () => {
+      render(<ProjectDetail project={{ ...baseProject, canLeave: true }} />);
+
+      expect(screen.getByTestId("leave-proj-1")).toBeInTheDocument();
+    });
+
+    it("does not offer it to someone outside the project", () => {
+      render(<ProjectDetail project={baseProject} />);
+
+      expect(screen.queryByRole("button", { name: "Salir del proyecto" })).not.toBeInTheDocument();
+    });
+
+    it("tells the only admin to name another admin before leaving", () => {
+      render(
+        <ProjectDetail project={{ ...baseProject, canLeave: true, canPromoteMembers: true }} />,
+      );
+
+      expect(screen.queryByRole("button", { name: "Salir del proyecto" })).not.toBeInTheDocument();
+      expect(
+        screen.getByText("Para salir del proyecto, primero designá a otra persona como admin."),
+      ).toBeInTheDocument();
+    });
+
+    it("lets an admin leave when there is another admin", () => {
+      render(
+        <ProjectDetail
+          project={{
+            ...baseProject,
+            canLeave: true,
+            canPromoteMembers: true,
+            members: [baseProject.members[0], { ...baseProject.members[1], rol: "admin" }],
+          }}
+        />,
+      );
+
+      expect(screen.getByTestId("leave-proj-1")).toBeInTheDocument();
+    });
+
+    it("puts the join action before the member list", () => {
+      render(<ProjectDetail project={baseProject} />);
+
+      const join = screen.getByRole("button", { name: "Solicitar unirme" });
+      const heading = screen.getByRole("heading", { name: "Miembros" });
+      expect(join.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
   });
 });

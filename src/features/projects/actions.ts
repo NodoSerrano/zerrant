@@ -502,3 +502,52 @@ export async function demoteProjectMember(
   revalidatePath("/nodo", "layout");
   return null;
 }
+
+const LEAVE_ERROR = "No pudimos sacarte del proyecto. Probá de nuevo.";
+const LEAVE_REJECTED = "No pudimos sacarte del proyecto.";
+const LEAVE_LAST_ADMIN = "Sos el único admin. Designá a otra persona como admin antes de salir.";
+
+/**
+ * The viewer leaves a project they belong to (ZER-200). The database refuses
+ * to let the last admin go (same LAST_ADMIN_ERROR as demoting).
+ */
+export async function leaveProject(
+  _prevState: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "No autorizado" };
+  }
+
+  const projectId = trimmed(formData.get("projectId"));
+  if (!projectId) {
+    return { error: JOIN_INVALID };
+  }
+
+  const { data, error } = await supabase
+    .from("project_members")
+    .delete()
+    .eq("project_id", projectId)
+    .eq("profile_id", user.id)
+    .eq("estado", "aprobado")
+    .select("project_id");
+
+  if (error) {
+    return { error: error.message === LAST_ADMIN_ERROR ? LEAVE_LAST_ADMIN : LEAVE_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: LEAVE_REJECTED };
+  }
+
+  revalidatePath(`/nodo/projects/${projectId}`);
+  revalidatePath("/nodo/projects");
+  revalidatePath("/nodo", "layout");
+  redirect(withActionNotice("/nodo/projects", "proyecto-abandonado"));
+}

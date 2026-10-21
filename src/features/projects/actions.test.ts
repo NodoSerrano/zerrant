@@ -111,6 +111,7 @@ import {
   approveProjectJoin,
   archiveProject,
   demoteProjectMember,
+  leaveProject,
   createProject,
   joinProject,
   promoteProjectMember,
@@ -706,5 +707,74 @@ describe("demoteProjectMember (ZER-199)", () => {
       error: "Revisá el miembro e intentá de nuevo.",
     });
     expect(mocks.membersUpdate).not.toHaveBeenCalled();
+  });
+});
+
+function makeLeaveForm(projectId = "proj-1") {
+  const fd = new FormData();
+  fd.set("projectId", projectId);
+  return fd;
+}
+
+describe("leaveProject (ZER-200)", () => {
+  it("deletes only the viewer's approved membership and goes back to the list", async () => {
+    setupAuth("member-2");
+    mocks.membersDeleteSelect.mockResolvedValue({
+      error: null,
+      data: [{ project_id: "proj-1" }],
+    });
+
+    await expect(leaveProject(null, makeLeaveForm())).rejects.toThrow(
+      "NEXT_REDIRECT:/nodo/projects?ok=proyecto-abandonado",
+    );
+    expect(mocks.membersDeleteEq).toHaveBeenCalledWith("project_id", "proj-1");
+    expect(mocks.membersDeleteEq).toHaveBeenCalledWith("profile_id", "member-2");
+    expect(mocks.membersDeleteEq).toHaveBeenCalledWith("estado", "aprobado");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects/proj-1");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects");
+  });
+
+  it("tells the last admin to name another one first", async () => {
+    setupAuth("admin-1");
+    mocks.membersDeleteSelect.mockResolvedValue({
+      error: { code: "P0001", message: "last_project_admin" },
+      data: null,
+    });
+
+    const result = await leaveProject(null, makeLeaveForm());
+
+    expect(result).toEqual({
+      error: "Sos el único admin. Designá a otra persona como admin antes de salir.",
+    });
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("treats a zero-row delete as failure (not a member)", async () => {
+    setupAuth("member-2");
+    mocks.membersDeleteSelect.mockResolvedValue({ error: null, data: [] });
+
+    expect(await leaveProject(null, makeLeaveForm())).toEqual({
+      error: "No pudimos sacarte del proyecto.",
+    });
+  });
+
+  it("surfaces a Spanish error when the delete fails", async () => {
+    setupAuth("member-2");
+    mocks.membersDeleteSelect.mockResolvedValue({ error: { message: "rls" }, data: null });
+
+    expect(await leaveProject(null, makeLeaveForm())).toEqual({
+      error: "No pudimos sacarte del proyecto. Probá de nuevo.",
+    });
+  });
+
+  it("returns unauthorized without a session and rejects a missing project", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+    expect(await leaveProject(null, makeLeaveForm())).toEqual({ error: "No autorizado" });
+
+    setupAuth("member-2");
+    expect(await leaveProject(null, new FormData())).toEqual({
+      error: "Revisá el proyecto e intentá de nuevo.",
+    });
+    expect(mocks.membersDelete).not.toHaveBeenCalled();
   });
 });
