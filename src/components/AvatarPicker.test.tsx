@@ -347,3 +347,49 @@ describe("AvatarPicker", () => {
     await waitFor(() => expect(screen.queryByText("Subiendo...")).toBeNull());
   });
 });
+
+describe("AvatarPicker — quitar foto (ZER-212)", () => {
+  const PHOTO = "https://sb.test/storage/v1/object/public/avatars/u/a.jpg";
+
+  it("offers 'Quitar foto' only when there is a photo to remove", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
+    const { unmount } = render(<AvatarPicker action={vi.fn()} removeAction={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: "Quitar foto" })).toBeNull();
+    unmount();
+
+    render(<AvatarPicker action={vi.fn()} removeAction={vi.fn()} initialUrl={PHOTO} />);
+    expect(screen.getByRole("button", { name: "Quitar foto" })).toBeInTheDocument();
+  });
+
+  it("does not offer it where removing is not wired (onboarding)", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
+    render(<AvatarPicker action={vi.fn()} initialUrl={PHOTO} />);
+
+    expect(screen.queryByRole("button", { name: "Quitar foto" })).toBeNull();
+  });
+
+  it("goes back to the placeholder once the photo is removed", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
+    const removeAction = vi.fn().mockResolvedValue({ avatarUrl: null });
+    render(<AvatarPicker action={vi.fn()} removeAction={removeAction} initialUrl={PHOTO} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Quitar foto" }));
+
+    await waitFor(() => expect(screen.queryByRole("img")).toBeNull());
+    expect(removeAction).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Quitar foto" })).toBeNull();
+  });
+
+  it("keeps the photo and shows the error when removing fails", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://sb.test");
+    const removeAction = vi
+      .fn()
+      .mockResolvedValue({ error: "No pudimos quitar la foto. Probá de nuevo." });
+    render(<AvatarPicker action={vi.fn()} removeAction={removeAction} initialUrl={PHOTO} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Quitar foto" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("No pudimos quitar la foto");
+    expect(screen.getByRole("img", { name: "Foto de perfil" })).toBeInTheDocument();
+  });
+});
