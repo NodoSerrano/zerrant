@@ -41,6 +41,14 @@ vi.mock("@/features/projects/PromoteMemberButton", () => ({
   ),
 }));
 
+vi.mock("@/features/projects/DemoteMemberButton", () => ({
+  DemoteMemberButton: ({ profileId }: { profileId: string }) => (
+    <button type="button" data-testid={`demote-${profileId}`}>
+      Quitar admin
+    </button>
+  ),
+}));
+
 const baseProject: ProjectDetailViewModel = {
   id: "proj-1",
   nombre: "Sitio web de Nodo",
@@ -165,7 +173,8 @@ describe("ProjectDetail", () => {
     expect(screen.queryByTestId("promote-u2")).not.toBeInTheDocument();
   });
 
-  it("shows Admin badge for promoted members without a demote control", () => {
+  // ZER-84 had no way back from admin; ZER-199 adds "Quitar admin" (covered below).
+  it("shows Admin badge for promoted members instead of the promote control", () => {
     render(
       <ProjectDetail
         project={{
@@ -180,7 +189,6 @@ describe("ProjectDetail", () => {
     );
     expect(screen.getAllByText("Admin")).toHaveLength(2);
     expect(screen.queryByTestId("promote-u2")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /quitar admin/i })).not.toBeInTheDocument();
   });
 
   it("keeps the topbar title centered without a dead ellipsis icon", () => {
@@ -209,5 +217,32 @@ describe("ProjectDetail", () => {
       "href",
       "/nodo/projects",
     );
+  });
+
+  describe("quitar admin (ZER-199)", () => {
+    const twoAdmins: ProjectDetailViewModel = {
+      ...baseProject,
+      canPromoteMembers: true,
+      members: [baseProject.members[0], { ...baseProject.members[1], rol: "admin" }],
+    };
+
+    it("lets a project admin remove the admin role while another admin remains", () => {
+      render(<ProjectDetail project={twoAdmins} />);
+
+      expect(screen.getByTestId("demote-u1")).toBeInTheDocument();
+      expect(screen.getByTestId("demote-u2")).toBeInTheDocument();
+    });
+
+    it("does not offer it on the only admin", () => {
+      render(<ProjectDetail project={{ ...baseProject, canPromoteMembers: true }} />);
+
+      expect(screen.queryByTestId("demote-u1")).not.toBeInTheDocument();
+    });
+
+    it("does not offer it to plain members", () => {
+      render(<ProjectDetail project={{ ...twoAdmins, canPromoteMembers: false }} />);
+
+      expect(screen.queryByRole("button", { name: "Quitar admin" })).not.toBeInTheDocument();
+    });
   });
 });
