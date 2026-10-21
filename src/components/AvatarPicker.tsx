@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { Camera, ImageUp, LoaderCircle } from "lucide-react";
+import { Camera, ImageUp, LoaderCircle, Trash2 } from "lucide-react";
 import { startTransition, useEffect, useRef, useState, type ChangeEvent } from "react";
-import type { AvatarUploadState } from "@/features/profile/actions";
+import type { AvatarRemoveState, AvatarUploadState } from "@/features/profile/actions";
 import { AVATAR_MAX_BYTES, AVATAR_TOO_LARGE_ERROR } from "@/features/profile/avatar";
 import { shrinkAvatarImage } from "@/features/profile/avatar-resize";
 import { isServableAvatarImageUrl } from "@/lib/avatar-image-url";
@@ -24,6 +24,11 @@ interface AvatarPickerProps {
     formData: FormData,
   ) => Promise<AvatarUploadState> | AvatarUploadState;
   initialUrl?: string | null;
+  /** Takes the photo off the profile; without it there is no "Quitar foto" (ZER-212). */
+  removeAction?: (
+    prevState: AvatarRemoveState | null,
+    formData: FormData,
+  ) => Promise<AvatarRemoveState> | AvatarRemoveState;
   /** Keeps the enclosing form from submitting while a photo is mid-upload. */
   onUploadingChange?: (uploading: boolean) => void;
   /** Short explanation shown under the circle. */
@@ -31,14 +36,21 @@ interface AvatarPickerProps {
   className?: string;
 }
 
+const noRemoval = (): AvatarRemoveState => ({});
+
 export function AvatarPicker({
   action,
+  removeAction,
   initialUrl,
   onUploadingChange,
   hint,
   className,
 }: AvatarPickerProps) {
   const [state, dispatch, pending] = useGuardedActionState(action, null);
+  const [removeState, removeDispatch, removing] = useGuardedActionState(
+    removeAction ?? noRemoval,
+    null,
+  );
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,13 +61,19 @@ export function AvatarPicker({
   // Shrinking happens before the action runs; it counts as uploading for the UI.
   const [processing, setProcessing] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
-  const busy = pending || processing;
+  const busy = pending || processing || removing;
 
   useEffect(() => {
     if (state?.avatarUrl) {
       setUrl(state.avatarUrl);
     }
   }, [state?.avatarUrl]);
+
+  useEffect(() => {
+    if (removeState && !removeState.error) {
+      setUrl(null);
+    }
+  }, [removeState]);
 
   // next/image can still 400/404 after a URL is held (local IP blocked, missing object).
   // Reset when the URL changes so a successful re-upload can paint again.
@@ -72,7 +90,7 @@ export function AvatarPicker({
   // directly with a camera placeholder instead of the shared Avatar component.
   const servableUrl = url && isServableAvatarImageUrl(url) ? url : null;
   const displayUrl = servableUrl && !failed ? servableUrl : null;
-  const error = localError ?? state?.error;
+  const error = localError ?? removeState?.error ?? state?.error;
 
   async function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const input = event.target;
@@ -149,6 +167,21 @@ export function AvatarPicker({
           Sacar foto
         </button>
       </div>
+
+      {removeAction && displayUrl ? (
+        <button
+          type="button"
+          onClick={() => {
+            setLocalError(null);
+            startTransition(() => removeDispatch(new FormData()));
+          }}
+          disabled={busy}
+          className="inline-flex items-center gap-1.5 font-display text-[13px] font-medium text-coral disabled:opacity-60"
+        >
+          <Trash2 aria-hidden className="size-4" />
+          {removing ? "Quitando..." : "Quitar foto"}
+        </button>
+      ) : null}
 
       {/* The accessible controls are the buttons above: these inputs stay out of
           the focus order and the accessibility tree so they aren't duplicated. */}
