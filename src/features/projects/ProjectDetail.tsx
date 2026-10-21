@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ChevronLeft, Lock } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { ProjectJoinButton } from "@/features/projects/ProjectJoinButton";
+import { DemoteMemberButton } from "@/features/projects/DemoteMemberButton";
+import { LeaveProjectButton } from "@/features/projects/LeaveProjectButton";
 import { PromoteMemberButton } from "@/features/projects/PromoteMemberButton";
 import {
   getProjectEstadoBadge,
@@ -16,6 +18,7 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
   const ingresoLabel = getProjectIngresoLabel(project.ingreso);
   const approval = isProjectIngresoApproval(project.ingreso);
   const memberCount = project.members.length;
+  const adminCount = project.members.filter((member) => member.rol === "admin").length;
 
   return (
     <div className="flex w-full flex-col gap-[18px]">
@@ -68,6 +71,17 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
         </p>
       ) : null}
 
+      {/* The viewer's own next step comes first, before the member list (ZER-200). */}
+      {project.affordance.kind === "join" ? (
+        <ProjectJoinButton projectId={project.id} label={project.affordance.label} />
+      ) : null}
+
+      {project.affordance.kind === "pending" ? (
+        <p className="font-body text-sm text-text-muted text-center w-full">
+          {project.affordance.label}
+        </p>
+      ) : null}
+
       <section className="flex flex-col gap-2.5 w-full">
         <div className="flex items-center justify-between w-full">
           <h2 className="font-display text-[17px] font-medium text-text-primary">Miembros</h2>
@@ -95,9 +109,19 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
                 </span>
               </div>
               {member.rol === "admin" ? (
-                <span className="shrink-0 rounded-pill bg-blue-raw/20 px-2.5 py-1 font-display text-[11px] font-semibold text-on-blue-tint">
-                  Admin
-                </span>
+                <div className="shrink-0 flex flex-col items-end gap-1">
+                  <span className="rounded-pill bg-blue-raw/20 px-2.5 py-1 font-display text-[11px] font-semibold text-on-blue-tint">
+                    Admin
+                  </span>
+                  {/* The project always keeps one admin, so the last one can't be removed (ZER-199). */}
+                  {project.canPromoteMembers && adminCount > 1 ? (
+                    <DemoteMemberButton
+                      projectId={project.id}
+                      profileId={member.profileId}
+                      name={member.name}
+                    />
+                  ) : null}
+                </div>
               ) : project.canPromoteMembers ? (
                 <PromoteMemberButton projectId={project.id} profileId={member.profileId} />
               ) : null}
@@ -115,14 +139,15 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
         </Link>
       ) : null}
 
-      {project.affordance.kind === "join" ? (
-        <ProjectJoinButton projectId={project.id} label={project.affordance.label} />
-      ) : null}
-
-      {project.affordance.kind === "pending" ? (
-        <p className="font-body text-sm text-text-muted text-center w-full">
-          {project.affordance.label}
-        </p>
+      {project.canLeave ? (
+        project.canPromoteMembers && adminCount === 1 ? (
+          // The project always keeps one admin (ZER-199): the only one can't leave.
+          <p className="font-body text-sm text-text-muted text-center w-full">
+            Para salir del proyecto, primero designá a otra persona como admin.
+          </p>
+        ) : (
+          <LeaveProjectButton projectId={project.id} />
+        )
       ) : null}
     </div>
   );

@@ -448,3 +448,106 @@ export async function promoteProjectMember(
   revalidatePath("/nodo", "layout");
   return null;
 }
+
+const DEMOTE_ERROR = "No pudimos quitar el rol de admin. Probá de nuevo.";
+const DEMOTE_REJECTED = "No pudimos quitar el rol de admin.";
+const DEMOTE_LAST_ADMIN = "El proyecto necesita al menos un admin. Designá a otra persona antes.";
+/** Raised by the project_members trigger that keeps one admin per project (ZER-199). */
+const LAST_ADMIN_ERROR = "last_project_admin";
+
+/**
+ * Turns an admin back into a plain member (ZER-199). The database refuses to
+ * leave a project without admins; that refusal comes back as LAST_ADMIN_ERROR.
+ */
+export async function demoteProjectMember(
+  _prevState: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: PROMOTE_UNAUTHORIZED };
+  }
+
+  const projectId = trimmed(formData.get("projectId"));
+  const profileId = trimmed(formData.get("profileId"));
+  if (!projectId || !profileId) {
+    return { error: PROMOTE_INVALID };
+  }
+
+  const { data, error } = await supabase
+    .from("project_members")
+    .update({ rol: "miembro" })
+    .eq("project_id", projectId)
+    .eq("profile_id", profileId)
+    .eq("estado", "aprobado")
+    .eq("rol", "admin")
+    .select("project_id, profile_id, rol");
+
+  if (error) {
+    return { error: error.message === LAST_ADMIN_ERROR ? DEMOTE_LAST_ADMIN : DEMOTE_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: DEMOTE_REJECTED };
+  }
+
+  revalidatePath(`/nodo/projects/${projectId}`);
+  revalidatePath(`/nodo/projects/${projectId}/requests`);
+  revalidatePath("/nodo/projects");
+  revalidatePath("/nodo", "layout");
+  return null;
+}
+
+const LEAVE_ERROR = "No pudimos sacarte del proyecto. Probá de nuevo.";
+const LEAVE_REJECTED = "No pudimos sacarte del proyecto.";
+const LEAVE_LAST_ADMIN = "Sos el único admin. Designá a otra persona como admin antes de salir.";
+
+/**
+ * The viewer leaves a project they belong to (ZER-200). The database refuses
+ * to let the last admin go (same LAST_ADMIN_ERROR as demoting).
+ */
+export async function leaveProject(
+  _prevState: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "No autorizado" };
+  }
+
+  const projectId = trimmed(formData.get("projectId"));
+  if (!projectId) {
+    return { error: JOIN_INVALID };
+  }
+
+  const { data, error } = await supabase
+    .from("project_members")
+    .delete()
+    .eq("project_id", projectId)
+    .eq("profile_id", user.id)
+    .eq("estado", "aprobado")
+    .select("project_id");
+
+  if (error) {
+    return { error: error.message === LAST_ADMIN_ERROR ? LEAVE_LAST_ADMIN : LEAVE_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: LEAVE_REJECTED };
+  }
+
+  revalidatePath(`/nodo/projects/${projectId}`);
+  revalidatePath("/nodo/projects");
+  revalidatePath("/nodo", "layout");
+  redirect(withActionNotice("/nodo/projects", "proyecto-abandonado"));
+}
