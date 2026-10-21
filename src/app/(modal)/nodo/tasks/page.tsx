@@ -162,7 +162,6 @@ export default async function TasksPage({
               estado={toCardEstado(task.estado)}
               urgencia={task.urgencia ?? "media"}
               assigneeName={takerLabel(task)}
-              actionLabel="Tomar"
             />
           ))}
         </div>

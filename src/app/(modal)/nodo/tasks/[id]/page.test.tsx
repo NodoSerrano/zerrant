@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   redirect: vi.fn(),
   notFound: vi.fn(),
   memberRows: [] as Record<string, unknown>[],
+  selects: [] as [string, string][],
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -16,7 +17,10 @@ vi.mock("@/lib/supabase/server", () => ({
     from: vi.fn((table: string) => {
       const chain: Record<string, unknown> = {};
       const self = () => chain;
-      chain.select = vi.fn(self);
+      chain.select = vi.fn((columns: string) => {
+        mocks.selects.push([table, columns]);
+        return chain;
+      });
       chain.eq = vi.fn(self);
       chain.neq = vi.fn(self);
       chain.single = table === "tasks" ? mocks.taskSingle : mocks.profileSingle;
@@ -63,6 +67,7 @@ import TaskDetailPage from "./page";
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.memberRows = [];
+  mocks.selects = [];
 });
 
 // `nombre_visible` is the preference for how to show the name, not the name itself.
@@ -128,6 +133,24 @@ describe("TaskDetailPage — guards preserved", () => {
 
   it("returns notFound when the task does not exist", async () => {
     await expect(renderDetail({ task: null })).rejects.toThrow("NEXT_NOT_FOUND");
+  });
+});
+
+// ZER-194: since ZER-43 `authenticated` may only read some profile columns
+// (tarifa_hora is masked), so `profiles(*)` fails with 42501 and the page fell
+// into notFound ("Perdiste el rumbo"). Profiles must be read by named columns.
+describe("TaskDetailPage — profile reads (ZER-194)", () => {
+  it("never asks for every profile column", async () => {
+    await renderDetail({ viewerId: CREATOR.id });
+
+    const taskSelect = mocks.selects.find(([table]) => table === "tasks")?.[1] ?? "";
+    expect(taskSelect).not.toMatch(/creado_por\(\*\)|tomada_por\(\*\)/);
+    expect(taskSelect).toMatch(/creador:creado_por\(.*nombre_visible.*\)/);
+    expect(taskSelect).toMatch(/tomador:tomada_por\(.*nombre_visible.*\)/);
+
+    const profileSelects = mocks.selects.filter(([table]) => table === "profiles");
+    expect(profileSelects.length).toBeGreaterThan(0);
+    for (const [, columns] of profileSelects) expect(columns).not.toContain("*");
   });
 });
 
