@@ -12,7 +12,7 @@ import type { EventAttendanceEstado } from "@/lib/db/events-schema";
 const CHIP_VARIANT = {
   voy: "mint",
   quizas: "yellow",
-  no: "default",
+  no: "coral",
 } as const;
 
 export type EventDetailProps = {
