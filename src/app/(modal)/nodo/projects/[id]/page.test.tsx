@@ -201,6 +201,32 @@ describe("ProjectDetailPage", () => {
     );
   });
 
+  // ZER-197: an open project lets people in directly, so there is no queue to
+  // review. Leftover requests from when it required approval still show it.
+  it("hides the requests queue from admins of an open project", async () => {
+    mockClient({
+      project: {
+        ...sampleProject,
+        ingreso: "abierto",
+        project_members: sampleProject.project_members.filter((m) => m.estado !== "pendiente"),
+      },
+      viewerMembership: { estado: "aprobado", rol: "admin" },
+    });
+    const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
+    render(ui);
+    expect(screen.queryByRole("link", { name: "Solicitudes de ingreso" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the queue on an open project while old requests are still pending", async () => {
+    mockClient({
+      project: { ...sampleProject, ingreso: "abierto" },
+      viewerMembership: { estado: "aprobado", rol: "admin" },
+    });
+    const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
+    render(ui);
+    expect(screen.getByRole("link", { name: "Solicitudes de ingreso" })).toBeInTheDocument();
+  });
+
   it("does not offer promote to plain miembros", async () => {
     mockClient({
       project: sampleProject,
