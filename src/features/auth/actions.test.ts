@@ -67,14 +67,14 @@ describe("signInWithPassword", () => {
     expect(navigationMocks.redirect).toHaveBeenCalledWith("/");
   });
 
-  it("returns error message when supabase returns an error", async () => {
+  it("returns a Spanish message instead of Supabase's English one", async () => {
     authMock.signInWithPassword.mockResolvedValue({
-      error: { message: "Invalid credentials" },
+      error: { code: "invalid_credentials", message: "Invalid login credentials" },
     });
 
     const result = await signInWithPassword(null, makeFormData());
 
-    expect(result).toEqual({ error: "Invalid credentials" });
+    expect(result).toEqual({ error: "Email o contraseña incorrectos." });
     expect(authMock.signInWithPassword).toHaveBeenCalledWith({
       email: "test@example.com",
       password: "secret123",
@@ -131,15 +131,15 @@ describe("signUpWithPassword", () => {
     expect(navigationMocks.redirect).toHaveBeenCalledWith("/");
   });
 
-  it("returns error message when supabase returns an error", async () => {
+  it("returns a Spanish message instead of Supabase's English one", async () => {
     authMock.signUp.mockResolvedValue({
       data: { session: null, user: null },
-      error: { message: "Email already registered" },
+      error: { code: "user_already_exists", message: "User already registered" },
     });
 
     const result = await signUpWithPassword(null, makeFormData());
 
-    expect(result).toEqual({ error: "Email already registered" });
+    expect(result).toEqual({ error: "Ya hay una cuenta con ese email. Iniciá sesión." });
     expect(navigationMocks.redirect).not.toHaveBeenCalled();
   });
 });
@@ -166,15 +166,17 @@ describe("resendSignupEmail", () => {
     expect(result).toEqual({ success: true });
   });
 
-  it("returns the supabase error message (including rate limits)", async () => {
+  it("explains the email rate limit in Spanish", async () => {
     authMock.resend.mockResolvedValue({
       data: {},
-      error: { message: "email rate limit exceeded" },
+      error: { code: "over_email_send_rate_limit", message: "email rate limit exceeded" },
     });
 
     const result = await resendSignupEmail(null, makeFormData());
 
-    expect(result).toEqual({ error: "email rate limit exceeded" });
+    expect(result).toEqual({
+      error: "Ya te mandamos un email hace poco. Esperá unos minutos y probá de nuevo.",
+    });
   });
 
   it("returns a validation error when email is missing", async () => {
@@ -204,14 +206,14 @@ describe("signInWithGoogle", () => {
     });
   });
 
-  it("redirects to login with encoded error when supabase returns an error", async () => {
+  it("redirects to login with an error code, never Supabase's text", async () => {
     authMock.signInWithOAuth.mockResolvedValue({
       data: null,
       error: { message: "Provider not enabled" },
     });
 
     await expect(signInWithGoogle(new FormData())).rejects.toThrow(
-      "NEXT_REDIRECT:/auth/login?error=Provider%20not%20enabled",
+      "NEXT_REDIRECT:/auth/login?error=oauth_failed",
     );
 
     expect(authMock.signInWithOAuth).toHaveBeenCalledWith({
@@ -249,7 +251,7 @@ describe("sendPasswordReset", () => {
 
     const result = await sendPasswordReset(null, makeFormData());
 
-    expect(result).toEqual({ error: "Email not found" });
+    expect(result).toEqual({ error: "No pudimos enviar el enlace. Probá de nuevo." });
   });
 });
 
@@ -291,12 +293,12 @@ describe("resetPassword", () => {
 
   it("returns error message when supabase returns an error", async () => {
     authMock.updateUser.mockResolvedValue({
-      error: { message: "Password too weak" },
+      error: { code: "weak_password", message: "Password too weak" },
     });
 
     const result = await resetPassword(null, makeFormData());
 
-    expect(result).toEqual({ error: "Password too weak" });
+    expect(result).toEqual({ error: "La contraseña es muy débil. Probá con una más larga." });
   });
 });
 
@@ -404,7 +406,7 @@ describe("next propagation (ZER-136)", () => {
     fd.set("next", "/unirme");
 
     await expect(signInWithGoogle(fd)).rejects.toThrow(
-      "NEXT_REDIRECT:/auth/login?error=x&next=%2Funirme",
+      "NEXT_REDIRECT:/auth/login?error=oauth_failed&next=%2Funirme",
     );
   });
 });
