@@ -25,4 +25,13 @@ describe("FormFeedback", () => {
     const { container } = render(<FormFeedback error={null} success={undefined} />);
     expect(container).toBeEmptyDOMElement();
   });
+
+  // text-coral on the coral/10 tint stays under 4.5:1 for small text (4.0 on
+  // the dark surface); on-coral-tint is the token ZER-175 made for it.
+  it("writes the error in the readable tint colour", () => {
+    render(<FormFeedback error="No pudimos guardar" />);
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveClass("text-on-coral-tint");
+    expect(alert).not.toHaveClass("text-coral");
+  });
 });

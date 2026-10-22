@@ -110,7 +110,7 @@ export function EditProfileForm({ defaults }: EditProfileFormProps) {
         <input type="hidden" name="fecha_nacimiento" value={defaults.fecha_nacimiento ?? ""} />
 
         {state?.error && (
-          <p role="alert" className="text-sm text-coral bg-coral/10 rounded-md px-3 py-2">
+          <p role="alert" className="text-sm text-on-coral-tint bg-coral/10 rounded-md px-3 py-2">
             {state.error}
           </p>
         )}
