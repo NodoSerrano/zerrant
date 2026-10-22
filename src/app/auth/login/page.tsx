@@ -17,24 +17,15 @@ import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 import { cn } from "@/lib/utils";
 import { safeInternalPath, withNext } from "@/lib/safe-next";
 import { NextField } from "@/features/auth/NextField";
+import { loginUrlErrorMessage } from "@/features/auth/auth-errors";
 import { readBuildStamp } from "@/features/auth/build-stamp";
 import { deployHistoryAllowed } from "@/features/auth/deploy-history";
 import { TestDeployHistory } from "@/features/auth/TestDeployHistory";
 
-const LOGIN_ERROR_COPY: Record<string, string> = {
-  auth_callback_failed: "No pudimos confirmar el enlace. Pedí uno nuevo o intentá de nuevo.",
-  otp_expired: "El enlace expiró o ya se usó. Pedí uno nuevo desde el registro.",
-};
-
-function loginErrorMessage(raw: string | null): string | null {
-  if (!raw) return null;
-  return LOGIN_ERROR_COPY[raw] ?? raw;
-}
-
 function LoginForm() {
   const [state, action, pending] = useGuardedActionState(signInWithPassword, null);
   const searchParams = useSearchParams();
-  const urlError = loginErrorMessage(searchParams.get("error"));
+  const urlError = loginUrlErrorMessage(searchParams.get("error"));
   const next = safeInternalPath(searchParams.get("next"));
   const error = state?.error ?? urlError;
   const showGoogleAuth = isGoogleAuthEnabled();
