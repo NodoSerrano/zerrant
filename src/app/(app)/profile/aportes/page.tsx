@@ -37,6 +37,7 @@ export default async function MisAportesPage() {
     .from("aportes")
     .select("id, tipo, descripcion, monto, fecha")
     .eq("profile_id", user.id)
+    .is("estado", null)
     .order("fecha", { ascending: false });
 
   const aportes = (rows ?? []) as AporteListItem[];

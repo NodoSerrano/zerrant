@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   profilesSingle: vi.fn(),
   aportesSelect: vi.fn(),
   aportesEq: vi.fn(),
+  aportesIs: vi.fn(),
   aportesOrder: vi.fn(),
   redirect: vi.fn(),
   from: vi.fn(),
@@ -63,7 +64,9 @@ beforeEach(() => {
       return {
         select: mocks.aportesSelect.mockImplementation(() => ({
           eq: mocks.aportesEq.mockImplementation(() => ({
-            order: mocks.aportesOrder,
+            is: mocks.aportesIs.mockImplementation(() => ({
+              order: mocks.aportesOrder,
+            })),
           })),
         })),
       };
@@ -109,6 +112,7 @@ describe("MisAportesPage", () => {
 
     expect(mocks.aportesSelect).toHaveBeenCalledWith("id, tipo, descripcion, monto, fecha");
     expect(mocks.aportesEq).toHaveBeenCalledWith("profile_id", "user-1");
+    expect(mocks.aportesIs).toHaveBeenCalledWith("estado", null);
     expect(mocks.aportesOrder).toHaveBeenCalledWith("fecha", { ascending: false });
 
     expect(screen.getByText("Charla ZK")).toBeInTheDocument();
