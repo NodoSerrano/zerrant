@@ -187,6 +187,10 @@ describe("AdminMembresiasPage", () => {
     render(await AdminMembresiasPage(EN_CURSO));
     expect(screen.getByText(/Membresías/)).toBeInTheDocument();
     expect(screen.getByText(/Roles/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Habilidades" })).toHaveAttribute(
+      "href",
+      "/admin/habilidades",
+    );
   });
 
   it("selects estado and passes it to each card", async () => {

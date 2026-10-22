@@ -306,6 +306,14 @@ export default async function AdminMembresiasPage({
               Roles · {rolesCount ?? 0}
             </span>
           </Link>
+          <Link
+            href="/admin/habilidades"
+            className="rounded-[11px] h-[38px] flex-1 flex items-center justify-center"
+          >
+            <span className="font-display text-[13px] font-medium text-text-muted">
+              Habilidades
+            </span>
+          </Link>
         </div>
 
         <nav aria-label="Vista de solicitudes" className="flex gap-2">

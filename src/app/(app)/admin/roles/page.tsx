@@ -103,6 +103,14 @@ export default async function AdminRolesPage() {
               Roles · {rolesCount}
             </span>
           </div>
+          <Link
+            href="/admin/habilidades"
+            className="rounded-[11px] h-[38px] flex-1 flex items-center justify-center"
+          >
+            <span className="font-display text-[13px] font-medium text-text-muted">
+              Habilidades
+            </span>
+          </Link>
         </div>
 
         <RolesConfirmationPanel data={pendingProfiles} />
