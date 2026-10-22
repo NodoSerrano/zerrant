@@ -8,6 +8,7 @@ import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { sendPasswordReset } from "@/features/auth/actions";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
+import { FormFeedback } from "@/components/FormFeedback";
 
 export default function RecoveryPage() {
   const [state, action, pending] = useGuardedActionState(sendPasswordReset, null);
@@ -41,9 +42,7 @@ export default function RecoveryPage() {
       <form action={action} className="flex flex-col gap-[14px]">
         <Input name="email" type="email" label="Email" placeholder="tu@email.com" required />
 
-        {state?.error && (
-          <p className="text-sm text-coral bg-coral/10 rounded-md px-3 py-2">{state.error}</p>
-        )}
+        <FormFeedback error={state?.error} />
 
         <PrimaryButton type="submit" disabled={pending}>
           {pending ? "Enviando..." : "Enviar enlace"}

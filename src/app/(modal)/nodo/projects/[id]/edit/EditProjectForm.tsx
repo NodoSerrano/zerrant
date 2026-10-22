@@ -71,7 +71,7 @@ export function EditProjectForm({ projectId, defaults }: EditProjectFormProps) {
               <button
                 type="submit"
                 disabled={archivePending}
-                className="flex-1 whitespace-nowrap rounded-pill bg-coral/10 px-3 py-2 font-display text-[13px] font-semibold text-coral focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
+                className="flex-1 whitespace-nowrap rounded-pill bg-coral/10 px-3 py-2 font-display text-[13px] font-semibold text-on-coral-tint focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
               >
                 {archivePending ? "Archivando..." : "Sí, archivar"}
               </button>
