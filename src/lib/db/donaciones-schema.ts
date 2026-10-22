@@ -40,6 +40,15 @@ export const DONACION_PRESTAMO_FECHA_COLUMNS = ["prestamo_desde", "prestamo_hast
 /** Follow-up migration fragment for optional loan dates. */
 export const DONACIONES_PRESTAMO_FECHAS_MIGRATION_FRAGMENT = "zer166_prestamo_fechas";
 
+/**
+ * Hardening: INSERT WITH CHECK must only allow estado null (M6 ledger)
+ * or 'pendiente' (donation queue). Never aprobado/rechazado from the client.
+ */
+export const DONACIONES_INSERT_ESTADO_GUARD_MIGRATION_FRAGMENT = "zer166_insert_estado_guard";
+
+/** Insert-time estados a client may set (RPC-only for aprobado/rechazado). */
+export const DONACION_INSERT_ALLOWED_ESTADOS = [null, "pendiente"] as const;
+
 /** Formats optional loan range for list meta (es short dates). */
 export function formatPrestamoRango(
   desde: string | null | undefined,

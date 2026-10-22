@@ -4,9 +4,11 @@ import { describe, expect, it } from "vitest";
 import { APORTE_TIPOS } from "./aportes-schema";
 import {
   APORTE_ESTADOS,
+  DONACIONES_INSERT_ESTADO_GUARD_MIGRATION_FRAGMENT,
   DONACIONES_MIGRATION_NAME_FRAGMENT,
   DONACIONES_PRESTAMO_FECHAS_MIGRATION_FRAGMENT,
   DONACION_APPROVAL_COLUMNS,
+  DONACION_INSERT_ALLOWED_ESTADOS,
   DONACION_INSERT_EXTRA_COLUMNS,
   DONACION_PRESTAMO_FECHA_COLUMNS,
   DONACION_STORAGE_BUCKET,
@@ -222,5 +224,31 @@ describe("ZER-166 prestamo fechas migration", () => {
     expect(formatPrestamoRango("2026-10-01", "2026-11-01", fmt)).toBe("2026-10-01 → 2026-11-01");
     expect(formatPrestamoRango("2026-10-01", null, fmt)).toBe("desde 2026-10-01");
     expect(formatPrestamoRango(null, "2026-11-01", fmt)).toBe("hasta 2026-11-01");
+  });
+});
+
+describe("ZER-166 insert estado guard", () => {
+  it("only null | pendiente are client-insertable approval states", () => {
+    expect([...DONACION_INSERT_ALLOWED_ESTADOS]).toEqual([null, "pendiente"]);
+    expect(DONACION_INSERT_ALLOWED_ESTADOS).not.toContain("aprobado");
+    expect(DONACION_INSERT_ALLOWED_ESTADOS).not.toContain("rechazado");
+  });
+
+  it("ships migration that rewrites insert WITH CHECK to block aprobado/rechazado", () => {
+    const files = readdirSync(MIGRATIONS_DIR).filter((f) =>
+      f.includes(DONACIONES_INSERT_ESTADO_GUARD_MIGRATION_FRAGMENT),
+    );
+    expect(files.length, "expected one insert-estado-guard migration").toBe(1);
+    const sql = readFileSync(path.join(MIGRATIONS_DIR, files[0]!), "utf8");
+
+    expect(sql).toMatch(/drop policy(?: if exists)? "Owner or admin can insert aportes"/i);
+    expect(sql).toMatch(/create policy "Owner or admin can insert aportes"/i);
+    // M6 ledger still allowed
+    expect(sql).toMatch(/estado is null/i);
+    // Donation queue start state only
+    expect(sql).toMatch(/estado\s*=\s*'pendiente'/i);
+    // Must not allow client to insert approved/rejected
+    expect(sql).not.toMatch(/estado\s*=\s*'aprobado'/i);
+    expect(sql).not.toMatch(/estado\s*=\s*'rechazado'/i);
   });
 });
