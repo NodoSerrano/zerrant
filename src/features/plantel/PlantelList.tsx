@@ -152,7 +152,7 @@ export function PlantelList({ members, roleOptions, skillOptions }: PlantelListP
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {chip("todos", "Todos", !rol && !skill, () => {
+        {chip("todos", "Todos", !rol && !skill && picker === null, () => {
           setRol(null);
           setSkill(null);
           setPicker(null);
