@@ -199,7 +199,7 @@ describe("TasksPage", () => {
       expect(screen.queryByRole("button")).not.toBeInTheDocument();
     });
 
-    it("shows filter pills", async () => {
+    it("shows filter pills without Verificada", async () => {
       const { createClient } = await import("@/lib/supabase/server");
       (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
       await renderPage();
@@ -207,8 +207,8 @@ describe("TasksPage", () => {
       expect(screen.getByText("Abierta")).toBeInTheDocument();
       expect(screen.getByText("Tomada")).toBeInTheDocument();
       expect(screen.getByText("Hecha")).toBeInTheDocument();
-      expect(screen.getByText("Verificada")).toBeInTheDocument();
       expect(screen.getByText("Cancelada")).toBeInTheDocument();
+      expect(screen.queryByText("Verificada")).not.toBeInTheDocument();
     });
 
     it("the Cancelada pill filters by that estado", async () => {
@@ -220,6 +220,57 @@ describe("TasksPage", () => {
         (a) => a.textContent === "Cancelada",
       );
       expect(pill).toHaveAttribute("href", "/nodo/tasks?estado=cancelada");
+    });
+
+    it("marks Todas active by default (no estado param)", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+      await renderPage();
+      const todas = screen.getByRole("link", { name: "Todas" });
+      expect(todas.className).toContain("bg-primary");
+      expect(todas).toHaveAttribute("href", "/nodo/tasks");
+    });
+
+    it("marks Todas active when estado=todas", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+      await renderPage({ estado: "todas" });
+      const todas = screen.getByRole("link", { name: "Todas" });
+      expect(todas.className).toContain("bg-primary");
+      expect(screen.getByRole("link", { name: "Abierta" }).className).not.toContain("bg-primary");
+    });
+
+    it("marks Abierta active when estado=abierta", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+      await renderPage({ estado: "abierta" });
+      expect(screen.getByRole("link", { name: "Abierta" }).className).toContain("bg-primary");
+      expect(screen.getByRole("link", { name: "Todas" }).className).not.toContain("bg-primary");
+    });
+
+    it("empty + concrete filter: no Publicar tarea CTA and no FAB (serrano)", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [], tier: "serrano" }),
+      );
+      const { container } = await renderPage({ estado: "abierta" });
+      expect(screen.getByText("No hay tareas")).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /Publicar tarea/ })).not.toBeInTheDocument();
+      expect(container.querySelector('a[aria-label="Crear tarea"]')).toBeNull();
+      expect(screen.getByText(/No hay tareas con este estado/)).toBeInTheDocument();
+    });
+
+    it("empty default: serrano still gets Publicar tarea and FAB", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [], tier: "serrano" }),
+      );
+      const { container } = await renderPage();
+      expect(screen.getByRole("link", { name: /Publicar tarea/ })).toHaveAttribute(
+        "href",
+        "/nodo/tasks/new",
+      );
+      expect(container.querySelector('a[aria-label="Crear tarea"]')).toBeTruthy();
     });
   });
 
@@ -266,6 +317,19 @@ describe("TasksPage", () => {
       const chain = client.getTasksChain();
       expect(chain?.eq).toHaveBeenCalledWith("estado", "cancelada");
       expect(chain?.neq).not.toHaveBeenCalled();
+    });
+
+    it("legacy estado=verificada falls back to todas (neq cancelada, no crash)", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      const client = mockSupabase();
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
+      await renderPage({ estado: "verificada" });
+
+      const chain = client.getTasksChain();
+      expect(chain?.neq).toHaveBeenCalledWith("estado", "cancelada");
+      expect(chain?.eq).not.toHaveBeenCalledWith("estado", "verificada");
+      expect(screen.queryByText("Verificada")).not.toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Todas" }).className).toContain("bg-primary");
     });
   });
 
@@ -381,7 +445,12 @@ describe("TasksPage", () => {
             created_at: "2026-07-27T12:00:00Z",
             creado_por: "user-1",
             tomada_por: TAKER_ID,
-            profiles: { nombre: "Juan", apellido: "Perez", apodo: null, nombre_visible: "nombre_apellido" },
+            profiles: {
+              nombre: "Juan",
+              apellido: "Perez",
+              apodo: null,
+              nombre_visible: "nombre_apellido",
+            },
             tomador: {
               nombre: "Ana",
               apellido: "Sosa",
@@ -417,7 +486,12 @@ describe("TasksPage", () => {
               creado_por: "user-1",
               tomada_por: TAKER_ID,
               tomador: null,
-              profiles: { nombre: "Juan", apellido: "Perez", apodo: null, nombre_visible: "nombre_apellido" },
+              profiles: {
+                nombre: "Juan",
+                apellido: "Perez",
+                apodo: null,
+                nombre_visible: "nombre_apellido",
+              },
             },
           ],
         }),
