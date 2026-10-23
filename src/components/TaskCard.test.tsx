@@ -82,19 +82,19 @@ describe("TaskCard", () => {
   it("renders urgencia alta with correct colors and label", () => {
     render(<TaskCard {...defaultProps} urgencia="alta" />);
     expect(screen.getByText("Urgencia alta")).toBeInTheDocument();
-    expect(screen.getByText("Urgencia alta")).toHaveClass("text-warm-orange");
+    expect(screen.getByText("Urgencia alta")).toHaveClass("text-warm-red");
   });
 
   it("renders urgencia media with correct colors and label", () => {
     render(<TaskCard {...defaultProps} urgencia="media" />);
     expect(screen.getByText("Urgencia media")).toBeInTheDocument();
-    expect(screen.getByText("Urgencia media")).toHaveClass("text-warm-yellow");
+    expect(screen.getByText("Urgencia media")).toHaveClass("text-warm-orange");
   });
 
   it("renders urgencia baja with correct colors and label", () => {
     render(<TaskCard {...defaultProps} urgencia="baja" />);
     expect(screen.getByText("Urgencia baja")).toBeInTheDocument();
-    expect(screen.getByText("Urgencia baja")).toHaveClass("text-text-muted");
+    expect(screen.getByText("Urgencia baja")).toHaveClass("text-brand-green");
   });
 
   it("renders Wrench icon for Reparación category", () => {
@@ -279,7 +279,7 @@ describe("TaskCard", () => {
     const unknownUrgencia = "critica" as unknown as typeof defaultProps.urgencia;
     render(<TaskCard {...defaultProps} urgencia={unknownUrgencia} />);
 
-    expect(screen.getByText("Urgencia media").className).toContain("text-warm-yellow");
+    expect(screen.getByText("Urgencia media").className).toContain("text-warm-orange");
   });
 });
 

@@ -73,10 +73,12 @@ describe("getEstadoBadge", () => {
 });
 
 describe("getUrgencia", () => {
+  // ZER-210: traffic-light priority — baja green, media orange, alta red.
+  // Tokens from the ZER-175 palette (no free hex).
   it.each([
-    ["alta", "Urgencia alta", "text-warm-orange"],
-    ["media", "Urgencia media", "text-warm-yellow"],
-    ["baja", "Urgencia baja", "text-text-muted"],
+    ["alta", "Urgencia alta", "text-warm-red"],
+    ["media", "Urgencia media", "text-warm-orange"],
+    ["baja", "Urgencia baja", "text-brand-green"],
   ])("maps %s to its label and colour", (urgencia, label, color) => {
     expect(getUrgencia(urgencia)).toEqual({ label, color });
   });
