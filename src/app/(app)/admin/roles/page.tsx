@@ -95,7 +95,7 @@ export default async function AdminRolesPage() {
             className="rounded-[11px] h-[38px] flex-1 flex items-center justify-center"
           >
             <span className="font-display text-[13px] font-medium text-text-muted">
-              Membresías · {membershipCount ?? 0}
+              Miembros · {membershipCount ?? 0}
             </span>
           </Link>
           <div className="rounded-[11px] bg-surface h-[38px] flex-1 flex items-center justify-center shadow-[0_2px_6px_#1a161418]">

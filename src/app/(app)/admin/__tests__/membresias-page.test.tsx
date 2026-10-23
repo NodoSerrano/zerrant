@@ -175,18 +175,23 @@ describe("AdminMembresiasPage", () => {
     expect(screen.getByText("Panel de admin")).toBeInTheDocument();
   });
 
-  it("renders solicitudes pendientes section title", async () => {
+  it("renders pending users under Miembros with the ZER-205 title", async () => {
     setEmptyMembership();
     render(await AdminMembresiasPage(EN_CURSO));
-    expect(screen.getByText("Solicitudes pendientes")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Miembros" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Usuarios pendientes de aprobación" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Turistas esperando ser Serranos")).toBeInTheDocument();
+    expect(screen.queryByText("Solicitudes pendientes")).not.toBeInTheDocument();
   });
 
-  it("renders segmented tabs with Membresías active and Roles inactive", async () => {
+  it("renders segmented tabs with Miembros active and Roles inactive", async () => {
     setEmptyMembership();
     render(await AdminMembresiasPage(EN_CURSO));
-    expect(screen.getByText(/Membresías/)).toBeInTheDocument();
+    expect(screen.getByText(/^Miembros ·/)).toBeInTheDocument();
     expect(screen.getByText(/Roles/)).toBeInTheDocument();
+    expect(screen.queryByText(/Membresías/)).not.toBeInTheDocument();
   });
 
   it("selects estado and passes it to each card", async () => {
