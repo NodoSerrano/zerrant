@@ -114,6 +114,13 @@ describe("EventDetail", () => {
     expect(screen.getByText("VD")).toBeInTheDocument();
   });
 
+  // ZER-211: the "No" group read as neutral grey, like an unanswered option.
+  it("labels the No group in red", () => {
+    render(<EventDetail {...BASE_PROPS} />);
+
+    expect(screen.getByText("No").className).toContain("bg-coral/20");
+  });
+
   it("links back to the agenda", () => {
     render(<EventDetail {...BASE_PROPS} />);
     const back = screen.getByRole("link", { name: "Volver a la agenda" });
