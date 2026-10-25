@@ -110,6 +110,7 @@ vi.mock("next/navigation", () => ({
 import {
   approveProjectJoin,
   archiveProject,
+  demoteProjectMember,
   createProject,
   joinProject,
   promoteProjectMember,
@@ -638,6 +639,70 @@ describe("promoteProjectMember", () => {
 
     const empty = new FormData();
     expect(await promoteProjectMember(null, empty)).toEqual({
+      error: "Revisá el miembro e intentá de nuevo.",
+    });
+    expect(mocks.membersUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe("demoteProjectMember (ZER-199)", () => {
+  it("turns an aprobado admin back into miembro and revalidates the project", async () => {
+    setupAuth("admin-1");
+    mocks.membersUpdateSelect.mockResolvedValue({
+      error: null,
+      data: [{ project_id: "proj-1", profile_id: "member-2", rol: "miembro" }],
+    });
+
+    const result = await demoteProjectMember(null, makePromoteForm());
+
+    expect(result).toBeNull();
+    expect(mocks.membersUpdatePayload).toEqual({ rol: "miembro" });
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("project_id", "proj-1");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("profile_id", "member-2");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("estado", "aprobado");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("rol", "admin");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects/proj-1");
+  });
+
+  it("explains that a project needs at least one admin", async () => {
+    setupAuth("admin-1");
+    mocks.membersUpdateSelect.mockResolvedValue({
+      error: { code: "P0001", message: "last_project_admin" },
+      data: null,
+    });
+
+    const result = await demoteProjectMember(null, makePromoteForm());
+
+    expect(result).toEqual({
+      error: "El proyecto necesita al menos un admin. Designá a otra persona antes.",
+    });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("treats a zero-row update as failure (not an admin, or no permission)", async () => {
+    setupAuth("admin-1");
+    mocks.membersUpdateSelect.mockResolvedValue({ error: null, data: [] });
+
+    const result = await demoteProjectMember(null, makePromoteForm());
+
+    expect(result).toEqual({ error: "No pudimos quitar el rol de admin." });
+  });
+
+  it("surfaces a Spanish error when the update fails", async () => {
+    setupAuth("admin-1");
+    mocks.membersUpdateSelect.mockResolvedValue({ error: { message: "rls" }, data: null });
+
+    const result = await demoteProjectMember(null, makePromoteForm());
+
+    expect(result).toEqual({ error: "No pudimos quitar el rol de admin. Probá de nuevo." });
+  });
+
+  it("returns unauthorized without a session and rejects a malformed form", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+    expect(await demoteProjectMember(null, makePromoteForm())).toEqual({ error: "No autorizado" });
+
+    setupAuth("admin-1");
+    expect(await demoteProjectMember(null, new FormData())).toEqual({
       error: "Revisá el miembro e intentá de nuevo.",
     });
     expect(mocks.membersUpdate).not.toHaveBeenCalled();

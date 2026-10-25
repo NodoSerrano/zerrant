@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronLeft, Lock } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { ProjectJoinButton } from "@/features/projects/ProjectJoinButton";
+import { DemoteMemberButton } from "@/features/projects/DemoteMemberButton";
 import { PromoteMemberButton } from "@/features/projects/PromoteMemberButton";
 import {
   getProjectEstadoBadge,
@@ -16,6 +17,7 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
   const ingresoLabel = getProjectIngresoLabel(project.ingreso);
   const approval = isProjectIngresoApproval(project.ingreso);
   const memberCount = project.members.length;
+  const adminCount = project.members.filter((member) => member.rol === "admin").length;
 
   return (
     <div className="flex w-full flex-col gap-[18px]">
@@ -95,9 +97,19 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
                 </span>
               </div>
               {member.rol === "admin" ? (
-                <span className="shrink-0 rounded-pill bg-blue-raw/20 px-2.5 py-1 font-display text-[11px] font-semibold text-on-blue-tint">
-                  Admin
-                </span>
+                <div className="shrink-0 flex flex-col items-end gap-1">
+                  <span className="rounded-pill bg-blue-raw/20 px-2.5 py-1 font-display text-[11px] font-semibold text-on-blue-tint">
+                    Admin
+                  </span>
+                  {/* The project always keeps one admin, so the last one can't be removed (ZER-199). */}
+                  {project.canPromoteMembers && adminCount > 1 ? (
+                    <DemoteMemberButton
+                      projectId={project.id}
+                      profileId={member.profileId}
+                      name={member.name}
+                    />
+                  ) : null}
+                </div>
               ) : project.canPromoteMembers ? (
                 <PromoteMemberButton projectId={project.id} profileId={member.profileId} />
               ) : null}
