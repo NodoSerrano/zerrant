@@ -8,6 +8,7 @@ import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { resetPassword } from "@/features/auth/actions";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
+import { FormFeedback } from "@/components/FormFeedback";
 
 export default function ResetPasswordPage() {
   const [state, action, pending] = useGuardedActionState(resetPassword, null);
@@ -54,9 +55,7 @@ export default function ResetPasswordPage() {
           minLength={6}
         />
 
-        {state?.error && (
-          <p className="text-sm text-coral bg-coral/10 rounded-md px-3 py-2">{state.error}</p>
-        )}
+        <FormFeedback error={state?.error} />
 
         <PrimaryButton type="submit" disabled={pending}>
           {pending ? "Guardando..." : "Guardar contraseña"}

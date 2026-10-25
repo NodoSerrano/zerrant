@@ -10,6 +10,7 @@ import { saveOnboardingStep1, uploadAvatar } from "@/features/profile/actions";
 import { todayIsoDate } from "@/features/profile/birthdate";
 import { formatPersonName } from "@/features/profile/person-name";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
+import { FormFeedback } from "@/components/FormFeedback";
 
 export interface Step1Defaults {
   nombre?: string | null;
@@ -126,11 +127,7 @@ export function Step1Form({ defaults, avatarUrl, progress }: Step1FormProps) {
           defaultValue={defaults?.sitio_url ?? ""}
         />
 
-        {state?.error && (
-          <p role="alert" className="text-sm text-coral bg-coral/10 rounded-md px-3 py-2">
-            {state.error}
-          </p>
-        )}
+        <FormFeedback error={state?.error} />
 
         {/* Submitting while the upload is in flight would unmount the picker
             before knowing whether the photo got in: the user would believe

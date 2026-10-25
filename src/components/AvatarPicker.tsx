@@ -211,7 +211,7 @@ export function AvatarPicker({
       {error && (
         <p
           role="alert"
-          className="self-stretch text-left text-sm text-coral bg-coral/10 rounded-md px-3 py-2"
+          className="self-stretch text-left text-sm text-on-coral-tint bg-coral/10 rounded-md px-3 py-2"
         >
           {error}
         </p>

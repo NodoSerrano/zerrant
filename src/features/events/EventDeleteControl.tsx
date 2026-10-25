@@ -43,7 +43,7 @@ export function EventDeleteControl({ eventId }: EventDeleteControlProps) {
         <button
           type="submit"
           disabled={pending}
-          className="flex-1 whitespace-nowrap rounded-pill bg-coral/10 px-3 py-2 font-display text-[13px] font-semibold text-coral disabled:opacity-50"
+          className="flex-1 whitespace-nowrap rounded-pill bg-coral/10 px-3 py-2 font-display text-[13px] font-semibold text-on-coral-tint disabled:opacity-50"
         >
           {pending ? "Eliminando..." : "Sí, eliminar"}
         </button>

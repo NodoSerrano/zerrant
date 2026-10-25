@@ -18,7 +18,7 @@ export function FormFeedback({
     return (
       <p
         role="alert"
-        className={cn("rounded-md bg-coral/10 px-3 py-2 text-sm text-coral", className)}
+        className={cn("rounded-md bg-coral/10 px-3 py-2 text-sm text-on-coral-tint", className)}
       >
         {error}
       </p>
