@@ -41,36 +41,74 @@ export type Database = {
     Tables: {
       aportes: {
         Row: {
+          aprobado_en: string | null;
+          aprobado_por: string | null;
           created_at: string;
           descripcion: string | null;
+          estado: Database["public"]["Enums"]["aporte_estado"] | null;
           fecha: string;
           id: string;
+          imagen_path: string | null;
           monto: number | null;
+          notas_admin: string | null;
+          prestamo_desde: string | null;
+          prestamo_hasta: string | null;
           profile_id: string;
           registrado_por: string;
           tipo: Database["public"]["Enums"]["aporte_tipo"];
+          titulo: string | null;
         };
         Insert: {
+          aprobado_en?: string | null;
+          aprobado_por?: string | null;
           created_at?: string;
           descripcion?: string | null;
+          estado?: Database["public"]["Enums"]["aporte_estado"] | null;
           fecha: string;
           id?: string;
+          imagen_path?: string | null;
           monto?: number | null;
+          notas_admin?: string | null;
+          prestamo_desde?: string | null;
+          prestamo_hasta?: string | null;
           profile_id: string;
           registrado_por: string;
           tipo: Database["public"]["Enums"]["aporte_tipo"];
+          titulo?: string | null;
         };
         Update: {
+          aprobado_en?: string | null;
+          aprobado_por?: string | null;
           created_at?: string;
           descripcion?: string | null;
+          estado?: Database["public"]["Enums"]["aporte_estado"] | null;
           fecha?: string;
           id?: string;
+          imagen_path?: string | null;
           monto?: number | null;
+          notas_admin?: string | null;
+          prestamo_desde?: string | null;
+          prestamo_hasta?: string | null;
           profile_id?: string;
           registrado_por?: string;
           tipo?: Database["public"]["Enums"]["aporte_tipo"];
+          titulo?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "aportes_aprobado_por_fkey";
+            columns: ["aprobado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "aportes_aprobado_por_fkey";
+            columns: ["aprobado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles_with_rate";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "aportes_profile_id_fkey";
             columns: ["profile_id"];
@@ -916,6 +954,14 @@ export type Database = {
       };
     };
     Functions: {
+      approve_aporte_donacion: {
+        Args: { p_aporte_id: string; p_notas?: string | null };
+        Returns: Json;
+      };
+      reject_aporte_donacion: {
+        Args: { p_aporte_id: string; p_notas?: string | null };
+        Returns: Json;
+      };
       book_interview_slot: {
         Args: { p_slot_id: string };
         Returns: {
@@ -978,6 +1024,7 @@ export type Database = {
       };
     };
     Enums: {
+      aporte_estado: "pendiente" | "aprobado" | "rechazado";
       aporte_tipo:
         | "economico"
         | "donacion"
@@ -1153,6 +1200,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      aporte_estado: ["pendiente", "aprobado", "rechazado"],
       aporte_tipo: [
         "economico",
         "donacion",

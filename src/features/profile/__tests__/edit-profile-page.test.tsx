@@ -6,6 +6,7 @@ const mockUpdateProfile = vi.hoisted(() => vi.fn());
 vi.mock("@/features/profile/actions", () => ({
   updateProfile: mockUpdateProfile,
   uploadAvatar: vi.fn(),
+  removeAvatar: vi.fn(),
 }));
 
 vi.mock("next/link", () => ({

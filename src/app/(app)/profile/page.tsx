@@ -104,19 +104,29 @@ export default async function ProfilePage() {
     );
   }
 
-  const [{ count: aportesCount }, { count: proyectosCount }, { data: approvedRequest }] =
-    await Promise.all([
-      supabase
-        .from("aportes")
-        .select("id", { count: "exact", head: true })
-        .eq("profile_id", user.id),
-      supabase
-        .from("project_members")
-        .select("project_id", { count: "exact", head: true })
-        .eq("profile_id", user.id)
-        .eq("estado", "aprobado"),
-      recentMemberConfirmation(supabase, user.id, now),
-    ]);
+  const [
+    { count: aportesCount },
+    { count: proyectosCount },
+    { count: donacionesCount },
+    { data: approvedRequest },
+  ] = await Promise.all([
+    supabase
+      .from("aportes")
+      .select("id", { count: "exact", head: true })
+      .eq("profile_id", user.id)
+      .is("estado", null),
+    supabase
+      .from("project_members")
+      .select("project_id", { count: "exact", head: true })
+      .eq("profile_id", user.id)
+      .eq("estado", "aprobado"),
+    supabase
+      .from("aportes")
+      .select("id", { count: "exact", head: true })
+      .eq("profile_id", user.id)
+      .not("estado", "is", null),
+    recentMemberConfirmation(supabase, user.id, now),
+  ]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -150,6 +160,7 @@ export default async function ProfilePage() {
       <SerranoMenu
         aportesCount={aportesCount ?? 0}
         proyectosCount={proyectosCount ?? 0}
+        donacionesCount={donacionesCount ?? 0}
         isPlatformAdmin={profile.is_platform_admin === true}
       />
     </div>

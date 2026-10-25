@@ -301,10 +301,12 @@ describe("TaskCard href mode", () => {
     expect(link).toHaveAttribute("href", "/nodo/tasks/abc-123");
   });
 
-  it("does not render <button> for action when href is set", () => {
+  // ZER-194: the whole card already opens the detail, where the task is
+  // actually taken. A "Tomar" pill here looked like a button that did nothing.
+  it("shows no action pill when the whole card is a link", () => {
     render(<TaskCard {...hrefProps} />);
-    expect(screen.getByText("Tomar")).toBeInTheDocument();
-    expect(screen.getByText("Tomar").tagName).toBe("SPAN");
+    expect(screen.queryByText("Tomar")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("renders as <div> when href is not set (backward compat)", () => {

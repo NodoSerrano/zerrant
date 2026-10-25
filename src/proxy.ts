@@ -53,7 +53,7 @@ function updateSession(request: NextRequest) {
   return { response, supabase };
 }
 
-const PROTECTED_PREFIXES = ["/onboarding", "/profile", "/nodo", "/solicitar"];
+const PROTECTED_PREFIXES = ["/onboarding", "/profile", "/nodo", "/solicitar", "/ser-serrano"];
 const AUTH_PREFIXES = [
   "/auth/login",
   "/auth/signup",

@@ -70,6 +70,10 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   });
 
   const viewerIsAdmin = isProjectAdmin({ viewerMembership });
+  // An open project lets people in directly: there is nothing to review unless
+  // requests from when it required approval are still pending (ZER-197).
+  const hasPendingRequests = (row.project_members ?? []).some((m) => m.estado === "pendiente");
+  const showRequestsQueue = viewerIsAdmin && (row.ingreso !== "abierto" || hasPendingRequests);
 
   const viewModel: ProjectDetailViewModel = {
     id: row.id,
@@ -79,7 +83,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     ingreso: row.ingreso,
     members,
     affordance,
-    showRequestsQueue: viewerIsAdmin,
+    showRequestsQueue,
     canPromoteMembers: viewerIsAdmin,
     canEdit: viewerIsAdmin,
     canLeave: viewerMembership?.estado === "aprobado",

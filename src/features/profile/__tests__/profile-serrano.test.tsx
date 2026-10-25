@@ -51,11 +51,18 @@ beforeEach(() => {
   mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
   mocks.profilesSelectSingle.mockResolvedValue({ data: serranoProfile, error: null });
   mocks.approvedRequest.mockResolvedValue({ data: null, error: null });
-  const countResult = Promise.resolve({ count: 0, error: null });
-  const countChain = {
-    eq: vi.fn(function eq() {
-      return Object.assign(countResult, { eq: vi.fn(() => countResult) });
-    }),
+  const makeCountChain = (): {
+    eq: ReturnType<typeof vi.fn>;
+    is: ReturnType<typeof vi.fn>;
+    not: ReturnType<typeof vi.fn>;
+  } & Promise<{ count: number; error: null }> => {
+    const result = Promise.resolve({ count: 0, error: null });
+    const chain = Object.assign(result, {
+      eq: vi.fn(() => makeCountChain()),
+      is: vi.fn(() => makeCountChain()),
+      not: vi.fn(() => makeCountChain()),
+    });
+    return chain;
   };
   mocks.from.mockImplementation((table: string) => {
     if (table === "profiles") {
@@ -81,7 +88,7 @@ beforeEach(() => {
       };
     }
     return {
-      select: vi.fn(() => countChain),
+      select: vi.fn(() => makeCountChain()),
     };
   });
   vi.mocked(useTheme).mockReturnValue({ dark: false, toggle: mockToggle });
@@ -219,8 +226,8 @@ describe("ProfilePage (serrano)", () => {
   it("does not render membership CTA banner", async () => {
     render(await ProfilePage());
 
-    expect(screen.queryByText("Todavía sos Turista")).toBeNull();
-    expect(screen.queryByText("Solicitar ser Serrano")).toBeNull();
+    expect(screen.queryByText("¿Querés conocer los beneficios de ser Serrano?")).toBeNull();
+    expect(screen.queryByText("Ver beneficios")).toBeNull();
   });
 
   it("does not render old 'Modo lectura' badge", async () => {

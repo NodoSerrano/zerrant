@@ -52,7 +52,7 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
-import { saveOnboardingStep1, updateProfile, uploadAvatar } from "./actions";
+import { removeAvatar, saveOnboardingStep1, updateProfile, uploadAvatar } from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -837,5 +837,55 @@ describe("saveOnboardingStep1 — membership flow (ZER-136)", () => {
   it("ignores an unexpected cookie value", async () => {
     cookieJar.flow = "otra-cosa";
     expect(await redirectTarget()).toBe("/profile");
+  });
+});
+
+describe("removeAvatar (ZER-212)", () => {
+  const OWN_URL = "https://proj.supabase.co/storage/v1/object/public/avatars/test-user-id/old.png";
+
+  function signedIn(avatarUrl: string | null) {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "test-user-id" } } });
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { avatar_url: avatarUrl }, error: null });
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: null });
+    mocks.storageRemove.mockResolvedValue({ data: null, error: null });
+  }
+
+  it("returns error when user is not authenticated", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+
+    const result = await removeAvatar(null, new FormData());
+
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.profilesUpdate).not.toHaveBeenCalled();
+  });
+
+  it("clears avatar_url and deletes the user's own photo", async () => {
+    signedIn(OWN_URL);
+
+    const result = await removeAvatar(null, new FormData());
+
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith({ avatar_url: null });
+    expect(mocks.profilesUpdateEq).toHaveBeenCalledWith("id", "test-user-id");
+    expect(mocks.storageRemove).toHaveBeenCalledWith(["test-user-id/old.png"]);
+    expect(result).toEqual({ avatarUrl: null });
+  });
+
+  it("never deletes a file outside the user's own folder", async () => {
+    signedIn("https://proj.supabase.co/storage/v1/object/public/avatars/someone-else/x.png");
+
+    await removeAvatar(null, new FormData());
+
+    expect(mocks.profilesUpdate).toHaveBeenCalledWith({ avatar_url: null });
+    expect(mocks.storageRemove).not.toHaveBeenCalled();
+  });
+
+  it("keeps the photo when the profile cannot be updated", async () => {
+    signedIn(OWN_URL);
+    mocks.profilesUpdateEq.mockResolvedValue({ data: null, error: { message: "boom" } });
+
+    const result = await removeAvatar(null, new FormData());
+
+    expect(result).toEqual({ error: "No pudimos quitar la foto. Probá de nuevo." });
+    expect(mocks.storageRemove).not.toHaveBeenCalled();
   });
 });

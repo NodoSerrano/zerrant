@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   Folder,
   Gift,
+  Package,
   Sparkles,
   Moon,
   ShieldCheck,
@@ -17,12 +18,14 @@ import { signOut } from "@/features/auth/actions";
 interface SerranoMenuProps {
   aportesCount?: number;
   proyectosCount?: number;
+  donacionesCount?: number;
   isPlatformAdmin?: boolean;
 }
 
 export function SerranoMenu({
   aportesCount = 0,
   proyectosCount = 0,
+  donacionesCount = 0,
   isPlatformAdmin = false,
 }: SerranoMenuProps) {
   return (
@@ -55,6 +58,17 @@ export function SerranoMenu({
             Mis aportes
           </span>
           <span className="font-body text-sm text-text-muted">{aportesCount}</span>
+          <ChevronRight size={18} className="text-text-muted shrink-0" />
+        </Link>
+
+        <div className="h-px bg-border w-full" />
+
+        <Link href="/donaciones" className="flex items-center gap-3 px-4 py-[15px] w-full">
+          <Package size={20} className="text-brand-green shrink-0" />
+          <span className="font-body text-[15px] text-text-primary text-left flex-1">
+            Donaciones del Nodo
+          </span>
+          <span className="font-body text-sm text-text-muted">{donacionesCount}</span>
           <ChevronRight size={18} className="text-text-muted shrink-0" />
         </Link>
       </div>
