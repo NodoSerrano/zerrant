@@ -63,7 +63,8 @@ describe("AdminRolesPage", () => {
   it("renders Roles tab as active", async () => {
     render(await AdminRolesPage());
     expect(screen.getByText(/^Roles ·/)).toBeInTheDocument();
-    expect(screen.getByText(/^Membresías ·/)).toBeInTheDocument();
+    expect(screen.getByText(/^Miembros ·/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Membresías ·/)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Habilidades" })).toHaveAttribute(
       "href",
       "/admin/habilidades",

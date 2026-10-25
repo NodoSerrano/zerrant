@@ -276,9 +276,7 @@ export default async function AdminMembresiasPage({
 
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-[3px]">
-            <h1 className="font-display text-[22px] font-bold text-text-primary">
-              {vista === "historial" ? "Historial de solicitudes" : "Solicitudes pendientes"}
-            </h1>
+            <h1 className="font-display text-[22px] font-bold text-text-primary">Miembros</h1>
             <p className="font-body text-[13px] text-text-secondary">
               {vista === "historial"
                 ? "Aprobadas y cerradas, con quién, cuándo y por qué"
@@ -295,7 +293,7 @@ export default async function AdminMembresiasPage({
         <div className="flex gap-1 p-1 rounded-[14px] bg-surface-inset">
           <div className="rounded-[11px] bg-surface h-[38px] flex-1 flex items-center justify-center shadow-[0_2px_6px_#1a161418]">
             <span className="font-display text-[13px] font-semibold text-text-primary">
-              Membresías · {pendingCount ?? 0}
+              Miembros · {pendingCount ?? 0}
             </span>
           </div>
           <Link
@@ -339,15 +337,23 @@ export default async function AdminMembresiasPage({
         </nav>
 
         {vista === "historial" ? (
-          <RequestHistoryList
-            items={historyItems}
-            filter={historyFilter}
-            eventsError={historyEventsError}
-            limit={HISTORY_LIMIT}
-          />
+          <section className="flex flex-col gap-3">
+            <h2 className="font-display text-[16px] font-semibold text-text-primary">
+              Historial de solicitudes
+            </h2>
+            <RequestHistoryList
+              items={historyItems}
+              filter={historyFilter}
+              eventsError={historyEventsError}
+              limit={HISTORY_LIMIT}
+            />
+          </section>
         ) : (
           <>
-            <div className="flex flex-col gap-3">
+            <section className="flex flex-col gap-3">
+              <h2 className="font-display text-[16px] font-semibold text-text-primary">
+                Usuarios pendientes de aprobación
+              </h2>
               {activeEventsError ? (
                 <p className="font-body text-[13px] text-coral">
                   No pudimos cargar quién hizo el último cambio
@@ -366,10 +372,10 @@ export default async function AdminMembresiasPage({
                 requests.map((r) => (
                   <div key={r.id} className="flex flex-col gap-2">
                     <RequestCard request={r} />
-                    <section className="rounded-[24px] border border-border bg-surface px-4 py-3 flex flex-col gap-3">
-                      <h2 className="font-display text-[13px] font-semibold text-text-primary">
+                    <div className="rounded-[24px] border border-border bg-surface px-4 py-3 flex flex-col gap-3">
+                      <h3 className="font-display text-[13px] font-semibold text-text-primary">
                         Notas internas
-                      </h2>
+                      </h3>
                       {(notesByRequest.get(r.id) ?? []).map((note) => {
                         const author = noteAuthor(note.profiles);
                         const authorName = author
@@ -401,11 +407,11 @@ export default async function AdminMembresiasPage({
                         );
                       })}
                       <InterviewNoteForm requestId={r.id} />
-                    </section>
+                    </div>
                   </div>
                 ))
               )}
-            </div>
+            </section>
 
             <section className="flex flex-col gap-3 pt-2">
               <h2 className="font-display text-[16px] font-semibold text-text-primary">
