@@ -1,7 +1,10 @@
 name: Log merged PR to RAG
 
 on:
-  pull_request:
+  # pull_request from a fork does not receive secrets, so the webhook never ran
+  # and Linear's default merge rule marked the issue Done. This workflow only
+  # reads the event payload. It does not check out the PR head.
+  pull_request_target:
     types: [closed]
 
 jobs:
