@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { safeInternalPath, withNext } from "@/lib/safe-next";
+import { authErrorMessage } from "./auth-errors";
 
 function getSiteUrl() {
   const base = process.env.NEXT_PUBLIC_SITE_URL;
@@ -32,7 +33,7 @@ export async function signInWithPassword(_prevState: { error: string } | null, f
   const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
-    return { error: error.message };
+    return { error: authErrorMessage(error, "No pudimos iniciar sesión. Probá de nuevo.") };
   }
 
   revalidatePath("/", "layout");
@@ -57,7 +58,7 @@ export async function signUpWithPassword(_prevState: { error: string } | null, f
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: authErrorMessage(error, "No pudimos crear la cuenta. Probá de nuevo.") };
   }
 
   // Confirmations off → live session. Confirmations on (or obfuscated existing
@@ -90,7 +91,7 @@ export async function resendSignupEmail(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: authErrorMessage(error, "No pudimos reenviar el email. Probá de nuevo.") };
   }
 
   return { success: true };
@@ -108,7 +109,8 @@ export async function signInWithGoogle(formData: FormData) {
   });
 
   if (error) {
-    redirect(withNext(`/auth/login?error=${encodeURIComponent(error.message)}`, next));
+    console.error("[auth] Google sign-in failed", error.code, error.message);
+    redirect(withNext("/auth/login?error=oauth_failed", next));
   }
 
   if (data.url) {
@@ -126,7 +128,7 @@ export async function sendPasswordReset(_prevState: { error: string } | null, fo
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: authErrorMessage(error, "No pudimos enviar el enlace. Probá de nuevo.") };
   }
 
   redirect(`/auth/check-email?email=${encodeURIComponent(email)}&flow=recovery`);
@@ -149,7 +151,7 @@ export async function resetPassword(_prevState: { error: string } | null, formDa
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    return { error: error.message };
+    return { error: authErrorMessage(error, "No pudimos cambiar la contraseña. Probá de nuevo.") };
   }
 
   redirect("/");
