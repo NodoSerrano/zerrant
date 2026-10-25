@@ -77,7 +77,11 @@ export default async function TasksPage({
   if (!user) return <p className="text-text-secondary">Iniciá sesión para ver las tareas.</p>;
 
   const { estado } = await searchParams;
-  const filter = !estado || estado === "todas" ? "todas" : estado;
+  // Hub pills only. Legacy ?estado=verificada (and any unknown) → todas.
+  const filtros = ["todas", "abierta", "tomada", "hecha", "cancelada"] as const;
+  type HubFilter = (typeof filtros)[number];
+  const filter: HubFilter =
+    estado && (filtros as readonly string[]).includes(estado) ? (estado as HubFilter) : "todas";
 
   let query = supabase
     .from("tasks")
@@ -99,9 +103,9 @@ export default async function TasksPage({
     .select("tier")
     .eq("id", user.id)
     .single();
-  const canCreate = profile && profile.tier !== "tourist";
-
-  const filtros = ["todas", "abierta", "tomada", "hecha", "verificada", "cancelada"];
+  const canCreate = Boolean(profile && profile.tier !== "tourist");
+  const isEmpty = !tasks || tasks.length === 0;
+  const showCreateCta = canCreate && (filter === "todas" || !isEmpty);
 
   return (
     <div className="flex flex-col gap-5 relative">
@@ -131,7 +135,7 @@ export default async function TasksPage({
             href={f === "todas" ? "/nodo/tasks" : `/nodo/tasks?estado=${f}`}
             className={cn(
               "inline-flex items-center rounded-pill px-3 py-1.5 text-xs font-semibold font-display whitespace-nowrap transition-colors",
-              (f === "todas" && !estado) || estado === f
+              filter === f
                 ? "bg-primary text-on-primary"
                 : "bg-surface border border-border text-text-secondary hover:text-text-primary",
             )}
@@ -141,13 +145,15 @@ export default async function TasksPage({
         ))}
       </div>
 
-      {!tasks || tasks.length === 0 ? (
+      {isEmpty ? (
         <EmptyState
-          href={canCreate ? "/nodo/tasks/new" : undefined}
+          href={showCreateCta ? "/nodo/tasks/new" : undefined}
           subtitle={
-            canCreate
-              ? "Parece que todavia no hay tareas publicadas. Queres crear la primera?"
-              : "Parece que todavia no hay tareas publicadas."
+            filter !== "todas"
+              ? "No hay tareas con este estado."
+              : canCreate
+                ? "Parece que todavia no hay tareas publicadas. Queres crear la primera?"
+                : "Parece que todavia no hay tareas publicadas."
           }
         />
       ) : (
@@ -167,7 +173,7 @@ export default async function TasksPage({
         </div>
       )}
 
-      {canCreate && (
+      {showCreateCta && (
         <Link
           href="/nodo/tasks/new"
           className={cn(
