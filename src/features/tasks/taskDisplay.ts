@@ -56,10 +56,11 @@ export function getEstadoBadge(estado: string): EstadoBadge {
   return ESTADO_BADGE[estado as keyof typeof ESTADO_BADGE] ?? ESTADO_BADGE.abierta;
 }
 
+// ZER-210 traffic light on ZER-175 tokens: baja green · media orange · alta red.
 export const URGENCIA_CONFIG = {
-  alta: { label: "Urgencia alta", color: "text-warm-orange" },
-  media: { label: "Urgencia media", color: "text-warm-yellow" },
-  baja: { label: "Urgencia baja", color: "text-text-muted" },
+  alta: { label: "Urgencia alta", color: "text-warm-red" },
+  media: { label: "Urgencia media", color: "text-warm-orange" },
+  baja: { label: "Urgencia baja", color: "text-brand-green" },
 } as const;
 
 export type UrgenciaConfig = (typeof URGENCIA_CONFIG)[keyof typeof URGENCIA_CONFIG];

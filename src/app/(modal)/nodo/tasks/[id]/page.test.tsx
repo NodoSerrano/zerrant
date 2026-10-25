@@ -255,9 +255,9 @@ describe("TaskDetailPage — meta card (AC4)", () => {
   });
 
   it.each([
-    ["alta", "Urgencia alta", "text-warm-orange"],
-    ["media", "Urgencia media", "text-warm-yellow"],
-    ["baja", "Urgencia baja", "text-text-muted"],
+    ["alta", "Urgencia alta", "text-warm-red"],
+    ["media", "Urgencia media", "text-warm-orange"],
+    ["baja", "Urgencia baja", "text-brand-green"],
   ])("shows %s urgency with its colour", async (urgencia, label, color) => {
     const { container } = await renderDetail({ task: makeTask({ urgencia }) });
 
