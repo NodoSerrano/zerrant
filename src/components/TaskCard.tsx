@@ -11,7 +11,8 @@ interface TaskCardProps {
   timeAgo: string;
   estado: "abierta" | "tomada" | "hecha" | "cancelada";
   urgencia: "alta" | "media" | "baja";
-  actionLabel: string;
+  /** Only for the button mode: with `href` the whole card opens the detail. */
+  actionLabel?: string;
   onAction?: () => void;
   assigneeName?: string | null;
   className?: string;
@@ -98,13 +99,13 @@ export function TaskCard({
             {urgenciaData.label}
           </span>
         </div>
-        {href ? (
-          <span className={actionClasses}>{actionLabel}</span>
-        ) : (
+        {/* With `href` the card itself opens the detail, where the task is
+            taken: a pill here looked like a button that did nothing (ZER-194). */}
+        {!href && actionLabel ? (
           <button type="button" className={actionClasses} onClick={onAction} disabled={!accionable}>
             {actionLabel}
           </button>
-        )}
+        ) : null}
       </div>
     </>
   );
