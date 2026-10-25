@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { computeSkillDiff, dedupeSkillNames, normalizeSkillName, suggestSkills } from "./skills";
+import {
+  computeSkillDiff,
+  dedupeSkillNames,
+  formatSkillExperience,
+  normalizeSkillName,
+  parseSkillItems,
+  suggestSkills,
+} from "./skills";
 
 describe("normalizeSkillName", () => {
   it("trims and collapses internal whitespace", () => {
@@ -69,5 +76,54 @@ describe("suggestSkills", () => {
 
   it("preserves catalog order", () => {
     expect(suggestSkills(catalog, [], "")).toEqual(catalog);
+  });
+});
+
+describe("parseSkillItems (ZER-163)", () => {
+  it("parses names with optional level and years, deduping by case", () => {
+    const raw = JSON.stringify([
+      { nombre: " IA ", nivel: "avanzado", anios_freelance: "3", anios_empresa: 5 },
+      { nombre: "ia", nivel: "basico", anios_freelance: 1, anios_empresa: 1 },
+      { nombre: "Diseño", nivel: "", anios_freelance: "", anios_empresa: null },
+    ]);
+    expect(parseSkillItems(raw)).toEqual({
+      items: [
+        { nombre: "IA", nivel: "avanzado", anios_freelance: 3, anios_empresa: 5 },
+        { nombre: "Diseño", nivel: null, anios_freelance: null, anios_empresa: null },
+      ],
+    });
+  });
+
+  it.each([
+    ["not JSON", "{"],
+    ["not a list", JSON.stringify({ nombre: "IA" })],
+    ["an unknown level", JSON.stringify([{ nombre: "IA", nivel: "experto" }])],
+    ["years over 60", JSON.stringify([{ nombre: "IA", anios_freelance: 61 }])],
+    ["negative years", JSON.stringify([{ nombre: "IA", anios_empresa: -1 }])],
+    ["fractional years", JSON.stringify([{ nombre: "IA", anios_empresa: 1.5 }])],
+  ])("rejects %s", (_case, raw) => {
+    expect(parseSkillItems(raw)).toEqual({ error: "Revisá el nivel y los años de experiencia" });
+  });
+
+  it("drops blank names and treats a missing field as an empty list", () => {
+    expect(parseSkillItems(JSON.stringify([{ nombre: "  " }]))).toEqual({ items: [] });
+    expect(parseSkillItems(null)).toEqual({ items: [] });
+  });
+});
+
+describe("formatSkillExperience (ZER-163)", () => {
+  it("joins level and both kinds of years", () => {
+    expect(formatSkillExperience({ nivel: "avanzado", anios_freelance: 3, anios_empresa: 1 })).toBe(
+      "Avanzado · 3 años freelance · 1 año en empresa",
+    );
+  });
+
+  it("leaves out what is not set", () => {
+    expect(formatSkillExperience({ nivel: null, anios_freelance: null, anios_empresa: 2 })).toBe(
+      "2 años en empresa",
+    );
+    expect(formatSkillExperience({ nivel: null, anios_freelance: null, anios_empresa: null })).toBe(
+      "",
+    );
   });
 });

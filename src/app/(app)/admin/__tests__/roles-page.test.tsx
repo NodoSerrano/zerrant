@@ -65,6 +65,10 @@ describe("AdminRolesPage", () => {
     expect(screen.getByText(/^Roles ·/)).toBeInTheDocument();
     expect(screen.getByText(/^Miembros ·/)).toBeInTheDocument();
     expect(screen.queryByText(/^Membresías ·/)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Habilidades" })).toHaveAttribute(
+      "href",
+      "/admin/habilidades",
+    );
   });
 
   it("groups pending roles by profile and passes them to the panel", async () => {

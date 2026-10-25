@@ -20,7 +20,7 @@ function PrefillLoadError() {
         <p className="text-sm text-text-secondary">Así el resto de la comunidad te conoce.</p>
       </div>
 
-      <p role="alert" className="text-sm text-coral bg-coral/10 rounded-md px-3 py-2">
+      <p role="alert" className="text-sm text-on-coral-tint bg-coral/10 rounded-md px-3 py-2">
         {LOAD_ERROR}
       </p>
 

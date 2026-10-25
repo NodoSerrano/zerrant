@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -80,5 +80,48 @@ describe("RsvpControl", () => {
     expect(screen.getByRole("button", { name: "Voy" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Quizás" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "No" })).toBeDisabled();
+  });
+  // ZER-211: saving can take a few seconds. The tapped answer has to show as
+  // chosen right away, not leave every option greyed out as if nothing happened.
+  it("marks the tapped answer while it is being saved", () => {
+    const { rerender } = render(<RsvpControl eventId="evt-1" currentEstado={null} />);
+    fireEvent.click(screen.getByRole("button", { name: "Voy" }));
+
+    mocks.useActionState.mockReturnValue([null, mocks.formAction, true]);
+    rerender(<RsvpControl eventId="evt-1" currentEstado={null} />);
+
+    expect(screen.getByRole("button", { name: "Voy" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "No" })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("goes back to the saved answer once the save ends", async () => {
+    // Run the real guarded action so its lock is released when the save fails.
+    mocks.setRsvp.mockResolvedValue({ error: "No pudimos guardar tu respuesta." });
+    mocks.useActionState.mockImplementation((action: Function, initial: unknown) => [
+      initial,
+      (formData: FormData) => action(initial, formData),
+      false,
+    ]);
+    render(<RsvpControl eventId="evt-1" currentEstado="quizas" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Voy" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Quizás" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      ),
+    );
+    expect(screen.getByRole("button", { name: "Voy" })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("shows a chosen No in red, not in the neutral grey of an unchosen option", () => {
+    render(<RsvpControl eventId="evt-1" currentEstado="no" />);
+
+    const no = screen.getByRole("button", { name: "No" });
+    expect(no.className).toContain("bg-coral/20");
+    expect(no.className).toContain("text-on-coral-tint");
+    // On touch screens hover sticks after the tap: it must not grey it out again.
+    expect(no.className).toContain("hover:bg-coral/20");
   });
 });

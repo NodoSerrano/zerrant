@@ -33,7 +33,12 @@ export default async function PlantelPage() {
     supabase.from("profile_roles").select("profile_id, roles(nombre)").eq("confirmado", true),
     supabase.from("profile_skills").select("profile_id, skills(nombre)"),
     supabase.from("roles").select("nombre").order("nombre", { ascending: true }),
-    supabase.from("skills").select("nombre").order("nombre", { ascending: true }),
+    // Approved catalog only: pending proposals (ZER-163) are not filter options.
+    supabase
+      .from("skills")
+      .select("nombre")
+      .eq("estado", "aprobada")
+      .order("nombre", { ascending: true }),
     supabase
       .from("profiles")
       .select("tier")

@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   rolesOrder: vi.fn(),
   skillsSelect: vi.fn(),
   skillsOrder: vi.fn(),
+  skillsEq: vi.fn(),
   redirect: vi.fn(),
 }));
 
@@ -60,7 +61,7 @@ vi.mock("@/lib/supabase/server", () => ({
       if (table === "skills") {
         return {
           select: mocks.skillsSelect.mockImplementation(() => ({
-            order: mocks.skillsOrder,
+            eq: mocks.skillsEq.mockImplementation(() => ({ order: mocks.skillsOrder })),
           })),
         };
       }
@@ -167,6 +168,8 @@ describe("PlantelPage", () => {
 
     expect(mocks.rolesSelect).toHaveBeenCalledWith("nombre");
     expect(mocks.skillsSelect).toHaveBeenCalledWith("nombre");
+    // Pending proposals (ZER-163) never show up as filter options.
+    expect(mocks.skillsEq).toHaveBeenCalledWith("estado", "aprobada");
     expect(screen.getByTestId("role-options")).toHaveTextContent("Infra,Charlas");
     expect(screen.getByTestId("skill-options")).toHaveTextContent("Solidity");
   });
@@ -180,9 +183,9 @@ describe("PlantelPage", () => {
     const element = await PlantelPage();
     render(element);
 
-    const link = screen.getByRole("link", { name: /Solicitar ser Serrano/i });
+    const link = screen.getByRole("link", { name: "Ver beneficios" });
     const list = screen.getByTestId("plantel-list");
-    expect(link).toHaveAttribute("href", "/solicitar");
+    expect(link).toHaveAttribute("href", "/ser-serrano");
     expect(list.parentElement).toHaveClass("gap-4");
     expect(list.parentElement).toContainElement(link);
     expect(resolveSerSerranoCtaVisibility).toHaveBeenCalledWith(
@@ -196,7 +199,7 @@ describe("PlantelPage", () => {
       await import("@/features/membership/ser-serrano-cta-server");
     const element = await PlantelPage();
     const { container } = render(element);
-    expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Ver beneficios" })).not.toBeInTheDocument();
     expect(container.querySelector(".gap-4")).not.toBeInTheDocument();
     expect(resolveSerSerranoCtaVisibility).toHaveBeenCalledWith(
       "user-1",

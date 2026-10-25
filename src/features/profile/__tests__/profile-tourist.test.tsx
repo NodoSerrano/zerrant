@@ -118,11 +118,10 @@ describe("ProfilePage (tourist)", () => {
     expect(screen.getByText("Turista")).toBeInTheDocument();
   });
 
-  it("renders the membership CTA banner with Mountain icon and Spanish copy", async () => {
+  it("renders the membership CTA banner with its short question (ZER-191)", async () => {
     render(await ProfilePage());
 
-    expect(screen.getByText("Todavía sos Turista")).toBeInTheDocument();
-    expect(screen.getByText(/Sumate como Serrano para aparecer en el plantel/)).toBeInTheDocument();
+    expect(screen.getByText("¿Querés conocer los beneficios de ser Serrano?")).toBeInTheDocument();
   });
 
   it("renders platform Admin badge on tourist identity when is_platform_admin", async () => {
@@ -141,13 +140,13 @@ describe("ProfilePage (tourist)", () => {
     expect(screen.queryByText("Admin")).not.toBeInTheDocument();
   });
 
-  it("renders Solicitar ser Serrano CTA as a link to /solicitar", async () => {
+  it("renders the CTA as a link to the benefits page (ZER-191)", async () => {
     render(await ProfilePage());
 
-    const cta = screen.getByText("Solicitar ser Serrano");
+    const cta = screen.getByText("Ver beneficios");
     const ctaLink = cta.closest("a");
     expect(ctaLink).not.toBeNull();
-    expect(ctaLink).toHaveAttribute("href", "/solicitar");
+    expect(ctaLink).toHaveAttribute("href", "/ser-serrano");
   });
 
   describe("pending membership request (ZER-110)", () => {
@@ -182,9 +181,9 @@ describe("ProfilePage (tourist)", () => {
           "Recibimos tu solicitud. Un admin de Nodo te va a contactar para coordinar una entrevista.",
         ),
       ).toBeInTheDocument();
-      expect(screen.queryByText("Todavía sos Turista")).toBeNull();
-      expect(screen.queryByText("Solicitar ser Serrano")).toBeNull();
-      expect(screen.queryByRole("link", { name: "Solicitar ser Serrano" })).toBeNull();
+      expect(screen.queryByText("¿Querés conocer los beneficios de ser Serrano?")).toBeNull();
+      expect(screen.queryByText("Ver beneficios")).toBeNull();
+      expect(screen.queryByRole("link", { name: "Ver beneficios" })).toBeNull();
       expect(screen.queryByRole("link", { name: "Explorar Nodo" })).toBeNull();
     });
 
@@ -212,7 +211,7 @@ describe("ProfilePage (tourist)", () => {
     });
     render(await ProfilePage());
 
-    expect(screen.getByText("Todavía sos Turista")).toBeInTheDocument();
+    expect(screen.getByText("¿Querés conocer los beneficios de ser Serrano?")).toBeInTheDocument();
     expect(screen.queryByText("Tu solicitud de membresía")).toBeNull();
   });
 

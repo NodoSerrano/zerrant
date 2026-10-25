@@ -369,9 +369,9 @@ describe("InicioPage (/)", () => {
     (resolveSerSerranoCtaVisibility as ReturnType<typeof vi.fn>).mockResolvedValueOnce(true);
 
     render(await InicioPage());
-    expect(screen.getByRole("link", { name: /Solicitar ser Serrano/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Ver beneficios" })).toHaveAttribute(
       "href",
-      "/solicitar",
+      "/ser-serrano",
     );
   });
 
@@ -386,6 +386,6 @@ describe("InicioPage (/)", () => {
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
 
     render(await InicioPage());
-    expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Ver beneficios" })).not.toBeInTheDocument();
   });
 });

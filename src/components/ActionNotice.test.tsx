@@ -11,7 +11,7 @@ vi.mock("next/navigation", () => ({
   usePathname: () => nav.pathname,
 }));
 
-import { ActionNotice } from "./ActionNotice";
+import { ACTION_NOTICE_DURATION_MS, ActionNotice } from "./ActionNotice";
 
 let replaceState: ReturnType<typeof vi.spyOn>;
 
@@ -92,5 +92,87 @@ describe("ActionNotice", () => {
     const { container } = render(<ActionNotice />);
     expect(container).toBeEmptyDOMElement();
     expect(replaceState).not.toHaveBeenCalled();
+  });
+
+  describe("toast (ZER-207)", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("floats over the page instead of pushing the content down", () => {
+      nav.params = new URLSearchParams("ok=proyecto-actualizado");
+      render(<ActionNotice />);
+      const toast = screen.getByRole("status");
+      expect(toast.closest(".fixed")).not.toBeNull();
+    });
+
+    it("closes itself after a few seconds", () => {
+      vi.useFakeTimers();
+      nav.params = new URLSearchParams("ok=proyecto-actualizado");
+      render(<ActionNotice />);
+      expect(screen.getByRole("status")).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(ACTION_NOTICE_DURATION_MS - 100);
+      });
+      expect(screen.getByRole("status")).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
+
+    it("gives a new notice its full time on screen", () => {
+      vi.useFakeTimers();
+      nav.params = new URLSearchParams("ok=evento-creado");
+      const { rerender } = render(<ActionNotice />);
+      act(() => {
+        vi.advanceTimersByTime(ACTION_NOTICE_DURATION_MS - 500);
+      });
+
+      nav.params = new URLSearchParams("ok=evento-actualizado");
+      rerender(<ActionNotice />);
+      act(() => {
+        vi.advanceTimersByTime(ACTION_NOTICE_DURATION_MS - 500);
+      });
+      expect(screen.getByRole("status")).toHaveTextContent("Cambios del evento guardados");
+    });
+
+    it("stays while the pointer or focus is on it, then closes", () => {
+      vi.useFakeTimers();
+      nav.params = new URLSearchParams("ok=evento-creado");
+      render(<ActionNotice />);
+      const toast = screen.getByRole("status");
+
+      fireEvent.mouseEnter(toast);
+      act(() => {
+        vi.advanceTimersByTime(ACTION_NOTICE_DURATION_MS * 2);
+      });
+      expect(screen.getByRole("status")).toBeInTheDocument();
+
+      fireEvent.mouseLeave(toast);
+      act(() => {
+        vi.advanceTimersByTime(ACTION_NOTICE_DURATION_MS + 100);
+      });
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
+
+    it("a notice closed while hovered does not leave the next one stuck", () => {
+      vi.useFakeTimers();
+      nav.params = new URLSearchParams("ok=evento-creado");
+      const { rerender } = render(<ActionNotice />);
+      fireEvent.mouseEnter(screen.getByRole("status"));
+      act(() => {
+        fireEvent.click(screen.getByRole("button", { name: "Cerrar aviso" }));
+      });
+
+      nav.params = new URLSearchParams("ok=evento-actualizado");
+      rerender(<ActionNotice />);
+      act(() => {
+        vi.advanceTimersByTime(ACTION_NOTICE_DURATION_MS + 100);
+      });
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
   });
 });

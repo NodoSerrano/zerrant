@@ -82,19 +82,19 @@ describe("TaskCard", () => {
   it("renders urgencia alta with correct colors and label", () => {
     render(<TaskCard {...defaultProps} urgencia="alta" />);
     expect(screen.getByText("Urgencia alta")).toBeInTheDocument();
-    expect(screen.getByText("Urgencia alta")).toHaveClass("text-warm-orange");
+    expect(screen.getByText("Urgencia alta")).toHaveClass("text-warm-red");
   });
 
   it("renders urgencia media with correct colors and label", () => {
     render(<TaskCard {...defaultProps} urgencia="media" />);
     expect(screen.getByText("Urgencia media")).toBeInTheDocument();
-    expect(screen.getByText("Urgencia media")).toHaveClass("text-warm-yellow");
+    expect(screen.getByText("Urgencia media")).toHaveClass("text-warm-orange");
   });
 
   it("renders urgencia baja with correct colors and label", () => {
     render(<TaskCard {...defaultProps} urgencia="baja" />);
     expect(screen.getByText("Urgencia baja")).toBeInTheDocument();
-    expect(screen.getByText("Urgencia baja")).toHaveClass("text-text-muted");
+    expect(screen.getByText("Urgencia baja")).toHaveClass("text-brand-green");
   });
 
   it("renders Wrench icon for Reparación category", () => {
@@ -279,7 +279,7 @@ describe("TaskCard", () => {
     const unknownUrgencia = "critica" as unknown as typeof defaultProps.urgencia;
     render(<TaskCard {...defaultProps} urgencia={unknownUrgencia} />);
 
-    expect(screen.getByText("Urgencia media").className).toContain("text-warm-yellow");
+    expect(screen.getByText("Urgencia media").className).toContain("text-warm-orange");
   });
 });
 
@@ -301,10 +301,12 @@ describe("TaskCard href mode", () => {
     expect(link).toHaveAttribute("href", "/nodo/tasks/abc-123");
   });
 
-  it("does not render <button> for action when href is set", () => {
+  // ZER-194: the whole card already opens the detail, where the task is
+  // actually taken. A "Tomar" pill here looked like a button that did nothing.
+  it("shows no action pill when the whole card is a link", () => {
     render(<TaskCard {...hrefProps} />);
-    expect(screen.getByText("Tomar")).toBeInTheDocument();
-    expect(screen.getByText("Tomar").tagName).toBe("SPAN");
+    expect(screen.queryByText("Tomar")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("renders as <div> when href is not set (backward compat)", () => {

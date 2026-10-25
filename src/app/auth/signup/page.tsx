@@ -16,6 +16,7 @@ import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 import { cn } from "@/lib/utils";
 import { safeInternalPath, withNext } from "@/lib/safe-next";
 import { NextField } from "@/features/auth/NextField";
+import { FormFeedback } from "@/components/FormFeedback";
 
 function SignupForm() {
   const [state, action, pending] = useGuardedActionState(signUpWithPassword, null);
@@ -53,9 +54,7 @@ function SignupForm() {
           minLength={6}
         />
 
-        {state?.error && (
-          <p className="text-sm text-coral bg-coral/10 rounded-md px-3 py-2">{state.error}</p>
-        )}
+        <FormFeedback error={state?.error} />
 
         <PrimaryButton type="submit" disabled={pending}>
           {pending ? "Creando cuenta..." : "Crear cuenta"}
