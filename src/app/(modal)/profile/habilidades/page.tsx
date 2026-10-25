@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { EditSkills } from "@/features/plantel/EditSkills";
+import type { SkillItem } from "@/features/plantel/skills";
 
 export const dynamic = "force-dynamic";
 
@@ -29,20 +30,40 @@ export default async function HabilidadesPage() {
     redirect("/profile");
   }
 
-  const [{ data: skillAssignments }, { data: catalog }] = await Promise.all([
+  const [{ data: skillAssignments }, { data: skills }] = await Promise.all([
     supabase
       .from("profile_skills")
-      .select("skills(nombre)")
+      .select("nivel, anios_freelance, anios_empresa, skills(nombre)")
       .eq("profile_id", user.id)
       .order("created_at"),
-    supabase.from("skills").select("nombre").order("nombre"),
+    // RLS returns the approved catalog plus the caller's own proposals (all of
+    // them for admins), so split them here.
+    supabase.from("skills").select("nombre, estado, propuesta_por").order("nombre"),
   ]);
 
-  const initialSkills = (skillAssignments ?? [])
-    .map((assignment) => assignment.skills?.nombre)
-    .filter((name): name is string => Boolean(name));
+  const initialSkills: SkillItem[] = (skillAssignments ?? []).flatMap((assignment) =>
+    assignment.skills?.nombre
+      ? [
+          {
+            nombre: assignment.skills.nombre,
+            nivel: assignment.nivel,
+            anios_freelance: assignment.anios_freelance,
+            anios_empresa: assignment.anios_empresa,
+          },
+        ]
+      : [],
+  );
 
-  const catalogNames = (catalog ?? []).map((skill) => skill.nombre);
+  const catalog = (skills ?? []).filter((s) => s.estado === "aprobada").map((s) => s.nombre);
+  const pendingProposals = (skills ?? [])
+    .filter((s) => s.estado === "pendiente" && s.propuesta_por === user.id)
+    .map((s) => s.nombre);
 
-  return <EditSkills initialSkills={initialSkills} catalog={catalogNames} />;
+  return (
+    <EditSkills
+      initialSkills={initialSkills}
+      catalog={catalog}
+      pendingProposals={pendingProposals}
+    />
+  );
 }

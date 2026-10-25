@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   rolesOrder: vi.fn(),
   skillsSelect: vi.fn(),
   skillsOrder: vi.fn(),
+  skillsEq: vi.fn(),
   redirect: vi.fn(),
 }));
 
@@ -60,7 +61,7 @@ vi.mock("@/lib/supabase/server", () => ({
       if (table === "skills") {
         return {
           select: mocks.skillsSelect.mockImplementation(() => ({
-            order: mocks.skillsOrder,
+            eq: mocks.skillsEq.mockImplementation(() => ({ order: mocks.skillsOrder })),
           })),
         };
       }
@@ -167,6 +168,8 @@ describe("PlantelPage", () => {
 
     expect(mocks.rolesSelect).toHaveBeenCalledWith("nombre");
     expect(mocks.skillsSelect).toHaveBeenCalledWith("nombre");
+    // Pending proposals (ZER-163) never show up as filter options.
+    expect(mocks.skillsEq).toHaveBeenCalledWith("estado", "aprobada");
     expect(screen.getByTestId("role-options")).toHaveTextContent("Infra,Charlas");
     expect(screen.getByTestId("skill-options")).toHaveTextContent("Solidity");
   });

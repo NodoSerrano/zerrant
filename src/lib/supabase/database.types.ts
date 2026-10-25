@@ -570,20 +570,29 @@ export type Database = {
       };
       profile_skills: {
         Row: {
+          anios_empresa: number | null;
+          anios_freelance: number | null;
           created_at: string;
           id: string;
+          nivel: Database["public"]["Enums"]["skill_nivel"] | null;
           profile_id: string;
           skill_id: string;
         };
         Insert: {
+          anios_empresa?: number | null;
+          anios_freelance?: number | null;
           created_at?: string;
           id?: string;
+          nivel?: Database["public"]["Enums"]["skill_nivel"] | null;
           profile_id: string;
           skill_id: string;
         };
         Update: {
+          anios_empresa?: number | null;
+          anios_freelance?: number | null;
           created_at?: string;
           id?: string;
+          nivel?: Database["public"]["Enums"]["skill_nivel"] | null;
           profile_id?: string;
           skill_id?: string;
         };
@@ -792,20 +801,34 @@ export type Database = {
       skills: {
         Row: {
           created_at: string;
+          estado: Database["public"]["Enums"]["skill_estado"];
           id: string;
           nombre: string;
+          propuesta_por: string | null;
         };
         Insert: {
           created_at?: string;
+          estado?: Database["public"]["Enums"]["skill_estado"];
           id?: string;
           nombre: string;
+          propuesta_por?: string | null;
         };
         Update: {
           created_at?: string;
+          estado?: Database["public"]["Enums"]["skill_estado"];
           id?: string;
           nombre?: string;
+          propuesta_por?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "skills_propuesta_por_fkey";
+            columns: ["propuesta_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       tasks: {
         Row: {
@@ -984,9 +1007,24 @@ export type Database = {
       is_non_tourist: { Args: never; Returns: boolean };
       is_platform_admin: { Args: never; Returns: boolean };
       is_project_admin: { Args: { p_project_id: string }; Returns: boolean };
-      sync_profile_skills: {
-        Args: { p_skill_ids: string[] };
-        Returns: { error?: string; success?: boolean };
+      propose_skill: {
+        Args: { p_nombre: string };
+        Returns: {
+          id?: string;
+          nombre?: string;
+          estado?: Database["public"]["Enums"]["skill_estado"];
+          existing?: boolean;
+          error?: string;
+          code?: string;
+        };
+      };
+      review_skill: {
+        Args: { p_skill_id: string; p_aprobar: boolean };
+        Returns: { success?: boolean; estado?: string; error?: string; code?: string };
+      };
+      save_profile_skills: {
+        Args: { p_items: Json };
+        Returns: { success?: boolean; error?: string; code?: string };
       };
       transition_membership_request: {
         Args: {
@@ -1067,6 +1105,8 @@ export type Database = {
       project_ingreso: "abierto" | "aprobacion";
       project_member_estado: "pendiente" | "aprobado";
       project_member_rol: "miembro" | "admin";
+      skill_estado: "aprobada" | "pendiente";
+      skill_nivel: "basico" | "intermedio" | "avanzado";
       task_categoria: "reparacion" | "limpieza" | "compra" | "mantenimiento" | "otro";
       task_estado: "abierta" | "tomada" | "hecha" | "verificada" | "cancelada";
       task_urgencia: "baja" | "media" | "alta";
@@ -1247,6 +1287,8 @@ export const Constants = {
       project_ingreso: ["abierto", "aprobacion"],
       project_member_estado: ["pendiente", "aprobado"],
       project_member_rol: ["miembro", "admin"],
+      skill_estado: ["aprobada", "pendiente"],
+      skill_nivel: ["basico", "intermedio", "avanzado"],
       task_categoria: ["reparacion", "limpieza", "compra", "mantenimiento", "otro"],
       task_estado: ["abierta", "tomada", "hecha", "verificada", "cancelada"],
       task_urgencia: ["baja", "media", "alta"],

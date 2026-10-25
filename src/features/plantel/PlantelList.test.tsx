@@ -105,6 +105,26 @@ describe("PlantelList", () => {
     expect(screen.getByRole("button", { name: "Todos" })).toHaveClass("bg-primary");
   });
 
+  it.each([
+    ["Por rol", "rol"],
+    ["Por skill", "skill"],
+  ])("only one chip looks selected after opening %s (ZER-163 bug)", (label) => {
+    render(<PlantelList members={members} />);
+    fireEvent.click(screen.getByRole("button", { name: label }));
+
+    expect(screen.getByRole("button", { name: label })).toHaveClass("bg-primary");
+    expect(screen.getByRole("button", { name: "Todos" })).not.toHaveClass("bg-primary");
+  });
+
+  it("Todos becomes the selected chip again when tapped", () => {
+    render(<PlantelList members={members} />);
+    fireEvent.click(screen.getByRole("button", { name: "Por rol" }));
+    fireEvent.click(screen.getByRole("button", { name: "Todos" }));
+
+    expect(screen.getByRole("button", { name: "Todos" })).toHaveClass("bg-primary");
+    expect(screen.getByRole("button", { name: "Por rol" })).not.toHaveClass("bg-primary");
+  });
+
   it("does not render a Disponibles chip or availability on cards", () => {
     render(<PlantelList members={members} />);
     expect(screen.queryByRole("button", { name: "Disponibles" })).not.toBeInTheDocument();
