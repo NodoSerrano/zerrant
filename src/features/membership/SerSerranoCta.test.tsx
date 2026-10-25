@@ -20,15 +20,14 @@ vi.mock("next/link", () => ({
 }));
 
 describe("SerSerranoCta (ZER-171)", () => {
-  it("renders Spanish copy and links into the membership pipeline", () => {
+  it("asks one short question and links to the benefits page, not the form (ZER-191)", () => {
     render(<SerSerranoCta />);
 
-    expect(screen.getByText("Todavía sos Turista")).toBeInTheDocument();
-    expect(screen.getByText(/Sumate como Serrano para aparecer en el plantel/)).toBeInTheDocument();
-
-    const cta = screen.getByRole("link", { name: /Solicitar ser Serrano/i });
+    expect(screen.getByText("¿Querés conocer los beneficios de ser Serrano?")).toBeInTheDocument();
+    const cta = screen.getByRole("link", { name: "Ver beneficios" });
     expect(cta).toHaveAttribute("href", SER_SERRANO_CTA_HREF);
-    expect(cta).toHaveAttribute("href", "/solicitar");
+    expect(cta).toHaveAttribute("href", "/ser-serrano");
+    expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
   });
 
   it("uses brand gradient + on-primary text (no free hex green)", () => {

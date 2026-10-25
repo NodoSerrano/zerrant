@@ -318,6 +318,15 @@ describe("proxy", () => {
       expect(res.headers.get("location")).toBe("https://example.com/auth/login?next=%2Fsolicitar");
     });
 
+    it("protects /ser-serrano and carries it as next (ZER-191)", async () => {
+      noAuth();
+      const res = await proxy(makeRequest("/ser-serrano"));
+
+      expect(res.headers.get("location")).toBe(
+        "https://example.com/auth/login?next=%2Fser-serrano",
+      );
+    });
+
     it("leaves /unirme public (the route resolves no-session itself)", async () => {
       noAuth();
       const res = await proxy(makeRequest("/unirme"));

@@ -180,9 +180,9 @@ describe("PlantelPage", () => {
     const element = await PlantelPage();
     render(element);
 
-    const link = screen.getByRole("link", { name: /Solicitar ser Serrano/i });
+    const link = screen.getByRole("link", { name: "Ver beneficios" });
     const list = screen.getByTestId("plantel-list");
-    expect(link).toHaveAttribute("href", "/solicitar");
+    expect(link).toHaveAttribute("href", "/ser-serrano");
     expect(list.parentElement).toHaveClass("gap-4");
     expect(list.parentElement).toContainElement(link);
     expect(resolveSerSerranoCtaVisibility).toHaveBeenCalledWith(
@@ -196,7 +196,7 @@ describe("PlantelPage", () => {
       await import("@/features/membership/ser-serrano-cta-server");
     const element = await PlantelPage();
     const { container } = render(element);
-    expect(screen.queryByRole("link", { name: /Solicitar ser Serrano/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Ver beneficios" })).not.toBeInTheDocument();
     expect(container.querySelector(".gap-4")).not.toBeInTheDocument();
     expect(resolveSerSerranoCtaVisibility).toHaveBeenCalledWith(
       "user-1",
