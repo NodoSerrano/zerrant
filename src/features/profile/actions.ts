@@ -297,6 +297,53 @@ export async function uploadAvatar(
   return { avatarUrl: publicUrl };
 }
 
+export type AvatarRemoveState = { error?: string; avatarUrl?: null };
+
+/**
+ * Takes the photo off the profile so it shows the initials again (ZER-212).
+ * Clears avatar_url first: if that fails the photo stays, file included.
+ */
+export async function removeAvatar(
+  _prevState: AvatarRemoveState | null,
+  _formData: FormData,
+): Promise<AvatarRemoveState> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "No autorizado" };
+  }
+
+  const { data: previous } = await supabase
+    .from("profiles")
+    .select("avatar_url")
+    .eq("id", user.id)
+    .single();
+
+  const { error: dbError } = await supabase
+    .from("profiles")
+    .update({ avatar_url: null })
+    .eq("id", user.id);
+
+  if (dbError) {
+    console.error("[removeAvatar] no se pudo limpiar avatar_url", dbError);
+    return { error: "No pudimos quitar la foto. Probá de nuevo." };
+  }
+
+  const previousPath = avatarPathFromPublicUrl(previous?.avatar_url ?? null);
+  // Only ever clean up inside the user's own folder, whatever avatar_url says.
+  if (previousPath?.startsWith(`${user.id}/`)) {
+    await supabase.storage.from(AVATAR_BUCKET).remove([previousPath]);
+  }
+
+  revalidatePath("/", "layout");
+
+  return { avatarUrl: null };
+}
+
 export async function updateProfile(_prevState: { error: string } | null, formData: FormData) {
   const supabase = await createClient();
 

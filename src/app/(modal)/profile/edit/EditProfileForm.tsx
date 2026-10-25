@@ -6,7 +6,7 @@ import { ChevronLeft } from "lucide-react";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { AvatarPicker } from "@/components/AvatarPicker";
-import { updateProfile, uploadAvatar } from "@/features/profile/actions";
+import { removeAvatar, updateProfile, uploadAvatar } from "@/features/profile/actions";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 
 const NOMBRE_VISIBLE_OPTIONS = [
@@ -45,6 +45,7 @@ export function EditProfileForm({ defaults }: EditProfileFormProps) {
 
       <AvatarPicker
         action={uploadAvatar}
+        removeAction={removeAvatar}
         initialUrl={defaults.avatar_url}
         onUploadingChange={setUploadingPhoto}
       />
