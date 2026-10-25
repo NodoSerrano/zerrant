@@ -86,6 +86,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     showRequestsQueue,
     canPromoteMembers: viewerIsAdmin,
     canEdit: viewerIsAdmin,
+    canLeave: viewerMembership?.estado === "aprobado",
   };
 
   return <ProjectDetail project={viewModel} />;

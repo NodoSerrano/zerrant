@@ -174,3 +174,55 @@ describe("project admins (ZER-199)", () => {
     expect(await rolOf(projectId, owner.id)).toBeUndefined();
   });
 });
+
+describe("leaving a project (ZER-200)", () => {
+  function leave(user: TestUser, projectId: string, profileId = user.id) {
+    return user.client
+      .from("project_members")
+      .delete()
+      .eq("project_id", projectId)
+      .eq("profile_id", profileId)
+      .select("profile_id");
+  }
+
+  it("a member leaves on their own", async () => {
+    const owner = await createUser();
+    const member = await createUser();
+    const projectId = await projectWithMember(owner, member);
+
+    const { error, data } = await leave(member, projectId);
+
+    expect(error).toBeNull();
+    expect(data).toEqual([{ profile_id: member.id }]);
+    expect(await rolOf(projectId, member.id)).toBeUndefined();
+  });
+
+  it("a member cannot remove someone else", async () => {
+    const owner = await createUser();
+    const member = await createUser();
+    const third = await createUser();
+    const projectId = await projectWithMember(owner, member);
+    await third.client
+      .from("project_members")
+      .insert({ project_id: projectId, profile_id: third.id, estado: "aprobado" });
+
+    const { data } = await leave(member, projectId, third.id);
+
+    expect(data).toEqual([]);
+    expect(await rolOf(projectId, third.id)).toBe("miembro");
+  });
+
+  it("the last admin cannot leave, but can once another admin exists", async () => {
+    const owner = await createUser();
+    const member = await createUser();
+    const projectId = await projectWithMember(owner, member);
+
+    const blocked = await leave(owner, projectId);
+    expect(blocked.error?.message).toBe("last_project_admin");
+
+    await setRol(owner, projectId, member.id, "admin");
+    const allowed = await leave(owner, projectId);
+    expect(allowed.error).toBeNull();
+    expect(await rolOf(projectId, owner.id)).toBeUndefined();
+  });
+});

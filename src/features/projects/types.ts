@@ -66,4 +66,6 @@ export type ProjectDetailViewModel = {
   canPromoteMembers: boolean;
   /** Viewer is project admin — may edit metadata and archive. */
   canEdit: boolean;
+  /** Viewer is an approved member — may leave the project (ZER-200). */
+  canLeave: boolean;
 };
