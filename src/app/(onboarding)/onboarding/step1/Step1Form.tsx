@@ -108,7 +108,7 @@ export function Step1Form({ defaults, avatarUrl, progress }: Step1FormProps) {
             rows={4}
             placeholder="Contanos quién sos y qué hacés..."
             defaultValue={defaults?.bio ?? ""}
-            className="h-[100px] rounded-2xl border border-border bg-surface px-4 py-4 text-[15px] text-text-primary placeholder:text-text-muted focus:outline-hidden focus:ring-2 focus:ring-primary/40 resize-none"
+            className="h-[100px] rounded-2xl border border-border bg-surface px-4 py-4 text-base text-text-primary placeholder:text-text-muted focus:outline-hidden focus:ring-2 focus:ring-primary/40 resize-none"
           />
         </div>
 

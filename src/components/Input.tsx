@@ -17,7 +17,8 @@ export function Input({ label, error, className, endAdornment, ...props }: Input
     <input
       id={id}
       className={cn(
-        "h-[50px] rounded-2xl border border-border bg-surface px-4 text-[15px] text-text-primary",
+        // text-base (16px): iOS Safari zooms in on focus below 16px (ZER-176).
+        "h-[50px] rounded-2xl border border-border bg-surface px-4 text-base text-text-primary",
         "placeholder:text-text-muted",
         "focus:outline-hidden focus:ring-2 focus:ring-primary/40",
         "disabled:opacity-50 disabled:cursor-not-allowed",

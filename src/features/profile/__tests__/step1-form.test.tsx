@@ -182,3 +182,12 @@ describe("Step1Form", () => {
     expect(screen.queryByRole("button", { name: "Guardar y continuar" })).not.toBeInTheDocument();
   });
 });
+
+describe("Step1Form on mobile (ZER-176)", () => {
+  it("uses 16px text in the bio so iOS Safari does not zoom in on focus", () => {
+    render(<Step1Form />);
+    const bio = document.querySelector("textarea#bio") as HTMLTextAreaElement;
+    expect(bio).toHaveClass("text-base");
+    expect(bio.className).not.toContain("text-[15px]");
+  });
+});
