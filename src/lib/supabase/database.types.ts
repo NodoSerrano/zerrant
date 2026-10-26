@@ -832,7 +832,8 @@ export type Database = {
       };
       tasks: {
         Row: {
-          categoria: Database["public"]["Enums"]["task_categoria"];
+          categoria_otra: string | null;
+          categorias: Database["public"]["Enums"]["task_categoria"][];
           creado_por: string;
           created_at: string;
           descripcion: string | null;
@@ -843,7 +844,8 @@ export type Database = {
           urgencia: Database["public"]["Enums"]["task_urgencia"];
         };
         Insert: {
-          categoria?: Database["public"]["Enums"]["task_categoria"];
+          categoria_otra?: string | null;
+          categorias?: Database["public"]["Enums"]["task_categoria"][];
           creado_por: string;
           created_at?: string;
           descripcion?: string | null;
@@ -854,7 +856,8 @@ export type Database = {
           urgencia?: Database["public"]["Enums"]["task_urgencia"];
         };
         Update: {
-          categoria?: Database["public"]["Enums"]["task_categoria"];
+          categoria_otra?: string | null;
+          categorias?: Database["public"]["Enums"]["task_categoria"][];
           creado_por?: string;
           created_at?: string;
           descripcion?: string | null;

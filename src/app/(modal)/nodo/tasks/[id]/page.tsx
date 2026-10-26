@@ -60,7 +60,8 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
       taskId={task.id}
       titulo={task.titulo}
       descripcion={task.descripcion}
-      categoria={task.categoria}
+      categorias={task.categorias ?? []}
+      categoriaOtra={task.categoria_otra}
       urgencia={task.urgencia ?? "media"}
       estado={task.estado ?? "abierta"}
       createdAt={task.created_at}

@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { cn } from "@/lib/utils";
 import { FormFeedback } from "@/components/FormFeedback";
+import { CATEGORIA_OTRA_MAX } from "./categorias";
 
 // Create and edit share the same form: Pencil frames `V0ODk` and `H3BY0u`
 // differ only in the header and the CTA label. It lives here so a design
@@ -26,7 +28,7 @@ const URGENCIAS = [
 
 const GROUP_LABEL = "text-[13px] font-medium text-text-secondary";
 
-// The radio is visually hidden but remains the real control: this way the
+// The input is visually hidden but remains the real control: this way the
 // form works without JS, FormData still carries the value and keyboard focus
 // is preserved. The "selected" styling comes from `has-checked:` on the label.
 const FOCUS_RING = "has-focus-visible:ring-2 has-focus-visible:ring-primary/40";
@@ -38,7 +40,8 @@ type TaskFormAction = (state: TaskFormState, formData: FormData) => Promise<Task
 interface TaskFormDefaults {
   titulo?: string;
   descripcion?: string;
-  categoria?: string;
+  categorias?: string[];
+  categoriaOtra?: string | null;
   urgencia?: string;
 }
 
@@ -60,8 +63,10 @@ export function TaskForm({
 }: TaskFormProps) {
   const [state, formAction, pending] = useGuardedActionState(action, null);
 
-  const categoria = defaults?.categoria ?? "reparacion";
+  const categorias = defaults?.categorias?.length ? defaults.categorias : ["reparacion"];
   const urgencia = defaults?.urgencia ?? "media";
+  // "Otro" asks which one (ZER-208): the text field only exists while it is checked.
+  const [otroChecked, setOtroChecked] = useState(categorias.includes("otro"));
 
   return (
     // The CTA is a sibling of the field group, not a child: in Pencil the
@@ -100,6 +105,7 @@ export function TaskForm({
 
         <fieldset className="flex flex-col gap-2">
           <legend className={GROUP_LABEL}>Categoría</legend>
+          {/* Several can be chosen (ZER-208); the action requires at least one. */}
           <div className="flex flex-wrap gap-2">
             {CATEGORIAS.map((c) => (
               <label
@@ -116,16 +122,29 @@ export function TaskForm({
                 )}
               >
                 <input
-                  type="radio"
-                  name="categoria"
+                  type="checkbox"
+                  name="categorias"
                   value={c.value}
-                  defaultChecked={c.value === categoria}
+                  defaultChecked={categorias.includes(c.value)}
+                  onChange={
+                    c.value === "otro" ? (event) => setOtroChecked(event.target.checked) : undefined
+                  }
                   className="sr-only"
                 />
                 {c.label}
               </label>
             ))}
           </div>
+          {otroChecked ? (
+            <Input
+              name="categoria_otra"
+              label="¿Cuál?"
+              placeholder="Ej: Jardinería"
+              defaultValue={defaults?.categoriaOtra ?? ""}
+              maxLength={CATEGORIA_OTRA_MAX}
+              required
+            />
+          ) : null}
         </fieldset>
 
         <fieldset className="flex flex-col gap-2">

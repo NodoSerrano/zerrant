@@ -57,7 +57,8 @@ export default async function EditTaskPage({ params }: { params: Promise<{ id: s
         defaults={{
           titulo: task.titulo,
           descripcion: task.descripcion ?? "",
-          categoria: task.categoria,
+          categorias: task.categorias,
+          categoriaOtra: task.categoria_otra,
           urgencia: task.urgencia,
         }}
       />

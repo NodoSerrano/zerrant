@@ -18,11 +18,11 @@ interface TaskCardProps {
   className?: string;
 }
 
-// The component receives the category already translated, so it resolves the
-// icon by label. The index comes from `taskDisplay`, the only place where
-// the category map lives.
+// The component receives the categories already translated ("Compra, Limpieza"),
+// so it resolves the icon by the first label (ZER-208). The index comes from
+// `taskDisplay`, the only place where the category map lives.
 const getCategoryIcon = (category: string): LucideIcon => {
-  return categoriaIconByLabel[category] ?? MoreHorizontal;
+  return categoriaIconByLabel[category.split(", ")[0] ?? ""] ?? MoreHorizontal;
 };
 
 export function TaskCard({
