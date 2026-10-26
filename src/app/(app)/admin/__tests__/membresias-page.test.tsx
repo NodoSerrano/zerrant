@@ -333,6 +333,36 @@ describe("AdminMembresiasPage — interview notes (ZER-145)", () => {
     expect(screen.queryByDisplayValue("Nota de otro admin")).not.toBeInTheDocument();
   });
 
+  // A note written at 22:30 in Argentina is already the next day in UTC: it
+  // has to show the day the admin wrote it.
+  it("dates a note written at night with the Argentine day, not UTC's", async () => {
+    setMembershipData([pendingRequests[0]], 1);
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "admin-1" } } });
+    mocks.notesResponse = Promise.resolve({
+      data: [
+        {
+          id: "note-night",
+          request_id: "req-1",
+          author_id: "admin-2",
+          body: "Nota de la noche",
+          created_at: "2026-03-02T01:30:00.000Z",
+          profiles: {
+            nombre: "Grace",
+            apellido: "Hopper",
+            apodo: null,
+            nombre_visible: "nombre_apellido",
+          },
+        },
+      ],
+      error: null,
+    });
+
+    render(await AdminMembresiasPage(EN_CURSO));
+
+    expect(screen.getByText(/1 de mar de 2026/)).toBeInTheDocument();
+    expect(screen.queryByText(/2 de mar de 2026/)).not.toBeInTheDocument();
+  });
+
   it("keeps interview notes out of applicant, profile and plantel selects", () => {
     const files = [
       "src/app/(app)/profile/page.tsx",
