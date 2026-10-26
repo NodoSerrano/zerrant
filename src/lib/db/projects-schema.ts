@@ -6,7 +6,7 @@
 export const PROJECT_ESTADOS = ["idea", "en_curso", "pausado", "terminado"] as const;
 export type ProjectEstado = (typeof PROJECT_ESTADOS)[number];
 
-export const PROJECT_INGRESOS = ["abierto", "aprobacion"] as const;
+export const PROJECT_INGRESOS = ["abierto", "aprobacion", "cerrado"] as const;
 export type ProjectIngreso = (typeof PROJECT_INGRESOS)[number];
 
 export const PROJECT_MEMBER_ROLES = ["miembro", "admin"] as const;

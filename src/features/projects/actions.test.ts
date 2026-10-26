@@ -403,6 +403,20 @@ describe("joinProject", () => {
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects/proj-1");
   });
 
+  it("refuses a cerrado project before inserting anything (ZER-151)", async () => {
+    setupAuth("serrano-1");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.projectsMaybeSingle.mockResolvedValue({
+      data: { id: "proj-1", ingreso: "cerrado" },
+      error: null,
+    });
+
+    const result = await joinProject(null, makeJoinForm());
+
+    expect(result).toEqual({ error: "Este proyecto no está sumando gente por ahora." });
+    expect(mocks.membersInsert).not.toHaveBeenCalled();
+  });
+
   it("inserts pendiente for an aprobacion project", async () => {
     setupAuth("serrano-1");
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });

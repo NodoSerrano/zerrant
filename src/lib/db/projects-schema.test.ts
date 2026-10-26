@@ -32,7 +32,7 @@ function findProjectsMigration(): { name: string; sql: string } {
 describe("project enum contracts", () => {
   it("locks PRD Spanish enum values", () => {
     expect(PROJECT_ESTADOS).toEqual(["idea", "en_curso", "pausado", "terminado"]);
-    expect(PROJECT_INGRESOS).toEqual(["abierto", "aprobacion"]);
+    expect(PROJECT_INGRESOS).toEqual(["abierto", "aprobacion", "cerrado"]);
     expect(PROJECT_MEMBER_ROLES).toEqual(["miembro", "admin"]);
     expect(PROJECT_MEMBER_ESTADOS).toEqual(["pendiente", "aprobado"]);
     expect(isProjectEstado("en_curso")).toBe(true);
@@ -94,9 +94,10 @@ describe("ZER-78 migration SQL", () => {
     expect(sql).toMatch(/create type public\.project_ingreso as enum/i);
     expect(sql).toMatch(/create type public\.project_member_rol as enum/i);
     expect(sql).toMatch(/create type public\.project_member_estado as enum/i);
+    // 'cerrado' came later, in its own migration (ZER-151).
     for (const value of [
       ...PROJECT_ESTADOS,
-      ...PROJECT_INGRESOS,
+      ...PROJECT_INGRESOS.filter((ingreso) => ingreso !== "cerrado"),
       ...PROJECT_MEMBER_ROLES,
       ...PROJECT_MEMBER_ESTADOS,
     ]) {
@@ -174,6 +175,32 @@ describe("ZER-78 migration SQL", () => {
     expect([...PROJECTS_UPDATE_COLUMNS]).toEqual(["nombre", "descripcion", "estado", "ingreso"]);
     expect([...PROJECT_MEMBERS_INSERT_COLUMNS]).toEqual(["project_id", "profile_id", "estado"]);
     expect([...PROJECT_MEMBERS_UPDATE_COLUMNS]).toEqual(["rol", "estado"]);
+  });
+});
+
+describe("ZER-151 cerrado ingreso migration SQL", () => {
+  function findCerradoMigration(): string {
+    const files = readdirSync(MIGRATIONS_DIR).filter((f) =>
+      f.includes("zer151_project_ingreso_cerrado"),
+    );
+    expect(files.length, "expected one ZER-151 cerrado migration").toBe(1);
+    return readFileSync(path.join(MIGRATIONS_DIR, files[0]!), "utf8");
+  }
+
+  it("adds 'cerrado' to project_ingreso", () => {
+    expect(findCerradoMigration()).toMatch(
+      /alter type public\.project_ingreso add value if not exists 'cerrado'/i,
+    );
+  });
+
+  it("relies on the ZER-82 door, which only lets people in on abierto or aprobacion", () => {
+    const files = readdirSync(MIGRATIONS_DIR).filter((f) =>
+      f.includes("zer82_project_members_ingreso_door"),
+    );
+    const door = readFileSync(path.join(MIGRATIONS_DIR, files[0]!), "utf8");
+    expect(door).not.toMatch(/cerrado/);
+    expect(door).toMatch(/ingreso = 'abierto'/);
+    expect(door).toMatch(/ingreso = 'aprobacion'/);
   });
 });
 

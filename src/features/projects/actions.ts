@@ -212,6 +212,7 @@ export async function archiveProject(
 
 const JOIN_ERROR = "No pudimos unirte al proyecto. Probá de nuevo.";
 const JOIN_REJECTED = "No pudimos unirte al proyecto.";
+const JOIN_CLOSED = "Este proyecto no está sumando gente por ahora.";
 const JOIN_UNAUTHORIZED = "No autorizado";
 const JOIN_TOURIST = "Solo los serranos pueden unirse a proyectos";
 const JOIN_NOT_FOUND = "No encontramos ese proyecto.";
@@ -262,6 +263,11 @@ export async function joinProject(
 
   if (projectError || !project) {
     return { error: JOIN_NOT_FOUND };
+  }
+
+  // The DB door refuses it too (ZER-82); this just says why (ZER-151).
+  if (project.ingreso === "cerrado") {
+    return { error: JOIN_CLOSED };
   }
 
   const estado = project.ingreso === "abierto" ? "aprobado" : "pendiente";

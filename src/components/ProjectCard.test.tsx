@@ -104,6 +104,13 @@ describe("ProjectCard", () => {
       expect(screen.queryByRole("button")).not.toBeInTheDocument();
     });
 
+    it("shows a cerrado project as Cerrado, without a button (ZER-151)", () => {
+      render(<ProjectCard {...BASE} affordance={{ kind: "closed", label: "Cerrado" }} />);
+      expect(screen.getByText("Cerrado")).toBeInTheDocument();
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
+      expect(screen.queryByText("Participás")).not.toBeInTheDocument();
+    });
+
     it("tells a member they already take part, without a button", () => {
       render(<ProjectCard {...BASE} affordance={{ kind: "none" }} />);
       expect(screen.getByText("Participás")).toBeInTheDocument();

@@ -16,6 +16,7 @@ export function getProjectEstadoBadge(estado: string): ProjectEstadoBadge {
 export const PROJECT_INGRESO_LABEL = {
   abierto: "Abierto",
   aprobacion: "Por aprobación",
+  cerrado: "Cerrado",
 } as const satisfies Record<ProjectIngreso, string>;
 
 export function getProjectIngresoLabel(ingreso: string): string {

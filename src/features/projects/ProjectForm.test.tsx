@@ -73,6 +73,9 @@ describe("ProjectForm — frame 4.4 fields", () => {
     expect(radio("Por aprobación").value).toBe("aprobacion");
     expect(screen.getByText("Cualquier serrano se une al toque")).toBeTruthy();
     expect(screen.getByText("Vos aprobás cada ingreso")).toBeTruthy();
+    // ZER-151: the third way, a project that does not take people.
+    expect(radio("Cerrado").value).toBe("cerrado");
+    expect(screen.getByText("No acepta gente nueva por ahora")).toBeTruthy();
     expect(radio("Por aprobación").defaultChecked || radio("Por aprobación").checked).toBe(true);
   });
 
