@@ -119,7 +119,7 @@ describe("MisProyectosPage", () => {
     render(el);
 
     expect(mocks.membersSelect).toHaveBeenCalledWith(
-      "project_id, projects:project_id(id, nombre, descripcion, estado, ingreso)",
+      "project_id, projects:project_id(id, nombre, descripcion, estado, ingreso, archivado_en)",
     );
     expect(mocks.membersEqProfile).toHaveBeenCalledWith("profile_id", "user-1");
     expect(mocks.membersEqEstado).toHaveBeenCalledWith("estado", "aprobado");
@@ -131,6 +131,43 @@ describe("MisProyectosPage", () => {
       "href",
       "/nodo/projects/proj-2",
     );
+  });
+
+  it("leaves archived projects out of Mis proyectos and the total (ZER-201)", async () => {
+    mocks.membersOrder.mockResolvedValue({
+      data: [
+        {
+          project_id: "proj-1",
+          projects: {
+            id: "proj-1",
+            nombre: "Nodo hub",
+            descripcion: null,
+            estado: "idea",
+            ingreso: "abierto",
+            archivado_en: null,
+          },
+        },
+        {
+          project_id: "proj-2",
+          projects: {
+            id: "proj-2",
+            nombre: "Feria vieja",
+            descripcion: null,
+            estado: "en_curso",
+            ingreso: "abierto",
+            archivado_en: "2026-10-20T12:00:00Z",
+          },
+        },
+      ],
+      error: null,
+    });
+
+    const el = await MisProyectosPage();
+    render(el);
+
+    expect(screen.getByText("Nodo hub")).toBeInTheDocument();
+    expect(screen.queryByText("Feria vieja")).not.toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
   });
 
   it("renders empty state for zero approved projects", async () => {

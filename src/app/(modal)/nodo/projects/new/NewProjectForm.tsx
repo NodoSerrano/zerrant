@@ -25,7 +25,12 @@ export function NewProjectForm() {
         <span aria-hidden="true" className="size-6" />
       </div>
 
-      <ProjectForm action={createProject} submitLabel="Crear proyecto" pendingLabel="Creando..." />
+      <ProjectForm
+        action={createProject}
+        submitLabel="Crear proyecto"
+        pendingLabel="Creando..."
+        hideTerminado
+      />
     </div>
   );
 }

@@ -7,9 +7,22 @@ export const PROJECT_ESTADO_BADGE = {
   terminado: { label: "Terminado", bg: "bg-mint-raw/20", text: "text-brand-mint" },
 } as const satisfies Record<ProjectEstado, { label: string; bg: string; text: string }>;
 
-export type ProjectEstadoBadge = (typeof PROJECT_ESTADO_BADGE)[keyof typeof PROJECT_ESTADO_BADGE];
+/** Archived is its own mark, not an estado (ZER-201): it wins over whatever estado the project had. */
+export const PROJECT_ARCHIVADO_BADGE = {
+  label: "Archivado",
+  bg: "bg-surface-inset",
+  text: "text-text-secondary",
+} as const;
 
-export function getProjectEstadoBadge(estado: string): ProjectEstadoBadge {
+export type ProjectEstadoBadge =
+  | (typeof PROJECT_ESTADO_BADGE)[keyof typeof PROJECT_ESTADO_BADGE]
+  | typeof PROJECT_ARCHIVADO_BADGE;
+
+export function getProjectEstadoBadge(
+  estado: string,
+  { archived = false }: { archived?: boolean } = {},
+): ProjectEstadoBadge {
+  if (archived) return PROJECT_ARCHIVADO_BADGE;
   return PROJECT_ESTADO_BADGE[estado as ProjectEstado] ?? PROJECT_ESTADO_BADGE.idea;
 }
 

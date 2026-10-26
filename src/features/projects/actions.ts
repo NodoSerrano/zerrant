@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isTasksBlockedTier } from "@/features/tasks/tier-guards";
 import {
+  PROJECT_CREATE_ESTADOS,
   PROJECT_ESTADOS,
   PROJECT_INGRESOS,
   type ProjectEstado,
@@ -65,7 +66,8 @@ export async function createProject(
     return { error: EMPTY_NOMBRE };
   }
 
-  const estado = oneOf(formData.get("estado"), PROJECT_ESTADOS);
+  // A new project cannot start as Terminado (ZER-201); the form does not offer it either.
+  const estado = oneOf(formData.get("estado"), PROJECT_CREATE_ESTADOS);
   const ingreso = oneOf(formData.get("ingreso"), PROJECT_INGRESOS);
   if (!estado || !ingreso) {
     return { error: INVALID_INPUT };
@@ -168,8 +170,9 @@ export async function updateProject(
 }
 
 /**
- * Sets estado to terminado. The row stays, so members and pending join
- * requests keep pointing at this project.
+ * Stamps archivado_en (ZER-201). estado is left as it was, so an archived
+ * project that was En curso does not turn into Terminado. The row stays, so
+ * members and pending join requests keep pointing at this project.
  */
 export async function archiveProject(
   _prevState: { error: string } | null,
@@ -192,8 +195,10 @@ export async function archiveProject(
 
   const { data, error } = await supabase
     .from("projects")
-    .update({ estado: "terminado" })
+    .update({ archivado_en: new Date().toISOString() })
     .eq("id", projectId)
+    // Archiving twice must not move the date it was first archived.
+    .is("archivado_en", null)
     .select("id");
 
   if (error) {

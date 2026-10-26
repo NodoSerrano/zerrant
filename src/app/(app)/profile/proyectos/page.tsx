@@ -13,6 +13,7 @@ type MembershipProject = {
   descripcion: string | null;
   estado: string;
   ingreso: string;
+  archivado_en: string | null;
 };
 
 type MembershipRow = {
@@ -22,7 +23,8 @@ type MembershipRow = {
 
 function unwrapProject(row: MembershipRow): MembershipProject | null {
   const project = Array.isArray(row.projects) ? row.projects[0] : row.projects;
-  if (!project?.id || !project.nombre) return null;
+  // Archived projects leave every list but Proyectos > Archivados (ZER-201).
+  if (!project?.id || !project.nombre || project.archivado_en) return null;
   return project;
 }
 
@@ -53,7 +55,9 @@ export default async function MisProyectosPage() {
 
   const { data: rows } = await supabase
     .from("project_members")
-    .select("project_id, projects:project_id(id, nombre, descripcion, estado, ingreso)")
+    .select(
+      "project_id, projects:project_id(id, nombre, descripcion, estado, ingreso, archivado_en)",
+    )
     .eq("profile_id", user.id)
     .eq("estado", "aprobado")
     .order("created_at", { ascending: false });
