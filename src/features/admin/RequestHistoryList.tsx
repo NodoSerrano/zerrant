@@ -9,6 +9,8 @@ import {
   type RequestHistoryEvent,
 } from "@/features/membership/request-history";
 import { estadoLabel, type MembershipRequestEstado } from "@/features/membership/request-state";
+import { formatReapplyDate, reapplyStatus } from "@/features/membership/reapply";
+import { EnableReapplicationButton } from "./EnableReapplicationButton";
 
 export interface RequestHistoryItem {
   id: string;
@@ -17,6 +19,9 @@ export interface RequestHistoryItem {
   name: string;
   avatarUrl: string | null;
   events: RequestHistoryEvent[];
+  /** cerrada only: when it closed and whether an admin reopened it (ZER-180). */
+  cerradaEn?: string | null;
+  reaperturaHabilitadaEn?: string | null;
 }
 
 const FILTER_LABELS: Record<HistoryFilter, string> = {
@@ -61,6 +66,30 @@ function Motivo({ text }: { text: string }) {
   );
 }
 
+// ZER-180: after a cerrada request, a new one waits 30 days unless an admin enables it.
+function Reapply({ item }: { item: RequestHistoryItem }) {
+  if (item.reaperturaHabilitadaEn) {
+    return <p className="font-body text-[13px] text-text-secondary">Nueva solicitud habilitada</p>;
+  }
+  const status = reapplyStatus({
+    cerradaEn: item.cerradaEn ?? null,
+    reaperturaHabilitadaEn: null,
+  });
+  if (status.allowed) {
+    return <p className="font-body text-[13px] text-text-secondary">Ya puede volver a solicitar</p>;
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      {status.availableFrom ? (
+        <p className="font-body text-[13px] text-text-secondary">
+          Puede volver a solicitar desde el {formatReapplyDate(status.availableFrom)}
+        </p>
+      ) : null}
+      <EnableReapplicationButton requestId={item.id} />
+    </div>
+  );
+}
+
 function HistoryCard({ item }: { item: RequestHistoryItem }) {
   const closing = closingEvent(item.events, item.estado);
   const changes = item.events.filter((event) => event.from !== null);
@@ -92,6 +121,7 @@ function HistoryCard({ item }: { item: RequestHistoryItem }) {
         <p className="font-body text-[13px] text-text-muted">Sin registro del cierre</p>
       )}
       {closing?.motivo ? <Motivo text={closing.motivo} /> : null}
+      {item.estado === "cerrada" ? <Reapply item={item} /> : null}
 
       {changes.length > 0 ? (
         <details className="group">

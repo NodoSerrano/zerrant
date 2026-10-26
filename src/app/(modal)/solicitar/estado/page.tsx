@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loadMembershipPipeline } from "@/features/membership/pipeline-server";
 import { membershipPipelineStep } from "@/features/membership/pipeline";
 import type { MembershipRequestEstado } from "@/features/membership/request-state";
+import { reapplyStatus } from "@/features/membership/reapply";
 import { BRAND_CTA_SHADOW_CLASS, BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 import { cn } from "@/lib/utils";
 import { EstadoCard } from "./EstadoCard";
@@ -31,6 +32,13 @@ export default async function EstadoPage() {
     ? "aprobado"
     : (input.request?.estado ?? "aprobado");
   const approved = estado === "aprobado";
+  const reapply =
+    estado === "cerrada" && input.request
+      ? reapplyStatus({
+          cerradaEn: input.request.cerradaEn ?? null,
+          reaperturaHabilitadaEn: input.request.reaperturaHabilitadaEn ?? null,
+        })
+      : undefined;
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -51,7 +59,7 @@ export default async function EstadoPage() {
         <p className="text-sm text-text-secondary">Seguí en qué paso está tu solicitud.</p>
       </div>
 
-      <EstadoCard estado={estado} />
+      <EstadoCard estado={estado} reapply={reapply} />
       <Timeline progress={progress} />
 
       {approved ? (
@@ -65,6 +73,18 @@ export default async function EstadoPage() {
           )}
         >
           Entrar a Nodo
+        </Link>
+      ) : reapply?.allowed ? (
+        <Link
+          href="/solicitar"
+          className={cn(
+            BUTTON,
+            "text-on-gradient hover:opacity-90",
+            BRAND_GRADIENT_CLASS,
+            BRAND_CTA_SHADOW_CLASS,
+          )}
+        >
+          Volver a solicitar
         </Link>
       ) : (
         <Link

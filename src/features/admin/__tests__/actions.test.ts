@@ -41,7 +41,7 @@ vi.mock("next/cache", () => ({
   revalidatePath: mocks.revalidatePath,
 }));
 
-import { saveInterviewNote, transitionRequest } from "../actions";
+import { enableReapplication, saveInterviewNote, transitionRequest } from "../actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -485,5 +485,71 @@ describe("saveInterviewNote", () => {
       p_body: "corregida",
     });
     expect(result).toEqual({ success: "Nota guardada" });
+  });
+});
+
+describe("enableReapplication (ZER-180)", () => {
+  function reapplyForm(requestId = VALID_UUID) {
+    const fd = new FormData();
+    fd.set("requestId", requestId);
+    return fd;
+  }
+
+  it("calls the RPC and refreshes the admin list and the applicant's views", async () => {
+    setupAdmin();
+    mocks.rpc.mockResolvedValue({ data: { success: true }, error: null });
+
+    const result = await enableReapplication(null, reapplyForm());
+
+    expect(mocks.rpc).toHaveBeenCalledWith("enable_membership_reapplication", {
+      p_request_id: VALID_UUID,
+    });
+    expect(result).toEqual({ success: "Listo: ya puede enviar una nueva solicitud" });
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/membresias");
+  });
+
+  it("is only for platform admins", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { is_platform_admin: false } });
+
+    const result = await enableReapplication(null, reapplyForm());
+
+    expect(result).toEqual({ error: "Solo un admin puede gestionar solicitudes" });
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it("rejects a malformed request id without calling the RPC", async () => {
+    setupAdmin();
+
+    const result = await enableReapplication(null, reapplyForm("not-a-uuid"));
+
+    expect(result).toEqual({ error: "Solicitud inválida" });
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it("surfaces the RPC's own message when it does not apply", async () => {
+    setupAdmin();
+    mocks.rpc.mockResolvedValue({
+      data: {
+        error: "Esa solicitud no está cerrada o ya tiene habilitada una nueva",
+        code: "not_applicable",
+      },
+      error: null,
+    });
+
+    const result = await enableReapplication(null, reapplyForm());
+
+    expect(result).toEqual({
+      error: "Esa solicitud no está cerrada o ya tiene habilitada una nueva",
+    });
+  });
+
+  it("falls back to a generic message on a transport error", async () => {
+    setupAdmin();
+    mocks.rpc.mockResolvedValue({ data: null, error: { message: "boom" } });
+
+    const result = await enableReapplication(null, reapplyForm());
+
+    expect(result).toEqual({ error: "No pudimos habilitar una nueva solicitud" });
   });
 });

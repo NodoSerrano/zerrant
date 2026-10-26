@@ -5,6 +5,8 @@ const mocks = vi.hoisted(() => ({
   profilesSelectSingle: vi.fn(),
   pendingMaybeSingle: vi.fn(),
   activeIn: vi.fn(),
+  closedEq: vi.fn(),
+  closedMaybeSingle: vi.fn(),
   membershipInsert: vi.fn(),
   redirect: vi.fn(),
 }));
@@ -29,6 +31,12 @@ vi.mock("@/lib/supabase/server", () => ({
             eq: vi.fn(() => ({
               in: mocks.activeIn.mockReturnValue({
                 limit: vi.fn(() => ({ maybeSingle: mocks.pendingMaybeSingle })),
+              }),
+              // Latest cerrada request (ZER-180).
+              eq: mocks.closedEq.mockReturnValue({
+                order: vi.fn(() => ({
+                  limit: vi.fn(() => ({ maybeSingle: mocks.closedMaybeSingle })),
+                })),
               }),
             })),
           })),
@@ -92,6 +100,7 @@ function setupTourist() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.closedMaybeSingle.mockResolvedValue({ data: null, error: null });
 });
 
 afterEach(() => {
@@ -214,24 +223,87 @@ describe("createMembershipRequest", () => {
     const result = await createMembershipRequest(null, new FormData());
 
     expect(result).toEqual({ error: "Ya tenés una solicitud en curso." });
-    expect(mocks.activeIn).toHaveBeenCalledWith("estado", [
-      ...MEMBERSHIP_REQUEST_ACTIVE_ESTADOS,
-      "cerrada",
-    ]);
+    expect(mocks.activeIn).toHaveBeenCalledWith("estado", [...MEMBERSHIP_REQUEST_ACTIVE_ESTADOS]);
     expect(mocks.membershipInsert).not.toHaveBeenCalled();
   });
 
-  it("rejects re-application after a cerrada request without inserting (ZER-136, ZER-180)", async () => {
-    setupAuth();
-    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "tourist" }, error: null });
-    mocks.pendingMaybeSingle.mockResolvedValue({ data: { estado: "cerrada" }, error: null });
-
-    const result = await createMembershipRequest(null, screeningForm());
-
-    expect(result).toEqual({
-      error: "Tu solicitud anterior fue cerrada. Por ahora no podés enviar una nueva.",
+  describe("re-application after a cerrada request (ZER-180)", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2026-10-26T15:00:00.000Z"));
     });
-    expect(mocks.membershipInsert).not.toHaveBeenCalled();
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("blocks it for 30 days and says from when, without inserting", async () => {
+      setupTourist();
+      mocks.closedMaybeSingle.mockResolvedValue({
+        data: { cerrada_en: "2026-10-20T15:00:00.000Z", reapertura_habilitada_en: null },
+        error: null,
+      });
+
+      const result = await createMembershipRequest(null, screeningForm());
+
+      expect(result).toEqual({
+        error: "Tu solicitud anterior se cerró. Podés enviar una nueva desde el 19 de noviembre.",
+      });
+      expect(mocks.closedEq).toHaveBeenCalledWith("estado", "cerrada");
+      expect(mocks.membershipInsert).not.toHaveBeenCalled();
+    });
+
+    it("lets it through once the 30 days are over", async () => {
+      setupTourist();
+      mocks.closedMaybeSingle.mockResolvedValue({
+        data: { cerrada_en: "2026-09-01T15:00:00.000Z", reapertura_habilitada_en: null },
+        error: null,
+      });
+      mocks.membershipInsert.mockResolvedValue({ error: null });
+
+      await expect(createMembershipRequest(null, screeningForm())).rejects.toThrow("NEXT_REDIRECT");
+      expect(mocks.membershipInsert).toHaveBeenCalled();
+    });
+
+    it("lets it through earlier when an admin enabled it", async () => {
+      setupTourist();
+      mocks.closedMaybeSingle.mockResolvedValue({
+        data: {
+          cerrada_en: "2026-10-25T15:00:00.000Z",
+          reapertura_habilitada_en: "2026-10-26T10:00:00.000Z",
+        },
+        error: null,
+      });
+      mocks.membershipInsert.mockResolvedValue({ error: null });
+
+      await expect(createMembershipRequest(null, screeningForm())).rejects.toThrow("NEXT_REDIRECT");
+      expect(mocks.membershipInsert).toHaveBeenCalled();
+    });
+
+    it("fails closed when the closed-request read fails", async () => {
+      setupTourist();
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      mocks.closedMaybeSingle.mockResolvedValue({ data: null, error: { code: "500" } });
+
+      const result = await createMembershipRequest(null, screeningForm());
+
+      expect(result).toEqual({ error: "No pudimos enviar tu solicitud. Probá de nuevo." });
+      expect(mocks.membershipInsert).not.toHaveBeenCalled();
+    });
+
+    it("maps the DB reapply gate (42501) to a clear message", async () => {
+      setupTourist();
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      mocks.membershipInsert.mockResolvedValue({
+        error: { code: "42501", message: "membership request denied: reapply cooldown" },
+      });
+
+      const result = await createMembershipRequest(null, screeningForm());
+
+      expect(result).toEqual({
+        error: "Tu solicitud anterior se cerró hace poco. Todavía no podés enviar una nueva.",
+      });
+    });
   });
 
   it("fails closed when the existing-request read fails", async () => {

@@ -126,6 +126,53 @@ export async function transitionRequest(
   return { success: `Estado actualizado: ${estadoLabel(data.estado)}` };
 }
 
+/** ZER-180: let someone with a cerrada request apply again before the 30 days. */
+export async function enableReapplication(
+  _prevState: TransitionRequestState,
+  formData: FormData,
+): Promise<TransitionRequestState> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "No autorizado" };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_platform_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.is_platform_admin) {
+    return { error: "Solo un admin puede gestionar solicitudes" };
+  }
+
+  const requestId = getRequestId(formData);
+  if (!requestId) {
+    return { error: "Solicitud inválida" };
+  }
+
+  const { data, error } = await supabase.rpc("enable_membership_reapplication", {
+    p_request_id: requestId,
+  });
+
+  if (error || !data) {
+    return { error: "No pudimos habilitar una nueva solicitud" };
+  }
+
+  if (data.error || !data.success) {
+    return { error: data.error ?? "No pudimos habilitar una nueva solicitud" };
+  }
+
+  revalidatePath("/admin/membresias");
+  revalidatePath("/profile", "layout");
+  return { success: "Listo: ya puede enviar una nueva solicitud" };
+}
+
 const NOTE_BODY_MAX = 2000;
 
 function noteBody(formData: FormData): { body: string } | { error: string } {

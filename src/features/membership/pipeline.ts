@@ -39,7 +39,12 @@ export type PipelineInput = {
   emailConfirmed: boolean;
   profile: OnboardingGateProfile | null;
   /** Latest request of the user (active one, else most recent), any state. */
-  request: { estado: MembershipRequestEstado } | null;
+  request: {
+    estado: MembershipRequestEstado;
+    /** Only for cerrada: when it closed and whether an admin reopened it (ZER-180). */
+    cerradaEn?: string | null;
+    reaperturaHabilitadaEn?: string | null;
+  } | null;
 };
 
 export type PipelineProgress = {

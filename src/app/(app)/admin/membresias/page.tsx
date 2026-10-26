@@ -97,7 +97,7 @@ function toScreening(row: RequestRow): RequestScreeningData {
 }
 
 const HISTORY_SELECT =
-  "id, estado, created_at, profiles!membership_requests_profile_id_fkey(nombre, apellido, apodo, nombre_visible, avatar_url, id)";
+  "id, estado, created_at, cerrada_en, reapertura_habilitada_en, profiles!membership_requests_profile_id_fkey(nombre, apellido, apodo, nombre_visible, avatar_url, id)";
 
 /** The newest final requests; older history is out of scope until someone needs paging. */
 const HISTORY_LIMIT = 100;
@@ -106,6 +106,8 @@ type HistoryRow = {
   id: string;
   estado: RequestHistoryItem["estado"];
   created_at: string;
+  cerrada_en: string | null;
+  reapertura_habilitada_en: string | null;
   profiles: RequestProfileData | RequestProfileData[] | null;
 };
 
@@ -196,6 +198,8 @@ export default async function AdminMembresiasPage({
           : "",
         avatarUrl: profile?.avatar_url ?? null,
         events: eventsByRequest.get(row.id) ?? [],
+        cerradaEn: row.cerrada_en,
+        reaperturaHabilitadaEn: row.reapertura_habilitada_en,
       };
     });
   }
