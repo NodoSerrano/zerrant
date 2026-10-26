@@ -79,11 +79,13 @@ async function renderPage(searchParams: Record<string, string> = {}) {
 
 describe("TasksPage", () => {
   describe("header and layout", () => {
-    it("renders 'Nodo' header", async () => {
+    it("titles the section Proyectos y Tareas with no subtitle (ZER-206)", async () => {
       const { createClient } = await import("@/lib/supabase/server");
       (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
       await renderPage();
-      expect(screen.getByText("Nodo")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Proyectos y Tareas");
+      expect(screen.queryByText("Nodo")).not.toBeInTheDocument();
+      expect(screen.queryByText("Tareas y proyectos de la comunidad")).not.toBeInTheDocument();
     });
 
     it("renders segmented control with Tareas and Proyectos tabs", async () => {
@@ -111,12 +113,11 @@ describe("TasksPage", () => {
       expect(screen.getByRole("tab", { name: "Tareas" })).toHaveAttribute("href", "/nodo/tasks");
     });
 
-    it("links Volver back to Inicio (/)", async () => {
+    it("has no back link to Inicio: the TabBar handles navigation (ZER-206)", async () => {
       const { createClient } = await import("@/lib/supabase/server");
       (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
       await renderPage();
-      const back = screen.getByRole("link", { name: "Volver a Inicio" });
-      expect(back).toHaveAttribute("href", "/");
+      expect(screen.queryByRole("link", { name: "Volver a Inicio" })).not.toBeInTheDocument();
     });
   });
 

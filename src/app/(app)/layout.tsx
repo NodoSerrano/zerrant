@@ -2,8 +2,14 @@ import { TabBarClient } from "@/components/TabBarClient";
 import { TabBarPin } from "@/components/TabBarPin";
 import { Suspense, type ReactNode } from "react";
 import { ActionNotice } from "@/components/ActionNotice";
+import { getOnboardingGateProfile } from "@/features/profile/onboarding-gate-server";
 
-export default function AppLayout({ children }: { children: ReactNode }) {
+export default async function AppLayout({ children }: { children: ReactNode }) {
+  // Proyectos y Tareas is members-only (ZER-107): tourists do not get Actividad (ZER-206).
+  // Same cached profile read as the (app) template's onboarding gate.
+  const { profile } = await getOnboardingGateProfile();
+  const showActividad = Boolean(profile && profile.tier !== "tourist");
+
   return (
     <div className="flex flex-col min-h-full bg-bg">
       {/*
@@ -22,7 +28,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       {/* Pencil TabBar nMDGY: pt 21 + pill 62 + pb 21 = 104px reserved so lists clear the fixed bar */}
       <div data-testid="tab-bar-spacer" className="h-[104px] shrink-0" aria-hidden />
       <TabBarPin>
-        <TabBarClient />
+        <TabBarClient showActividad={showActividad} />
       </TabBarPin>
     </div>
   );

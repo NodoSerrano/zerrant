@@ -95,13 +95,10 @@ export default async function InicioPage() {
     today,
   });
 
-  const showCommunityHub = Boolean(profile && profile.tier !== "tourist");
-
   return (
     <InicioHub
       events={eventItems}
       birthdays={birthdayRows}
-      showCommunityHub={showCommunityHub}
       showBirthdays={!viewerIsTourist}
       showSerSerranoCta={showSerSerranoCta}
       memberConfirmed={Boolean(approvedRequest)}

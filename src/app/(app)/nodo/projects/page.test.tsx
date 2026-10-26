@@ -85,12 +85,13 @@ async function renderPage(searchParams: { vista?: string } = {}) {
 }
 
 describe("ProjectsPage", () => {
-  it("renders Nodo header and community subtitle", async () => {
+  it("titles the section Proyectos y Tareas with no subtitle (ZER-206)", async () => {
     const { createClient } = await import("@/lib/supabase/server");
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
     await renderPage();
-    expect(screen.getByText("Nodo")).toBeInTheDocument();
-    expect(screen.getByText("Tareas y proyectos de la comunidad")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Proyectos y Tareas");
+    expect(screen.queryByText("Nodo")).not.toBeInTheDocument();
+    expect(screen.queryByText("Tareas y proyectos de la comunidad")).not.toBeInTheDocument();
   });
 
   it("marks Proyectos active and keeps both halves as links", async () => {
@@ -105,12 +106,11 @@ describe("ProjectsPage", () => {
     );
   });
 
-  it("links Volver back to Inicio (/)", async () => {
+  it("has no back link to Inicio: the TabBar handles navigation (ZER-206)", async () => {
     const { createClient } = await import("@/lib/supabase/server");
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
     await renderPage();
-    const back = screen.getByRole("link", { name: "Volver a Inicio" });
-    expect(back).toHaveAttribute("href", "/");
+    expect(screen.queryByRole("link", { name: "Volver a Inicio" })).not.toBeInTheDocument();
   });
 
   it("renders ProjectCards from mocked projects rows", async () => {

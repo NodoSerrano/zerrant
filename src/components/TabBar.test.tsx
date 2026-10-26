@@ -47,6 +47,27 @@ describe("TabBar", () => {
     expect(screen.queryByRole("link", { name: /NODO/i })).not.toBeInTheDocument();
   });
 
+  it("hides Actividad unless asked (tourists keep four tabs)", () => {
+    render(<TabBar />);
+    expect(screen.getAllByRole("link")).toHaveLength(4);
+    expect(screen.queryByRole("link", { name: /ACTIVIDAD/i })).not.toBeInTheDocument();
+  });
+
+  it("adds a single Actividad tab, second, linking to the projects list (ZER-206)", () => {
+    render(<TabBar showActividad />);
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(5);
+    expect(links[1]).toHaveAccessibleName(/ACTIVIDAD/i);
+    expect(links[1]).toHaveAttribute("href", "/nodo/projects");
+    expect(links[1].querySelector("svg")).toBeInTheDocument();
+  });
+
+  it("marks Actividad active with the primary pill", () => {
+    render(<TabBar showActividad active="actividad" />);
+    expect(screen.getByRole("link", { name: /ACTIVIDAD/i })).toHaveClass("bg-primary");
+    expect(screen.getByRole("link", { name: /INICIO/i })).not.toHaveClass("bg-primary");
+  });
+
   it("does not render any tab as a button", () => {
     render(<TabBar />);
     expect(screen.queryByRole("button")).not.toBeInTheDocument();

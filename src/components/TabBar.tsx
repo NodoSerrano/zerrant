@@ -2,17 +2,20 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { House, Users, Calendar, User, type LucideIcon } from "lucide-react";
+import { House, FolderKanban, Users, Calendar, User, type LucideIcon } from "lucide-react";
 
-export type Tab = "inicio" | "plantel" | "agenda" | "perfil";
+export type Tab = "inicio" | "actividad" | "plantel" | "agenda" | "perfil";
 
 interface TabBarProps {
   active?: Tab;
+  /** Members only (ZER-206): tourists keep the four public tabs. */
+  showActividad?: boolean;
   className?: string;
 }
 
 const tabIcons: Record<Tab, LucideIcon> = {
   inicio: House,
+  actividad: FolderKanban,
   plantel: Users,
   agenda: Calendar,
   perfil: User,
@@ -20,12 +23,15 @@ const tabIcons: Record<Tab, LucideIcon> = {
 
 const tabs: { id: Tab; label: string; href: string }[] = [
   { id: "inicio", label: "INICIO", href: "/" },
+  { id: "actividad", label: "ACTIVIDAD", href: "/nodo/projects" },
   { id: "plantel", label: "PLANTEL", href: "/plantel" },
   { id: "agenda", label: "AGENDA", href: "/agenda" },
   { id: "perfil", label: "PERFIL", href: "/profile" },
 ];
 
-export function TabBar({ active = "inicio", className }: TabBarProps) {
+export function TabBar({ active = "inicio", showActividad = false, className }: TabBarProps) {
+  const visibleTabs = showActividad ? tabs : tabs.filter((tab) => tab.id !== "actividad");
+
   return (
     <nav className={cn("pt-[21px] pr-[12px] pb-[21px] pl-[21px]", className)}>
       <div
@@ -34,7 +40,7 @@ export function TabBar({ active = "inicio", className }: TabBarProps) {
           "shadow-[0_8px_24px_-6px_rgba(26,22,20,0.13)]",
         )}
       >
-        {tabs.map((tab) => {
+        {visibleTabs.map((tab) => {
           const isActive = active === tab.id;
           const Icon = tabIcons[tab.id];
 

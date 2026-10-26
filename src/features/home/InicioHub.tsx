@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Cake, Calendar, FolderOpen, ListTodo } from "lucide-react";
+import { Cake, Calendar } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { EmptyState } from "@/components/EmptyState";
 import { MemberConfirmedNotice } from "@/features/membership/MemberConfirmedNotice";
@@ -21,8 +21,6 @@ export type InicioEventItem = {
 export type InicioHubProps = {
   events: InicioEventItem[];
   birthdays: UpcomingBirthday[];
-  /** Members (non-tourist) see Tareas/Proyectos entry under Inicio. */
-  showCommunityHub?: boolean;
   /** Members see upcoming birthdays. Tourists must not see the section. */
   showBirthdays?: boolean;
   /** Tourists without an active membership request (ZER-171). */
@@ -44,7 +42,6 @@ function birthdaySubtitle(row: UpcomingBirthday): string {
 export function InicioHub({
   events,
   birthdays,
-  showCommunityHub = false,
   showBirthdays = true,
   showSerSerranoCta = false,
   memberConfirmed = false,
@@ -55,44 +52,6 @@ export function InicioHub({
 
       {showSerSerranoCta ? <SerSerranoCta /> : null}
       {memberConfirmed ? <MemberConfirmedNotice /> : null}
-
-      {showCommunityHub ? (
-        <section className="flex flex-col gap-3" aria-labelledby="inicio-comunidad-heading">
-          <h2
-            id="inicio-comunidad-heading"
-            className="font-display text-[15px] font-semibold text-text-primary"
-          >
-            Tareas y proyectos
-          </h2>
-          <p className="font-body text-[13px] text-text-secondary">
-            Lo que antes vivía en Nodo ahora entra desde Inicio.
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <Link
-              href="/nodo/tasks"
-              className="rounded-[20px] bg-surface border border-border shadow-[0_10px_30px_-12px_rgba(26,22,20,0.15)] p-4 flex flex-col gap-2 min-h-[88px] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
-            >
-              <ListTodo className="size-5 text-text-primary" aria-hidden="true" />
-              <span className="font-display text-[15px] font-semibold text-text-primary">
-                Tareas
-              </span>
-              <span className="font-body text-xs text-text-muted">
-                Listado y filtros de la comunidad
-              </span>
-            </Link>
-            <Link
-              href="/nodo/projects"
-              className="rounded-[20px] bg-surface border border-border shadow-[0_10px_30px_-12px_rgba(26,22,20,0.15)] p-4 flex flex-col gap-2 min-h-[88px] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
-            >
-              <FolderOpen className="size-5 text-text-primary" aria-hidden="true" />
-              <span className="font-display text-[15px] font-semibold text-text-primary">
-                Proyectos
-              </span>
-              <span className="font-body text-xs text-text-muted">Iniciativas y membresías</span>
-            </Link>
-          </div>
-        </section>
-      ) : null}
 
       <section className="flex flex-col gap-3" aria-labelledby="inicio-eventos-heading">
         <h2
