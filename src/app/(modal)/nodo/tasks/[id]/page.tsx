@@ -20,7 +20,10 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
 
   const { data: task } = await supabase
     .from("tasks")
-    .select(`*, creador:creado_por(${PERSON_COLUMNS}), tomador:tomada_por(${PERSON_COLUMNS})`)
+    // Named columns only, like the profiles join: `*` breaks with column-level grants (ZER-194, ZER-220).
+    .select(
+      `id, titulo, descripcion, categoria, urgencia, estado, creado_por, tomada_por, created_at, creador:creado_por(${PERSON_COLUMNS}), tomador:tomada_por(${PERSON_COLUMNS})`,
+    )
     .eq("id", id)
     .single();
 
