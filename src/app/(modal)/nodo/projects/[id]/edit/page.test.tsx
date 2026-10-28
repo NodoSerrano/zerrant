@@ -179,5 +179,17 @@ describe("EditProjectPage", () => {
       expect(screen.queryByRole("button", { name: "Archivar proyecto" })).not.toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Guardar cambios" })).toBeInTheDocument();
     });
+
+    it("offers to unarchive an archived project", async () => {
+      await renderEdit({ row: { ...project, archivado_en: "2026-10-20T12:00:00Z" } });
+      expect(screen.getByRole("button", { name: "Desarchivar proyecto" })).toBeInTheDocument();
+    });
+
+    it("does not offer to unarchive an active project", async () => {
+      await renderEdit();
+      expect(
+        screen.queryByRole("button", { name: "Desarchivar proyecto" }),
+      ).not.toBeInTheDocument();
+    });
   });
 });

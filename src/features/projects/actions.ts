@@ -107,6 +107,8 @@ const UPDATE_REJECTED = "No pudimos guardar los cambios.";
 const UPDATE_MISSING = "No encontramos ese proyecto.";
 const ARCHIVE_ERROR = "No pudimos archivar el proyecto. Probá de nuevo.";
 const ARCHIVE_REJECTED = "No pudimos archivar el proyecto.";
+const UNARCHIVE_ERROR = "No pudimos desarchivar el proyecto. Probá de nuevo.";
+const UNARCHIVE_REJECTED = "No pudimos desarchivar el proyecto.";
 
 /**
  * Updates nombre, descripcion, estado, and ingreso.
@@ -213,6 +215,50 @@ export async function archiveProject(
   revalidatePath("/nodo/projects");
   revalidatePath("/nodo", "layout");
   redirect(withActionNotice(`/nodo/projects/${projectId}`, "proyecto-archivado"));
+}
+
+/**
+ * Clears archivado_en (ZER-201): the project is back in the lists. estado stays
+ * Pausado; the admin changes it from the same edit screen if it is active again.
+ */
+export async function unarchiveProject(
+  _prevState: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "No autorizado" };
+  }
+
+  const projectId = trimmed(formData.get("projectId"));
+  if (!projectId) {
+    return { error: UPDATE_MISSING };
+  }
+
+  const { data, error } = await supabase
+    .from("projects")
+    .update({ archivado_en: null })
+    .eq("id", projectId)
+    .not("archivado_en", "is", null)
+    .select("id");
+
+  if (error) {
+    return { error: UNARCHIVE_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: UNARCHIVE_REJECTED };
+  }
+
+  revalidatePath(`/nodo/projects/${projectId}`);
+  revalidatePath("/nodo/projects");
+  revalidatePath("/nodo", "layout");
+  redirect(withActionNotice(`/nodo/projects/${projectId}`, "proyecto-desarchivado"));
 }
 
 const JOIN_ERROR = "No pudimos unirte al proyecto. Probá de nuevo.";

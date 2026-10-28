@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, X } from "lucide-react";
 import { ProjectForm } from "@/features/projects/ProjectForm";
-import { archiveProject, updateProject } from "@/features/projects/actions";
+import { archiveProject, unarchiveProject, updateProject } from "@/features/projects/actions";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { FormFeedback } from "@/components/FormFeedback";
 
@@ -23,6 +23,10 @@ interface EditProjectFormProps {
 export function EditProjectForm({ projectId, archived = false, defaults }: EditProjectFormProps) {
   const [confirming, setConfirming] = useState(false);
   const [archiveState, archiveAction, archivePending] = useGuardedActionState(archiveProject, null);
+  const [unarchiveState, unarchiveAction, unarchivePending] = useGuardedActionState(
+    unarchiveProject,
+    null,
+  );
 
   // Cancel = X, tap outside or Escape; the only button is "Sí, archivar" (ZER-201).
   const cancel = () => {
@@ -60,7 +64,19 @@ export function EditProjectForm({ projectId, archived = false, defaults }: EditP
         hiddenFields={{ projectId }}
       />
 
-      {archived ? null : (
+      {archived ? (
+        <form action={unarchiveAction} className="flex w-full flex-col items-center gap-3 pt-1">
+          <input type="hidden" name="projectId" value={projectId} />
+          <FormFeedback error={unarchiveState?.error} />
+          <button
+            type="submit"
+            disabled={unarchivePending}
+            className="inline-flex items-center justify-center font-display text-[15px] font-medium text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
+          >
+            {unarchivePending ? "Desarchivando..." : "Desarchivar proyecto"}
+          </button>
+        </form>
+      ) : (
         <div className="flex w-full flex-col items-center gap-3 pt-1">
           <button
             type="button"
