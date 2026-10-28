@@ -29,7 +29,7 @@ export function NewProjectForm() {
         action={createProject}
         submitLabel="Crear proyecto"
         pendingLabel="Creando..."
-        hideTerminado
+        creating
       />
     </div>
   );

@@ -14,9 +14,9 @@ describe("projectDisplay", () => {
     expect(getProjectEstadoBadge("terminado").label).toBe("Terminado");
   });
 
-  it("shows Archivado instead of the estado when the project is archived (ZER-201)", () => {
+  it("shows Archivado · Pausado instead of the estado when the project is archived (ZER-201)", () => {
     for (const estado of ["idea", "en_curso", "pausado", "terminado"]) {
-      expect(getProjectEstadoBadge(estado, { archived: true }).label).toBe("Archivado");
+      expect(getProjectEstadoBadge(estado, { archived: true }).label).toBe("Archivado · Pausado");
     }
     expect(getProjectEstadoBadge("en_curso", { archived: false }).label).toBe("En curso");
     expect(getProjectEstadoBadge("en_curso", { archived: true })).not.toEqual(

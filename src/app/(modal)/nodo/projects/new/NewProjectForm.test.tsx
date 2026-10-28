@@ -59,9 +59,10 @@ describe("NewProjectForm — header (frame 4.4)", () => {
     expect(mocks.push).toHaveBeenCalledWith("/nodo/projects");
   });
 
-  it("does not offer Terminado as the starting estado (ZER-201)", () => {
+  it("does not offer Terminado or Pausado as the starting estado (ZER-201)", () => {
     render(<NewProjectForm />);
     expect(screen.queryByRole("radio", { name: "Terminado" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: "Pausado" })).not.toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "Idea" })).toBeInTheDocument();
   });
 

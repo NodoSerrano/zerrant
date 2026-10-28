@@ -77,7 +77,7 @@ export function EditProjectForm({ projectId, archived = false, defaults }: EditP
         <div
           data-testid="archive-backdrop"
           onClick={cancel}
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-5 sm:items-center"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-5"
         >
           <form
             action={archiveAction}
@@ -104,8 +104,8 @@ export function EditProjectForm({ projectId, archived = false, defaults }: EditP
               Archivar proyecto
             </h2>
             <p className="font-body text-sm text-text-primary">
-              Deja de aparecer en Proyectos y pasa a Archivados. Los miembros y las solicitudes de
-              ingreso siguen en este proyecto.
+              Queda Pausado, deja de aparecer en Proyectos y pasa a Archivados. Los miembros y las
+              solicitudes de ingreso siguen en este proyecto.
             </p>
             <FormFeedback error={archiveState?.error} />
             <button

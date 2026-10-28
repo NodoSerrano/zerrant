@@ -233,6 +233,16 @@ describe("createProject", () => {
     expect(mocks.projectsInsert).not.toHaveBeenCalled();
   });
 
+  it("does not create a project as Pausado (ZER-201)", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+
+    const result = await createProject(null, makeFormData({ estado: "pausado" }));
+
+    expect(result).toEqual({ error: "Revisá los datos del proyecto." });
+    expect(mocks.projectsInsert).not.toHaveBeenCalled();
+  });
+
   it("rejects an invalid ingreso without casting", async () => {
     setupAuth();
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
@@ -355,7 +365,7 @@ describe("archiveProject", () => {
     return fd;
   }
 
-  it("stamps archivado_en, keeps estado, and leaves members and join requests on the row (ZER-201)", async () => {
+  it("stamps archivado_en, pauses the project, and leaves members and join requests on the row (ZER-201)", async () => {
     setupAuth("serrano-1");
     mocks.projectsUpdateSelect.mockResolvedValue({ error: null, data: [{ id: "proj-1" }] });
 
@@ -363,10 +373,12 @@ describe("archiveProject", () => {
       "NEXT_REDIRECT:/nodo/projects/proj-1?ok=proyecto-archivado",
     );
 
-    expect(mocks.projectsUpdatePayload).toEqual({ archivado_en: expect.any(String) });
+    expect(mocks.projectsUpdatePayload).toEqual({
+      archivado_en: expect.any(String),
+      estado: "pausado",
+    });
     const { archivado_en } = mocks.projectsUpdatePayload as { archivado_en: string };
     expect(Number.isNaN(Date.parse(archivado_en))).toBe(false);
-    expect(mocks.projectsUpdatePayload).not.toHaveProperty("estado");
     expect(mocks.projectsUpdateEq).toHaveBeenCalledWith("id", "proj-1");
     expect(mocks.projectsDelete).not.toHaveBeenCalled();
     expect(mocks.membersDelete).not.toHaveBeenCalled();

@@ -66,7 +66,7 @@ export async function createProject(
     return { error: EMPTY_NOMBRE };
   }
 
-  // A new project cannot start as Terminado (ZER-201); the form does not offer it either.
+  // A new project cannot start as Terminado or Pausado (ZER-201); the form does not offer them either.
   const estado = oneOf(formData.get("estado"), PROJECT_CREATE_ESTADOS);
   const ingreso = oneOf(formData.get("ingreso"), PROJECT_INGRESOS);
   if (!estado || !ingreso) {
@@ -170,9 +170,9 @@ export async function updateProject(
 }
 
 /**
- * Stamps archivado_en (ZER-201). estado is left as it was, so an archived
- * project that was En curso does not turn into Terminado. The row stays, so
- * members and pending join requests keep pointing at this project.
+ * Stamps archivado_en and pauses the project (ZER-201): archived means Pausado,
+ * never Terminado. The row stays, so members and pending join requests keep
+ * pointing at this project.
  */
 export async function archiveProject(
   _prevState: { error: string } | null,
@@ -195,7 +195,7 @@ export async function archiveProject(
 
   const { data, error } = await supabase
     .from("projects")
-    .update({ archivado_en: new Date().toISOString() })
+    .update({ archivado_en: new Date().toISOString(), estado: "pausado" })
     .eq("id", projectId)
     // Archiving twice must not move the date it was first archived.
     .is("archivado_en", null)

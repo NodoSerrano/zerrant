@@ -284,7 +284,7 @@ describe("ProjectDetailPage", () => {
     });
     const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
     render(ui);
-    expect(screen.getByText("Archivado")).toBeInTheDocument();
+    expect(screen.getByText("Archivado · Pausado")).toBeInTheDocument();
     expect(screen.queryByText("Terminado")).not.toBeInTheDocument();
     expect(screen.queryByText("En curso")).not.toBeInTheDocument();
   });

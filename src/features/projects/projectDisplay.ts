@@ -7,9 +7,9 @@ export const PROJECT_ESTADO_BADGE = {
   terminado: { label: "Terminado", bg: "bg-mint-raw/20", text: "text-brand-mint" },
 } as const satisfies Record<ProjectEstado, { label: string; bg: string; text: string }>;
 
-/** Archived is its own mark, not an estado (ZER-201): it wins over whatever estado the project had. */
+/** Archiving pauses the project (ZER-201); the badge names both so it is not read as just Pausado. */
 export const PROJECT_ARCHIVADO_BADGE = {
-  label: "Archivado",
+  label: "Archivado · Pausado",
   bg: "bg-surface-inset",
   text: "text-text-secondary",
 } as const;

@@ -26,8 +26,8 @@ interface ProjectFormProps {
   pendingLabel: string;
   defaults?: ProjectFormDefaults;
   hiddenFields?: Record<string, string>;
-  /** Creating: a project cannot start as Terminado (ZER-201). */
-  hideTerminado?: boolean;
+  /** Creating: a project cannot start as Terminado or Pausado (ZER-201). */
+  creating?: boolean;
 }
 
 export function ProjectForm({
@@ -36,14 +36,16 @@ export function ProjectForm({
   pendingLabel,
   defaults,
   hiddenFields,
-  hideTerminado = false,
+  creating = false,
 }: ProjectFormProps) {
   const [state, formAction, pending] = useGuardedActionState(action, null);
 
   const estado = defaults?.estado ?? "idea";
   const ingreso = defaults?.ingreso ?? "aprobacion";
-  const estadoOptions = hideTerminado
-    ? PROJECT_ESTADO_OPTIONS.filter((option) => option.value !== "terminado")
+  const estadoOptions = creating
+    ? PROJECT_ESTADO_OPTIONS.filter(
+        (option) => option.value !== "terminado" && option.value !== "pausado",
+      )
     : PROJECT_ESTADO_OPTIONS;
 
   return (

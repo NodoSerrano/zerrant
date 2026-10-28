@@ -60,20 +60,20 @@ describe("ProjectForm — frame 4.4 fields", () => {
     expect(radio("Idea").defaultChecked || radio("Idea").checked).toBe(true);
   });
 
-  it("does not offer Terminado when creating a project (ZER-201)", () => {
+  it("does not offer Terminado or Pausado when creating a project (ZER-201)", () => {
     render(
       <ProjectForm
         action={async () => null}
         submitLabel="Crear proyecto"
         pendingLabel="Creando..."
-        hideTerminado
+        creating
       />,
     );
 
     expect(screen.queryByRole("radio", { name: "Terminado" })).not.toBeInTheDocument();
     expect(radio("Idea").value).toBe("idea");
     expect(radio("En curso").value).toBe("en_curso");
-    expect(radio("Pausado").value).toBe("pausado");
+    expect(screen.queryByRole("radio", { name: "Pausado" })).not.toBeInTheDocument();
   });
 
   it("exposes ingreso options with unaccented stored values and frame labels", () => {

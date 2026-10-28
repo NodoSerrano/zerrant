@@ -2,8 +2,9 @@
 -- Until now "Archivar" set estado to terminado, so an archived project (even one
 -- that was En curso) read as Terminado and stayed in every list.
 --
--- A nullable timestamp, not a new project_estado value: the project keeps the
--- estado it had, so un-archiving later is just clearing the column.
+-- A nullable timestamp, not a new project_estado value. Archiving also sets
+-- estado = pausado (the app does it in the same update), so an archived project
+-- reads as paused, never as finished.
 --
 -- Who can set it is the existing UPDATE policy (project admins only). It is not
 -- in the INSERT grant: a project is never created archived.

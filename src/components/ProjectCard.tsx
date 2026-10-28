@@ -16,7 +16,7 @@ interface ProjectCardProps {
   name: string;
   description?: string | null;
   estado: string;
-  /** archivado_en is set: badge reads Archivado (ZER-201). */
+  /** archivado_en is set: badge reads Archivado · Pausado (ZER-201). */
   archived?: boolean;
   /** What the viewer can do with this project; entry rules live in the detail (ZER-154). */
   affordance: JoinAffordance;

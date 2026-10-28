@@ -281,7 +281,7 @@ describe("ProjectsPage", () => {
       expect(chain.not).toHaveBeenCalledWith("archivado_en", "is", null);
       expect(chain.is).not.toHaveBeenCalled();
       expect(screen.getByText("Feria vieja")).toBeInTheDocument();
-      expect(screen.getByText("Archivado")).toBeInTheDocument();
+      expect(screen.getByText("Archivado · Pausado")).toBeInTheDocument();
       expect(screen.queryByText("En curso")).not.toBeInTheDocument();
     });
 

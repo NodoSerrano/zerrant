@@ -53,7 +53,7 @@ describe("ProjectCard", () => {
 
   it("shows Archivado, not Terminado, on an archived project (ZER-201)", () => {
     render(<ProjectCard {...BASE} archived affordance={{ kind: "none" }} />);
-    expect(screen.getByText("Archivado")).toBeInTheDocument();
+    expect(screen.getByText("Archivado · Pausado")).toBeInTheDocument();
     expect(screen.queryByText("En curso")).not.toBeInTheDocument();
     expect(screen.queryByText("Terminado")).not.toBeInTheDocument();
   });

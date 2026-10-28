@@ -121,6 +121,9 @@ describe("EditProjectPage", () => {
     expect(screen.getByRole("button", { name: "Guardar cambios" })).toBeInTheDocument();
 
     expect(screen.getByRole("button", { name: "Archivar proyecto" })).toBeInTheDocument();
+    // Editing still offers every estado, Terminado included (ZER-201).
+    expect(screen.getByRole("radio", { name: "Terminado" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Pausado" })).toBeInTheDocument();
   });
 
   describe("archive confirmation (ZER-201)", () => {
@@ -137,6 +140,7 @@ describe("EditProjectPage", () => {
       expect(screen.getByRole("button", { name: "Sí, archivar" })).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Volver" })).not.toBeInTheDocument();
       expect(within(dialog).getByText(/pasa a Archivados/i)).toBeInTheDocument();
+      expect(within(dialog).getByText(/queda Pausado/i)).toBeInTheDocument();
       expect(within(dialog).getByText(/miembros y las solicitudes/i)).toBeInTheDocument();
       // Archiving no longer means Terminado (ZER-201).
       expect(within(dialog).queryByText(/Terminado/)).not.toBeInTheDocument();
