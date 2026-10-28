@@ -16,7 +16,13 @@ export default async function EditTaskPage({ params }: { params: Promise<{ id: s
 
   if (!user) redirect("/auth/login");
 
-  const { data: task } = await supabase.from("tasks").select("*").eq("id", id).single();
+  // Only the columns this page uses: `*` breaks as soon as a column gets a
+  // column-level grant (ZER-194 was that, on profiles).
+  const { data: task } = await supabase
+    .from("tasks")
+    .select("id, titulo, descripcion, categoria, urgencia, estado, creado_por")
+    .eq("id", id)
+    .single();
 
   if (!task) notFound();
 
