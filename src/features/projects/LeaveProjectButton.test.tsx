@@ -21,18 +21,22 @@ beforeEach(() => {
 });
 
 describe("LeaveProjectButton (ZER-200)", () => {
-  it("asks for confirmation before leaving", () => {
-    const { container } = render(<LeaveProjectButton projectId="proj-1" />);
+  it("asks for confirmation in a pop up before leaving (ZER-221)", () => {
+    render(<LeaveProjectButton projectId="proj-1" />);
 
     expect(screen.queryByRole("button", { name: "Sí, salir" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Salir del proyecto" }));
 
+    expect(screen.getByRole("dialog", { name: "Salir del proyecto" })).toHaveAttribute(
+      "aria-modal",
+      "true",
+    );
     expect(screen.getByText(/Vas a dejar de ser parte de este proyecto/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sí, salir" })).toHaveAttribute("type", "submit");
-    expect(container.querySelector('input[name="projectId"]')).toHaveAttribute("value", "proj-1");
+    expect(document.querySelector('input[name="projectId"]')).toHaveAttribute("value", "proj-1");
   });
 
-  it("can be cancelled", () => {
+  it("can be cancelled with the X", () => {
     render(<LeaveProjectButton projectId="proj-1" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Salir del proyecto" }));
@@ -44,6 +48,7 @@ describe("LeaveProjectButton (ZER-200)", () => {
   it("shows why it could not leave", () => {
     mocks.state = { error: "No pudimos sacarte del proyecto. Probá de nuevo." };
     render(<LeaveProjectButton projectId="proj-1" />);
+    fireEvent.click(screen.getByRole("button", { name: "Salir del proyecto" }));
 
     expect(screen.getByRole("alert")).toHaveTextContent("No pudimos sacarte del proyecto");
   });
