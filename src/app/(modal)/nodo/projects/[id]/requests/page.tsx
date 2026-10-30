@@ -1,10 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { JoinRequestQueue } from "@/features/projects/JoinRequestQueue";
-import {
-  toJoinRequestQueue,
-  type RawJoinRequestRow,
-} from "@/features/projects/join-request-transform";
+import { toJoinRequestQueue } from "@/features/projects/join-request-transform";
 import { isProjectAdmin, type ViewerMembership } from "@/features/projects/membership";
 import type { ProjectMemberEstado, ProjectMemberRol } from "@/lib/db/projects-schema";
 
@@ -69,7 +66,7 @@ export default async function ProjectJoinRequestsPage({ params }: PageProps) {
     throw new Error(`No pudimos cargar las solicitudes: ${pendingError.message}`);
   }
 
-  const requests = toJoinRequestQueue((pendingRows ?? []) as unknown as RawJoinRequestRow[]);
+  const requests = toJoinRequestQueue(pendingRows ?? []);
 
   return <JoinRequestQueue projectId={row.id} projectName={row.nombre} requests={requests} />;
 }

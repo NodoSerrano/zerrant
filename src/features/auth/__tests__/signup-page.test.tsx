@@ -55,3 +55,11 @@ describe("SignupPage", () => {
     expect(sesionLink.closest("a")).toHaveAttribute("href", "/auth/login");
   });
 });
+
+describe("SignupPage autofill (ZER-176)", () => {
+  it("lets the phone's password manager fill and save the new account", () => {
+    render(<SignupPage />);
+    expect(screen.getByLabelText("Email")).toHaveAttribute("autoComplete", "email");
+    expect(screen.getByLabelText("Contraseña")).toHaveAttribute("autoComplete", "new-password");
+  });
+});

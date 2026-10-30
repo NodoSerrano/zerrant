@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isTasksBlockedTier } from "@/features/tasks/tier-guards";
 import {
+  PROJECT_CREATE_ESTADOS,
   PROJECT_ESTADOS,
   PROJECT_INGRESOS,
   type ProjectEstado,
@@ -65,7 +66,8 @@ export async function createProject(
     return { error: EMPTY_NOMBRE };
   }
 
-  const estado = oneOf(formData.get("estado"), PROJECT_ESTADOS);
+  // A new project cannot start as Terminado or Pausado (ZER-201); the form does not offer them either.
+  const estado = oneOf(formData.get("estado"), PROJECT_CREATE_ESTADOS);
   const ingreso = oneOf(formData.get("ingreso"), PROJECT_INGRESOS);
   if (!estado || !ingreso) {
     return { error: INVALID_INPUT };
@@ -105,6 +107,8 @@ const UPDATE_REJECTED = "No pudimos guardar los cambios.";
 const UPDATE_MISSING = "No encontramos ese proyecto.";
 const ARCHIVE_ERROR = "No pudimos archivar el proyecto. Probá de nuevo.";
 const ARCHIVE_REJECTED = "No pudimos archivar el proyecto.";
+const UNARCHIVE_ERROR = "No pudimos desarchivar el proyecto. Probá de nuevo.";
+const UNARCHIVE_REJECTED = "No pudimos desarchivar el proyecto.";
 
 /**
  * Updates nombre, descripcion, estado, and ingreso.
@@ -168,8 +172,9 @@ export async function updateProject(
 }
 
 /**
- * Sets estado to terminado. The row stays, so members and pending join
- * requests keep pointing at this project.
+ * Stamps archivado_en and pauses the project (ZER-201): archived means Pausado,
+ * never Terminado. The row stays, so members and pending join requests keep
+ * pointing at this project.
  */
 export async function archiveProject(
   _prevState: { error: string } | null,
@@ -192,8 +197,10 @@ export async function archiveProject(
 
   const { data, error } = await supabase
     .from("projects")
-    .update({ estado: "terminado" })
+    .update({ archivado_en: new Date().toISOString(), estado: "pausado" })
     .eq("id", projectId)
+    // Archiving twice must not move the date it was first archived.
+    .is("archivado_en", null)
     .select("id");
 
   if (error) {
@@ -208,6 +215,50 @@ export async function archiveProject(
   revalidatePath("/nodo/projects");
   revalidatePath("/nodo", "layout");
   redirect(withActionNotice(`/nodo/projects/${projectId}`, "proyecto-archivado"));
+}
+
+/**
+ * Clears archivado_en (ZER-201): the project is back in the lists. estado stays
+ * Pausado; the admin changes it from the same edit screen if it is active again.
+ */
+export async function unarchiveProject(
+  _prevState: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "No autorizado" };
+  }
+
+  const projectId = trimmed(formData.get("projectId"));
+  if (!projectId) {
+    return { error: UPDATE_MISSING };
+  }
+
+  const { data, error } = await supabase
+    .from("projects")
+    .update({ archivado_en: null })
+    .eq("id", projectId)
+    .not("archivado_en", "is", null)
+    .select("id");
+
+  if (error) {
+    return { error: UNARCHIVE_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: UNARCHIVE_REJECTED };
+  }
+
+  revalidatePath(`/nodo/projects/${projectId}`);
+  revalidatePath("/nodo/projects");
+  revalidatePath("/nodo", "layout");
+  redirect(withActionNotice(`/nodo/projects/${projectId}`, "proyecto-desarchivado"));
 }
 
 const JOIN_ERROR = "No pudimos unirte al proyecto. Probá de nuevo.";

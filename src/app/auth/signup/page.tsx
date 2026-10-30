@@ -44,10 +44,18 @@ function SignupForm() {
 
       <form action={action} className="flex flex-col gap-[14px]">
         <NextField next={next} />
-        <Input name="email" type="email" label="Email" placeholder="tu@email.com" required />
+        <Input
+          name="email"
+          type="email"
+          autoComplete="email"
+          label="Email"
+          placeholder="tu@email.com"
+          required
+        />
         <Input
           name="password"
           type="password"
+          autoComplete="new-password"
           label="Contraseña"
           placeholder="Mínimo 6 caracteres"
           required

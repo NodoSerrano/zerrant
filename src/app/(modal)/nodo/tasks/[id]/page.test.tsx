@@ -153,6 +153,13 @@ describe("TaskDetailPage — profile reads (ZER-194)", () => {
     expect(profileSelects.length).toBeGreaterThan(0);
     for (const [, columns] of profileSelects) expect(columns).not.toContain("*");
   });
+
+  it("reads the task by named columns too, never * (ZER-220)", async () => {
+    await renderDetail({ viewerId: CREATOR.id });
+
+    const taskSelect = mocks.selects.find(([table]) => table === "tasks")?.[1] ?? "";
+    expect(taskSelect).not.toContain("*");
+  });
 });
 
 describe("TaskDetailPage — header row (AC1)", () => {

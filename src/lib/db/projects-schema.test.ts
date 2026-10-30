@@ -177,6 +177,38 @@ describe("ZER-78 migration SQL", () => {
   });
 });
 
+describe("ZER-201 archivado_en migration SQL", () => {
+  function findArchiveMigration(): string {
+    const files = readdirSync(MIGRATIONS_DIR).filter((f) =>
+      f.includes("zer201_projects_archivado_en"),
+    );
+    expect(files.length, "expected one ZER-201 archive migration").toBe(1);
+    return readFileSync(path.join(MIGRATIONS_DIR, files[0]!), "utf8");
+  }
+
+  it("adds a nullable archivado_en mark instead of a new project_estado value", () => {
+    const sql = findArchiveMigration();
+    expect(sql).toMatch(/alter table public\.projects\s+add column archivado_en timestamptz;/i);
+    expect(sql).not.toMatch(/not null/i);
+    expect(sql).not.toMatch(/alter type public\.project_estado/i);
+  });
+
+  it("lets project admins set it through UPDATE only, never on INSERT", () => {
+    const sql = findArchiveMigration();
+    expect(sql).toMatch(/grant update \(archivado_en\) on public\.projects to authenticated/i);
+    expect(sql).not.toMatch(/grant insert/i);
+  });
+
+  it("exposes archivado_en on the projects table types", () => {
+    type ProjectsRow = Database["public"]["Tables"]["projects"]["Row"];
+    type ProjectsInsert = Database["public"]["Tables"]["projects"]["Insert"];
+    const archived: ProjectsRow["archivado_en"] = null;
+    const insert: ProjectsInsert["archivado_en"] = undefined;
+    expect(archived).toBeNull();
+    expect(insert).toBeUndefined();
+  });
+});
+
 describe("ZER-82 ingreso door migration SQL", () => {
   it("replaces self-join WITH CHECK with the projects.ingreso door and grants estado", () => {
     const files = readdirSync(MIGRATIONS_DIR).filter((f) =>

@@ -29,8 +29,16 @@ type ProjectRow = {
   descripcion: string | null;
   estado: string;
   ingreso: string;
+  archivado_en: string | null;
   project_members: ProjectMemberRow[] | null;
 };
+
+// Archived projects only show up under their own section (ZER-201).
+const VISTAS = [
+  { id: "activos", label: "Activos", href: "/nodo/projects" },
+  { id: "archivados", label: "Archivados", href: "/nodo/projects?vista=archivados" },
+] as const;
+type Vista = (typeof VISTAS)[number]["id"];
 
 function memberDisplayName(profile: MemberProfile | null | undefined): string {
   if (!profile) return "?";
@@ -60,7 +68,11 @@ function viewerMembershipOf(
   return row ? ({ estado: row.estado, rol: row.rol } as ViewerMembership) : null;
 }
 
-export default async function ProjectsPage() {
+export default async function ProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ vista?: string }>;
+}) {
   const supabase = await createClient();
 
   const {
@@ -71,12 +83,18 @@ export default async function ProjectsPage() {
     return <p className="text-text-secondary">Iniciá sesión para ver los proyectos.</p>;
   }
 
-  const { data: projects } = await supabase
+  const { vista: rawVista } = await searchParams;
+  const vista: Vista = rawVista === "archivados" ? "archivados" : "activos";
+
+  const query = supabase
     .from("projects")
     .select(
-      "id, nombre, descripcion, estado, ingreso, project_members(estado, rol, profile_id, profiles:profile_id(nombre, apellido, apodo, nombre_visible, avatar_url))",
+      "id, nombre, descripcion, estado, ingreso, archivado_en, project_members(estado, rol, profile_id, profiles:profile_id(nombre, apellido, apodo, nombre_visible, avatar_url))",
     )
     .order("created_at", { ascending: false });
+  const { data: projects } = await (vista === "archivados"
+    ? query.not("archivado_en", "is", null)
+    : query.is("archivado_en", null));
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -84,6 +102,8 @@ export default async function ProjectsPage() {
     .eq("id", user.id)
     .single();
   const canCreate = profile && profile.tier !== "tourist";
+  // Nothing gets created from the archived section.
+  const showCreate = Boolean(canCreate) && vista === "activos";
 
   const rows = (projects ?? []) as ProjectRow[];
 
@@ -108,7 +128,30 @@ export default async function ProjectsPage() {
         <NodoTabs active="proyectos" />
       </div>
 
-      {!rows.length ? (
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {VISTAS.map((option) => (
+          <Link
+            key={option.id}
+            href={option.href}
+            className={cn(
+              "inline-flex items-center rounded-pill px-3 py-1.5 text-xs font-semibold font-display whitespace-nowrap transition-colors",
+              vista === option.id
+                ? "bg-primary text-on-primary"
+                : "bg-surface border border-border text-text-secondary hover:text-text-primary",
+            )}
+          >
+            {option.label}
+          </Link>
+        ))}
+      </div>
+
+      {!rows.length && vista === "archivados" ? (
+        <EmptyState
+          title="Sin archivados"
+          icon={FolderOpen}
+          subtitle="No hay proyectos archivados."
+        />
+      ) : !rows.length ? (
         <EmptyState
           title="Sin proyectos todavía"
           icon={FolderOpen}
@@ -132,6 +175,7 @@ export default async function ProjectsPage() {
                 name={project.nombre}
                 description={project.descripcion}
                 estado={project.estado}
+                archived={Boolean(project.archivado_en)}
                 affordance={resolveJoinAffordance({
                   ingreso: project.ingreso,
                   viewerMembership: viewerMembershipOf(project.project_members, user.id),
@@ -144,7 +188,7 @@ export default async function ProjectsPage() {
         </div>
       )}
 
-      {canCreate && rows.length > 0 ? (
+      {showCreate && rows.length > 0 ? (
         <Link
           href="/nodo/projects/new"
           className={cn(

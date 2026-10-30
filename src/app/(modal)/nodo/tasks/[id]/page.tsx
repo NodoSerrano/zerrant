@@ -20,7 +20,10 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
 
   const { data: task } = await supabase
     .from("tasks")
-    .select(`*, creador:creado_por(${PERSON_COLUMNS}), tomador:tomada_por(${PERSON_COLUMNS})`)
+    // Named columns only, like the profiles join: `*` breaks with column-level grants (ZER-194, ZER-220).
+    .select(
+      `id, titulo, descripcion, categorias, categoria_otra, urgencia, estado, creado_por, tomada_por, created_at, creador:creado_por(${PERSON_COLUMNS}), tomador:tomada_por(${PERSON_COLUMNS})`,
+    )
     .eq("id", id)
     .single();
 
@@ -33,8 +36,8 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     .single();
 
   type Person = Pick<Profile, "id" | "nombre" | "apellido" | "apodo" | "nombre_visible">;
-  const creador = task.creador as unknown as Person | null;
-  const tomador = task.tomador as unknown as Person | null;
+  const creador: Person | null = task.creador;
+  const tomador: Person | null = task.tomador;
 
   const canAssign =
     (task.creado_por === user.id || Boolean(currentProfile?.is_platform_admin)) &&

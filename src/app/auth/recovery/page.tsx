@@ -40,7 +40,14 @@ export default function RecoveryPage() {
       </div>
 
       <form action={action} className="flex flex-col gap-[14px]">
-        <Input name="email" type="email" label="Email" placeholder="tu@email.com" required />
+        <Input
+          name="email"
+          type="email"
+          autoComplete="email"
+          label="Email"
+          placeholder="tu@email.com"
+          required
+        />
 
         <FormFeedback error={state?.error} />
 

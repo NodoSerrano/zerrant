@@ -28,6 +28,12 @@ export const PROJECT_ESTADO_OPTIONS = [
   { value: "terminado", label: "Terminado" },
 ] as const satisfies ReadonlyArray<{ value: ProjectEstado; label: string }>;
 
+/** Estados a project can be created with: not Terminado nor Pausado, which is what archiving means (ZER-201). */
+export const PROJECT_CREATE_ESTADOS = PROJECT_ESTADOS.filter(
+  (estado): estado is Exclude<ProjectEstado, "terminado" | "pausado"> =>
+    estado !== "terminado" && estado !== "pausado",
+);
+
 export const PROJECT_INGRESO_OPTIONS = [
   {
     value: "abierto",
@@ -68,4 +74,6 @@ export type ProjectDetailViewModel = {
   canEdit: boolean;
   /** Viewer is an approved member — may leave the project (ZER-200). */
   canLeave: boolean;
+  /** archivado_en is set: shown as Archivado · Pausado (ZER-201). */
+  archived: boolean;
 };

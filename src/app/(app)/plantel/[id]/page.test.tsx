@@ -89,8 +89,17 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/features/plantel/MemberDetail", () => ({
-  MemberDetail: ({ member }: { member: { id: string; name: string } }) => (
-    <div data-testid="member-detail">{member.name}</div>
+  MemberDetail: ({
+    member,
+  }: {
+    member: { id: string; name: string; proyectos?: { id: string; nombre: string }[] };
+  }) => (
+    <div data-testid="member-detail">
+      {member.name}
+      {member.proyectos?.map((p) => (
+        <span key={p.id}>{p.nombre}</span>
+      ))}
+    </div>
   ),
 }));
 
@@ -215,11 +224,33 @@ describe("PlantelMemberPage", () => {
 
     expect(mocks.from).toHaveBeenCalledWith("project_members");
     expect(mocks.projectMembersSelect).toHaveBeenCalledWith(
-      "project_id, projects:project_id(id, nombre)",
+      "project_id, projects:project_id(id, nombre, archivado_en)",
     );
     expect(mocks.projectMembersEqProfile).toHaveBeenCalledWith("profile_id", "p1");
     expect(mocks.projectMembersEqEstado).toHaveBeenCalledWith("estado", "aprobado");
     expect(mocks.projectMembersOrder).toHaveBeenCalledWith("created_at", { ascending: false });
+  });
+
+  it("leaves archived projects out of the member's list (ZER-201)", async () => {
+    mocks.projectMembersOrder.mockResolvedValue({
+      data: [
+        {
+          project_id: "proj-1",
+          projects: { id: "proj-1", nombre: "Nodo hub", archivado_en: null },
+        },
+        {
+          project_id: "proj-2",
+          projects: { id: "proj-2", nombre: "Feria vieja", archivado_en: "2026-10-20T12:00:00Z" },
+        },
+      ],
+      error: null,
+    });
+
+    const element = await PlantelMemberPage({ params: Promise.resolve({ id: "p1" }) });
+    render(element);
+
+    expect(screen.getByText("Nodo hub")).toBeInTheDocument();
+    expect(screen.queryByText("Feria vieja")).not.toBeInTheDocument();
   });
 
   it("degrades to empty proyectos when the membership read is refused or empty", async () => {
