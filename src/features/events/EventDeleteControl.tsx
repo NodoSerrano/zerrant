@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { deleteEvent } from "./actions";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
-import { FormFeedback } from "@/components/FormFeedback";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface EventDeleteControlProps {
   eventId: string;
@@ -14,48 +14,32 @@ export function EventDeleteControl({ eventId }: EventDeleteControlProps) {
   const [confirming, setConfirming] = useState(false);
   const [state, action, pending] = useGuardedActionState(deleteEvent, null);
 
-  if (!confirming) {
-    return (
+  return (
+    <>
       <button
         type="button"
+        aria-haspopup="dialog"
         onClick={() => setConfirming(true)}
         className="inline-flex items-center justify-center gap-2 font-display text-[15px] font-medium text-coral focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
       >
         <Trash2 className="size-4" aria-hidden="true" />
         Eliminar evento
       </button>
-    );
-  }
-
-  return (
-    <form
-      action={action}
-      className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4"
-      role="dialog"
-      aria-label="Confirmar eliminación"
-    >
-      <input type="hidden" name="eventId" value={eventId} />
-      <p className="font-body text-sm text-text-primary">
-        ¿Eliminar este evento? Se borra de la agenda y se pierden las confirmaciones de asistencia.
-      </p>
-      <FormFeedback error={state?.error} />
-      <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={pending}
-          className="flex-1 whitespace-nowrap rounded-pill bg-coral/10 px-3 py-2 font-display text-[13px] font-semibold text-on-coral-tint disabled:opacity-50"
+      {confirming ? (
+        <ConfirmDialog
+          title="Eliminar evento"
+          confirmLabel="Sí, eliminar"
+          pendingLabel="Eliminando..."
+          action={action}
+          pending={pending}
+          error={state?.error}
+          onCancel={() => setConfirming(false)}
+          hiddenFields={{ eventId }}
         >
-          {pending ? "Eliminando..." : "Sí, eliminar"}
-        </button>
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => setConfirming(false)}
-          className="flex-1 whitespace-nowrap rounded-pill border border-border px-3 py-2 font-display text-[13px] font-semibold text-text-secondary disabled:opacity-50"
-        >
-          Volver
-        </button>
-      </div>
-    </form>
+          ¿Eliminar este evento? Se borra de la agenda y se pierden las confirmaciones de
+          asistencia.
+        </ConfirmDialog>
+      ) : null}
+    </>
   );
 }

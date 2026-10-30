@@ -23,21 +23,23 @@ beforeEach(() => {
 });
 
 describe("DemoteMemberButton (ZER-199)", () => {
-  it("asks for confirmation before removing the admin role", () => {
-    const { container } = render(
-      <DemoteMemberButton projectId="proj-1" profileId="member-2" name="Lucía Morales" />,
-    );
+  it("asks for confirmation in a pop up before removing the admin role (ZER-221)", () => {
+    render(<DemoteMemberButton projectId="proj-1" profileId="member-2" name="Lucía Morales" />);
 
     expect(screen.queryByRole("button", { name: "Sí, quitar" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Quitar admin" }));
 
+    expect(screen.getByRole("dialog", { name: "Quitar admin" })).toHaveAttribute(
+      "aria-modal",
+      "true",
+    );
     expect(screen.getByText("¿Quitarle el rol de admin a Lucía Morales?")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sí, quitar" })).toHaveAttribute("type", "submit");
-    expect(container.querySelector('input[name="projectId"]')).toHaveAttribute("value", "proj-1");
-    expect(container.querySelector('input[name="profileId"]')).toHaveAttribute("value", "member-2");
+    expect(document.querySelector('input[name="projectId"]')).toHaveAttribute("value", "proj-1");
+    expect(document.querySelector('input[name="profileId"]')).toHaveAttribute("value", "member-2");
   });
 
-  it("can be cancelled", () => {
+  it("can be cancelled with the X", () => {
     render(<DemoteMemberButton projectId="proj-1" profileId="member-2" name="Lucía Morales" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Quitar admin" }));
@@ -52,6 +54,7 @@ describe("DemoteMemberButton (ZER-199)", () => {
       error: "El proyecto necesita al menos un admin. Designá a otra persona antes.",
     };
     render(<DemoteMemberButton projectId="proj-1" profileId="member-2" name="Lucía Morales" />);
+    fireEvent.click(screen.getByRole("button", { name: "Quitar admin" }));
 
     expect(screen.getByRole("alert")).toHaveTextContent("El proyecto necesita al menos un admin");
   });

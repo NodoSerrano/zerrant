@@ -51,6 +51,13 @@ describe("ProjectCard", () => {
     expect(screen.getByText("En curso")).toBeInTheDocument();
   });
 
+  it("shows Archivado, not Terminado, on an archived project (ZER-201)", () => {
+    render(<ProjectCard {...BASE} archived affordance={{ kind: "none" }} />);
+    expect(screen.getByText("Archivado · Pausado")).toBeInTheDocument();
+    expect(screen.queryByText("En curso")).not.toBeInTheDocument();
+    expect(screen.queryByText("Terminado")).not.toBeInTheDocument();
+  });
+
   it("links the title to the project detail", () => {
     render(<ProjectCard {...BASE} affordance={{ kind: "none" }} />);
     expect(screen.getByRole("link", { name: "Sitio web de Nodo" })).toHaveAttribute(

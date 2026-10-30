@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import type { ProjectDetailViewModel } from "./types";
 
 export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) {
-  const badge = getProjectEstadoBadge(project.estado);
+  const badge = getProjectEstadoBadge(project.estado, { archived: project.archived });
   const ingresoLabel = getProjectIngresoLabel(project.ingreso);
   const approval = isProjectIngresoApproval(project.ingreso);
   const memberCount = project.members.length;

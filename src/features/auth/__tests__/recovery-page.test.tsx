@@ -48,3 +48,10 @@ describe("RecoveryPage", () => {
     expect(await screen.findByText("Email no encontrado")).toBeInTheDocument();
   });
 });
+
+describe("RecoveryPage autofill (ZER-176)", () => {
+  it("offers the saved email", () => {
+    render(<RecoveryPage />);
+    expect(screen.getByLabelText("Email")).toHaveAttribute("autoComplete", "email");
+  });
+});

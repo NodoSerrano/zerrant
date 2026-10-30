@@ -280,7 +280,7 @@ describe("ProjectDetailPage", () => {
     expect(screen.queryByRole("link", { name: "Editar proyecto" })).not.toBeInTheDocument();
   });
 
-  it("shows the archived estado on the detail view", async () => {
+  it("keeps Terminado for a project that really finished", async () => {
     mockClient({
       project: {
         ...sampleProject,
@@ -295,5 +295,21 @@ describe("ProjectDetailPage", () => {
     expect(screen.getByText("Lote 3 ampliado")).toBeInTheDocument();
     expect(screen.getByText("Terminado")).toBeInTheDocument();
     expect(screen.getByText("Abierto")).toBeInTheDocument();
+  });
+
+  it("shows Archivado, not Terminado, for an archived project that was En curso (ZER-201)", async () => {
+    mockClient({
+      project: {
+        ...sampleProject,
+        estado: "en_curso",
+        archivado_en: "2026-10-20T12:00:00Z",
+      },
+      viewerMembership: { estado: "aprobado", rol: "admin" },
+    });
+    const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
+    render(ui);
+    expect(screen.getByText("Archivado · Pausado")).toBeInTheDocument();
+    expect(screen.queryByText("Terminado")).not.toBeInTheDocument();
+    expect(screen.queryByText("En curso")).not.toBeInTheDocument();
   });
 });

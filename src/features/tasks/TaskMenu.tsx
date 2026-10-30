@@ -6,7 +6,7 @@ import { Ellipsis } from "lucide-react";
 import { cancelTask } from "./actions";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { cn } from "@/lib/utils";
-import { FormFeedback } from "@/components/FormFeedback";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 // Each action lives in its own window of states. Cancelling still makes sense
 // once the task is taken; editing doesn't, because it would change the work of
@@ -41,8 +41,14 @@ export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskM
 
   function close({ restoreFocus }: { restoreFocus: boolean }) {
     setOpen(false);
-    setConfirming(false);
     if (restoreFocus) triggerRef.current?.focus();
+  }
+
+  // The menu closes and the shared pop up asks (ZER-221). Focus goes to the
+  // trigger first, so the pop up hands it back there when it closes.
+  function askToCancel() {
+    close({ restoreFocus: true });
+    setConfirming(true);
   }
 
   // Escape closes and returns focus to the trigger: otherwise the focus stays
@@ -76,8 +82,8 @@ export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskM
   // On open, focus moves into the menu. If it stayed on the trigger, the next
   // Tab would go to the content behind instead of the first item.
   useEffect(() => {
-    if (open && !confirming) firstItemRef.current?.focus();
-  }, [open, confirming]);
+    if (open) firstItemRef.current?.focus();
+  }, [open]);
 
   if (!isOwner || !puedeCancelar) return null;
 
@@ -103,68 +109,49 @@ export function TaskMenu({ taskId, estado, isOwner, showEditItem = true }: TaskM
         <div
           id={menuId}
           ref={menuRef}
-          // During confirmation the container no longer has `menuitem`s, so
-          // keeping `role="menu"` would put a screen reader in an empty menu
-          // with a destructive action pending.
-          role={confirming ? "dialog" : "menu"}
-          aria-label={confirming ? "Confirmar cancelación" : undefined}
-          aria-modal={confirming ? false : undefined}
+          role="menu"
           className={cn(
             "absolute right-0 top-full z-40 mt-2 w-max min-w-[180px] max-w-[280px] overflow-hidden py-1",
             "bg-surface border border-border rounded-md",
             "shadow-[0_10px_30px_-12px_rgba(26,22,20,0.15)]",
           )}
         >
-          {confirming ? (
-            <form action={action} className="flex flex-col gap-2 p-3">
-              <input type="hidden" name="taskId" value={taskId} />
-              <p className="font-body text-sm text-text-primary">¿Cancelar esta tarea?</p>
-              <FormFeedback error={state?.error} />
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  disabled={pending}
-                  className="flex-1 whitespace-nowrap rounded-pill bg-coral/10 px-3 py-1.5 font-display text-[13px] font-semibold text-on-coral-tint disabled:opacity-50"
-                >
-                  {pending ? "Cancelando..." : "Sí, cancelar"}
-                </button>
-                <button
-                  type="button"
-                  // Disabled while in flight: otherwise it unmounts the form
-                  // mid-request and the user is left with neither result nor error.
-                  disabled={pending}
-                  onClick={() => setConfirming(false)}
-                  className="flex-1 whitespace-nowrap rounded-pill border border-border px-3 py-1.5 font-display text-[13px] font-semibold text-text-secondary disabled:opacity-50"
-                >
-                  Volver
-                </button>
-              </div>
-            </form>
-          ) : (
-            <>
-              {puedeEditar && (
-                <Link
-                  ref={firstItemRef as React.Ref<HTMLAnchorElement>}
-                  href={`/nodo/tasks/${taskId}/edit`}
-                  role="menuitem"
-                  className={ITEM_CLASSES}
-                >
-                  Editar
-                </Link>
-              )}
-              <button
-                ref={puedeEditar ? undefined : (firstItemRef as React.Ref<HTMLButtonElement>)}
-                type="button"
-                role="menuitem"
-                onClick={() => setConfirming(true)}
-                className={ITEM_CLASSES}
-              >
-                Cancelar tarea
-              </button>
-            </>
+          {puedeEditar && (
+            <Link
+              ref={firstItemRef as React.Ref<HTMLAnchorElement>}
+              href={`/nodo/tasks/${taskId}/edit`}
+              role="menuitem"
+              className={ITEM_CLASSES}
+            >
+              Editar
+            </Link>
           )}
+          <button
+            ref={puedeEditar ? undefined : (firstItemRef as React.Ref<HTMLButtonElement>)}
+            type="button"
+            role="menuitem"
+            onClick={askToCancel}
+            className={ITEM_CLASSES}
+          >
+            Cancelar tarea
+          </button>
         </div>
       )}
+
+      {confirming ? (
+        <ConfirmDialog
+          title="Cancelar tarea"
+          confirmLabel="Sí, cancelar"
+          pendingLabel="Cancelando..."
+          action={action}
+          pending={pending}
+          error={state?.error}
+          onCancel={() => setConfirming(false)}
+          hiddenFields={{ taskId }}
+        >
+          ¿Cancelar esta tarea?
+        </ConfirmDialog>
+      ) : null}
     </div>
   );
 }

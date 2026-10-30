@@ -734,6 +734,7 @@ export type Database = {
       };
       projects: {
         Row: {
+          archivado_en: string | null;
           creado_por: string;
           created_at: string;
           descripcion: string | null;
@@ -743,6 +744,7 @@ export type Database = {
           nombre: string;
         };
         Insert: {
+          archivado_en?: string | null;
           creado_por: string;
           created_at?: string;
           descripcion?: string | null;
@@ -752,6 +754,7 @@ export type Database = {
           nombre: string;
         };
         Update: {
+          archivado_en?: string | null;
           creado_por?: string;
           created_at?: string;
           descripcion?: string | null;
