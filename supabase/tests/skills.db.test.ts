@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, describe, expect, it } from "vitest";
 
-// ZER-163: skill proposals (admin-approved) and level / years per member skill.
+// ZER-163: skill proposals (admin-approved). ZER-216: a member skill is only its name.
 // Local stack defaults from `supabase status` (demo keys, not secrets).
 const API_URL = process.env.SUPABASE_TEST_URL ?? "http://127.0.0.1:54321";
 const ANON_KEY =
@@ -157,69 +157,40 @@ describe("skill proposals (ZER-163)", () => {
   });
 });
 
-describe("save_profile_skills with level and years (ZER-163)", () => {
+describe("save_profile_skills by skill id only (ZER-216)", () => {
   async function approvedId(nombre: string) {
     const { data } = await service.from("skills").select("id").eq("nombre", nombre).single();
     return data!.id as string;
   }
 
-  it("stores level and freelance / company years separately, and replaces the set", async () => {
+  it("replaces the caller's set of skills", async () => {
     const member = await createUser();
     const ia = await approvedId("IA");
     const diseno = await approvedId("Diseño");
 
-    const first = await member.client.rpc("save_profile_skills", {
-      p_items: [
-        { skill_id: ia, nivel: "avanzado", anios_freelance: 3, anios_empresa: 5 },
-        { skill_id: diseno, nivel: null, anios_freelance: null, anios_empresa: null },
-      ],
-    });
+    const first = await member.client.rpc("save_profile_skills", { p_skill_ids: [ia, diseno] });
     expect(first.error).toBeNull();
     expect(first.data).toMatchObject({ success: true });
 
-    const second = await member.client.rpc("save_profile_skills", {
-      p_items: [{ skill_id: ia, nivel: "intermedio", anios_freelance: 4, anios_empresa: 0 }],
-    });
+    const second = await member.client.rpc("save_profile_skills", { p_skill_ids: [ia] });
     expect(second.data).toMatchObject({ success: true });
 
     const { data: rows } = await service
       .from("profile_skills")
-      .select("skill_id, nivel, anios_freelance, anios_empresa")
+      .select("skill_id")
       .eq("profile_id", member.id);
-    expect(rows).toEqual([
-      { skill_id: ia, nivel: "intermedio", anios_freelance: 4, anios_empresa: 0 },
-    ]);
+    expect(rows).toEqual([{ skill_id: ia }]);
   });
 
-  it("rejects an unknown level or years out of range without touching the profile", async () => {
-    const member = await createUser();
-    const ia = await approvedId("IA");
-    await member.client.rpc("save_profile_skills", {
-      p_items: [{ skill_id: ia, nivel: "basico", anios_freelance: 1, anios_empresa: 1 }],
-    });
-
-    for (const bad of [
-      { skill_id: ia, nivel: "experto", anios_freelance: 1, anios_empresa: 1 },
-      { skill_id: ia, nivel: "basico", anios_freelance: 61, anios_empresa: 1 },
-      { skill_id: ia, nivel: "basico", anios_freelance: 1, anios_empresa: -1 },
-    ]) {
-      const { data } = await member.client.rpc("save_profile_skills", { p_items: [bad] });
-      expect(data).toMatchObject({ code: "invalid_items" });
-    }
-
-    const { data: rows } = await service
-      .from("profile_skills")
-      .select("nivel, anios_freelance, anios_empresa")
-      .eq("profile_id", member.id);
-    expect(rows).toEqual([{ nivel: "basico", anios_freelance: 1, anios_empresa: 1 }]);
+  it("level and years are gone from member skills", async () => {
+    const { error } = await service.from("profile_skills").select("nivel").limit(1);
+    expect(error?.code).toBe("42703");
   });
 
   it("ignores pending skills, and tourists cannot save", async () => {
     const member = await createUser();
     const { id: pending } = await propose(member, unique("Bordado"));
-    await member.client.rpc("save_profile_skills", {
-      p_items: [{ skill_id: pending, nivel: "basico", anios_freelance: 1, anios_empresa: 1 }],
-    });
+    await member.client.rpc("save_profile_skills", { p_skill_ids: [pending] });
     const { data: rows } = await service
       .from("profile_skills")
       .select("id")
@@ -227,7 +198,7 @@ describe("save_profile_skills with level and years (ZER-163)", () => {
     expect(rows).toHaveLength(0);
 
     const tourist = await createUser({ tier: "tourist" });
-    const { data } = await tourist.client.rpc("save_profile_skills", { p_items: [] });
+    const { data } = await tourist.client.rpc("save_profile_skills", { p_skill_ids: [] });
     expect(data).toMatchObject({ code: "forbidden" });
   });
 });
