@@ -60,7 +60,11 @@ export default async function EntrevistaPage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center gap-3">
-        <Link href="/profile" aria-label="Volver al perfil">
+        <Link
+          href="/profile"
+          aria-label="Volver al perfil"
+          className="-ml-2.5 inline-flex size-11 shrink-0 items-center justify-center"
+        >
           <ChevronLeft className="size-6 text-text-primary" />
         </Link>
         <h1 className="font-display text-[22px] font-bold text-text-primary">

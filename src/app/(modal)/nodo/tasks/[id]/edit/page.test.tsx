@@ -4,6 +4,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   taskSingle: vi.fn(),
+  taskSelect: vi.fn(),
   redirect: vi.fn(),
   notFound: vi.fn(),
 }));
@@ -12,7 +13,7 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mocks.getUser },
     from: vi.fn(() => ({
-      select: vi.fn(() => ({
+      select: mocks.taskSelect.mockImplementation(() => ({
         eq: vi.fn(() => ({ single: mocks.taskSingle })),
       })),
     })),
@@ -52,7 +53,8 @@ function makeTask(overrides: Record<string, unknown> = {}) {
     id: "task-1",
     titulo: "Reparar el caño del baño",
     descripcion: "Pierde agua abajo de la pileta.",
-    categoria: "limpieza",
+    categorias: ["limpieza"],
+    categoria_otra: null,
     urgencia: "baja",
     estado: "abierta",
     creado_por: OWNER,
@@ -144,13 +146,35 @@ describe("EditTaskPage — prefilled form (AC8)", () => {
     expect(screen.getByLabelText("Descripción")).toHaveValue("Pierde agua abajo de la pileta.");
   });
 
-  it("preselects the saved categoria, not the create-screen default", async () => {
+  it('reads only the columns it uses, never select("*") (ZER-220)', async () => {
+    await renderEdit();
+
+    const columns = String(mocks.taskSelect.mock.calls[0]?.[0])
+      .split(",")
+      .map((column) => column.trim());
+    expect(columns).not.toContain("*");
+    expect(columns.sort()).toEqual(
+      ["categoria_otra", "categorias", "creado_por", "descripcion", "estado", "id", "titulo", "urgencia"].sort(),
+    );
+  });
+
+  it("preselects the saved categorias, not the create-screen default", async () => {
     const { container } = await renderEdit();
 
-    expect(container.querySelector('input[name="categoria"][value="limpieza"]')).toBeChecked();
+    expect(container.querySelector('input[name="categorias"][value="limpieza"]')).toBeChecked();
     expect(
-      container.querySelector('input[name="categoria"][value="reparacion"]'),
+      container.querySelector('input[name="categorias"][value="reparacion"]'),
     ).not.toBeChecked();
+  });
+
+  it("preselects every saved category and the Otro text (ZER-208)", async () => {
+    const { container } = await renderEdit({
+      task: makeTask({ categorias: ["compra", "otro"], categoria_otra: "Jardinería" }),
+    });
+
+    expect(container.querySelector('input[name="categorias"][value="compra"]')).toBeChecked();
+    expect(container.querySelector('input[name="categorias"][value="otro"]')).toBeChecked();
+    expect(screen.getByLabelText("¿Cuál?")).toHaveValue("Jardinería");
   });
 
   it("preselects the saved urgencia, not the create-screen default", async () => {

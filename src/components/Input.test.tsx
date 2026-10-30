@@ -84,3 +84,12 @@ describe("Input", () => {
     expect(screen.getByText("ojo").parentElement).toHaveClass("absolute");
   });
 });
+
+describe("Input on mobile (ZER-176)", () => {
+  it("uses 16px text so iOS Safari does not zoom in on focus", () => {
+    render(<Input name="email" label="Email" />);
+    const input = screen.getByLabelText("Email");
+    expect(input).toHaveClass("text-base");
+    expect(input.className).not.toContain("text-[15px]");
+  });
+});

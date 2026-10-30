@@ -146,16 +146,19 @@ describe("TaskMenu — dismissal and focus (AC6)", () => {
     expect(document.activeElement).toBe(screen.getByRole("menuitem", { name: "Editar" }));
   });
 
-  // During confirmation there are no `menuitem`s left: keeping `role="menu"`
-  // would put a screen reader in an empty menu with a destructive action
+  // The confirmation is the shared pop up (ZER-221): the menu closes, so a
+  // screen reader is never left in an empty menu with a destructive action
   // pending.
-  it("stops claiming to be a menu while it is asking for confirmation", () => {
+  it("closes the menu and asks in a pop up", () => {
     render(<TaskMenu {...OWNER_OPEN} />);
     openMenu();
     fireEvent.click(screen.getByRole("menuitem", { name: "Cancelar tarea" }));
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-    expect(screen.getByRole("dialog", { name: "Confirmar cancelación" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Cancelar tarea" })).toHaveAttribute(
+      "aria-modal",
+      "true",
+    );
   });
 });
 
@@ -183,42 +186,29 @@ describe("TaskMenu — cancelling (AC6)", () => {
 
     expect(screen.getByText("¿Cancelar esta tarea?")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sí, cancelar" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Volver" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Volver" })).not.toBeInTheDocument();
   });
 
   it("submits the task id when the cancellation is confirmed", () => {
-    const { container } = render(<TaskMenu {...OWNER_OPEN} />);
+    render(<TaskMenu {...OWNER_OPEN} />);
     openMenu();
     fireEvent.click(screen.getByRole("menuitem", { name: "Cancelar tarea" }));
 
     const confirm = screen.getByRole("button", { name: "Sí, cancelar" });
     expect(confirm).toHaveAttribute("type", "submit");
     expect(confirm.closest("form")).toBeTruthy();
-    expect(container.querySelector('input[name="taskId"]')).toHaveValue("task-1");
+    expect(document.querySelector('input[name="taskId"]')).toHaveValue("task-1");
   });
 
-  // Measured in the browser: with the menu at 180px the two buttons didn't fit
-  // and "Sí, cancelar" wrapped onto two lines. No class-based test caught it.
-  it("keeps the confirmation labels on a single line", () => {
+  it("backs out with the X without cancelling anything, focus back on the trigger", () => {
     render(<TaskMenu {...OWNER_OPEN} />);
     openMenu();
     fireEvent.click(screen.getByRole("menuitem", { name: "Cancelar tarea" }));
 
-    expect(screen.getByRole("button", { name: "Sí, cancelar" }).className).toContain(
-      "whitespace-nowrap",
-    );
-    expect(screen.getByRole("button", { name: "Volver" }).className).toContain("whitespace-nowrap");
-    expect(screen.getByRole("dialog").className).toContain("w-max");
-  });
-
-  it("backs out of the confirmation without cancelling anything", () => {
-    render(<TaskMenu {...OWNER_OPEN} />);
-    openMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Cancelar tarea" }));
-
-    fireEvent.click(screen.getByRole("button", { name: "Volver" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
 
     expect(screen.queryByText("¿Cancelar esta tarea?")).not.toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "Cancelar tarea" })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Más opciones" }));
   });
 });

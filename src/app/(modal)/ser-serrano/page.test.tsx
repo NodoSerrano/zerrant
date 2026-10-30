@@ -83,3 +83,11 @@ describe("SerSerranoPage (ZER-191)", () => {
     await expect(SerSerranoPage()).rejects.toThrow("NEXT_REDIRECT:/auth/login?next=%2Fser-serrano");
   });
 });
+
+describe("SerSerranoPage on mobile (ZER-176)", () => {
+  it("gives the back link a 44px tap target", async () => {
+    asTourist();
+    render(await SerSerranoPage());
+    expect(screen.getByRole("link", { name: "Volver a Inicio" })).toHaveClass("size-11");
+  });
+});

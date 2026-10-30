@@ -23,6 +23,7 @@ type ProjectRow = {
   descripcion: string | null;
   estado: string;
   ingreso: string;
+  archivado_en: string | null;
   creado_por: string | null;
   project_members: RawProjectMember[] | null;
 };
@@ -40,14 +41,14 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   const { data: project } = await supabase
     .from("projects")
     .select(
-      "id, nombre, descripcion, estado, ingreso, creado_por, project_members(profile_id, estado, rol, profiles:profile_id(id, nombre, apellido, apodo, nombre_visible, avatar_url))",
+      "id, nombre, descripcion, estado, ingreso, archivado_en, creado_por, project_members(profile_id, estado, rol, profiles:profile_id(id, nombre, apellido, apodo, nombre_visible, avatar_url))",
     )
     .eq("id", id)
     .maybeSingle();
 
   if (!project?.id) notFound();
 
-  const row = project as unknown as ProjectRow;
+  const row: ProjectRow = project;
 
   const { data: viewerRow } = await supabase
     .from("project_members")
@@ -70,10 +71,10 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   });
 
   const viewerIsAdmin = isProjectAdmin({ viewerMembership });
-  // An open project lets people in directly: there is nothing to review unless
-  // requests from when it required approval are still pending (ZER-197).
+  // Only an approval project has something to review. An open or cerrado one
+  // shows the queue only while old requests are still pending (ZER-197, ZER-151).
   const hasPendingRequests = (row.project_members ?? []).some((m) => m.estado === "pendiente");
-  const showRequestsQueue = viewerIsAdmin && (row.ingreso !== "abierto" || hasPendingRequests);
+  const showRequestsQueue = viewerIsAdmin && (row.ingreso === "aprobacion" || hasPendingRequests);
 
   const viewModel: ProjectDetailViewModel = {
     id: row.id,
@@ -87,6 +88,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     canPromoteMembers: viewerIsAdmin,
     canEdit: viewerIsAdmin,
     canLeave: viewerMembership?.estado === "aprobado",
+    archived: Boolean(row.archivado_en),
   };
 
   return <ProjectDetail project={viewModel} />;

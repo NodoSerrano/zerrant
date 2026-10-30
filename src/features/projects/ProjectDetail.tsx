@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import type { ProjectDetailViewModel } from "./types";
 
 export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) {
-  const badge = getProjectEstadoBadge(project.estado);
+  const badge = getProjectEstadoBadge(project.estado, { archived: project.archived });
   const ingresoLabel = getProjectIngresoLabel(project.ingreso);
   const approval = isProjectIngresoApproval(project.ingreso);
   const memberCount = project.members.length;
@@ -74,6 +74,12 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
       {/* The viewer's own next step comes first, before the member list (ZER-200). */}
       {project.affordance.kind === "join" ? (
         <ProjectJoinButton projectId={project.id} label={project.affordance.label} />
+      ) : null}
+
+      {project.affordance.kind === "closed" ? (
+        <p className="font-body text-sm text-text-muted text-center w-full">
+          Este proyecto no está sumando gente por ahora.
+        </p>
       ) : null}
 
       {project.affordance.kind === "pending" ? (

@@ -46,7 +46,11 @@ export default async function SerSerranoPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-3">
-        <Link href="/" aria-label="Volver a Inicio" className="shrink-0 text-text-primary">
+        <Link
+          href="/"
+          aria-label="Volver a Inicio"
+          className="-ml-2.5 inline-flex size-11 shrink-0 items-center justify-center text-text-primary"
+        >
           <ChevronLeft size={24} />
         </Link>
         <h1 className="font-display text-[22px] font-bold text-text-primary">Ser Serrano</h1>

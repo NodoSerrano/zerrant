@@ -12,7 +12,7 @@ import type { Tier } from "@/features/profile/types";
 import Link from "next/link";
 import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "@/features/membership/request-state";
 import { PublishInterviewSlotForm } from "@/features/membership/PublishInterviewSlotForm";
-import { formatDayKey, formatEventTimeRange } from "@/features/events/day";
+import { AGENDA_TIME_ZONE, formatDayKey, formatEventTimeRange } from "@/features/events/day";
 import {
   groupEventsByRequest,
   historyEstados,
@@ -58,7 +58,8 @@ function formatNoteDate(iso: string): string {
     day: "numeric",
     month: "short",
     year: "numeric",
-    timeZone: "UTC",
+    // The day the admin wrote it in Argentina: in UTC a night note is already tomorrow.
+    timeZone: AGENDA_TIME_ZONE,
   }).format(new Date(iso));
 }
 

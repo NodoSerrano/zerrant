@@ -48,6 +48,8 @@ function createProjectsChain(projects: unknown[]) {
     then: (cb: (v: unknown) => void) => cb(resolveData),
     select: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
+    not: vi.fn().mockReturnThis(),
   };
   return chain;
 }
@@ -77,8 +79,8 @@ function mockSupabase(overrides: { projects?: unknown[]; tier?: string; user?: u
   return client;
 }
 
-async function renderPage() {
-  const element = await ProjectsPage();
+async function renderPage(searchParams: { vista?: string } = {}) {
+  const element = await ProjectsPage({ searchParams: Promise.resolve(searchParams) });
   return render(element);
 }
 
@@ -233,5 +235,71 @@ describe("ProjectsPage", () => {
       'a[href="/nodo/projects/new"][aria-label="Crear proyecto"]',
     );
     expect(fab).toBeTruthy();
+  });
+
+  describe("Archivados (ZER-201)", () => {
+    const archivedRow = {
+      id: "p9",
+      nombre: "Feria vieja",
+      descripcion: null,
+      estado: "en_curso",
+      ingreso: "abierto",
+      archivado_en: "2026-10-20T12:00:00Z",
+      project_members: [],
+    };
+
+    it("keeps archived projects out of the default list", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      const client = mockSupabase();
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
+      await renderPage();
+      const chain = client.getProjectsChain()!;
+      expect(chain.is).toHaveBeenCalledWith("archivado_en", null);
+      expect(chain.not).not.toHaveBeenCalled();
+    });
+
+    it("offers an Archivados section next to the active projects", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+      await renderPage();
+      expect(screen.getByRole("link", { name: "Activos" })).toHaveAttribute(
+        "href",
+        "/nodo/projects",
+      );
+      expect(screen.getByRole("link", { name: "Archivados" })).toHaveAttribute(
+        "href",
+        "/nodo/projects?vista=archivados",
+      );
+    });
+
+    it("lists only archived projects, badged Archivado, under ?vista=archivados", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      const client = mockSupabase({ projects: [archivedRow] });
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
+      await renderPage({ vista: "archivados" });
+      const chain = client.getProjectsChain()!;
+      expect(chain.not).toHaveBeenCalledWith("archivado_en", "is", null);
+      expect(chain.is).not.toHaveBeenCalled();
+      expect(screen.getByText("Feria vieja")).toBeInTheDocument();
+      expect(screen.getByText("Archivado · Pausado")).toBeInTheDocument();
+      expect(screen.queryByText("En curso")).not.toBeInTheDocument();
+    });
+
+    it("does not offer to create a project from the archived section", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ projects: [archivedRow] }),
+      );
+      await renderPage({ vista: "archivados" });
+      expect(screen.queryByRole("link", { name: "Crear proyecto" })).not.toBeInTheDocument();
+    });
+
+    it("explains an empty archived section without a create CTA", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+      await renderPage({ vista: "archivados" });
+      expect(screen.getByText("No hay proyectos archivados.")).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Crear proyecto" })).not.toBeInTheDocument();
+    });
   });
 });

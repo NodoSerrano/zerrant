@@ -16,6 +16,8 @@ interface ProjectCardProps {
   name: string;
   description?: string | null;
   estado: string;
+  /** archivado_en is set: badge reads Archivado · Pausado (ZER-201). */
+  archived?: boolean;
   /** What the viewer can do with this project; entry rules live in the detail (ZER-154). */
   affordance: JoinAffordance;
   members?: ProjectCardMember[];
@@ -28,6 +30,11 @@ const MAX_VISIBLE_MEMBERS = 3;
 function CardAction({ projectId, affordance }: { projectId: string; affordance: JoinAffordance }) {
   if (affordance.kind === "join") {
     return <ProjectJoinButton projectId={projectId} label={affordance.label} compact />;
+  }
+  if (affordance.kind === "closed") {
+    return (
+      <span className="font-body text-xs font-medium text-text-muted">{affordance.label}</span>
+    );
   }
   return (
     <span className="font-body text-xs font-medium text-text-secondary">
@@ -42,12 +49,13 @@ export function ProjectCard({
   name,
   description,
   estado,
+  archived = false,
   affordance,
   members = [],
   memberCount,
   className,
 }: ProjectCardProps) {
-  const badge = getProjectEstadoBadge(estado);
+  const badge = getProjectEstadoBadge(estado, { archived });
   const totalMembers = memberCount ?? members.length;
   const visible = members.slice(0, MAX_VISIBLE_MEMBERS);
   const overflow = Math.max(0, totalMembers - visible.length);

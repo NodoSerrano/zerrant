@@ -91,7 +91,8 @@ function makeTask(overrides: Record<string, unknown> = {}) {
     id: "task-1",
     titulo: "Reparar el caño del baño",
     descripcion: "El caño de abajo de la pileta pierde agua.",
-    categoria: "reparacion",
+    categorias: ["reparacion"],
+    categoria_otra: null,
     urgencia: "alta",
     estado: "abierta",
     creado_por: CREATOR.id,
@@ -152,6 +153,13 @@ describe("TaskDetailPage — profile reads (ZER-194)", () => {
     expect(profileSelects.length).toBeGreaterThan(0);
     for (const [, columns] of profileSelects) expect(columns).not.toContain("*");
   });
+
+  it("reads the task by named columns too, never * (ZER-220)", async () => {
+    await renderDetail({ viewerId: CREATOR.id });
+
+    const taskSelect = mocks.selects.find(([table]) => table === "tasks")?.[1] ?? "";
+    expect(taskSelect).not.toContain("*");
+  });
 });
 
 describe("TaskDetailPage — header row (AC1)", () => {
@@ -202,10 +210,20 @@ describe("TaskDetailPage — title block (AC2)", () => {
     expect(icon.parentElement!.className).toContain("bg-warm-yellow/[0.09]");
   });
 
-  it("picks the icon from the categoria", async () => {
-    const { container } = await renderDetail({ task: makeTask({ categoria: "compra" }) });
+  it("picks the icon from the first category", async () => {
+    const { container } = await renderDetail({
+      task: makeTask({ categorias: ["compra", "limpieza"] }),
+    });
 
     expect(container.querySelector("svg.lucide-shopping-cart")).toBeTruthy();
+  });
+
+  it("lists every category, with the Otro text instead of Otro (ZER-208)", async () => {
+    await renderDetail({
+      task: makeTask({ categorias: ["compra", "otro"], categoria_otra: "Jardinería" }),
+    });
+
+    expect(screen.getByText("Compra, Jardinería")).toBeInTheDocument();
   });
 
   it("renders the task title at 20px bold display", async () => {

@@ -235,6 +235,30 @@ describe("ProjectDetailPage", () => {
     expect(screen.queryByRole("link", { name: "Solicitudes de ingreso" })).not.toBeInTheDocument();
   });
 
+  it("hides the requests queue from admins of a cerrado project with nothing pending (ZER-151)", async () => {
+    mockClient({
+      project: {
+        ...sampleProject,
+        ingreso: "cerrado",
+        project_members: sampleProject.project_members.filter((m) => m.estado !== "pendiente"),
+      },
+      viewerMembership: { estado: "aprobado", rol: "admin" },
+    });
+    const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
+    render(ui);
+    expect(screen.queryByRole("link", { name: "Solicitudes de ingreso" })).not.toBeInTheDocument();
+  });
+
+  it("offers no way in to an outsider of a cerrado project (ZER-151)", async () => {
+    mockClient({ project: { ...sampleProject, ingreso: "cerrado" }, viewerMembership: null });
+    const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
+    render(ui);
+    expect(screen.getByText("Este proyecto no está sumando gente por ahora.")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Unirme|Solicitar unirme/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps the queue on an open project while old requests are still pending", async () => {
     mockClient({
       project: { ...sampleProject, ingreso: "abierto" },
@@ -256,7 +280,7 @@ describe("ProjectDetailPage", () => {
     expect(screen.queryByRole("link", { name: "Editar proyecto" })).not.toBeInTheDocument();
   });
 
-  it("shows the archived estado on the detail view", async () => {
+  it("keeps Terminado for a project that really finished", async () => {
     mockClient({
       project: {
         ...sampleProject,
@@ -271,5 +295,21 @@ describe("ProjectDetailPage", () => {
     expect(screen.getByText("Lote 3 ampliado")).toBeInTheDocument();
     expect(screen.getByText("Terminado")).toBeInTheDocument();
     expect(screen.getByText("Abierto")).toBeInTheDocument();
+  });
+
+  it("shows Archivado, not Terminado, for an archived project that was En curso (ZER-201)", async () => {
+    mockClient({
+      project: {
+        ...sampleProject,
+        estado: "en_curso",
+        archivado_en: "2026-10-20T12:00:00Z",
+      },
+      viewerMembership: { estado: "aprobado", rol: "admin" },
+    });
+    const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
+    render(ui);
+    expect(screen.getByText("Archivado · Pausado")).toBeInTheDocument();
+    expect(screen.queryByText("Terminado")).not.toBeInTheDocument();
+    expect(screen.queryByText("En curso")).not.toBeInTheDocument();
   });
 });

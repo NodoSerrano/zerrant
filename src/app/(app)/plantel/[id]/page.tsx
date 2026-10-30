@@ -51,7 +51,7 @@ export default async function PlantelMemberPage({ params }: { params: Promise<{ 
     // Only aprobado memberships — pendiente must never leak into the list.
     supabase
       .from("project_members")
-      .select("project_id, projects:project_id(id, nombre)")
+      .select("project_id, projects:project_id(id, nombre, archivado_en)")
       .eq("profile_id", id)
       .eq("estado", "aprobado")
       .order("created_at", { ascending: false }),
@@ -59,15 +59,17 @@ export default async function PlantelMemberPage({ params }: { params: Promise<{ 
 
   const aportes = (aporteRows ?? []) as AporteListItem[];
 
+  type MemberProjectRow = { id: string; nombre: string; archivado_en: string | null };
   type ProjectMemberJoin = {
     project_id: string;
-    projects: { id: string; nombre: string } | { id: string; nombre: string }[] | null;
+    projects: MemberProjectRow | MemberProjectRow[] | null;
   };
 
   const proyectos: MemberProjectPreview[] = ((projectMemberRows ?? []) as ProjectMemberJoin[])
     .map((row) => {
       const project = Array.isArray(row.projects) ? row.projects[0] : row.projects;
-      if (!project?.id || !project.nombre) return null;
+      // Archived projects leave every list but Proyectos > Archivados (ZER-201).
+      if (!project?.id || !project.nombre || project.archivado_en) return null;
       return { id: project.id, nombre: project.nombre };
     })
     .filter((row): row is MemberProjectPreview => row !== null);

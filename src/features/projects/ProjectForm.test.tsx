@@ -60,6 +60,22 @@ describe("ProjectForm — frame 4.4 fields", () => {
     expect(radio("Idea").defaultChecked || radio("Idea").checked).toBe(true);
   });
 
+  it("does not offer Terminado or Pausado when creating a project (ZER-201)", () => {
+    render(
+      <ProjectForm
+        action={async () => null}
+        submitLabel="Crear proyecto"
+        pendingLabel="Creando..."
+        creating
+      />,
+    );
+
+    expect(screen.queryByRole("radio", { name: "Terminado" })).not.toBeInTheDocument();
+    expect(radio("Idea").value).toBe("idea");
+    expect(radio("En curso").value).toBe("en_curso");
+    expect(screen.queryByRole("radio", { name: "Pausado" })).not.toBeInTheDocument();
+  });
+
   it("exposes ingreso options with unaccented stored values and frame labels", () => {
     render(
       <ProjectForm
@@ -73,6 +89,9 @@ describe("ProjectForm — frame 4.4 fields", () => {
     expect(radio("Por aprobación").value).toBe("aprobacion");
     expect(screen.getByText("Cualquier serrano se une al toque")).toBeTruthy();
     expect(screen.getByText("Vos aprobás cada ingreso")).toBeTruthy();
+    // ZER-151: the third way, a project that does not take people.
+    expect(radio("Cerrado").value).toBe("cerrado");
+    expect(screen.getByText("No acepta gente nueva por ahora")).toBeTruthy();
     expect(radio("Por aprobación").defaultChecked || radio("Por aprobación").checked).toBe(true);
   });
 

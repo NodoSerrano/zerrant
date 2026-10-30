@@ -39,6 +39,10 @@ function radio(name: string) {
   return screen.getByRole("radio", { name }) as HTMLInputElement;
 }
 
+function checkbox(name: string) {
+  return screen.getByRole("checkbox", { name }) as HTMLInputElement;
+}
+
 describe("NewTaskForm — header (AC1)", () => {
   it("renders the title 'Nueva tarea' with Pencil typography", () => {
     render(<NewTaskForm />);
@@ -196,30 +200,32 @@ describe("NewTaskForm — Category (AC4)", () => {
     expect(label.className).toContain("text-text-secondary");
   });
 
-  it("renders exactly the five Pencil options as a radio group named 'categoria'", () => {
+  it("renders the five options as checkboxes named 'categorias' (ZER-208)", () => {
     render(<NewTaskForm />);
 
     for (const [label, value] of CATEGORIAS) {
-      const input = radio(label);
-      expect(input).toHaveAttribute("name", "categoria");
+      const input = checkbox(label);
+      expect(input).toHaveAttribute("name", "categorias");
       expect(input.value).toBe(value);
     }
 
-    const all = screen.getAllByRole("radio").filter((r) => r.getAttribute("name") === "categoria");
+    const all = screen
+      .getAllByRole("checkbox")
+      .filter((r) => r.getAttribute("name") === "categorias");
     expect(all).toHaveLength(5);
   });
 
   it("preselects 'Reparación' to match Pencil", () => {
     render(<NewTaskForm />);
 
-    expect(radio("Reparación").checked).toBe(true);
-    expect(radio("Limpieza").checked).toBe(false);
+    expect(checkbox("Reparación").checked).toBe(true);
+    expect(checkbox("Limpieza").checked).toBe(false);
   });
 
   it("styles each option as a Pencil pill (rounded-pill, px-[14px] py-2, display 13/500)", () => {
     render(<NewTaskForm />);
 
-    const pill = radio("Limpieza").closest("label");
+    const pill = checkbox("Limpieza").closest("label");
     expect(pill?.className).toContain("rounded-pill");
     expect(pill?.className).toContain("px-[14px]");
     expect(pill?.className).toContain("py-2");
@@ -231,7 +237,7 @@ describe("NewTaskForm — Category (AC4)", () => {
   it("gives the unselected pill surface+border and the selected pill primary", () => {
     render(<NewTaskForm />);
 
-    const pill = radio("Limpieza").closest("label");
+    const pill = checkbox("Limpieza").closest("label");
     expect(pill?.className).toContain("bg-surface");
     expect(pill?.className).toContain("border-border");
     expect(pill?.className).toContain("text-text-secondary");
@@ -245,18 +251,32 @@ describe("NewTaskForm — Category (AC4)", () => {
   it("wraps the pills so they break into the Pencil 3+2 rows", () => {
     render(<NewTaskForm />);
 
-    const row = radio("Reparación").closest("label")?.parentElement;
+    const row = checkbox("Reparación").closest("label")?.parentElement;
     expect(row?.className).toContain("flex-wrap");
     expect(row?.className).toContain("gap-2");
   });
 
-  it("lets the user pick another category", () => {
+  it("lets the user pick several categories (ZER-208)", () => {
     render(<NewTaskForm />);
 
-    fireEvent.click(radio("Compra"));
+    fireEvent.click(checkbox("Compra"));
 
-    expect(radio("Compra").checked).toBe(true);
-    expect(radio("Reparación").checked).toBe(false);
+    expect(checkbox("Compra").checked).toBe(true);
+    expect(checkbox("Reparación").checked).toBe(true);
+  });
+
+  it("asks which one only while Otro is checked (ZER-208)", () => {
+    render(<NewTaskForm />);
+    expect(screen.queryByLabelText("¿Cuál?")).not.toBeInTheDocument();
+
+    fireEvent.click(checkbox("Otro"));
+    const otra = screen.getByLabelText("¿Cuál?");
+    expect(otra).toHaveAttribute("name", "categoria_otra");
+    expect(otra).toBeRequired();
+    expect(otra).toHaveAttribute("maxLength", "40");
+
+    fireEvent.click(checkbox("Otro"));
+    expect(screen.queryByLabelText("¿Cuál?")).not.toBeInTheDocument();
   });
 });
 

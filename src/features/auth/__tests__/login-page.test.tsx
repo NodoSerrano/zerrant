@@ -222,3 +222,11 @@ describe("LoginPage", () => {
     expect(screen.getByText(/El enlace expiró o ya se usó/i)).toBeInTheDocument();
   });
 });
+
+describe("LoginPage autofill (ZER-176)", () => {
+  it("lets the phone's password manager fill the saved account", () => {
+    render(<LoginPage />);
+    expect(screen.getByLabelText("Email")).toHaveAttribute("autoComplete", "email");
+    expect(screen.getByLabelText("Contraseña")).toHaveAttribute("autoComplete", "current-password");
+  });
+});

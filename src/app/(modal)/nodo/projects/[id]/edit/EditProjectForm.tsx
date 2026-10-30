@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 import { ProjectForm } from "@/features/projects/ProjectForm";
-import { archiveProject, updateProject } from "@/features/projects/actions";
+import { archiveProject, unarchiveProject, updateProject } from "@/features/projects/actions";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { FormFeedback } from "@/components/FormFeedback";
 
 interface EditProjectFormProps {
   projectId: string;
+  /** Already archived: nothing left to archive (ZER-201). */
+  archived?: boolean;
   defaults: {
     nombre: string;
     descripcion: string;
@@ -18,9 +20,27 @@ interface EditProjectFormProps {
   };
 }
 
-export function EditProjectForm({ projectId, defaults }: EditProjectFormProps) {
+export function EditProjectForm({ projectId, archived = false, defaults }: EditProjectFormProps) {
   const [confirming, setConfirming] = useState(false);
   const [archiveState, archiveAction, archivePending] = useGuardedActionState(archiveProject, null);
+  const [unarchiveState, unarchiveAction, unarchivePending] = useGuardedActionState(
+    unarchiveProject,
+    null,
+  );
+
+  // Cancel = X, tap outside or Escape; the only button is "Sí, archivar" (ZER-201).
+  const cancel = () => {
+    if (!archivePending) setConfirming(false);
+  };
+
+  useEffect(() => {
+    if (!confirming) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !archivePending) setConfirming(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [confirming, archivePending]);
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -44,49 +64,76 @@ export function EditProjectForm({ projectId, defaults }: EditProjectFormProps) {
         hiddenFields={{ projectId }}
       />
 
-      <div className="flex w-full flex-col items-center gap-3 pt-1">
-        <button
-          type="button"
-          aria-expanded={confirming}
-          aria-controls="archive-confirm"
-          onClick={() => setConfirming(true)}
-          className="inline-flex items-center justify-center font-display text-[15px] font-medium text-coral focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
+      {archived ? (
+        <form action={unarchiveAction} className="flex w-full flex-col items-center gap-3 pt-1">
+          <input type="hidden" name="projectId" value={projectId} />
+          <FormFeedback error={unarchiveState?.error} />
+          <button
+            type="submit"
+            disabled={unarchivePending}
+            className="inline-flex items-center justify-center font-display text-[15px] font-medium text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
+          >
+            {unarchivePending ? "Desarchivando..." : "Desarchivar proyecto"}
+          </button>
+        </form>
+      ) : (
+        <div className="flex w-full flex-col items-center gap-3 pt-1">
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            onClick={() => setConfirming(true)}
+            className="inline-flex items-center justify-center font-display text-[15px] font-medium text-coral focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
+          >
+            Archivar proyecto
+          </button>
+        </div>
+      )}
+
+      {confirming ? (
+        <div
+          data-testid="archive-backdrop"
+          onClick={cancel}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-5"
         >
-          Archivar proyecto
-        </button>
-        {confirming ? (
           <form
-            id="archive-confirm"
             action={archiveAction}
-            className="flex w-full flex-col gap-3 rounded-2xl border border-border bg-surface p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="archive-confirm-title"
+            onClick={(event) => event.stopPropagation()}
+            className="relative flex w-full max-w-lg flex-col gap-3 rounded-2xl border border-border bg-surface p-4 pr-12"
           >
             <input type="hidden" name="projectId" value={projectId} />
+            <button
+              type="button"
+              aria-label="Cancelar"
+              disabled={archivePending}
+              onClick={cancel}
+              className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full text-text-secondary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
+            >
+              <X className="size-5" aria-hidden="true" />
+            </button>
+            <h2
+              id="archive-confirm-title"
+              className="font-display text-[15px] font-semibold text-text-primary"
+            >
+              Archivar proyecto
+            </h2>
             <p className="font-body text-sm text-text-primary">
-              El proyecto queda como Terminado. Los miembros y las solicitudes de ingreso siguen en
-              este proyecto. Terminado no bloquea el proyecto: un admin puede volver a Idea o En
-              curso.
+              Queda Pausado, deja de aparecer en Proyectos y pasa a Archivados. Los miembros y las
+              solicitudes de ingreso siguen en este proyecto.
             </p>
             <FormFeedback error={archiveState?.error} />
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={archivePending}
-                className="flex-1 whitespace-nowrap rounded-pill bg-coral/10 px-3 py-2 font-display text-[13px] font-semibold text-on-coral-tint focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
-              >
-                {archivePending ? "Archivando..." : "Sí, archivar"}
-              </button>
-              <button
-                type="button"
-                disabled={archivePending}
-                onClick={() => setConfirming(false)}
-                className="flex-1 whitespace-nowrap rounded-pill border border-border px-3 py-2 font-display text-[13px] font-semibold text-text-secondary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
-              >
-                Volver
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={archivePending}
+              className="w-full whitespace-nowrap rounded-pill bg-coral/10 px-3 py-2 font-display text-[13px] font-semibold text-on-coral-tint focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
+            >
+              {archivePending ? "Archivando..." : "Sí, archivar"}
+            </button>
           </form>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }

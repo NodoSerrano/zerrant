@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
 import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 import { displayName } from "@/features/profile/displayName";
 import type { NombreVisible } from "@/features/profile/types";
-import { ESTADO_BADGE, getCategoriaLabel } from "@/features/tasks/taskDisplay";
+import { ESTADO_BADGE } from "@/features/tasks/taskDisplay";
+import { formatCategorias } from "@/features/tasks/categorias";
 import type { TaskEstado } from "@/features/tasks/types";
 
 // The pill labels come from the same place as the chip labels, so a state
@@ -163,7 +164,7 @@ export default async function TasksPage({
               key={task.id}
               href={`/nodo/tasks/${task.id}`}
               title={task.titulo}
-              category={getCategoriaLabel(task.categoria)}
+              category={formatCategorias(task.categorias ?? [], task.categoria_otra)}
               timeAgo={relativeTime(task.created_at)}
               estado={toCardEstado(task.estado)}
               urgencia={task.urgencia ?? "media"}

@@ -48,3 +48,17 @@ describe("ResetPasswordPage", () => {
     expect(await screen.findByText("Las contraseñas no coinciden")).toBeInTheDocument();
   });
 });
+
+describe("ResetPasswordPage autofill (ZER-176)", () => {
+  it("lets the password manager suggest and save the new password", () => {
+    render(<ResetPasswordPage />);
+    expect(screen.getByLabelText("Nueva contraseña")).toHaveAttribute(
+      "autoComplete",
+      "new-password",
+    );
+    expect(screen.getByLabelText("Repetir contraseña")).toHaveAttribute(
+      "autoComplete",
+      "new-password",
+    );
+  });
+});
