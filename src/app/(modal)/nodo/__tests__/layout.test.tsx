@@ -2,20 +2,17 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  getUser: vi.fn(),
-  profileMaybeSingle: vi.fn(),
+  getOnboardingGateProfile: vi.fn(),
   canApply: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn().mockResolvedValue({
-    auth: { getUser: mocks.getUser },
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({ maybeSingle: mocks.profileMaybeSingle })),
-      })),
-    })),
-  }),
+  createClient: vi.fn().mockResolvedValue({}),
+}));
+
+// The gate reads the same cached profile as the (app) layout's Actividad tab (ZER-206).
+vi.mock("@/features/profile/onboarding-gate-server", () => ({
+  getOnboardingGateProfile: mocks.getOnboardingGateProfile,
 }));
 
 vi.mock("@/features/membership/ser-serrano-cta-server", () => ({
@@ -47,8 +44,7 @@ async function renderLayout() {
 }
 
 function viewer(profile: { tier: string; is_platform_admin?: boolean } | null) {
-  mocks.getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
-  mocks.profileMaybeSingle.mockResolvedValue({ data: profile, error: null });
+  mocks.getOnboardingGateProfile.mockResolvedValue({ profile, error: null, userId: "u1" });
 }
 
 beforeEach(() => {
@@ -98,10 +94,21 @@ describe("Nodo layout (ZER-204)", () => {
   });
 
   it("leaves signed-out visitors to the pages (the proxy sends them to login)", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: null } });
+    mocks.getOnboardingGateProfile.mockResolvedValue({ profile: null, error: null, userId: null });
     await renderLayout();
 
     expect(screen.getByText("contenido del nodo")).toBeInTheDocument();
-    expect(mocks.profileMaybeSingle).not.toHaveBeenCalled();
+    expect(mocks.canApply).not.toHaveBeenCalled();
+  });
+
+  it("soft-allows when the profile cannot be read, like the Actividad tab (ZER-206)", async () => {
+    mocks.getOnboardingGateProfile.mockResolvedValue({
+      profile: null,
+      error: { code: "500", message: "boom" },
+      userId: "u1",
+    });
+    await renderLayout();
+
+    expect(screen.getByText("contenido del nodo")).toBeInTheDocument();
   });
 });

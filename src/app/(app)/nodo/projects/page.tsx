@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { ChevronLeft, FolderOpen, Plus } from "lucide-react";
+import { FolderOpen, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/EmptyState";
 import { NodoTabs } from "@/components/NodoTabs";
 import { ProjectCard } from "@/components/ProjectCard";
 import { cn } from "@/lib/utils";
+import { FAB_ABOVE_TAB_BAR_CLASS } from "@/components/tabBarLayout";
 import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 import { resolveJoinAffordance, type ViewerMembership } from "@/features/projects/membership";
 
@@ -109,24 +110,10 @@ export default async function ProjectsPage({
 
   return (
     <div className="flex flex-col gap-5 relative">
-      <div className="flex items-center justify-between w-full">
-        <Link
-          href="/"
-          aria-label="Volver a Inicio"
-          className="flex items-center justify-center shrink-0"
-        >
-          <ChevronLeft size={24} className="text-text-primary" />
-        </Link>
-        <h1 className="font-display text-2xl font-bold text-text-primary">Nodo</h1>
-        <span aria-hidden="true" className="size-6 shrink-0" />
-      </div>
+      {/* TabBar destination (ZER-206): no back link, title only. */}
+      <h1 className="font-display text-2xl font-bold text-text-primary">Proyectos y Tareas</h1>
 
-      <div className="flex flex-col gap-1">
-        <p className="font-body text-[13px] text-text-secondary">
-          Tareas y proyectos de la comunidad
-        </p>
-        <NodoTabs active="proyectos" />
-      </div>
+      <NodoTabs active="proyectos" />
 
       <div className="flex gap-2 overflow-x-auto pb-1">
         {VISTAS.map((option) => (
@@ -192,7 +179,8 @@ export default async function ProjectsPage({
         <Link
           href="/nodo/projects/new"
           className={cn(
-            "fixed bottom-6 right-5 z-40",
+            "fixed right-5 z-40",
+            FAB_ABOVE_TAB_BAR_CLASS,
             "size-14 rounded-full",
             BRAND_GRADIENT_CLASS,
             "shadow-[0_4px_14px_rgba(26,22,20,0.25)]",
