@@ -31,6 +31,11 @@ function CardAction({ projectId, affordance }: { projectId: string; affordance: 
   if (affordance.kind === "join") {
     return <ProjectJoinButton projectId={projectId} label={affordance.label} compact />;
   }
+  if (affordance.kind === "closed") {
+    return (
+      <span className="font-body text-xs font-medium text-text-muted">{affordance.label}</span>
+    );
+  }
   return (
     <span className="font-body text-xs font-medium text-text-secondary">
       {affordance.kind === "pending" ? affordance.label : "Participás"}

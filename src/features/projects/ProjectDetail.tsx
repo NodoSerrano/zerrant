@@ -76,6 +76,12 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
         <ProjectJoinButton projectId={project.id} label={project.affordance.label} />
       ) : null}
 
+      {project.affordance.kind === "closed" ? (
+        <p className="font-body text-sm text-text-muted text-center w-full">
+          Este proyecto no está sumando gente por ahora.
+        </p>
+      ) : null}
+
       {project.affordance.kind === "pending" ? (
         <p className="font-body text-sm text-text-muted text-center w-full">
           {project.affordance.label}

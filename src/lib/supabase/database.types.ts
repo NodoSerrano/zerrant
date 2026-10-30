@@ -1108,7 +1108,7 @@ export type Database = {
       membership_situacion_actual: "estudio" | "trabajo" | "estudio_trabajo" | "ninguno" | "otra";
       nombre_visible: "apodo" | "nombre_apellido" | "apellido_nombre";
       project_estado: "idea" | "en_curso" | "pausado" | "terminado";
-      project_ingreso: "abierto" | "aprobacion";
+      project_ingreso: "abierto" | "aprobacion" | "cerrado";
       project_member_estado: "pendiente" | "aprobado";
       project_member_rol: "miembro" | "admin";
       skill_estado: "aprobada" | "pendiente";
@@ -1290,7 +1290,7 @@ export const Constants = {
       membership_situacion_actual: ["estudio", "trabajo", "estudio_trabajo", "ninguno", "otra"],
       nombre_visible: ["apodo", "nombre_apellido", "apellido_nombre"],
       project_estado: ["idea", "en_curso", "pausado", "terminado"],
-      project_ingreso: ["abierto", "aprobacion"],
+      project_ingreso: ["abierto", "aprobacion", "cerrado"],
       project_member_estado: ["pendiente", "aprobado"],
       project_member_rol: ["miembro", "admin"],
       skill_estado: ["aprobada", "pendiente"],

@@ -71,10 +71,10 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   });
 
   const viewerIsAdmin = isProjectAdmin({ viewerMembership });
-  // An open project lets people in directly: there is nothing to review unless
-  // requests from when it required approval are still pending (ZER-197).
+  // Only an approval project has something to review. An open or cerrado one
+  // shows the queue only while old requests are still pending (ZER-197, ZER-151).
   const hasPendingRequests = (row.project_members ?? []).some((m) => m.estado === "pendiente");
-  const showRequestsQueue = viewerIsAdmin && (row.ingreso !== "abierto" || hasPendingRequests);
+  const showRequestsQueue = viewerIsAdmin && (row.ingreso === "aprobacion" || hasPendingRequests);
 
   const viewModel: ProjectDetailViewModel = {
     id: row.id,

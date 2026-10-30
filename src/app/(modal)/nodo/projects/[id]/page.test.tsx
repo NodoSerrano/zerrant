@@ -235,6 +235,30 @@ describe("ProjectDetailPage", () => {
     expect(screen.queryByRole("link", { name: "Solicitudes de ingreso" })).not.toBeInTheDocument();
   });
 
+  it("hides the requests queue from admins of a cerrado project with nothing pending (ZER-151)", async () => {
+    mockClient({
+      project: {
+        ...sampleProject,
+        ingreso: "cerrado",
+        project_members: sampleProject.project_members.filter((m) => m.estado !== "pendiente"),
+      },
+      viewerMembership: { estado: "aprobado", rol: "admin" },
+    });
+    const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
+    render(ui);
+    expect(screen.queryByRole("link", { name: "Solicitudes de ingreso" })).not.toBeInTheDocument();
+  });
+
+  it("offers no way in to an outsider of a cerrado project (ZER-151)", async () => {
+    mockClient({ project: { ...sampleProject, ingreso: "cerrado" }, viewerMembership: null });
+    const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
+    render(ui);
+    expect(screen.getByText("Este proyecto no está sumando gente por ahora.")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Unirme|Solicitar unirme/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps the queue on an open project while old requests are still pending", async () => {
     mockClient({
       project: { ...sampleProject, ingreso: "abierto" },

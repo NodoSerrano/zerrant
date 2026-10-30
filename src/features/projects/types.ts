@@ -45,6 +45,11 @@ export const PROJECT_INGRESO_OPTIONS = [
     label: "Por aprobación",
     description: "Vos aprobás cada ingreso",
   },
+  {
+    value: "cerrado",
+    label: "Cerrado",
+    description: "No acepta gente nueva por ahora",
+  },
 ] as const satisfies ReadonlyArray<{
   value: ProjectIngreso;
   label: string;

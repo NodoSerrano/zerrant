@@ -52,6 +52,28 @@ describe("resolveJoinAffordance", () => {
     ).toEqual({ kind: "none" });
   });
 
+  it("offers no way in to a cerrado project (ZER-151)", () => {
+    expect(resolveJoinAffordance({ ingreso: "cerrado", viewerMembership: null })).toEqual({
+      kind: "closed",
+      label: "Cerrado",
+    });
+  });
+
+  it("still tells members and pending applicants of a cerrado project where they stand", () => {
+    expect(
+      resolveJoinAffordance({
+        ingreso: "cerrado",
+        viewerMembership: { estado: "aprobado", rol: "miembro" },
+      }),
+    ).toEqual({ kind: "none" });
+    expect(
+      resolveJoinAffordance({
+        ingreso: "cerrado",
+        viewerMembership: { estado: "pendiente", rol: "miembro" },
+      }),
+    ).toEqual({ kind: "pending", label: "Solicitud pendiente" });
+  });
+
   it("treats only aprobado + admin as project admin for the queue entry", () => {
     expect(
       isProjectAdmin({

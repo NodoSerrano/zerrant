@@ -102,6 +102,23 @@ describe("ProjectDetail", () => {
     expect(screen.getByText("2")).toBeInTheDocument();
   });
 
+  it("explains a cerrado project instead of offering to join (ZER-151)", () => {
+    render(
+      <ProjectDetail
+        project={{
+          ...baseProject,
+          ingreso: "cerrado",
+          affordance: { kind: "closed", label: "Cerrado" },
+        }}
+      />,
+    );
+    expect(screen.getByText("Cerrado")).toBeInTheDocument();
+    expect(screen.getByText("Este proyecto no está sumando gente por ahora.")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Unirme|Solicitar unirme/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("shows Archivado, not Terminado, on an archived project (ZER-201)", () => {
     render(<ProjectDetail project={{ ...baseProject, archived: true }} />);
     expect(screen.getByText("Archivado · Pausado")).toBeInTheDocument();

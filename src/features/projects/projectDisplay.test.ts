@@ -31,6 +31,8 @@ describe("projectDisplay", () => {
   it("labels ingreso modes from Pencil copy", () => {
     expect(getProjectIngresoLabel("abierto")).toBe("Abierto");
     expect(getProjectIngresoLabel("aprobacion")).toBe("Por aprobación");
+    expect(getProjectIngresoLabel("cerrado")).toBe("Cerrado");
+    expect(isProjectIngresoApproval("cerrado")).toBe(false);
     expect(isProjectIngresoApproval("aprobacion")).toBe(true);
     expect(isProjectIngresoApproval("abierto")).toBe(false);
   });
