@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { normalizeSkillName, parseSkillItems } from "./skills";
+import { dedupeSkillNames, normalizeSkillName } from "./skills";
 
 const DB_ERROR = "No pudimos guardar tus habilidades. Probá de nuevo.";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -27,7 +27,7 @@ async function memberContext() {
   return { supabase, isAdmin: profile.is_platform_admin === true };
 }
 
-/** Replaces the caller's skills, each with optional level and years (ZER-163). */
+/** Replaces the caller's skills; a member skill is only its name (ZER-216). */
 export async function saveProfileSkills(
   _prevState: { error: string } | null,
   formData: FormData,
@@ -36,8 +36,12 @@ export async function saveProfileSkills(
   if (!context) return { error: "No autorizado" };
   const { supabase } = context;
 
-  const parsed = parseSkillItems(formData.get("items"));
-  if ("error" in parsed) return { error: parsed.error };
+  const names = dedupeSkillNames(
+    formData
+      .getAll("skill")
+      .map((value) => normalizeSkillName(String(value)))
+      .filter((name): name is string => name !== null),
+  );
 
   // Only approved skills can sit on a profile; pending proposals wait for an admin.
   const { data: catalog, error: catalogError } = await supabase
@@ -55,22 +59,10 @@ export async function saveProfileSkills(
     idByName.set(skill.nombre.toLocaleLowerCase(), skill.id);
   }
 
-  const items = parsed.items.flatMap((item) => {
-    const skillId = idByName.get(item.nombre.toLocaleLowerCase());
-    return skillId
-      ? [
-          {
-            skill_id: skillId,
-            nivel: item.nivel,
-            anios_freelance: item.anios_freelance,
-            anios_empresa: item.anios_empresa,
-          },
-        ]
-      : [];
-  });
+  const skillIds = names.flatMap((name) => idByName.get(name.toLocaleLowerCase()) ?? []);
 
   const { data, error: rpcError } = await supabase.rpc("save_profile_skills", {
-    p_items: items,
+    p_skill_ids: skillIds,
   });
 
   if (rpcError) {

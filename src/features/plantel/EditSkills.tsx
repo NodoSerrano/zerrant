@@ -5,19 +5,11 @@ import Link from "next/link";
 import { ChevronLeft, Clock, Plus, X } from "lucide-react";
 import { FormFeedback } from "@/components/FormFeedback";
 import { proposeSkill, saveProfileSkills } from "./skills-actions";
-import {
-  normalizeSkillName,
-  SKILL_MAX_ANIOS,
-  SKILL_NIVEL_LABELS,
-  SKILL_NIVELES,
-  suggestSkills,
-  type SkillItem,
-  type SkillNivel,
-} from "./skills";
+import { normalizeSkillName, suggestSkills } from "./skills";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 
 interface EditSkillsProps {
-  initialSkills: SkillItem[];
+  initialSkills: string[];
   /** Approved catalog names. */
   catalog: string[];
   /** The member's own proposals still waiting for an admin (ZER-163). */
@@ -26,41 +18,24 @@ interface EditSkillsProps {
 
 const sameName = (a: string, b: string) => a.toLocaleLowerCase() === b.toLocaleLowerCase();
 
-function yearsValue(raw: string): number | null {
-  if (raw.trim() === "") return null;
-  const n = Number(raw);
-  return Number.isFinite(n) ? n : null;
-}
-
 export function EditSkills({ initialSkills, catalog, pendingProposals }: EditSkillsProps) {
   const [state, formAction, pending] = useGuardedActionState(saveProfileSkills, null);
   const [proposeState, proposeAction, proposing] = useGuardedActionState(proposeSkill, null);
-  const [selected, setSelected] = useState<SkillItem[]>(initialSkills);
+  const [selected, setSelected] = useState<string[]>(initialSkills);
   const [query, setQuery] = useState("");
 
-  const selectedNames = selected.map((item) => item.nombre);
-  const suggestions = suggestSkills(catalog, selectedNames, query);
+  const suggestions = suggestSkills(catalog, selected, query);
   const proposal = normalizeSkillName(query);
   const canPropose =
     proposal !== null &&
     ![...catalog, ...pendingProposals].some((name) => sameName(name, proposal));
 
   function add(nombre: string) {
-    setSelected((prev) =>
-      prev.some((item) => sameName(item.nombre, nombre))
-        ? prev
-        : [...prev, { nombre, nivel: null, anios_freelance: null, anios_empresa: null }],
-    );
+    setSelected((prev) => (prev.some((name) => sameName(name, nombre)) ? prev : [...prev, nombre]));
   }
 
   function remove(nombre: string) {
-    setSelected((prev) => prev.filter((item) => !sameName(item.nombre, nombre)));
-  }
-
-  function update(nombre: string, patch: Partial<SkillItem>) {
-    setSelected((prev) =>
-      prev.map((item) => (sameName(item.nombre, nombre) ? { ...item, ...patch } : item)),
-    );
+    setSelected((prev) => prev.filter((name) => !sameName(name, nombre)));
   }
 
   return (
@@ -90,7 +65,9 @@ export function EditSkills({ initialSkills, catalog, pendingProposals }: EditSki
         </p>
       </div>
 
-      <input type="hidden" name="items" value={JSON.stringify(selected)} />
+      {selected.map((name) => (
+        <input key={name} type="hidden" name="skill" value={name} />
+      ))}
 
       <div className="flex items-center gap-2.5 h-[50px] rounded-2xl border border-border bg-surface px-4">
         <Plus size={18} className="text-text-muted shrink-0" />
@@ -110,11 +87,11 @@ export function EditSkills({ initialSkills, catalog, pendingProposals }: EditSki
 
       {canPropose && proposal ? (
         <div className="flex flex-col gap-1.5">
+          {/* React overrides `name` on a button whose formAction is a function (ZER-223). */}
+          <input type="hidden" name="propuesta" value={proposal} />
           <button
             type="submit"
             formAction={proposeAction}
-            name="propuesta"
-            value={proposal}
             disabled={proposing}
             className="inline-flex w-fit items-center gap-1.5 rounded-pill border border-border bg-surface px-3 py-[7px] font-body text-[13px] font-medium text-text-primary disabled:opacity-50"
           >
@@ -129,86 +106,20 @@ export function EditSkills({ initialSkills, catalog, pendingProposals }: EditSki
       <FormFeedback error={proposeState?.error} success={proposeState?.success} />
 
       {selected.length > 0 && (
-        <ul className="flex flex-col gap-2.5">
-          {selected.map((item) => (
-            <li
-              key={item.nombre}
-              className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-3.5"
+        <div className="flex flex-wrap gap-2">
+          {selected.map((name) => (
+            <button
+              key={name}
+              type="button"
+              onClick={() => remove(name)}
+              aria-label={`Quitar ${name}`}
+              className="inline-flex items-center gap-1.5 rounded-pill bg-brand-green/10 px-3 py-[7px] font-body text-[13px] font-medium text-on-green-tint"
             >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-display text-[15px] font-medium text-text-primary">
-                  {item.nombre}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => remove(item.nombre)}
-                  aria-label={`Quitar ${item.nombre}`}
-                  className="flex size-8 items-center justify-center rounded-full text-text-secondary hover:bg-surface-inset"
-                >
-                  <X size={16} aria-hidden />
-                </button>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <label className="flex flex-col gap-1">
-                  <span className="font-body text-[11px] font-medium text-text-secondary">
-                    Nivel
-                  </span>
-                  <select
-                    aria-label={`Nivel en ${item.nombre}`}
-                    value={item.nivel ?? ""}
-                    onChange={(event) =>
-                      update(item.nombre, {
-                        nivel: (event.target.value || null) as SkillNivel | null,
-                      })
-                    }
-                    className="h-10 rounded-xl border border-border bg-surface px-2 font-body text-[13px] text-text-primary"
-                  >
-                    <option value="">Sin indicar</option>
-                    {SKILL_NIVELES.map((nivel) => (
-                      <option key={nivel} value={nivel}>
-                        {SKILL_NIVEL_LABELS[nivel]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className="font-body text-[11px] font-medium text-text-secondary">
-                    Años freelance
-                  </span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={SKILL_MAX_ANIOS}
-                    aria-label={`Años freelance en ${item.nombre}`}
-                    value={item.anios_freelance ?? ""}
-                    onChange={(event) =>
-                      update(item.nombre, { anios_freelance: yearsValue(event.target.value) })
-                    }
-                    className="h-10 rounded-xl border border-border bg-surface px-2 font-body text-[13px] text-text-primary"
-                  />
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className="font-body text-[11px] font-medium text-text-secondary">
-                    Años en empresa
-                  </span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={SKILL_MAX_ANIOS}
-                    aria-label={`Años en empresa en ${item.nombre}`}
-                    value={item.anios_empresa ?? ""}
-                    onChange={(event) =>
-                      update(item.nombre, { anios_empresa: yearsValue(event.target.value) })
-                    }
-                    className="h-10 rounded-xl border border-border bg-surface px-2 font-body text-[13px] text-text-primary"
-                  />
-                </label>
-              </div>
-            </li>
+              {name}
+              <X size={13} className="text-brand-green" aria-hidden />
+            </button>
           ))}
-        </ul>
+        </div>
       )}
 
       <div className="flex flex-col gap-2">

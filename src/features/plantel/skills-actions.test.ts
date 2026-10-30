@@ -46,29 +46,10 @@ const CATALOG = [
   { id: "s3", nombre: "DevOps" },
 ];
 
-type Item = {
-  nombre: string;
-  nivel?: string | null;
-  anios_freelance?: number | string | null;
-  anios_empresa?: number | string | null;
-};
-
-function formDataWith(...items: (string | Item)[]): FormData {
+function formDataWith(...names: string[]): FormData {
   const fd = new FormData();
-  fd.set(
-    "items",
-    JSON.stringify(items.map((item) => (typeof item === "string" ? { nombre: item } : item))),
-  );
+  for (const name of names) fd.append("skill", name);
   return fd;
-}
-
-function rpcItem(skill_id: string, extra: Partial<Item> = {}) {
-  return {
-    skill_id,
-    nivel: extra.nivel ?? null,
-    anios_freelance: extra.anios_freelance ?? null,
-    anios_empresa: extra.anios_empresa ?? null,
-  };
 }
 
 function serranoUser(opts: { admin?: boolean } = {}) {
@@ -125,23 +106,13 @@ describe("saveProfileSkills", () => {
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
-  it("saves level and years with resolved catalog ids in a single RPC (ZER-163)", async () => {
+  it("saves the resolved approved catalog ids in a single RPC (ZER-216)", async () => {
     serranoUser();
 
-    await save(
-      formDataWith(
-        { nombre: "Solidity", nivel: "avanzado", anios_freelance: "3", anios_empresa: 5 },
-        "Rust",
-      ),
-    );
+    await save(formDataWith("Solidity", "Rust"));
 
     expect(mocks.skillsEq).toHaveBeenCalledWith("estado", "aprobada");
-    expect(mocks.rpc).toHaveBeenCalledWith("save_profile_skills", {
-      p_items: [
-        rpcItem("s1", { nivel: "avanzado", anios_freelance: 3, anios_empresa: 5 }),
-        rpcItem("s2"),
-      ],
-    });
+    expect(mocks.rpc).toHaveBeenCalledWith("save_profile_skills", { p_skill_ids: ["s1", "s2"] });
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/profile");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/plantel");
   });
@@ -149,11 +120,9 @@ describe("saveProfileSkills", () => {
   it("dedupes case-insensitive names and ignores names missing from the approved catalog", async () => {
     serranoUser();
 
-    await save(formDataWith("solidity", "Solidity", "Rust", "Cobol"));
+    await save(formDataWith("solidity", " Solidity ", "Rust", "Cobol", "   "));
 
-    expect(mocks.rpc).toHaveBeenCalledWith("save_profile_skills", {
-      p_items: [rpcItem("s1"), rpcItem("s2")],
-    });
+    expect(mocks.rpc).toHaveBeenCalledWith("save_profile_skills", { p_skill_ids: ["s1", "s2"] });
   });
 
   it("saves an empty list when the form has no skills", async () => {
@@ -161,19 +130,7 @@ describe("saveProfileSkills", () => {
 
     await save(formDataWith());
 
-    expect(mocks.rpc).toHaveBeenCalledWith("save_profile_skills", { p_items: [] });
-  });
-
-  it("rejects an invalid level or years before reaching the database", async () => {
-    serranoUser();
-
-    const result = await saveProfileSkills(
-      null,
-      formDataWith({ nombre: "Solidity", anios_freelance: 99 }),
-    );
-
-    expect(result).toEqual({ error: "Revisá el nivel y los años de experiencia" });
-    expect(mocks.rpc).not.toHaveBeenCalled();
+    expect(mocks.rpc).toHaveBeenCalledWith("save_profile_skills", { p_skill_ids: [] });
   });
 
   it("returns DB error when the catalog read fails", async () => {

@@ -59,14 +59,14 @@ vi.mock("@/features/plantel/EditSkills", () => ({
     catalog,
     pendingProposals,
   }: {
-    initialSkills: { nombre: string; nivel: string | null; anios_freelance: number | null }[];
+    initialSkills: string[];
     catalog: string[];
     pendingProposals: string[];
   }) => (
     <div data-testid="edit-skills">
       {initialSkills.map((skill) => (
-        <span key={skill.nombre} data-testid="initial-skill">
-          {`${skill.nombre}|${skill.nivel ?? "-"}|${skill.anios_freelance ?? "-"}`}
+        <span key={skill} data-testid="initial-skill">
+          {skill}
         </span>
       ))}
       {pendingProposals.map((skill) => (
@@ -90,15 +90,7 @@ beforeEach(() => {
   mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
   mocks.profilesSingle.mockResolvedValue({ data: { tier: "standard" }, error: null });
   mocks.profileSkillsOrder.mockResolvedValue({
-    data: [
-      {
-        nivel: "avanzado",
-        anios_freelance: 3,
-        anios_empresa: null,
-        skills: { nombre: "Solidity" },
-      },
-      { nivel: null, anios_freelance: null, anios_empresa: null, skills: null },
-    ],
+    data: [{ skills: { nombre: "Solidity" } }, { skills: null }],
   });
   mocks.skillsOrder.mockResolvedValue({
     data: [
@@ -129,13 +121,11 @@ describe("HabilidadesPage", () => {
     expect(mocks.redirect).toHaveBeenCalledWith("/onboarding/step1");
   });
 
-  it("loads skills with level and years, the approved catalog and own proposals (ZER-163)", async () => {
+  it("loads skill names, the approved catalog and own proposals (ZER-216)", async () => {
     const element = await HabilidadesPage();
     render(element);
 
-    expect(mocks.profileSkillsSelect).toHaveBeenCalledWith(
-      "nivel, anios_freelance, anios_empresa, skills(nombre)",
-    );
+    expect(mocks.profileSkillsSelect).toHaveBeenCalledWith("skills(nombre)");
     expect(mocks.skillsSelect).toHaveBeenCalledWith("nombre, estado, propuesta_por");
     expect(mocks.profileSkillsEq).toHaveBeenCalledWith("profile_id", "user-1");
     expect(mocks.profileSkillsOrder).toHaveBeenCalledWith("created_at");
@@ -146,7 +136,7 @@ describe("HabilidadesPage", () => {
 
     const pending = screen.getAllByTestId("pending-skill").map((el) => el.textContent);
 
-    expect(initial).toEqual(["Solidity|avanzado|3"]);
+    expect(initial).toEqual(["Solidity"]);
     // Pending proposals never reach the catalog; an admin's view of others' stays out too.
     expect(catalog).toEqual(["Rust", "Solidity"]);
     expect(pending).toEqual(["Cerámica"]);

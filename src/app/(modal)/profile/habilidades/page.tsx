@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { EditSkills } from "@/features/plantel/EditSkills";
-import type { SkillItem } from "@/features/plantel/skills";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +32,7 @@ export default async function HabilidadesPage() {
   const [{ data: skillAssignments }, { data: skills }] = await Promise.all([
     supabase
       .from("profile_skills")
-      .select("nivel, anios_freelance, anios_empresa, skills(nombre)")
+      .select("skills(nombre)")
       .eq("profile_id", user.id)
       .order("created_at"),
     // RLS returns the approved catalog plus the caller's own proposals (all of
@@ -41,17 +40,8 @@ export default async function HabilidadesPage() {
     supabase.from("skills").select("nombre, estado, propuesta_por").order("nombre"),
   ]);
 
-  const initialSkills: SkillItem[] = (skillAssignments ?? []).flatMap((assignment) =>
-    assignment.skills?.nombre
-      ? [
-          {
-            nombre: assignment.skills.nombre,
-            nivel: assignment.nivel,
-            anios_freelance: assignment.anios_freelance,
-            anios_empresa: assignment.anios_empresa,
-          },
-        ]
-      : [],
+  const initialSkills = (skillAssignments ?? []).flatMap((assignment) =>
+    assignment.skills?.nombre ? [assignment.skills.nombre] : [],
   );
 
   const catalog = (skills ?? []).filter((s) => s.estado === "aprobada").map((s) => s.nombre);
