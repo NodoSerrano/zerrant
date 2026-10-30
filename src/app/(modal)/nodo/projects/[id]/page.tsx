@@ -47,7 +47,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
   if (!project?.id) notFound();
 
-  const row = project as unknown as ProjectRow;
+  const row: ProjectRow = project;
 
   const { data: viewerRow } = await supabase
     .from("project_members")

@@ -33,8 +33,8 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     .single();
 
   type Person = Pick<Profile, "id" | "nombre" | "apellido" | "apodo" | "nombre_visible">;
-  const creador = task.creador as unknown as Person | null;
-  const tomador = task.tomador as unknown as Person | null;
+  const creador: Person | null = task.creador;
+  const tomador: Person | null = task.tomador;
 
   const canAssign =
     (task.creado_por === user.id || Boolean(currentProfile?.is_platform_admin)) &&
