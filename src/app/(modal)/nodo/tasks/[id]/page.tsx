@@ -22,7 +22,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     .from("tasks")
     // Named columns only, like the profiles join: `*` breaks with column-level grants (ZER-194, ZER-220).
     .select(
-      `id, titulo, descripcion, categoria, urgencia, estado, creado_por, tomada_por, created_at, creador:creado_por(${PERSON_COLUMNS}), tomador:tomada_por(${PERSON_COLUMNS})`,
+      `id, titulo, descripcion, categorias, categoria_otra, urgencia, estado, creado_por, tomada_por, created_at, creador:creado_por(${PERSON_COLUMNS}), tomador:tomada_por(${PERSON_COLUMNS})`,
     )
     .eq("id", id)
     .single();
@@ -63,7 +63,8 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
       taskId={task.id}
       titulo={task.titulo}
       descripcion={task.descripcion}
-      categoria={task.categoria}
+      categorias={task.categorias ?? []}
+      categoriaOtra={task.categoria_otra}
       urgencia={task.urgencia ?? "media"}
       estado={task.estado ?? "abierta"}
       createdAt={task.created_at}

@@ -12,7 +12,8 @@ function openTask(overrides: Partial<TaskGuardRow> = {}): TaskGuardRow {
     tomada_por: null,
     titulo: "Arreglar caño",
     descripcion: "Baño",
-    categoria: "reparacion",
+    categorias: ["reparacion"],
+    categoria_otra: null,
     urgencia: "media",
     ...overrides,
   };
@@ -23,6 +24,25 @@ function takenTask(overrides: Partial<TaskGuardRow> = {}): TaskGuardRow {
 }
 
 describe("assertTaskUpdateAllowed (ZER-42)", () => {
+  it("treats categories and the Otro text as content the taker cannot change (ZER-208)", () => {
+    const oldRow = takenTask();
+    for (const change of [
+      { categorias: ["reparacion", "compra"] },
+      { categorias: ["otro"], categoria_otra: "Jardinería" },
+    ]) {
+      const newRow = { ...oldRow, ...change, estado: "hecha" as const };
+      expect(assertTaskUpdateAllowed(oldRow, newRow, { id: taker, isAdmin: false }).ok).toBe(false);
+    }
+  });
+
+  it("does not see a change when the same categories come back in a new array (ZER-208)", () => {
+    const oldRow = takenTask();
+    const newRow = { ...oldRow, categorias: [...oldRow.categorias], estado: "hecha" as const };
+    expect(assertTaskUpdateAllowed(oldRow, newRow, { id: taker, isAdmin: false })).toEqual({
+      ok: true,
+    });
+  });
+
   it("denies taker setting estado=verificada (PostgREST auto-verify bypass)", () => {
     const oldRow = takenTask({ estado: "hecha" });
     const newRow = { ...oldRow, estado: "verificada" as const };

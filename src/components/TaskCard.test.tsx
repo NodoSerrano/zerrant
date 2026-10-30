@@ -132,6 +132,12 @@ describe("TaskCard", () => {
     expect(svg!.getAttribute("class")).toContain("lucide-ellipsis");
   });
 
+  it("uses the first category's icon when there are several (ZER-208)", () => {
+    const { container } = render(<TaskCard {...defaultProps} category="Compra, Limpieza" />);
+    expect(container.querySelector("svg.lucide-shopping-cart")).toBeTruthy();
+    expect(screen.getByText(/Compra, Limpieza ·/)).toBeInTheDocument();
+  });
+
   it("falls back to MoreHorizontal icon for unknown category", () => {
     const { container } = render(<TaskCard {...defaultProps} category="Fantasía" />);
     const svg = container.querySelector("svg");

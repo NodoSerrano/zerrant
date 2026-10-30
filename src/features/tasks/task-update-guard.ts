@@ -14,7 +14,8 @@ export type TaskGuardRow = {
   tomada_por: string | null;
   titulo: string;
   descripcion: string | null;
-  categoria: string;
+  categorias: string[];
+  categoria_otra: string | null;
   urgencia: string;
 };
 
@@ -31,7 +32,9 @@ function contentChanged(oldRow: TaskGuardRow, newRow: TaskGuardRow): boolean {
   return (
     oldRow.titulo !== newRow.titulo ||
     oldRow.descripcion !== newRow.descripcion ||
-    oldRow.categoria !== newRow.categoria ||
+    // Postgres compares arrays by value; join mirrors that for the enum values.
+    oldRow.categorias.join(",") !== newRow.categorias.join(",") ||
+    oldRow.categoria_otra !== newRow.categoria_otra ||
     oldRow.urgencia !== newRow.urgencia
   );
 }

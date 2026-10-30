@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isTasksBlockedTier } from "./tier-guards";
-import type { TaskCategoria, TaskUpdate, TaskUrgencia } from "./types";
+import { parseCategorias } from "./categorias";
+import type { TaskUpdate, TaskUrgencia } from "./types";
 import { withActionNotice } from "@/lib/action-notice";
 
 const CANCEL_ERROR = "No pudimos cancelar la tarea. Probá de nuevo.";
@@ -40,7 +41,6 @@ const MARK_DONE_REJECTED = "No pudimos marcar la tarea como hecha.";
 const VERIFY_REJECTED = "No pudimos verificar esta tarea.";
 const INVALID_INPUT = "Revisá los datos de la tarea.";
 
-const CATEGORIAS: TaskCategoria[] = ["reparacion", "limpieza", "compra", "mantenimiento", "otro"];
 const URGENCIAS: TaskUrgencia[] = ["baja", "media", "alta"];
 
 // States from which cancelling still makes sense. A `hecha` or `verificada`
@@ -83,10 +83,14 @@ export async function createTask(_prevState: { error: string } | null, formData:
     return { error: "El título no puede estar vacío" };
   }
 
-  const categoria = oneOf(formData.get("categoria"), CATEGORIAS);
+  const parsed = parseCategorias(formData);
+  if (!parsed.ok) {
+    return { error: parsed.error };
+  }
+
   const urgencia = oneOf(formData.get("urgencia"), URGENCIAS);
 
-  if (!categoria || !urgencia) {
+  if (!urgencia) {
     return { error: INVALID_INPUT };
   }
 
@@ -95,7 +99,8 @@ export async function createTask(_prevState: { error: string } | null, formData:
   const { error } = await supabase.from("tasks").insert({
     titulo,
     descripcion,
-    categoria,
+    categorias: parsed.categorias,
+    categoria_otra: parsed.categoriaOtra,
     urgencia,
     creado_por: user.id,
   });
@@ -414,14 +419,24 @@ export async function updateTask(_prevState: { error: string } | null, formData:
     return { error: "El título no puede estar vacío" };
   }
 
-  const categoria = oneOf(formData.get("categoria"), CATEGORIAS);
+  const parsed = parseCategorias(formData);
+  if (!parsed.ok) {
+    return { error: parsed.error };
+  }
+
   const urgencia = oneOf(formData.get("urgencia"), URGENCIAS);
 
-  if (!categoria || !urgencia) {
+  if (!urgencia) {
     return { error: INVALID_INPUT };
   }
 
-  const cambios: TaskUpdate = { titulo, categoria, urgencia };
+  // categoria_otra always travels with categorias: unchecking Otro clears its text.
+  const cambios: TaskUpdate = {
+    titulo,
+    categorias: parsed.categorias,
+    categoria_otra: parsed.categoriaOtra,
+    urgencia,
+  };
 
   // A partial submit shouldn't wipe the description that was already there: the
   // column is only touched if the field came in the form.

@@ -108,7 +108,7 @@ describe("createTask", () => {
     const fd = new FormData();
     fd.set("titulo", "Fix the roof");
     fd.set("descripcion", "The roof needs urgent repair");
-    fd.set("categoria", "mantenimiento");
+    fd.set("categorias", "mantenimiento");
     fd.set("urgencia", "alta");
     for (const [k, v] of Object.entries(overrides)) fd.set(k, v);
     return fd;
@@ -132,7 +132,8 @@ describe("createTask", () => {
     expect(mocks.tasksInsert).toHaveBeenCalledWith({
       titulo: "Fix the roof",
       descripcion: "The roof needs urgent repair",
-      categoria: "mantenimiento",
+      categorias: ["mantenimiento"],
+      categoria_otra: null,
       urgencia: "alta",
       creado_por: "test-user-id",
     });
@@ -158,7 +159,8 @@ describe("createTask", () => {
     expect(mocks.tasksInsert).toHaveBeenCalledWith({
       titulo: "Fix the roof",
       descripcion: "The roof needs urgent repair",
-      categoria: "mantenimiento",
+      categorias: ["mantenimiento"],
+      categoria_otra: null,
       urgencia: "alta",
       creado_por: "test-user-id",
     });
@@ -197,7 +199,7 @@ describe("createTask", () => {
   });
 
   it.each([
-    ["categoria", "teletransportacion"],
+    ["categorias", "teletransportacion"],
     ["urgencia", "critica"],
   ])("rejects an out-of-range %s instead of casting it blindly", async (field, value) => {
     setupAuth();
@@ -206,6 +208,46 @@ describe("createTask", () => {
     const result = await createTask(null, makeFormData({ [field]: value }));
 
     expect(result).toEqual({ error: "Revisá los datos de la tarea." });
+    expect(mocks.tasksInsert).not.toHaveBeenCalled();
+  });
+
+  it("saves several categories and the Otro text (ZER-208)", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.tasksInsert.mockResolvedValue({ error: null });
+    const fd = makeFormData();
+    fd.append("categorias", "otro");
+    fd.set("categoria_otra", " Jardinería ");
+
+    await createTask(null, fd).catch(() => undefined);
+
+    expect(mocks.tasksInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        categorias: ["mantenimiento", "otro"],
+        categoria_otra: "Jardinería",
+      }),
+    );
+  });
+
+  it("asks which one when Otro has no text, without touching the table (ZER-208)", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+
+    const result = await createTask(null, makeFormData({ categorias: "otro" }));
+
+    expect(result).toEqual({ error: "Contanos cuál es la otra categoría." });
+    expect(mocks.tasksInsert).not.toHaveBeenCalled();
+  });
+
+  it("requires at least one category (ZER-208)", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    const fd = makeFormData();
+    fd.delete("categorias");
+
+    const result = await createTask(null, fd);
+
+    expect(result).toEqual({ error: "Elegí al menos una categoría." });
     expect(mocks.tasksInsert).not.toHaveBeenCalled();
   });
 
@@ -506,7 +548,7 @@ describe("updateTask", () => {
     fd.set("taskId", "task-001");
     fd.set("titulo", "Reparar el caño del baño");
     fd.set("descripcion", "Pierde agua abajo de la pileta");
-    fd.set("categoria", "reparacion");
+    fd.set("categorias", "reparacion");
     fd.set("urgencia", "alta");
     for (const [k, v] of Object.entries(overrides)) fd.set(k, v);
     return fd;
@@ -525,7 +567,8 @@ describe("updateTask", () => {
     expect(mocks.tasksUpdate).toHaveBeenCalledWith({
       titulo: "Reparar el caño del baño",
       descripcion: "Pierde agua abajo de la pileta",
-      categoria: "reparacion",
+      categorias: ["reparacion"],
+      categoria_otra: null,
       urgencia: "alta",
     });
   });
@@ -632,7 +675,7 @@ describe("updateTask", () => {
   });
 
   it.each([
-    ["categoria", "teletransportacion"],
+    ["categorias", "teletransportacion"],
     ["urgencia", "critica"],
   ])("rejects an out-of-range %s instead of casting it blindly", async (field, value) => {
     setupAuth("owner-user-id");
@@ -641,6 +684,20 @@ describe("updateTask", () => {
 
     expect(result).toEqual({ error: "Revisá los datos de la tarea." });
     expect(mocks.tasksUpdate).not.toHaveBeenCalled();
+  });
+
+  it("saves edited categories and clears the Otro text when Otro is unchecked (ZER-208)", async () => {
+    setupAuth("owner-user-id");
+    updateMatched();
+    const fd = makeFormData();
+    fd.append("categorias", "limpieza");
+    fd.set("categoria_otra", "Jardinería");
+
+    await updateTask(null, fd).catch(() => undefined);
+
+    expect(mocks.tasksUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ categorias: ["reparacion", "limpieza"], categoria_otra: null }),
+    );
   });
 
   // A partial POST shouldn't wipe the description that was already there.

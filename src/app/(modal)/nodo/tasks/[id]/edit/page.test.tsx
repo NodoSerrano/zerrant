@@ -53,7 +53,8 @@ function makeTask(overrides: Record<string, unknown> = {}) {
     id: "task-1",
     titulo: "Reparar el caño del baño",
     descripcion: "Pierde agua abajo de la pileta.",
-    categoria: "limpieza",
+    categorias: ["limpieza"],
+    categoria_otra: null,
     urgencia: "baja",
     estado: "abierta",
     creado_por: OWNER,
@@ -153,17 +154,27 @@ describe("EditTaskPage — prefilled form (AC8)", () => {
       .map((column) => column.trim());
     expect(columns).not.toContain("*");
     expect(columns.sort()).toEqual(
-      ["categoria", "creado_por", "descripcion", "estado", "id", "titulo", "urgencia"].sort(),
+      ["categoria_otra", "categorias", "creado_por", "descripcion", "estado", "id", "titulo", "urgencia"].sort(),
     );
   });
 
-  it("preselects the saved categoria, not the create-screen default", async () => {
+  it("preselects the saved categorias, not the create-screen default", async () => {
     const { container } = await renderEdit();
 
-    expect(container.querySelector('input[name="categoria"][value="limpieza"]')).toBeChecked();
+    expect(container.querySelector('input[name="categorias"][value="limpieza"]')).toBeChecked();
     expect(
-      container.querySelector('input[name="categoria"][value="reparacion"]'),
+      container.querySelector('input[name="categorias"][value="reparacion"]'),
     ).not.toBeChecked();
+  });
+
+  it("preselects every saved category and the Otro text (ZER-208)", async () => {
+    const { container } = await renderEdit({
+      task: makeTask({ categorias: ["compra", "otro"], categoria_otra: "Jardinería" }),
+    });
+
+    expect(container.querySelector('input[name="categorias"][value="compra"]')).toBeChecked();
+    expect(container.querySelector('input[name="categorias"][value="otro"]')).toBeChecked();
+    expect(screen.getByLabelText("¿Cuál?")).toHaveValue("Jardinería");
   });
 
   it("preselects the saved urgencia, not the create-screen default", async () => {

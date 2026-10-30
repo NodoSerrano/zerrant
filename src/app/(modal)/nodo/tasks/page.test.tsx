@@ -129,7 +129,7 @@ describe("TasksPage", () => {
             {
               id: "task-1",
               titulo: "Arreglar cerca",
-              categoria: "Reparacion",
+              categorias: ["reparacion"],
               estado: "abierta",
               urgencia: "alta",
               created_at: "2026-07-27T12:00:00Z",
@@ -151,7 +151,7 @@ describe("TasksPage", () => {
             {
               id: "task-1",
               titulo: "Test",
-              categoria: "Otro",
+              categorias: ["otro"],
               estado: "abierta",
               urgencia: "baja",
               created_at: "2026-07-28T12:00:00Z",
@@ -333,7 +333,7 @@ describe("TasksPage", () => {
     });
   });
 
-  // The `categoria` column stores the enum value, lowercase and unaccented.
+  // The `categorias` column stores enum values, lowercase and unaccented.
   // If the hub passes it raw to TaskCard, the card prints "reparacion" and
   // finds no icon, because its index is keyed by the Spanish label.
   describe("categoria display", () => {
@@ -341,7 +341,7 @@ describe("TasksPage", () => {
       return {
         id: "task-1",
         titulo: "Arreglar el caño",
-        categoria,
+        categorias: [categoria],
         estado: "abierta",
         urgencia: "alta",
         created_at: "2026-07-27T12:00:00Z",
@@ -377,6 +377,48 @@ describe("TasksPage", () => {
     });
   });
 
+  describe("several categories (ZER-208)", () => {
+    function taskWith(categorias: string[], categoria_otra: string | null = null) {
+      return {
+        id: "task-1",
+        titulo: "Arreglar el caño",
+        categorias,
+        categoria_otra,
+        estado: "abierta",
+        urgencia: "alta",
+        created_at: "2026-07-27T12:00:00Z",
+        creado_por: "user-1",
+        profiles: { nombre: "Juan", apellido: "Perez", apodo: null, nombre_visible: "Juan" },
+      };
+    }
+
+    it("lists every category on the card, with the first one's icon", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [taskWith(["limpieza", "compra"])] }),
+      );
+
+      const { container } = await renderPage();
+
+      expect(screen.getByText(/Limpieza, Compra ·/)).toBeInTheDocument();
+      const icons = Array.from(container.querySelectorAll("svg")).map((s) =>
+        s.getAttribute("class"),
+      );
+      expect(icons.some((c) => c?.includes("lucide-spray-can"))).toBe(true);
+    });
+
+    it("shows the Otro text instead of Otro", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockSupabase({ tasks: [taskWith(["reparacion", "otro"], "Jardinería")] }),
+      );
+
+      await renderPage();
+
+      expect(screen.getByText(/Reparación, Jardinería ·/)).toBeInTheDocument();
+    });
+  });
+
   describe("estado mapping robustness", () => {
     // The Postgres `task_estado` enum can grow. If the hub translates states
     // with a partial lookup, any new value reaches TaskCard as `undefined`
@@ -386,7 +428,7 @@ describe("TasksPage", () => {
       return {
         id: "task-1",
         titulo: "Tarea con estado nuevo",
-        categoria: "reparacion",
+        categorias: ["reparacion"],
         estado,
         urgencia: "alta",
         created_at: "2026-07-27T12:00:00Z",
@@ -439,7 +481,7 @@ describe("TasksPage", () => {
           {
             id: "task-1",
             titulo: "Arreglar cerca",
-            categoria: "reparacion",
+            categorias: ["reparacion"],
             estado: "tomada",
             urgencia: "media",
             created_at: "2026-07-27T12:00:00Z",
@@ -479,7 +521,7 @@ describe("TasksPage", () => {
             {
               id: "task-1",
               titulo: "Arreglar cerca",
-              categoria: "reparacion",
+              categorias: ["reparacion"],
               estado: "tomada",
               urgencia: "media",
               created_at: "2026-07-27T12:00:00Z",

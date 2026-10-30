@@ -8,7 +8,8 @@ import {
   VerifyTaskButton,
 } from "./task-actions";
 import { TaskMenu } from "./TaskMenu";
-import { getCategoriaIcon, getCategoriaLabel, getEstadoBadge, getUrgencia } from "./taskDisplay";
+import { formatCategorias, primaryCategoria } from "./categorias";
+import { getCategoriaIcon, getEstadoBadge, getUrgencia } from "./taskDisplay";
 import { relativeTime } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +28,8 @@ export interface TaskDetailViewProps {
   taskId: string;
   titulo: string;
   descripcion: string | null;
-  categoria: string;
+  categorias: string[];
+  categoriaOtra: string | null;
   urgencia: string;
   estado: string;
   createdAt: string;
@@ -44,7 +46,8 @@ export function TaskDetailView({
   taskId,
   titulo,
   descripcion,
-  categoria,
+  categorias,
+  categoriaOtra,
   urgencia,
   estado,
   createdAt,
@@ -58,7 +61,7 @@ export function TaskDetailView({
 }: TaskDetailViewProps) {
   const badge = getEstadoBadge(estado);
   const urgenciaData = getUrgencia(urgencia);
-  const CategoriaIcon = getCategoriaIcon(categoria);
+  const CategoriaIcon = getCategoriaIcon(primaryCategoria(categorias));
 
   // The create-task textarea persists "" and never null, so both cases mean
   // the same thing: there is no description.
@@ -110,7 +113,7 @@ export function TaskDetailView({
         <div className="flex flex-row items-center gap-2">
           <Tag className="size-[15px] text-text-muted" aria-hidden="true" />
           <span className="font-body text-[13px] font-normal text-text-secondary">
-            {getCategoriaLabel(categoria)}
+            {formatCategorias(categorias, categoriaOtra)}
           </span>
         </div>
         <div className="flex flex-row items-center gap-2">

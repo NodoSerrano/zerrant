@@ -20,7 +20,7 @@ export default async function EditTaskPage({ params }: { params: Promise<{ id: s
   // column-level grant (ZER-194 was that, on profiles).
   const { data: task } = await supabase
     .from("tasks")
-    .select("id, titulo, descripcion, categoria, urgencia, estado, creado_por")
+    .select("id, titulo, descripcion, categorias, categoria_otra, urgencia, estado, creado_por")
     .eq("id", id)
     .single();
 
@@ -63,7 +63,8 @@ export default async function EditTaskPage({ params }: { params: Promise<{ id: s
         defaults={{
           titulo: task.titulo,
           descripcion: task.descripcion ?? "",
-          categoria: task.categoria,
+          categorias: task.categorias,
+          categoriaOtra: task.categoria_otra,
           urgencia: task.urgencia,
         }}
       />
