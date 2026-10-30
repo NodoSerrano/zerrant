@@ -6,6 +6,7 @@ import { TaskCard } from "@/components/TaskCard";
 import { EmptyState } from "@/components/EmptyState";
 import { NodoTabs } from "@/components/NodoTabs";
 import { cn } from "@/lib/utils";
+import { FAB_ABOVE_TAB_BAR_CLASS } from "@/components/tabBarLayout";
 import { BRAND_GRADIENT_CLASS } from "@/lib/brandGradients";
 import { displayName } from "@/features/profile/displayName";
 import type { NombreVisible } from "@/features/profile/types";
@@ -164,7 +165,8 @@ export default async function TasksPage({
         <Link
           href="/nodo/tasks/new"
           className={cn(
-            "fixed bottom-[128px] right-5 z-40",
+            "fixed right-5 z-40",
+            FAB_ABOVE_TAB_BAR_CLASS,
             "size-14 rounded-full",
             BRAND_GRADIENT_CLASS,
             "shadow-[0_4px_14px_rgba(26,22,20,0.25)]",

@@ -10,6 +10,8 @@ export type OnboardingGateProfile = {
   sitio_url?: string | null;
   /** Present when selected; used by Inicio community hub (ZER-107). */
   tier?: string | null;
+  /** Platform admins count as members for Proyectos y Tareas (ZER-206). */
+  is_platform_admin?: boolean | null;
 };
 
 export const NO_ROWS = "PGRST116";
