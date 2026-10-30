@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ProjectDetail } from "./ProjectDetail";
+import { PROJECT_OPERATION_CLASS } from "./projectActionStyles";
 import type { ProjectDetailViewModel } from "./types";
 
 vi.mock("next/link", () => ({
@@ -129,9 +130,25 @@ describe("ProjectDetail", () => {
   it("marks admins and never lists pendiente rows (fixture is approved-only)", () => {
     render(<ProjectDetail project={baseProject} />);
     expect(screen.getByText("Admin")).toBeInTheDocument();
-    expect(screen.getByText("Creó el proyecto")).toBeInTheDocument();
-    expect(screen.getByText("Miembro")).toBeInTheDocument();
     expect(screen.queryByText("Pendiente")).not.toBeInTheDocument();
+  });
+
+  it("shows only each member's name, plus Admin when they are one (ZER-224)", () => {
+    render(<ProjectDetail project={baseProject} />);
+    const rows = screen.getAllByRole("listitem");
+    expect(rows.map((row) => row.textContent)).toEqual([
+      "Nóbel DamNóbel DamAdmin",
+      "Lucía MoralesLucía Morales",
+    ]);
+    expect(screen.queryByText("Creó el proyecto")).not.toBeInTheDocument();
+    expect(screen.queryByText("Miembro")).not.toBeInTheDocument();
+  });
+
+  it("styles Solicitudes de ingreso like the other operations (ZER-224)", () => {
+    render(<ProjectDetail project={{ ...baseProject, showRequestsQueue: true }} />);
+    expect(screen.getByRole("link", { name: "Solicitudes de ingreso" }).className).toContain(
+      PROJECT_OPERATION_CLASS,
+    );
   });
 
   it("renders the Unirse affordance for non-members on abierto projects", () => {

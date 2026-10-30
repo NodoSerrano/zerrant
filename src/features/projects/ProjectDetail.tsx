@@ -11,6 +11,7 @@ import {
   isProjectIngresoApproval,
 } from "@/features/projects/projectDisplay";
 import { cn } from "@/lib/utils";
+import { PROJECT_OPERATION_CLASS } from "./projectActionStyles";
 import type { ProjectDetailViewModel } from "./types";
 
 export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) {
@@ -106,28 +107,26 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
                 size="sm"
                 className="size-10 text-lg"
               />
-              <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+              {/* Only the name and the Admin mark: no sub labels (ZER-224). */}
+              <div className="flex min-w-0 flex-1 items-center gap-2">
                 <span className="font-display text-[15px] font-medium text-text-primary truncate">
                   {member.name}
                 </span>
-                <span className="font-body text-xs text-text-muted">
-                  {member.isCreator ? "Creó el proyecto" : "Miembro"}
-                </span>
-              </div>
-              {member.rol === "admin" ? (
-                <div className="shrink-0 flex flex-col items-end gap-1">
-                  <span className="rounded-pill bg-blue-raw/20 px-2.5 py-1 font-display text-[11px] font-semibold text-on-blue-tint">
+                {member.rol === "admin" ? (
+                  <span className="shrink-0 rounded-pill bg-blue-raw/20 px-2.5 py-1 font-display text-[11px] font-semibold text-on-blue-tint">
                     Admin
                   </span>
-                  {/* The project always keeps one admin, so the last one can't be removed (ZER-199). */}
-                  {project.canPromoteMembers && adminCount > 1 ? (
-                    <DemoteMemberButton
-                      projectId={project.id}
-                      profileId={member.profileId}
-                      name={member.name}
-                    />
-                  ) : null}
-                </div>
+                ) : null}
+              </div>
+              {member.rol === "admin" ? (
+                // The project always keeps one admin, so the last one can't be removed (ZER-199).
+                project.canPromoteMembers && adminCount > 1 ? (
+                  <DemoteMemberButton
+                    projectId={project.id}
+                    profileId={member.profileId}
+                    name={member.name}
+                  />
+                ) : null
               ) : project.canPromoteMembers ? (
                 <PromoteMemberButton projectId={project.id} profileId={member.profileId} />
               ) : null}
@@ -136,24 +135,29 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
         </ul>
       </section>
 
-      {project.showRequestsQueue ? (
-        <Link
-          href={`/nodo/projects/${project.id}/requests`}
-          className="font-display text-sm font-semibold text-brand-green underline-offset-2 hover:underline self-start"
-        >
-          Solicitudes de ingreso
-        </Link>
-      ) : null}
+      {/* Project operations share one full-width button style (ZER-224). */}
+      {project.showRequestsQueue || project.canLeave ? (
+        <div className="flex w-full flex-col gap-2.5">
+          {project.showRequestsQueue ? (
+            <Link
+              href={`/nodo/projects/${project.id}/requests`}
+              className={cn(PROJECT_OPERATION_CLASS, "text-brand-green")}
+            >
+              Solicitudes de ingreso
+            </Link>
+          ) : null}
 
-      {project.canLeave ? (
-        project.canPromoteMembers && adminCount === 1 ? (
-          // The project always keeps one admin (ZER-199): the only one can't leave.
-          <p className="font-body text-sm text-text-muted text-center w-full">
-            Para salir del proyecto, primero designá a otra persona como admin.
-          </p>
-        ) : (
-          <LeaveProjectButton projectId={project.id} />
-        )
+          {project.canLeave ? (
+            project.canPromoteMembers && adminCount === 1 ? (
+              // The project always keeps one admin (ZER-199): the only one can't leave.
+              <p className="font-body text-sm text-text-muted text-center w-full">
+                Para salir del proyecto, primero designá a otra persona como admin.
+              </p>
+            ) : (
+              <LeaveProjectButton projectId={project.id} />
+            )
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

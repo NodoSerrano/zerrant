@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PromoteMemberButton } from "./PromoteMemberButton";
+import { MEMBER_ACTION_CLASS } from "./projectActionStyles";
 
 vi.mock("@/lib/use-guarded-action-state", () => ({
   useGuardedActionState: () => [null, vi.fn(), false],
@@ -19,5 +20,12 @@ describe("PromoteMemberButton", () => {
     const profileInput = container.querySelector('input[name="profileId"]');
     expect(projectInput).toHaveAttribute("value", "proj-1");
     expect(profileInput).toHaveAttribute("value", "member-2");
+  });
+
+  it("uses the same pill as Quitar admin (ZER-224)", () => {
+    render(<PromoteMemberButton projectId="proj-1" profileId="member-2" />);
+    expect(screen.getByRole("button", { name: "Designar admin" }).className).toContain(
+      MEMBER_ACTION_CLASS,
+    );
   });
 });

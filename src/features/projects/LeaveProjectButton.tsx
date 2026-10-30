@@ -4,6 +4,8 @@ import { useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { leaveProject } from "./actions";
+import { PROJECT_OPERATION_CLASS } from "./projectActionStyles";
+import { cn } from "@/lib/utils";
 
 // ZER-200: the viewer leaves the project. Confirms first: getting back in may
 // need an admin's approval. The confirmation is the shared pop up (ZER-221).
@@ -12,12 +14,12 @@ export function LeaveProjectButton({ projectId }: { projectId: string }) {
   const [confirming, setConfirming] = useState(false);
 
   return (
-    <div className="flex w-full flex-col items-center gap-3">
+    <div className="w-full">
       <button
         type="button"
         aria-haspopup="dialog"
         onClick={() => setConfirming(true)}
-        className="font-display text-[15px] font-medium text-coral"
+        className={cn(PROJECT_OPERATION_CLASS, "text-coral")}
       >
         Salir del proyecto
       </button>
