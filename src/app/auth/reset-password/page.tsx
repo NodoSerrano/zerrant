@@ -41,6 +41,7 @@ export default function ResetPasswordPage() {
         <Input
           name="password"
           type="password"
+          autoComplete="new-password"
           label="Nueva contraseña"
           placeholder="••••••••"
           required
@@ -49,6 +50,7 @@ export default function ResetPasswordPage() {
         <Input
           name="confirmPassword"
           type="password"
+          autoComplete="new-password"
           label="Repetir contraseña"
           placeholder="••••••••"
           required

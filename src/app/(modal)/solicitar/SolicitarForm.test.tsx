@@ -255,7 +255,8 @@ describe("SolicitarForm — message textarea", () => {
     expect(textarea.className).toContain("bg-surface");
     expect(textarea.className).toContain("border-border");
     expect(textarea.className).toContain("p-4");
-    expect(textarea.className).toContain("text-[15px]");
+    // 16px so iOS Safari does not zoom in on focus (ZER-176).
+    expect(textarea.className).toContain("text-base");
     expect(textarea.className).toContain("resize-none");
     expect(textarea.className).toContain("placeholder:text-text-muted");
   });
@@ -398,5 +399,34 @@ describe("SolicitarForm — screening core (ZER-108/109)", () => {
     goToStep2();
     expect(screen.getByRole("radio", { name: /Me resulta cómodo/i })).toBeRequired();
     expect(screen.getByLabelText(/Día\/horario fácil para la reunión/i)).toBeRequired();
+  });
+});
+
+describe("SolicitarForm on mobile (ZER-176)", () => {
+  it("brings up the phone keyboard and autofill for WhatsApp", () => {
+    render(<SolicitarForm />);
+    const phone = screen.getByLabelText(/Teléfono \/ WhatsApp/i);
+    expect(phone).toHaveAttribute("type", "tel");
+    expect(phone).toHaveAttribute("inputMode", "tel");
+    expect(phone).toHaveAttribute("autoComplete", "tel");
+  });
+
+  it("starts each step at the top, so its title is in view", () => {
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    render(<SolicitarForm />);
+
+    goToStep2();
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 0 });
+
+    scrollTo.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Volver" }));
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 0 });
+    scrollTo.mockRestore();
+  });
+
+  it("gives the back button and Ahora no a 44px tap target", () => {
+    render(<SolicitarForm />);
+    expect(screen.getByRole("button", { name: "Volver" })).toHaveClass("size-11");
+    expect(screen.getByRole("button", { name: "Ahora no" })).toHaveClass("min-h-[44px]");
   });
 });

@@ -148,10 +148,15 @@ export function SolicitarForm({ progress }: { progress?: PipelineProgressData })
   const goBackChrome = () =>
     window.history.length > 1 ? router.back() : router.push("/nodo/tasks");
 
+  // On a phone "Siguiente" sits at the bottom of a long step: start the next
+  // one at the top, so its title is in view (ZER-176).
+  const scrollToTop = () => window.scrollTo({ top: 0 });
+
   const onBack = () => {
     setStepError(null);
     if (step > 1) {
       setStep((s) => s - 1);
+      scrollToTop();
       return;
     }
     goBackChrome();
@@ -185,6 +190,7 @@ export function SolicitarForm({ progress }: { progress?: PipelineProgressData })
     if (!form) return;
     if (!validateStep(form, step)) return;
     setStep((s) => Math.min(TOTAL_STEPS, s + 1));
+    scrollToTop();
   };
 
   const stepTitle = useMemo(() => {
@@ -200,7 +206,7 @@ export function SolicitarForm({ progress }: { progress?: PipelineProgressData })
           type="button"
           aria-label="Volver"
           onClick={onBack}
-          className="rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
+          className="-ml-2.5 inline-flex size-11 shrink-0 items-center justify-center rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
         >
           <ChevronLeft className="size-6 text-text-primary" />
         </button>
@@ -248,6 +254,9 @@ export function SolicitarForm({ progress }: { progress?: PipelineProgressData })
         <div className={cn("flex flex-col gap-5", step !== 1 && "hidden")} data-step="1">
           <Input
             name="contacto_whatsapp"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
             label="Teléfono / WhatsApp"
             placeholder="+54 9 11 1234-5678"
             required
@@ -315,7 +324,7 @@ export function SolicitarForm({ progress }: { progress?: PipelineProgressData })
               placeholder="Ej: martes o jueves después de las 18"
               className={cn(
                 "h-[90px] rounded-2xl border border-border bg-surface p-4",
-                "text-[15px] leading-[1.4] text-text-primary placeholder:text-text-muted",
+                "text-base leading-[1.4] text-text-primary placeholder:text-text-muted",
                 "resize-none focus:outline-hidden focus:ring-2 focus:ring-primary/40",
               )}
             />
@@ -340,7 +349,7 @@ export function SolicitarForm({ progress }: { progress?: PipelineProgressData })
               placeholder="Charlas, infra, limpieza, organización…"
               className={cn(
                 "h-[90px] rounded-2xl border border-border bg-surface p-4",
-                "text-[15px] leading-[1.4] text-text-primary placeholder:text-text-muted",
+                "text-base leading-[1.4] text-text-primary placeholder:text-text-muted",
                 "resize-none focus:outline-hidden focus:ring-2 focus:ring-primary/40",
               )}
             />
@@ -373,7 +382,7 @@ export function SolicitarForm({ progress }: { progress?: PipelineProgressData })
               placeholder="Intereses, dudas o temas que quieras charlar…"
               className={cn(
                 "h-[90px] rounded-2xl border border-border bg-surface p-4",
-                "text-[15px] leading-[1.4] text-text-primary placeholder:text-text-muted",
+                "text-base leading-[1.4] text-text-primary placeholder:text-text-muted",
                 "resize-none focus:outline-hidden focus:ring-2 focus:ring-primary/40",
               )}
             />
@@ -389,7 +398,7 @@ export function SolicitarForm({ progress }: { progress?: PipelineProgressData })
               placeholder="Ej: Soy dev, me copa la infra y quiero ayudar con el sitio y las charlas..."
               className={cn(
                 "h-[110px] rounded-2xl border border-border bg-surface p-4",
-                "text-[15px] leading-[1.4] text-text-primary placeholder:text-text-muted",
+                "text-base leading-[1.4] text-text-primary placeholder:text-text-muted",
                 "resize-none focus:outline-hidden focus:ring-2 focus:ring-primary/40",
               )}
             />
@@ -420,7 +429,7 @@ export function SolicitarForm({ progress }: { progress?: PipelineProgressData })
       <button
         type="button"
         onClick={goBackChrome}
-        className="font-display text-[15px] font-medium text-text-muted text-center"
+        className="min-h-[44px] font-display text-[15px] font-medium text-text-muted text-center"
       >
         Ahora no
       </button>

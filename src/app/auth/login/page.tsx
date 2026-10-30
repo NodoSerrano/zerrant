@@ -63,13 +63,20 @@ function LoginForm() {
         <Input
           name="email"
           type="email"
+          autoComplete="email"
           label="Email"
           placeholder="tu@email.com"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <PasswordInput name="password" label="Contraseña" placeholder="Tu contraseña" required />
+        <PasswordInput
+          name="password"
+          autoComplete="current-password"
+          label="Contraseña"
+          placeholder="Tu contraseña"
+          required
+        />
 
         <div className="flex justify-end">
           <Link
