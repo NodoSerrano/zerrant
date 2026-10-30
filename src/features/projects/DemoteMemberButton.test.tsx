@@ -16,6 +16,7 @@ vi.mock("./actions", () => ({
 }));
 
 import { DemoteMemberButton } from "./DemoteMemberButton";
+import { MEMBER_ACTION_CLASS } from "./projectActionStyles";
 
 beforeEach(() => {
   mocks.state = null;
@@ -23,6 +24,13 @@ beforeEach(() => {
 });
 
 describe("DemoteMemberButton (ZER-199)", () => {
+  it("uses the same pill as Designar admin (ZER-224)", () => {
+    render(<DemoteMemberButton projectId="proj-1" profileId="member-2" name="Lucía Morales" />);
+    expect(screen.getByRole("button", { name: "Quitar admin" }).className).toContain(
+      MEMBER_ACTION_CLASS,
+    );
+  });
+
   it("asks for confirmation in a pop up before removing the admin role (ZER-221)", () => {
     render(<DemoteMemberButton projectId="proj-1" profileId="member-2" name="Lucía Morales" />);
 
