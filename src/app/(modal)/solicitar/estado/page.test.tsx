@@ -1,5 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { UnirmeInput } from "@/features/membership/pipeline";
 
 const mocks = vi.hoisted(() => ({
@@ -140,26 +140,63 @@ describe("/solicitar/estado (Pencil 1.10)", () => {
     expect(screen.getByRole("link", { name: "Cerrar" }).parentElement).toHaveClass("justify-start");
   });
 
-  it("explains cerrada and does not offer to re-apply (ZER-180)", async () => {
-    await renderWith({ ...onboarded, request: { estado: "cerrada" } });
+  describe("cerrada (ZER-180)", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2026-10-26T15:00:00.000Z"));
+    });
 
-    expect(screen.getByText("Solicitud cerrada")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Tu solicitud se cerró. Por ahora no se puede enviar una nueva; si creés que es un error, hablá con un admin de Nodo.",
-      ),
-    ).toBeInTheDocument();
-    expect(stepStatuses().map(([, s]) => s)).toEqual([
-      "done",
-      "done",
-      "done",
-      "done",
-      "pending",
-      "pending",
-      "pending",
-      "pending",
-    ]);
-    expect(screen.queryByRole("link", { name: /solicitar/i })).not.toBeInTheDocument();
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("says from when they can apply again and does not offer it yet", async () => {
+      await renderWith({
+        ...onboarded,
+        request: {
+          estado: "cerrada",
+          cerradaEn: "2026-10-20T15:00:00.000Z",
+          reaperturaHabilitadaEn: null,
+        },
+      });
+
+      expect(screen.getByText("Solicitud cerrada")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Tu solicitud se cerró. Podés enviar una nueva desde el 19 de noviembre. Si creés que es un error, hablá con un admin de Nodo.",
+        ),
+      ).toBeInTheDocument();
+      expect(stepStatuses().map(([, s]) => s)).toEqual([
+        "done",
+        "done",
+        "done",
+        "done",
+        "pending",
+        "pending",
+        "pending",
+        "pending",
+      ]);
+      expect(screen.queryByRole("link", { name: "Volver a solicitar" })).not.toBeInTheDocument();
+    });
+
+    it("offers Volver a solicitar once it is allowed", async () => {
+      await renderWith({
+        ...onboarded,
+        request: {
+          estado: "cerrada",
+          cerradaEn: "2026-10-25T15:00:00.000Z",
+          reaperturaHabilitadaEn: "2026-10-26T10:00:00.000Z",
+        },
+      });
+
+      expect(
+        screen.getByText("Tu solicitud se cerró. Ya podés enviar una nueva."),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Volver a solicitar" })).toHaveAttribute(
+        "href",
+        "/solicitar",
+      );
+    });
   });
 
   it("sends a tourist without any request to /solicitar", async () => {

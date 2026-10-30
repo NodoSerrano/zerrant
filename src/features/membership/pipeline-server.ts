@@ -54,7 +54,7 @@ export async function loadMembershipPipeline(supabase: ServerClient): Promise<Un
   // active per profile), and a terminal one is what the status page shows.
   const { data: request, error: requestError } = await supabase
     .from("membership_requests")
-    .select("estado")
+    .select("estado, cerrada_en, reapertura_habilitada_en")
     .eq("profile_id", user.id)
     .order("created_at", { ascending: false })
     .limit(1)
@@ -70,5 +70,17 @@ export async function loadMembershipPipeline(supabase: ServerClient): Promise<Un
     return { ...withProfile, requestError: true };
   }
 
-  return { ...withProfile, request: request ? { estado: request.estado } : null };
+  if (!request) return { ...withProfile, request: null };
+
+  return {
+    ...withProfile,
+    request:
+      request.estado === "cerrada"
+        ? {
+            estado: request.estado,
+            cerradaEn: request.cerrada_en,
+            reaperturaHabilitadaEn: request.reapertura_habilitada_en,
+          }
+        : { estado: request.estado },
+  };
 }
