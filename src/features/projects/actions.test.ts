@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
   projectsUpdatePayload: null as unknown,
   projectsUpdateEq: vi.fn(),
   projectsUpdateSelect: vi.fn(),
+  projectsUpdateIs: vi.fn(),
+  projectsUpdateNot: vi.fn(),
   projectsDelete: vi.fn(),
   membersInsert: vi.fn(),
   membersSelect: vi.fn(),
@@ -63,6 +65,12 @@ vi.mock("@/lib/supabase/server", () => ({
             return {
               eq: mocks.projectsUpdateEq.mockImplementation(() => ({
                 select: mocks.projectsUpdateSelect,
+                is: mocks.projectsUpdateIs.mockImplementation(() => ({
+                  select: mocks.projectsUpdateSelect,
+                })),
+                not: mocks.projectsUpdateNot.mockImplementation(() => ({
+                  select: mocks.projectsUpdateSelect,
+                })),
               })),
             };
           }),
@@ -110,6 +118,7 @@ vi.mock("next/navigation", () => ({
 import {
   approveProjectJoin,
   archiveProject,
+  unarchiveProject,
   demoteProjectMember,
   leaveProject,
   createProject,
@@ -214,6 +223,26 @@ describe("createProject", () => {
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
 
     const result = await createProject(null, makeFormData({ estado: "activo" }));
+
+    expect(result).toEqual({ error: "Revisá los datos del proyecto." });
+    expect(mocks.projectsInsert).not.toHaveBeenCalled();
+  });
+
+  it("does not create a project as Terminado (ZER-201)", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+
+    const result = await createProject(null, makeFormData({ estado: "terminado" }));
+
+    expect(result).toEqual({ error: "Revisá los datos del proyecto." });
+    expect(mocks.projectsInsert).not.toHaveBeenCalled();
+  });
+
+  it("does not create a project as Pausado (ZER-201)", async () => {
+    setupAuth();
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+
+    const result = await createProject(null, makeFormData({ estado: "pausado" }));
 
     expect(result).toEqual({ error: "Revisá los datos del proyecto." });
     expect(mocks.projectsInsert).not.toHaveBeenCalled();
@@ -341,7 +370,7 @@ describe("archiveProject", () => {
     return fd;
   }
 
-  it("marks the project terminado and leaves members and join requests on the live row", async () => {
+  it("stamps archivado_en, pauses the project, and leaves members and join requests on the row (ZER-201)", async () => {
     setupAuth("serrano-1");
     mocks.projectsUpdateSelect.mockResolvedValue({ error: null, data: [{ id: "proj-1" }] });
 
@@ -349,11 +378,25 @@ describe("archiveProject", () => {
       "NEXT_REDIRECT:/nodo/projects/proj-1?ok=proyecto-archivado",
     );
 
-    expect(mocks.projectsUpdatePayload).toEqual({ estado: "terminado" });
+    expect(mocks.projectsUpdatePayload).toEqual({
+      archivado_en: expect.any(String),
+      estado: "pausado",
+    });
+    const { archivado_en } = mocks.projectsUpdatePayload as { archivado_en: string };
+    expect(Number.isNaN(Date.parse(archivado_en))).toBe(false);
     expect(mocks.projectsUpdateEq).toHaveBeenCalledWith("id", "proj-1");
     expect(mocks.projectsDelete).not.toHaveBeenCalled();
     expect(mocks.membersDelete).not.toHaveBeenCalled();
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects/proj-1");
+  });
+
+  it("only archives a project that is not archived yet (keeps the first date)", async () => {
+    setupAuth("serrano-1");
+    mocks.projectsUpdateSelect.mockResolvedValue({ error: null, data: [{ id: "proj-1" }] });
+
+    await expect(archiveProject(null, makeArchiveForm())).rejects.toThrow("NEXT_REDIRECT");
+
+    expect(mocks.projectsUpdateIs).toHaveBeenCalledWith("archivado_en", null);
   });
 
   it("rejects a non-admin archive when RLS returns zero rows", async () => {
@@ -381,6 +424,45 @@ function makeJoinForm(projectId = "proj-1") {
   fd.set("projectId", projectId);
   return fd;
 }
+
+describe("unarchiveProject (ZER-201)", () => {
+  function makeForm(projectId = "proj-1") {
+    const fd = new FormData();
+    fd.set("projectId", projectId);
+    return fd;
+  }
+
+  it("clears archivado_en and leaves estado as it is", async () => {
+    setupAuth("serrano-1");
+    mocks.projectsUpdateSelect.mockResolvedValue({ error: null, data: [{ id: "proj-1" }] });
+
+    await expect(unarchiveProject(null, makeForm())).rejects.toThrow(
+      "NEXT_REDIRECT:/nodo/projects/proj-1?ok=proyecto-desarchivado",
+    );
+
+    expect(mocks.projectsUpdatePayload).toEqual({ archivado_en: null });
+    expect(mocks.projectsUpdateEq).toHaveBeenCalledWith("id", "proj-1");
+    expect(mocks.projectsUpdateNot).toHaveBeenCalledWith("archivado_en", "is", null);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects");
+  });
+
+  it("rejects when RLS returns zero rows (not an admin, or not archived)", async () => {
+    setupAuth("miembro-2");
+    mocks.projectsUpdateSelect.mockResolvedValue({ error: null, data: [] });
+
+    const result = await unarchiveProject(null, makeForm());
+
+    expect(result).toEqual({ error: "No pudimos desarchivar el proyecto." });
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("returns unauthorized when there is no session", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+    const result = await unarchiveProject(null, makeForm());
+    expect(result).toEqual({ error: "No autorizado" });
+    expect(mocks.projectsUpdate).not.toHaveBeenCalled();
+  });
+});
 
 describe("joinProject", () => {
   it("inserts aprobado for an abierto project and revalidates the detail route", async () => {

@@ -26,6 +26,8 @@ interface ProjectFormProps {
   pendingLabel: string;
   defaults?: ProjectFormDefaults;
   hiddenFields?: Record<string, string>;
+  /** Creating: a project cannot start as Terminado or Pausado (ZER-201). */
+  creating?: boolean;
 }
 
 export function ProjectForm({
@@ -34,11 +36,17 @@ export function ProjectForm({
   pendingLabel,
   defaults,
   hiddenFields,
+  creating = false,
 }: ProjectFormProps) {
   const [state, formAction, pending] = useGuardedActionState(action, null);
 
   const estado = defaults?.estado ?? "idea";
   const ingreso = defaults?.ingreso ?? "aprobacion";
+  const estadoOptions = creating
+    ? PROJECT_ESTADO_OPTIONS.filter(
+        (option) => option.value !== "terminado" && option.value !== "pausado",
+      )
+    : PROJECT_ESTADO_OPTIONS;
 
   return (
     <form action={formAction} className="flex flex-col gap-[18px]">
@@ -76,7 +84,7 @@ export function ProjectForm({
         <fieldset className="flex flex-col gap-2">
           <legend className={GROUP_LABEL}>Estado</legend>
           <div className="flex flex-wrap gap-2">
-            {PROJECT_ESTADO_OPTIONS.map((option) => (
+            {estadoOptions.map((option) => (
               <label
                 key={option.value}
                 className={cn(

@@ -11,6 +11,7 @@ const MESSAGES = {
   "proyecto-creado": "Proyecto creado",
   "proyecto-actualizado": "Cambios del proyecto guardados",
   "proyecto-archivado": "Proyecto archivado",
+  "proyecto-desarchivado": "Proyecto desarchivado",
   "proyecto-abandonado": "Saliste del proyecto",
   "evento-creado": "Evento creado",
   "evento-actualizado": "Cambios del evento guardados",

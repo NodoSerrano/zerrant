@@ -18,7 +18,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
 
   const { data: project } = await supabase
     .from("projects")
-    .select("id, nombre, descripcion, estado, ingreso")
+    .select("id, nombre, descripcion, estado, ingreso, archivado_en")
     .eq("id", id)
     .maybeSingle();
 
@@ -45,6 +45,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
   return (
     <EditProjectForm
       projectId={project.id}
+      archived={Boolean(project.archivado_en)}
       defaults={{
         nombre: project.nombre,
         descripcion: project.descripcion ?? "",
