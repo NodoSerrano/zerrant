@@ -40,6 +40,7 @@ create index idx_membership_requests_profile_cerrada
 create or replace function public.membership_requests_stamp_cerrada()
 returns trigger
 language plpgsql
+security definer
 set search_path = ''
 as $$
 begin
@@ -75,15 +76,16 @@ begin
   from public.membership_requests
   where profile_id = new.profile_id
     and estado = 'cerrada'
-  order by cerrada_en desc nulls first
+  order by cerrada_en desc nulls last, actualizado_en desc, id desc
   limit 1;
 
   if found
     and v_habilitada_en is null
     and (v_cerrada_en is null or v_cerrada_en > now() - interval '30 days')
   then
+    -- P0001, not 42501: a real privilege deny must not look like the cooldown.
     raise exception 'membership request denied: reapply cooldown'
-      using errcode = '42501';
+      using errcode = 'P0001';
   end if;
 
   return new;
@@ -106,9 +108,38 @@ set search_path = ''
 as $$
 declare
   v_uid uuid := auth.uid();
+  v_profile uuid;
+  v_latest uuid;
 begin
   if v_uid is null or not public.is_platform_admin() then
     return jsonb_build_object('error', 'No autorizado', 'code', 'forbidden');
+  end if;
+
+  select profile_id into v_profile
+  from public.membership_requests
+  where id = p_request_id
+    and estado = 'cerrada';
+
+  if not found then
+    return jsonb_build_object(
+      'error', 'Esa solicitud no está cerrada o ya tiene habilitada una nueva',
+      'code', 'not_applicable'
+    );
+  end if;
+
+  -- Same row the insert gate reads. Enabling an older close must not look like success.
+  select id into v_latest
+  from public.membership_requests
+  where profile_id = v_profile
+    and estado = 'cerrada'
+  order by cerrada_en desc nulls last, actualizado_en desc, id desc
+  limit 1;
+
+  if v_latest is distinct from p_request_id then
+    return jsonb_build_object(
+      'error', 'Solo se puede habilitar la solicitud cerrada más reciente',
+      'code', 'not_applicable'
+    );
   end if;
 
   update public.membership_requests
@@ -131,3 +162,11 @@ $$;
 
 revoke execute on function public.enable_membership_reapplication(uuid) from public, anon;
 grant execute on function public.enable_membership_reapplication(uuid) to authenticated;
+
+-- New columns inherit table privileges. Lock them so the owner cannot stamp
+-- the enable flag (or the close date) and skip the gate. The stamp trigger
+-- and this RPC are security definer, so they can still write.
+revoke insert (cerrada_en, reapertura_habilitada_en, reapertura_habilitada_por),
+       update (cerrada_en, reapertura_habilitada_en, reapertura_habilitada_por)
+  on public.membership_requests
+  from public, anon, authenticated;

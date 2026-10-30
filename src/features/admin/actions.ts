@@ -170,6 +170,8 @@ export async function enableReapplication(
 
   revalidatePath("/admin/membresias");
   revalidatePath("/profile", "layout");
+  revalidatePath("/solicitar");
+  revalidatePath("/solicitar/estado");
   return { success: "Listo: ya puede enviar una nueva solicitud" };
 }
 

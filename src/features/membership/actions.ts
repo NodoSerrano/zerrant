@@ -16,8 +16,8 @@ const REAPPLY_LOCKED =
 const NO_ROWS = "PGRST116";
 /** Partial unique index membership_requests_one_active_per_profile. */
 const UNIQUE_VIOLATION = "23505";
-/** membership_requests_reapply_gate (ZER-180). */
-const REAPPLY_DENIED = "42501";
+/** membership_requests_reapply_gate (ZER-180). Not 42501: that is a privilege deny. */
+const REAPPLY_DENIED = "P0001";
 
 function reapplyLockedUntil(availableFrom: string | null): string {
   return availableFrom
@@ -80,7 +80,9 @@ export async function createMembershipRequest(
     .select("cerrada_en, reapertura_habilitada_en")
     .eq("profile_id", user.id)
     .eq("estado", "cerrada")
-    .order("cerrada_en", { ascending: false, nullsFirst: true })
+    .order("cerrada_en", { ascending: false, nullsFirst: false })
+    .order("actualizado_en", { ascending: false })
+    .order("id", { ascending: false })
     .limit(1)
     .maybeSingle();
 

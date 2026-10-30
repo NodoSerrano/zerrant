@@ -32,6 +32,35 @@ export function reapplyStatus(closed: ClosedRequest | null, now: Date = new Date
     : { allowed: false, availableFrom: availableFrom.toISOString() };
 }
 
+export type ClosedRow = {
+  id: string;
+  profileId: string;
+  estado: string;
+  cerradaEn: string | null;
+  updatedAt: string;
+};
+
+/** Ids of the cerrada row the insert gate reads, one per profile. */
+export function gateClosedIds(rows: ClosedRow[]): Set<string> {
+  const best = new Map<string, ClosedRow>();
+  for (const row of rows) {
+    if (row.estado !== "cerrada" || !row.profileId) continue;
+    const current = best.get(row.profileId);
+    if (!current || closedIsLater(row, current)) best.set(row.profileId, row);
+  }
+  return new Set([...best.values()].map((row) => row.id));
+}
+
+function closedIsLater(candidate: ClosedRow, current: ClosedRow): boolean {
+  if (candidate.cerradaEn && !current.cerradaEn) return true;
+  if (!candidate.cerradaEn && current.cerradaEn) return false;
+  if (candidate.cerradaEn && current.cerradaEn && candidate.cerradaEn !== current.cerradaEn) {
+    return candidate.cerradaEn > current.cerradaEn;
+  }
+  if (candidate.updatedAt !== current.updatedAt) return candidate.updatedAt > current.updatedAt;
+  return candidate.id > current.id;
+}
+
 /** "19 de noviembre", the day in Argentina. */
 export function formatReapplyDate(iso: string): string {
   return new Intl.DateTimeFormat("es-AR", {

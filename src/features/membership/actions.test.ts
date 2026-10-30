@@ -35,7 +35,11 @@ vi.mock("@/lib/supabase/server", () => ({
               // Latest cerrada request (ZER-180).
               eq: mocks.closedEq.mockReturnValue({
                 order: vi.fn(() => ({
-                  limit: vi.fn(() => ({ maybeSingle: mocks.closedMaybeSingle })),
+                  order: vi.fn(() => ({
+                    order: vi.fn(() => ({
+                      limit: vi.fn(() => ({ maybeSingle: mocks.closedMaybeSingle })),
+                    })),
+                  })),
                 })),
               }),
             })),
@@ -291,11 +295,11 @@ describe("createMembershipRequest", () => {
       expect(mocks.membershipInsert).not.toHaveBeenCalled();
     });
 
-    it("maps the DB reapply gate (42501) to a clear message", async () => {
+    it("maps the DB reapply gate (P0001) to a clear message, not a privilege deny", async () => {
       setupTourist();
       vi.spyOn(console, "error").mockImplementation(() => {});
       mocks.membershipInsert.mockResolvedValue({
-        error: { code: "42501", message: "membership request denied: reapply cooldown" },
+        error: { code: "P0001", message: "membership request denied: reapply cooldown" },
       });
 
       const result = await createMembershipRequest(null, screeningForm());
@@ -303,6 +307,18 @@ describe("createMembershipRequest", () => {
       expect(result).toEqual({
         error: "Tu solicitud anterior se cerró hace poco. Todavía no podés enviar una nueva.",
       });
+    });
+
+    it("does not treat a real privilege deny (42501) as the cooldown", async () => {
+      setupTourist();
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      mocks.membershipInsert.mockResolvedValue({
+        error: { code: "42501", message: "permission denied for table membership_requests" },
+      });
+
+      const result = await createMembershipRequest(null, screeningForm());
+
+      expect(result).toEqual({ error: "No pudimos enviar tu solicitud. Probá de nuevo." });
     });
   });
 

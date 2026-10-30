@@ -35,9 +35,14 @@ describe("ZER-180 membership reapply migration", () => {
     expect(sql).toMatch(/create trigger membership_requests_reapply_gate\s+before insert/i);
     expect(sql).toContain(`interval '${REAPPLY_COOLDOWN_DAYS} days'`);
     expect(sql).toMatch(/v_habilitada_en is null/);
-    // An unknown closing date blocks, like reapplyStatus.
+    // An unknown closing date still blocks when it is the row the gate reads.
     expect(sql).toMatch(/v_cerrada_en is null or/);
-    expect(sql).toMatch(/errcode = '42501'/);
+    expect(sql).toMatch(/errcode = 'P0001'/);
+    expect(sql).not.toMatch(/errcode = '42501'/);
+    // Gate and enable RPC name the same row: latest dated close, nulls last.
+    expect(
+      sql.match(/order by cerrada_en desc nulls last, actualizado_en desc, id desc/gi),
+    ).toHaveLength(2);
   });
 
   it("lets only platform admins enable a new request, through a definer RPC", () => {
@@ -54,7 +59,14 @@ describe("ZER-180 membership reapply migration", () => {
     );
   });
 
-  it("keeps the new columns out of what the applicant can insert", () => {
-    expect(zer180()).not.toMatch(/grant insert/i);
+  it("keeps the control columns out of what the applicant can write", () => {
+    const sql = zer180();
+    expect(sql).not.toMatch(/grant insert/i);
+    expect(sql).toMatch(
+      /revoke insert\s*\(\s*cerrada_en\s*,\s*reapertura_habilitada_en\s*,\s*reapertura_habilitada_por\s*\)/i,
+    );
+    expect(sql).toMatch(
+      /update\s*\(\s*cerrada_en\s*,\s*reapertura_habilitada_en\s*,\s*reapertura_habilitada_por\s*\)\s+on public\.membership_requests\s+from public,\s*anon,\s*authenticated/i,
+    );
   });
 });

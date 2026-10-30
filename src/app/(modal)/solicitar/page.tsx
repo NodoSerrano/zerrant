@@ -42,7 +42,9 @@ export default async function SolicitarPage() {
     .select("cerrada_en, reapertura_habilitada_en")
     .eq("profile_id", user.id)
     .eq("estado", "cerrada")
-    .order("cerrada_en", { ascending: false, nullsFirst: true })
+    .order("cerrada_en", { ascending: false, nullsFirst: false })
+    .order("actualizado_en", { ascending: false })
+    .order("id", { ascending: false })
     .limit(1)
     .maybeSingle();
 

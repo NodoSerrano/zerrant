@@ -20,7 +20,11 @@ vi.mock("@/lib/supabase/server", () => ({
               eq: vi.fn(() => ({
                 eq: mocks.closedEq.mockImplementation(() => ({
                   order: vi.fn(() => ({
-                    limit: vi.fn(() => ({ maybeSingle: mocks.closedMaybeSingle })),
+                    order: vi.fn(() => ({
+                      order: vi.fn(() => ({
+                        limit: vi.fn(() => ({ maybeSingle: mocks.closedMaybeSingle })),
+                      })),
+                    })),
                   })),
                 })),
               })),

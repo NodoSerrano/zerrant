@@ -506,6 +506,9 @@ describe("enableReapplication (ZER-180)", () => {
     });
     expect(result).toEqual({ success: "Listo: ya puede enviar una nueva solicitud" });
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/membresias");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/profile", "layout");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/solicitar");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/solicitar/estado");
   });
 
   it("is only for platform admins", async () => {

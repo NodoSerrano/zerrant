@@ -22,6 +22,8 @@ export interface RequestHistoryItem {
   /** cerrada only: when it closed and whether an admin reopened it (ZER-180). */
   cerradaEn?: string | null;
   reaperturaHabilitadaEn?: string | null;
+  /** True only on the cerrada row the insert gate reads. */
+  isGateRow?: boolean;
 }
 
 const FILTER_LABELS: Record<HistoryFilter, string> = {
@@ -85,7 +87,7 @@ function Reapply({ item }: { item: RequestHistoryItem }) {
           Puede volver a solicitar desde el {formatReapplyDate(status.availableFrom)}
         </p>
       ) : null}
-      <EnableReapplicationButton requestId={item.id} />
+      {item.isGateRow ? <EnableReapplicationButton requestId={item.id} /> : null}
     </div>
   );
 }
