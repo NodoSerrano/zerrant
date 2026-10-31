@@ -4,6 +4,8 @@ import { useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { demoteProjectMember } from "./actions";
+import { MEMBER_ACTION_CLASS } from "./projectActionStyles";
+import { cn } from "@/lib/utils";
 
 // ZER-199: turns an admin back into a member. Confirms first: it can take the
 // role from the viewer themselves. The confirmation is the shared pop up (ZER-221).
@@ -25,7 +27,7 @@ export function DemoteMemberButton({
         type="button"
         aria-haspopup="dialog"
         onClick={() => setConfirming(true)}
-        className="whitespace-nowrap font-display text-[11px] font-semibold text-coral"
+        className={cn(MEMBER_ACTION_CLASS, "text-coral")}
       >
         Quitar admin
       </button>

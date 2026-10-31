@@ -2,6 +2,8 @@
 
 import { useGuardedActionState } from "@/lib/use-guarded-action-state";
 import { promoteProjectMember } from "./actions";
+import { MEMBER_ACTION_CLASS } from "./projectActionStyles";
+import { cn } from "@/lib/utils";
 
 export function PromoteMemberButton({
   projectId,
@@ -19,7 +21,7 @@ export function PromoteMemberButton({
       <button
         type="submit"
         disabled={pending}
-        className="whitespace-nowrap rounded-pill border border-border px-2.5 py-1 font-display text-[11px] font-semibold text-brand-blue disabled:opacity-50"
+        className={cn(MEMBER_ACTION_CLASS, "text-brand-blue")}
       >
         {pending ? "Designando..." : "Designar admin"}
       </button>

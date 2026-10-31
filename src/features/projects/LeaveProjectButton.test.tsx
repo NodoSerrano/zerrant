@@ -15,12 +15,20 @@ vi.mock("./actions", () => ({
 }));
 
 import { LeaveProjectButton } from "./LeaveProjectButton";
+import { PROJECT_OPERATION_CLASS } from "./projectActionStyles";
 
 beforeEach(() => {
   mocks.state = null;
 });
 
 describe("LeaveProjectButton (ZER-200)", () => {
+  it("uses the shared full-width operation button (ZER-224)", () => {
+    render(<LeaveProjectButton projectId="proj-1" />);
+    expect(screen.getByRole("button", { name: "Salir del proyecto" }).className).toContain(
+      PROJECT_OPERATION_CLASS,
+    );
+  });
+
   it("asks for confirmation in a pop up before leaving (ZER-221)", () => {
     render(<LeaveProjectButton projectId="proj-1" />);
 
