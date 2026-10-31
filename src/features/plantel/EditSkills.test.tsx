@@ -30,20 +30,16 @@ vi.mock("next/link", () => ({
 }));
 
 import { EditSkills } from "./EditSkills";
-import type { SkillItem } from "./skills";
 
 const CATALOG = ["Rust", "Solidity", "ZK Proofs", "DevOps"];
 
-function skill(nombre: string, extra: Partial<SkillItem> = {}): SkillItem {
-  return { nombre, nivel: null, anios_freelance: null, anios_empresa: null, ...extra };
+function submitted(): string[] {
+  return Array.from(
+    document.querySelectorAll<HTMLInputElement>('input[type="hidden"][name="skill"]'),
+  ).map((input) => input.value);
 }
 
-function submitted(): SkillItem[] {
-  const input = document.querySelector('input[type="hidden"][name="items"]') as HTMLInputElement;
-  return JSON.parse(input.value) as SkillItem[];
-}
-
-function renderEdit(opts: { initial?: SkillItem[]; pending?: string[] } = {}) {
+function renderEdit(opts: { initial?: string[]; pending?: string[] } = {}) {
   return render(
     <EditSkills
       initialSkills={opts.initial ?? []}
@@ -81,7 +77,7 @@ describe("EditSkills", () => {
   });
 
   it("renders suggestions excluding the selected skills", () => {
-    renderEdit({ initial: [skill("Solidity")] });
+    renderEdit({ initial: ["Solidity"] });
     expect(screen.getByText("Sugerencias")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Agregar Rust" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Agregar Solidity" })).not.toBeInTheDocument();
@@ -91,12 +87,12 @@ describe("EditSkills", () => {
     renderEdit();
     fireEvent.click(screen.getByRole("button", { name: "Agregar Rust" }));
 
-    expect(submitted()).toEqual([skill("Rust")]);
+    expect(submitted()).toEqual(["Rust"]);
     expect(screen.getByRole("button", { name: "Quitar Rust" })).toBeInTheDocument();
   });
 
   it("removes a selected skill", () => {
-    renderEdit({ initial: [skill("Solidity")] });
+    renderEdit({ initial: ["Solidity"] });
     fireEvent.click(screen.getByRole("button", { name: "Quitar Solidity" }));
 
     expect(submitted()).toEqual([]);
@@ -113,7 +109,7 @@ describe("EditSkills", () => {
   });
 
   it("shows an empty state when the whole catalog is selected", () => {
-    renderEdit({ initial: CATALOG.map((name) => skill(name)) });
+    renderEdit({ initial: CATALOG });
     expect(screen.getByText("No hay más habilidades para sugerir.")).toBeInTheDocument();
   });
 
@@ -137,55 +133,19 @@ describe("EditSkills", () => {
     expect(preventDefault).toHaveBeenCalled();
   });
 
-  describe("level and years (ZER-163)", () => {
-    it("shows the saved level and years for each skill", () => {
-      renderEdit({
-        initial: [skill("Solidity", { nivel: "avanzado", anios_freelance: 3, anios_empresa: 2 })],
-      });
+  describe("name only (ZER-216)", () => {
+    it("sends one hidden skill per selected name", () => {
+      renderEdit({ initial: ["Solidity"] });
+      fireEvent.click(screen.getByRole("button", { name: "Agregar Rust" }));
 
-      expect(screen.getByRole("combobox", { name: "Nivel en Solidity" })).toHaveValue("avanzado");
-      expect(screen.getByRole("spinbutton", { name: "Años freelance en Solidity" })).toHaveValue(3);
-      expect(screen.getByRole("spinbutton", { name: "Años en empresa en Solidity" })).toHaveValue(
-        2,
-      );
+      expect(submitted()).toEqual(["Solidity", "Rust"]);
     });
 
-    it("sends what the member edits, freelance and company years separately", () => {
-      renderEdit({ initial: [skill("Rust")] });
+    it("no longer asks for level or years", () => {
+      renderEdit({ initial: ["Solidity"] });
 
-      fireEvent.change(screen.getByRole("combobox", { name: "Nivel en Rust" }), {
-        target: { value: "intermedio" },
-      });
-      fireEvent.change(screen.getByRole("spinbutton", { name: "Años freelance en Rust" }), {
-        target: { value: "4" },
-      });
-      fireEvent.change(screen.getByRole("spinbutton", { name: "Años en empresa en Rust" }), {
-        target: { value: "1" },
-      });
-
-      expect(submitted()).toEqual([
-        skill("Rust", { nivel: "intermedio", anios_freelance: 4, anios_empresa: 1 }),
-      ]);
-    });
-
-    it("keeps level and years optional", () => {
-      renderEdit({ initial: [skill("Rust", { nivel: "basico", anios_freelance: 2 })] });
-
-      fireEvent.change(screen.getByRole("combobox", { name: "Nivel en Rust" }), {
-        target: { value: "" },
-      });
-      fireEvent.change(screen.getByRole("spinbutton", { name: "Años freelance en Rust" }), {
-        target: { value: "" },
-      });
-
-      expect(submitted()).toEqual([skill("Rust")]);
-    });
-
-    it("caps years between 0 and 60", () => {
-      renderEdit({ initial: [skill("Rust")] });
-      const freelance = screen.getByRole("spinbutton", { name: "Años freelance en Rust" });
-      expect(freelance).toHaveAttribute("min", "0");
-      expect(freelance).toHaveAttribute("max", "60");
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+      expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
     });
   });
 
@@ -198,8 +158,8 @@ describe("EditSkills", () => {
 
       const propose = screen.getByRole("button", { name: "Proponer «Cerámica»" });
       expect(propose).toHaveAttribute("type", "submit");
-      expect(propose).toHaveAttribute("name", "propuesta");
-      expect(propose).toHaveAttribute("value", "Cerámica");
+      // React overrides `name` on a button whose formAction is a function (ZER-223).
+      expect(propose).not.toHaveAttribute("name");
     });
 
     it("does not offer to propose an existing or pending skill, whatever the case", () => {
@@ -236,6 +196,9 @@ describe("EditSkills", () => {
         expect(screen.getByRole("status")).toHaveTextContent("Propusiste «Cerámica»"),
       );
       expect(mocks.saveProfileSkills).not.toHaveBeenCalled();
+      // The name used to get lost on the way: the action read an empty field (ZER-223).
+      const formData = mocks.proposeSkill.mock.calls[0][1] as FormData;
+      expect(formData.get("propuesta")).toBe("Cerámica");
     });
   });
 });
