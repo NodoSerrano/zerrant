@@ -106,6 +106,25 @@ describe("saveProfileSkills", () => {
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
+  it("sends full skill ids, not the characters of the id string (ZER-216)", async () => {
+    const solidity = "11111111-1111-4111-8111-111111111111";
+    const rust = "22222222-2222-4222-8222-222222222222";
+    serranoUser();
+    mocks.skillsEq.mockResolvedValue({
+      data: [
+        { id: solidity, nombre: "Solidity" },
+        { id: rust, nombre: "Rust" },
+      ],
+      error: null,
+    });
+
+    await save(formDataWith("Solidity", "Rust"));
+
+    expect(mocks.rpc).toHaveBeenCalledWith("save_profile_skills", {
+      p_skill_ids: [solidity, rust],
+    });
+  });
+
   it("saves the resolved approved catalog ids in a single RPC (ZER-216)", async () => {
     serranoUser();
 
@@ -114,6 +133,7 @@ describe("saveProfileSkills", () => {
     expect(mocks.skillsEq).toHaveBeenCalledWith("estado", "aprobada");
     expect(mocks.rpc).toHaveBeenCalledWith("save_profile_skills", { p_skill_ids: ["s1", "s2"] });
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/profile");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/profile/habilidades");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/plantel");
   });
 

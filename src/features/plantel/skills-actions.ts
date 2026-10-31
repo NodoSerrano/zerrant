@@ -59,7 +59,10 @@ export async function saveProfileSkills(
     idByName.set(skill.nombre.toLocaleLowerCase(), skill.id);
   }
 
-  const skillIds = names.flatMap((name) => idByName.get(name.toLocaleLowerCase()) ?? []);
+  const skillIds = names.flatMap((name) => {
+    const id = idByName.get(name.toLocaleLowerCase());
+    return id ? [id] : [];
+  });
 
   const { data, error: rpcError } = await supabase.rpc("save_profile_skills", {
     p_skill_ids: skillIds,
@@ -75,6 +78,7 @@ export async function saveProfileSkills(
   }
 
   revalidatePath("/profile");
+  revalidatePath("/profile/habilidades");
   revalidatePath("/plantel");
   redirect("/profile");
 }

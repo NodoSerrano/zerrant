@@ -8,6 +8,7 @@
 -- caller's set and still ignores anything that is not an approved skill.
 
 drop function if exists public.save_profile_skills(jsonb);
+drop function if exists public.save_profile_skills(json);
 
 alter table public.profile_skills
   drop column if exists nivel,
