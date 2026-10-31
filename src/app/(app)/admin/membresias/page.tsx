@@ -23,6 +23,7 @@ import {
   type RequestEventRow,
 } from "@/features/membership/request-history";
 import { RequestHistoryList, type RequestHistoryItem } from "@/features/admin/RequestHistoryList";
+import { gateClosedIds } from "@/features/membership/reapply";
 
 export const dynamic = "force-dynamic";
 
@@ -98,7 +99,7 @@ function toScreening(row: RequestRow): RequestScreeningData {
 }
 
 const HISTORY_SELECT =
-  "id, estado, created_at, profiles!membership_requests_profile_id_fkey(nombre, apellido, apodo, nombre_visible, avatar_url, id)";
+  "id, estado, created_at, actualizado_en, cerrada_en, reapertura_habilitada_en, profiles!membership_requests_profile_id_fkey(nombre, apellido, apodo, nombre_visible, avatar_url, id)";
 
 /** The newest final requests; older history is out of scope until someone needs paging. */
 const HISTORY_LIMIT = 100;
@@ -107,6 +108,9 @@ type HistoryRow = {
   id: string;
   estado: RequestHistoryItem["estado"];
   created_at: string;
+  actualizado_en: string;
+  cerrada_en: string | null;
+  reapertura_habilitada_en: string | null;
   profiles: RequestProfileData | RequestProfileData[] | null;
 };
 
@@ -181,7 +185,7 @@ export default async function AdminMembresiasPage({
     );
     historyEventsError = events.error;
     const eventsByRequest = groupEventsByRequest(events.rows);
-    historyItems = rows.map((row) => {
+    const mapped = rows.map((row) => {
       const profile = Array.isArray(row.profiles) ? (row.profiles[0] ?? null) : row.profiles;
       return {
         id: row.id,
@@ -197,8 +201,24 @@ export default async function AdminMembresiasPage({
           : "",
         avatarUrl: profile?.avatar_url ?? null,
         events: eventsByRequest.get(row.id) ?? [],
+        cerradaEn: row.cerrada_en,
+        reaperturaHabilitadaEn: row.reapertura_habilitada_en,
+        profileId: profile?.id ?? "",
+        updatedAt: row.actualizado_en,
       };
     });
+    const gateIds = gateClosedIds(mapped);
+    historyItems = mapped.map((row) => ({
+      id: row.id,
+      estado: row.estado,
+      createdAt: row.createdAt,
+      name: row.name,
+      avatarUrl: row.avatarUrl,
+      events: row.events,
+      cerradaEn: row.cerradaEn,
+      reaperturaHabilitadaEn: row.reaperturaHabilitadaEn,
+      isGateRow: gateIds.has(row.id),
+    }));
   }
 
   const bookingByRequest = new Map<string, { starts_at: string; ends_at: string }>();

@@ -119,6 +119,29 @@ describe("loadMembershipPipeline", () => {
     expect(r.request).toBeNull();
   });
 
+  it("brings when a cerrada request closed and whether an admin reopened it (ZER-180)", async () => {
+    const s = makeSupabase({
+      user: { id: "u1", email_confirmed_at: "2026-10-01T00:00:00Z" },
+      request: {
+        data: {
+          estado: "cerrada",
+          cerrada_en: "2026-10-20T15:00:00.000Z",
+          reapertura_habilitada_en: null,
+        },
+        error: null,
+      },
+    });
+    const r = await loadMembershipPipeline(s.client as never);
+
+    expect(r.request).toEqual({
+      estado: "cerrada",
+      cerradaEn: "2026-10-20T15:00:00.000Z",
+      reaperturaHabilitadaEn: null,
+    });
+    const req = s.calls.find((c) => c.table === "membership_requests")!;
+    expect(req.ops).toContainEqual(["select", "estado, cerrada_en, reapertura_habilitada_en"]);
+  });
+
   it("ignores a request row with an unknown estado", async () => {
     const s = makeSupabase({
       user: { id: "u1" },

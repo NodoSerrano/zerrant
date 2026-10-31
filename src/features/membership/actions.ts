@@ -5,20 +5,25 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { parseMembershipScreening } from "./screening";
 import { MEMBERSHIP_REQUEST_ACTIVE_ESTADOS } from "./request-state";
+import { formatReapplyDate, reapplyStatus } from "./reapply";
 
 const DB_ERROR = "No pudimos enviar tu solicitud. Probá de nuevo.";
 const NOT_TOURIST = "Solo los tourists pueden solicitar membresía.";
 const ALREADY_ACTIVE = "Ya tenés una solicitud en curso.";
-const ALREADY_CLOSED = "Tu solicitud anterior fue cerrada. Por ahora no podés enviar una nueva.";
-/**
- * States that block a new request: any active one, plus `cerrada` because
- * re-application is not allowed yet (ZER-136; enabling it is ZER-180). App
- * layer only: the DB index enforces one active request, not this rule.
- */
-const BLOCKING_ESTADOS = [...MEMBERSHIP_REQUEST_ACTIVE_ESTADOS, "cerrada" as const];
+/** The DB reapply gate refused it (ZER-180): the app check below normally says when. */
+const REAPPLY_LOCKED =
+  "Tu solicitud anterior se cerró hace poco. Todavía no podés enviar una nueva.";
 const NO_ROWS = "PGRST116";
 /** Partial unique index membership_requests_one_active_per_profile. */
 const UNIQUE_VIOLATION = "23505";
+/** membership_requests_reapply_gate (ZER-180). Not 42501: that is a privilege deny. */
+const REAPPLY_DENIED = "P0001";
+
+function reapplyLockedUntil(availableFrom: string | null): string {
+  return availableFrom
+    ? `Tu solicitud anterior se cerró. Podés enviar una nueva desde el ${formatReapplyDate(availableFrom)}.`
+    : REAPPLY_LOCKED;
+}
 
 export async function createMembershipRequest(
   _prevState: { error: string } | null,
@@ -55,18 +60,45 @@ export async function createMembershipRequest(
     .from("membership_requests")
     .select("estado")
     .eq("profile_id", user.id)
-    .in("estado", BLOCKING_ESTADOS)
+    .in("estado", [...MEMBERSHIP_REQUEST_ACTIVE_ESTADOS])
     .limit(1)
     .maybeSingle();
 
   if (existingError) {
-    // Fail closed: without this read the cerrada rule could be bypassed.
     console.error("[createMembershipRequest] existing request read failed", existingError);
     return { error: DB_ERROR };
   }
 
   if (existing) {
-    return { error: existing.estado === "cerrada" ? ALREADY_CLOSED : ALREADY_ACTIVE };
+    return { error: ALREADY_ACTIVE };
+  }
+
+  // After a cerrada request: 30 days, or earlier if an admin enabled it (ZER-180).
+  // The DB gate enforces it too; this read is what lets us say from when.
+  const { data: closed, error: closedError } = await supabase
+    .from("membership_requests")
+    .select("cerrada_en, reapertura_habilitada_en")
+    .eq("profile_id", user.id)
+    .eq("estado", "cerrada")
+    .order("cerrada_en", { ascending: false, nullsFirst: false })
+    .order("actualizado_en", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (closedError) {
+    // Fail closed, like the DB gate.
+    console.error("[createMembershipRequest] closed request read failed", closedError);
+    return { error: DB_ERROR };
+  }
+
+  const reapply = reapplyStatus(
+    closed
+      ? { cerradaEn: closed.cerrada_en, reaperturaHabilitadaEn: closed.reapertura_habilitada_en }
+      : null,
+  );
+  if (!reapply.allowed) {
+    return { error: reapplyLockedUntil(reapply.availableFrom) };
   }
 
   const screening = parseMembershipScreening(formData);
@@ -87,6 +119,9 @@ export async function createMembershipRequest(
     // already-in-progress case, not an unknown failure.
     if (error.code === UNIQUE_VIOLATION) {
       return { error: ALREADY_ACTIVE };
+    }
+    if (error.code === REAPPLY_DENIED) {
+      return { error: REAPPLY_LOCKED };
     }
     return { error: DB_ERROR };
   }
