@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
@@ -21,7 +21,9 @@ const MODAL_LEFTOVERS = ["(modal)/nodo/projects/page.tsx", "(modal)/nodo/tasks/p
 describe("Proyectos y Tareas hub shell placement (ZER-206)", () => {
   it("keeps the project and task lists under the app shell with TabBar", () => {
     for (const rel of HUB_LISTS) {
-      expect(existsSync(join(ROOT, rel)), `missing ${rel}`).toBe(true);
+      const source = readFileSync(join(ROOT, rel), "utf8");
+      expect(source, rel).toContain("FAB_ABOVE_TAB_BAR_CLASS");
+      expect(source, rel).not.toContain("(modal)");
     }
   });
 
