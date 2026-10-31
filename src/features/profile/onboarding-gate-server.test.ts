@@ -81,7 +81,7 @@ describe("getOnboardingGateProfile", () => {
     expect(b.profile?.nombre).toBe("Juan");
     expect(mocks.profileSingle).toHaveBeenCalledTimes(1);
     expect(mocks.select).toHaveBeenCalledWith(
-      "nombre, apellido, fecha_nacimiento, onboarding_completado_en, apodo, avatar_url, bio, contacto_telegram, sitio_url, tier",
+      "nombre, apellido, fecha_nacimiento, onboarding_completado_en, apodo, avatar_url, bio, contacto_telegram, sitio_url, tier, is_platform_admin",
     );
   });
 

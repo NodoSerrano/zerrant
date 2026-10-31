@@ -39,11 +39,27 @@ describe("TabBarClient", () => {
     expect(screen.getByRole("link", { name: /PLANTEL/i })).toHaveClass("bg-primary");
   });
 
-  it("marks inicio active when pathname starts with /nodo (hub lives under Inicio)", () => {
-    (usePathname as ReturnType<typeof vi.fn>).mockReturnValue("/nodo/tasks");
-    render(<TabBarClient />);
+  it.each(["/nodo/projects", "/nodo/tasks", "/nodo/projects/proj-1", "/nodo/tasks/task-1"])(
+    "marks Actividad active on %s (ZER-206)",
+    (pathname) => {
+      (usePathname as ReturnType<typeof vi.fn>).mockReturnValue(pathname);
+      render(<TabBarClient showActividad />);
+      expect(screen.getByRole("link", { name: /ACTIVIDAD/i })).toHaveClass("bg-primary");
+      expect(screen.getByRole("link", { name: /INICIO/i })).not.toHaveClass("bg-primary");
+    },
+  );
+
+  it("does not mark Actividad on a /nodo path that is not a hub", () => {
+    (usePathname as ReturnType<typeof vi.fn>).mockReturnValue("/nodo/other");
+    render(<TabBarClient showActividad />);
+    expect(screen.getByRole("link", { name: /ACTIVIDAD/i })).not.toHaveClass("bg-primary");
     expect(screen.getByRole("link", { name: /INICIO/i })).toHaveClass("bg-primary");
-    expect(screen.queryByRole("link", { name: /NODO/i })).not.toBeInTheDocument();
+  });
+
+  it("does not show Actividad to tourists", () => {
+    (usePathname as ReturnType<typeof vi.fn>).mockReturnValue("/");
+    render(<TabBarClient showActividad={false} />);
+    expect(screen.queryByRole("link", { name: /ACTIVIDAD/i })).not.toBeInTheDocument();
   });
 
   it("marks agenda active when pathname starts with /agenda", () => {

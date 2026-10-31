@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NO_ROWS, resolveOnboardingRedirect, type OnboardingGateProfile } from "./onboarding-gate";
 
 const GATE_SELECT =
-  "nombre, apellido, fecha_nacimiento, onboarding_completado_en, apodo, avatar_url, bio, contacto_telegram, sitio_url, tier";
+  "nombre, apellido, fecha_nacimiento, onboarding_completado_en, apodo, avatar_url, bio, contacto_telegram, sitio_url, tier, is_platform_admin";
 
 export type OnboardingGateResult = {
   profile: OnboardingGateProfile | null;

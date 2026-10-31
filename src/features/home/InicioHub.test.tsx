@@ -113,19 +113,12 @@ describe("InicioHub", () => {
     expect(img).toHaveAttribute("alt", "");
   });
 
-  it("links members into Tareas and Proyectos from Inicio (no Nodo tab)", () => {
-    render(<InicioHub events={[]} birthdays={[]} showCommunityHub />);
-    expect(screen.getByRole("link", { name: /Tareas/i })).toHaveAttribute("href", "/nodo/tasks");
-    expect(screen.getByRole("link", { name: /Proyectos/i })).toHaveAttribute(
-      "href",
-      "/nodo/projects",
-    );
-  });
-
-  it("hides Tareas/Proyectos entry for tourists", () => {
-    render(<InicioHub events={[]} birthdays={[]} showCommunityHub={false} />);
+  it("has no Tareas/Proyectos entry: they moved to the TabBar (ZER-206)", () => {
+    render(<InicioHub events={[]} birthdays={[]} />);
     expect(screen.queryByRole("link", { name: /Tareas/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Proyectos/i })).not.toBeInTheDocument();
+    expect(screen.queryByText("Tareas y proyectos")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Lo que antes vivía en Nodo/)).not.toBeInTheDocument();
   });
 
   it("shows Ser Serrano CTA when enabled (ZER-171)", () => {
@@ -141,8 +134,8 @@ describe("InicioHub", () => {
     expect(screen.queryByRole("link", { name: "Ver beneficios" })).not.toBeInTheDocument();
   });
 
-  it("confirms membership in copy, not only via the community hub", () => {
-    render(<InicioHub events={[]} birthdays={[]} showCommunityHub memberConfirmed />);
+  it("confirms membership in copy", () => {
+    render(<InicioHub events={[]} birthdays={[]} memberConfirmed />);
     expect(screen.getByRole("heading", { name: "Ya sos miembro del Nodo" })).toBeInTheDocument();
   });
 });
