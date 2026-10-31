@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 const mocks = vi.hoisted(() => ({
@@ -98,6 +98,14 @@ vi.mock("@/lib/supabase/server", () => ({
       return {};
     }),
   }),
+}));
+
+vi.mock("@/features/admin/EnableReapplicationButton", () => ({
+  EnableReapplicationButton: ({ requestId }: { requestId: string }) => (
+    <button type="submit" data-request-id={requestId}>
+      Habilitar nueva solicitud
+    </button>
+  ),
 }));
 
 vi.mock("@/components/RequestCard", () => ({
@@ -563,5 +571,90 @@ describe("AdminMembresiasPage — history view (ZER-169)", () => {
     expect(mocks.historyIn).toHaveBeenCalledWith("estado", ["aprobado", "cerrada"]);
     expect(screen.getByRole("link", { name: "Todas" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByText("No hay solicitudes en el historial")).toBeInTheDocument();
+  });
+});
+
+describe("AdminMembresiasPage — new request after a cerrada one (ZER-180)", () => {
+  const historial = () =>
+    AdminMembresiasPage({ searchParams: Promise.resolve({ vista: "historial" }) });
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-26T15:00:00.000Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("brings the closing date and the admin reopening with each request", async () => {
+    setEmptyMembership();
+    render(await historial());
+    expect(mocks.membershipSelect).toHaveBeenCalledWith(
+      expect.stringContaining("cerrada_en, reapertura_habilitada_en"),
+    );
+  });
+
+  it("offers to enable a new request while the 30 days are running", async () => {
+    setEmptyMembership();
+    mocks.historyResponse = Promise.resolve({
+      data: [
+        {
+          ...closedRequest,
+          cerrada_en: "2026-10-20T15:00:00.000Z",
+          reapertura_habilitada_en: null,
+        },
+      ],
+    });
+
+    render(await historial());
+
+    expect(screen.getByRole("button", { name: "Habilitar nueva solicitud" })).toHaveAttribute(
+      "data-request-id",
+      "req-9",
+    );
+    expect(
+      screen.getByText(/Puede volver a solicitar desde el 19 de noviembre/),
+    ).toBeInTheDocument();
+  });
+
+  it("says it was already enabled", async () => {
+    setEmptyMembership();
+    mocks.historyResponse = Promise.resolve({
+      data: [
+        {
+          ...closedRequest,
+          cerrada_en: "2026-10-20T15:00:00.000Z",
+          reapertura_habilitada_en: "2026-10-21T15:00:00.000Z",
+        },
+      ],
+    });
+
+    render(await historial());
+
+    expect(screen.getByText("Nueva solicitud habilitada")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Habilitar nueva solicitud" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("says they can apply again once the 30 days are over", async () => {
+    setEmptyMembership();
+    mocks.historyResponse = Promise.resolve({
+      data: [
+        {
+          ...closedRequest,
+          cerrada_en: "2026-09-01T15:00:00.000Z",
+          reapertura_habilitada_en: null,
+        },
+      ],
+    });
+
+    render(await historial());
+
+    expect(screen.getByText("Ya puede volver a solicitar")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Habilitar nueva solicitud" }),
+    ).not.toBeInTheDocument();
   });
 });

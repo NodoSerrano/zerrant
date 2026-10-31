@@ -431,6 +431,9 @@ export type Database = {
         Row: {
           aprobado_en: string | null;
           actualizado_en: string;
+          cerrada_en: string | null;
+          reapertura_habilitada_en: string | null;
+          reapertura_habilitada_por: string | null;
           aporte_actitud: Database["public"]["Enums"]["membership_aporte_actitud"] | null;
           aporte_mayor: Database["public"]["Enums"]["membership_aporte_mayor"] | null;
           aporte_otro: string | null;
@@ -450,6 +453,9 @@ export type Database = {
           tier_solicitado: Database["public"]["Enums"]["tier"];
         };
         Insert: {
+          cerrada_en?: string | null;
+          reapertura_habilitada_en?: string | null;
+          reapertura_habilitada_por?: string | null;
           aprobado_en?: string | null;
           actualizado_en?: string;
           aporte_actitud?: Database["public"]["Enums"]["membership_aporte_actitud"] | null;
@@ -471,6 +477,9 @@ export type Database = {
           tier_solicitado?: Database["public"]["Enums"]["tier"];
         };
         Update: {
+          cerrada_en?: string | null;
+          reapertura_habilitada_en?: string | null;
+          reapertura_habilitada_por?: string | null;
           aprobado_en?: string | null;
           actualizado_en?: string;
           aporte_actitud?: Database["public"]["Enums"]["membership_aporte_actitud"] | null;
@@ -1000,6 +1009,10 @@ export type Database = {
           error?: string;
           code?: "forbidden" | "invalid_slot" | "conflict";
         };
+      };
+      enable_membership_reapplication: {
+        Args: { p_request_id: string };
+        Returns: { success?: boolean; error?: string; code?: "forbidden" | "not_applicable" };
       };
       is_non_tourist: { Args: never; Returns: boolean };
       is_platform_admin: { Args: never; Returns: boolean };

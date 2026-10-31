@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
@@ -19,7 +19,13 @@ vi.mock("@/lib/supabase/server", () => ({
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
                 eq: mocks.closedEq.mockImplementation(() => ({
-                  limit: vi.fn(() => ({ maybeSingle: mocks.closedMaybeSingle })),
+                  order: vi.fn(() => ({
+                    order: vi.fn(() => ({
+                      order: vi.fn(() => ({
+                        limit: vi.fn(() => ({ maybeSingle: mocks.closedMaybeSingle })),
+                      })),
+                    })),
+                  })),
                 })),
               })),
             })),
@@ -139,14 +145,53 @@ describe("SolicitarPage — authorization", () => {
   });
 });
 
-describe("SolicitarPage — no re-application after cerrada (ZER-136, ZER-180)", () => {
-  it("sends a tourist with a cerrada request to the status page", async () => {
+describe("SolicitarPage — re-application after cerrada (ZER-180)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-26T15:00:00.000Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("sends a tourist whose request closed less than 30 days ago to the status page", async () => {
     setUser("tourist-id");
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "tourist" } });
-    mocks.closedMaybeSingle.mockResolvedValue({ data: { id: "req-1" }, error: null });
+    mocks.closedMaybeSingle.mockResolvedValue({
+      data: { cerrada_en: "2026-10-20T15:00:00.000Z", reapertura_habilitada_en: null },
+      error: null,
+    });
 
     await expect(renderPage()).rejects.toThrow("NEXT_REDIRECT:/solicitar/estado");
     expect(mocks.closedEq).toHaveBeenCalledWith("estado", "cerrada");
+  });
+
+  it("renders the form once the 30 days are over", async () => {
+    setUser("tourist-id");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "tourist" } });
+    mocks.closedMaybeSingle.mockResolvedValue({
+      data: { cerrada_en: "2026-09-01T15:00:00.000Z", reapertura_habilitada_en: null },
+      error: null,
+    });
+
+    expect(await renderPage()).toBeTruthy();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("renders the form earlier when an admin enabled it", async () => {
+    setUser("tourist-id");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "tourist" } });
+    mocks.closedMaybeSingle.mockResolvedValue({
+      data: {
+        cerrada_en: "2026-10-25T15:00:00.000Z",
+        reapertura_habilitada_en: "2026-10-26T10:00:00.000Z",
+      },
+      error: null,
+    });
+
+    expect(await renderPage()).toBeTruthy();
+    expect(mocks.redirect).not.toHaveBeenCalled();
   });
 
   it("still renders the form when the cerrada read fails (the action fails closed)", async () => {

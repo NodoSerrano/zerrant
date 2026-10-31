@@ -163,7 +163,7 @@ describe("ZER-143 creation", () => {
     expect(withTier.error).not.toBeNull();
   });
 
-  it("allows one active request per profile, and a new one after closing", async () => {
+  it("allows one active request per profile, and a new one after the cooldown is lifted", async () => {
     const owner = await createUser();
     const first = await submitRequest(owner);
 
@@ -173,6 +173,62 @@ describe("ZER-143 creation", () => {
     expect(second.error?.code).toBe("23505");
 
     await walk(admin, first, ["cerrada"]);
+
+    const locked = await owner.client
+      .from("membership_requests")
+      .insert({ profile_id: owner.id, mensaje: "too soon" });
+    expect(locked.error?.code).toBe("P0001");
+    expect(locked.error?.code).not.toBe("42501");
+
+    const sneaky = await owner.client
+      .from("membership_requests")
+      .update({ reapertura_habilitada_en: new Date().toISOString() })
+      .eq("id", first);
+    expect(sneaky.error).not.toBeNull();
+    const { data: stillLocked } = await service
+      .from("membership_requests")
+      .select("reapertura_habilitada_en")
+      .eq("id", first)
+      .single();
+    expect(stillLocked?.reapertura_habilitada_en).toBeNull();
+
+    const enabled = await admin.client.rpc("enable_membership_reapplication", {
+      p_request_id: first,
+    });
+    expect(enabled.error).toBeNull();
+    expect(enabled.data).toMatchObject({ success: true });
+
+    await expect(submitRequest(owner)).resolves.toBeTruthy();
+  });
+
+  it("enabling an older cerrada does not unlock a newer close", async () => {
+    const owner = await createUser();
+    const older = await submitRequest(owner);
+    await walk(admin, older, ["cerrada"]);
+    const backdated = await service
+      .from("membership_requests")
+      .update({ cerrada_en: "2026-01-01T00:00:00.000Z" })
+      .eq("id", older);
+    expect(backdated.error).toBeNull();
+
+    const latest = await submitRequest(owner);
+    await walk(admin, latest, ["cerrada"]);
+
+    const wrong = await admin.client.rpc("enable_membership_reapplication", {
+      p_request_id: older,
+    });
+    expect(wrong.error).toBeNull();
+    expect(wrong.data).toMatchObject({ code: "not_applicable" });
+
+    const stillLocked = await owner.client
+      .from("membership_requests")
+      .insert({ profile_id: owner.id, mensaje: "still locked" });
+    expect(stillLocked.error?.code).toBe("P0001");
+
+    const right = await admin.client.rpc("enable_membership_reapplication", {
+      p_request_id: latest,
+    });
+    expect(right.data).toMatchObject({ success: true });
     await expect(submitRequest(owner)).resolves.toBeTruthy();
   });
 });
