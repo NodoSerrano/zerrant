@@ -14,6 +14,7 @@ vi.mock("next/link", () => ({
     "aria-label": ariaLabel,
     role,
     "aria-selected": ariaSelected,
+    "data-testid": dataTestId,
   }: {
     href: string;
     className?: string;
@@ -21,6 +22,7 @@ vi.mock("next/link", () => ({
     "aria-label"?: string;
     role?: string;
     "aria-selected"?: boolean;
+    "data-testid"?: string;
   }) => (
     <a
       href={href}
@@ -28,6 +30,7 @@ vi.mock("next/link", () => ({
       aria-label={ariaLabel}
       role={role}
       aria-selected={ariaSelected}
+      data-testid={dataTestId}
     >
       {children}
     </a>
@@ -179,22 +182,22 @@ describe("TasksPage", () => {
       expect(screen.getByText("No hay tareas")).toBeInTheDocument();
     });
 
-    it("EmptyState link points to /nodo/tasks/new when serrano", async () => {
+    it("EmptyState on estado=todas links to /nodo/tasks/new when serrano", async () => {
       const { createClient } = await import("@/lib/supabase/server");
       (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
         mockSupabase({ tasks: [], tier: "serrano" }),
       );
-      await renderPage();
+      await renderPage({ estado: "todas" });
       const link = screen.getByRole("link", { name: /Publicar tarea/ });
       expect(link).toHaveAttribute("href", "/nodo/tasks/new");
     });
 
-    it("EmptyState has no button when tourist", async () => {
+    it("EmptyState has no button when tourist on estado=todas", async () => {
       const { createClient } = await import("@/lib/supabase/server");
       (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
         mockSupabase({ tasks: [], tier: "tourist" }),
       );
-      await renderPage();
+      await renderPage({ estado: "todas" });
       expect(screen.getByText("No hay tareas")).toBeInTheDocument();
       expect(screen.queryByRole("link", { name: /Publicar/ })).not.toBeInTheDocument();
       expect(screen.queryByRole("button")).not.toBeInTheDocument();
@@ -212,6 +215,20 @@ describe("TasksPage", () => {
       expect(screen.queryByText("Verificada")).not.toBeInTheDocument();
     });
 
+    it("estado pills order Abierta · Tomada · Hecha · Cancelada; Todas is separate (ZER-225)", async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
+      await renderPage();
+
+      const estadoGroup = screen.getByTestId("task-hub-filter-estado");
+      const estadoLabels = Array.from(estadoGroup.querySelectorAll("a")).map((a) => a.textContent);
+      expect(estadoLabels).toEqual(["Abierta", "Tomada", "Hecha", "Cancelada"]);
+
+      const todas = screen.getByTestId("task-hub-filter-todas");
+      expect(todas).toHaveTextContent("Todas");
+      expect(estadoGroup.contains(todas)).toBe(false);
+    });
+
     it("the Cancelada pill filters by that estado", async () => {
       const { createClient } = await import("@/lib/supabase/server");
       (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
@@ -223,13 +240,18 @@ describe("TasksPage", () => {
       expect(pill).toHaveAttribute("href", "/nodo/tasks?estado=cancelada");
     });
 
-    it("marks Todas active by default (no estado param)", async () => {
+    it("marks Abierta active by default (no estado param) (ZER-225)", async () => {
       const { createClient } = await import("@/lib/supabase/server");
       (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase());
       await renderPage();
-      const todas = screen.getByRole("link", { name: "Todas" });
-      expect(todas.className).toContain("bg-primary");
-      expect(todas).toHaveAttribute("href", "/nodo/tasks");
+      const abierta = screen.getByRole("link", { name: "Abierta" });
+      expect(abierta.className).toContain("bg-primary");
+      expect(abierta).toHaveAttribute("href", "/nodo/tasks");
+      expect(screen.getByRole("link", { name: "Todas" }).className).not.toContain("bg-primary");
+      expect(screen.getByRole("link", { name: "Todas" })).toHaveAttribute(
+        "href",
+        "/nodo/tasks?estado=todas",
+      );
     });
 
     it("marks Todas active when estado=todas", async () => {
@@ -249,24 +271,24 @@ describe("TasksPage", () => {
       expect(screen.getByRole("link", { name: "Todas" }).className).not.toContain("bg-primary");
     });
 
-    it("empty + concrete filter: no Publicar tarea CTA and no FAB (serrano)", async () => {
+    it("empty + concrete filter (incl. default abierta): no Publicar CTA and no FAB (ZER-209)", async () => {
       const { createClient } = await import("@/lib/supabase/server");
       (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
         mockSupabase({ tasks: [], tier: "serrano" }),
       );
-      const { container } = await renderPage({ estado: "abierta" });
+      const { container } = await renderPage();
       expect(screen.getByText("No hay tareas")).toBeInTheDocument();
       expect(screen.queryByRole("link", { name: /Publicar tarea/ })).not.toBeInTheDocument();
       expect(container.querySelector('a[aria-label="Crear tarea"]')).toBeNull();
       expect(screen.getByText(/No hay tareas con este estado/)).toBeInTheDocument();
     });
 
-    it("empty default: serrano still gets Publicar tarea and FAB", async () => {
+    it("empty + estado=todas: serrano gets Publicar tarea and FAB (ZER-62/209)", async () => {
       const { createClient } = await import("@/lib/supabase/server");
       (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
         mockSupabase({ tasks: [], tier: "serrano" }),
       );
-      const { container } = await renderPage();
+      const { container } = await renderPage({ estado: "todas" });
       expect(screen.getByRole("link", { name: /Publicar tarea/ })).toHaveAttribute(
         "href",
         "/nodo/tasks/new",
@@ -276,18 +298,18 @@ describe("TasksPage", () => {
   });
 
   describe("estado query filter", () => {
-    it("default (no searchParams) excludes cancelada via neq, not eq", async () => {
+    it("default (no searchParams) uses eq abierta (ZER-225)", async () => {
       const { createClient } = await import("@/lib/supabase/server");
       const client = mockSupabase();
       (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
       await renderPage();
 
       const chain = client.getTasksChain();
-      expect(chain?.neq).toHaveBeenCalledWith("estado", "cancelada");
-      expect(chain?.eq).not.toHaveBeenCalledWith("estado", expect.anything());
+      expect(chain?.eq).toHaveBeenCalledWith("estado", "abierta");
+      expect(chain?.neq).not.toHaveBeenCalled();
     });
 
-    it("estado=todas excludes cancelada via neq", async () => {
+    it("estado=todas excludes cancelada via neq (ZER-62)", async () => {
       const { createClient } = await import("@/lib/supabase/server");
       const client = mockSupabase();
       (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
@@ -320,17 +342,18 @@ describe("TasksPage", () => {
       expect(chain?.neq).not.toHaveBeenCalled();
     });
 
-    it("legacy estado=verificada falls back to todas (neq cancelada, no crash)", async () => {
+    it("legacy estado=verificada falls back to abierta (ZER-225)", async () => {
       const { createClient } = await import("@/lib/supabase/server");
       const client = mockSupabase();
       (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(client);
       await renderPage({ estado: "verificada" });
 
       const chain = client.getTasksChain();
-      expect(chain?.neq).toHaveBeenCalledWith("estado", "cancelada");
+      expect(chain?.eq).toHaveBeenCalledWith("estado", "abierta");
       expect(chain?.eq).not.toHaveBeenCalledWith("estado", "verificada");
+      expect(chain?.neq).not.toHaveBeenCalled();
       expect(screen.queryByText("Verificada")).not.toBeInTheDocument();
-      expect(screen.getByRole("link", { name: "Todas" }).className).toContain("bg-primary");
+      expect(screen.getByRole("link", { name: "Abierta" }).className).toContain("bg-primary");
     });
   });
 
@@ -559,10 +582,24 @@ describe("TasksPage", () => {
   });
 
   describe("auth and permissions", () => {
-    it("shows FAB when user is serrano", async () => {
+    it("shows FAB when serrano has tasks (non-empty list)", async () => {
       const { createClient } = await import("@/lib/supabase/server");
       (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockSupabase({ tier: "serrano" }),
+        mockSupabase({
+          tier: "serrano",
+          tasks: [
+            {
+              id: "task-1",
+              titulo: "Arreglar cerca",
+              categorias: ["reparacion"],
+              estado: "abierta",
+              urgencia: "alta",
+              created_at: "2026-07-27T12:00:00Z",
+              creado_por: "user-1",
+              profiles: { nombre: "Juan", apellido: "Perez", apodo: null, nombre_visible: "Juan" },
+            },
+          ],
+        }),
       );
       const { container } = await renderPage();
       const fabLink = container.querySelector(
