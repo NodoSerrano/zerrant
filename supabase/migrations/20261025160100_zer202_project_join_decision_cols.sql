@@ -84,6 +84,10 @@ create policy "Members can dismiss own join notice"
     and is_non_tourist()
     and estado in ('aprobado', 'rechazado')
     and decidido_en is not null
+    and (
+      (estado = 'rechazado' and motivo_rechazo is not null)
+      or (estado = 'aprobado' and motivo_rechazo is null)
+    )
   );
 
 -- Non-admins updating their own row may only change aviso_visto_en, or re-open rechazado.

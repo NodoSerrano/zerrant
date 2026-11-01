@@ -242,6 +242,19 @@ describe("ZER-202 project join decision migration SQL", () => {
     expect(sql).toMatch(/project_members_self_update_guard/i);
     expect(sql).toMatch(/old\.estado\s*=\s*'rechazado'[\s\S]*ingreso\s*=\s*'abierto'/i);
   });
+
+  it("dismiss guard pins decision columns via trigger OLD/NEW compares", () => {
+    const files = readdirSync(MIGRATIONS_DIR)
+      .filter((f) => f.includes("zer202_project_join_decision") && f.endsWith(".sql"))
+      .sort();
+    const sql = files.map((f) => readFileSync(path.join(MIGRATIONS_DIR, f), "utf8")).join("\n");
+
+    expect(sql).toMatch(/new\.rol is not distinct from old\.rol/i);
+    expect(sql).toMatch(/new\.estado is not distinct from old\.estado/i);
+    expect(sql).toMatch(/new\.motivo_rechazo is not distinct from old\.motivo_rechazo/i);
+    expect(sql).toMatch(/new\.decidido_en is not distinct from old\.decidido_en/i);
+    expect(sql).toMatch(/new\.decidido_por is not distinct from old\.decidido_por/i);
+  });
 });
 
 describe("ZER-151 cerrado ingreso migration SQL", () => {

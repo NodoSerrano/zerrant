@@ -554,6 +554,8 @@ export async function dismissProjectJoinNotice(
     .update({ aviso_visto_en: seenAt })
     .eq("project_id", projectId)
     .eq("profile_id", user.id)
+    .in("estado", ["aprobado", "rechazado"])
+    .not("decidido_en", "is", null)
     .select("project_id");
 
   if (error) {

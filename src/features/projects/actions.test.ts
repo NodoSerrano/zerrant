@@ -24,6 +24,8 @@ const mocks = vi.hoisted(() => ({
   membersUpdate: vi.fn(),
   membersUpdatePayload: null as unknown,
   membersUpdateEq: vi.fn(),
+  membersUpdateIn: vi.fn(),
+  membersUpdateNot: vi.fn(),
   membersUpdateSelect: vi.fn(),
   membersDelete: vi.fn(),
   membersDeleteEq: vi.fn(),
@@ -99,6 +101,8 @@ vi.mock("@/lib/supabase/server", () => ({
             mocks.membersUpdatePayload = payload;
             const chain = {
               eq: mocks.membersUpdateEq.mockImplementation(() => chain),
+              in: mocks.membersUpdateIn.mockImplementation(() => chain),
+              not: mocks.membersUpdateNot.mockImplementation(() => chain),
               select: mocks.membersUpdateSelect,
             };
             return chain;
@@ -815,12 +819,13 @@ describe("dismissProjectJoinNotice", () => {
     const result = await dismissProjectJoinNotice(null, fd);
 
     expect(result).toBeNull();
-    expect(mocks.membersUpdatePayload).toMatchObject({});
-    expect(typeof (mocks.membersUpdatePayload as { aviso_visto_en?: string }).aviso_visto_en).toBe(
-      "string",
-    );
+    expect(mocks.membersUpdatePayload).toEqual({
+      aviso_visto_en: expect.any(String),
+    });
     expect(mocks.membersUpdateEq).toHaveBeenCalledWith("project_id", "proj-1");
     expect(mocks.membersUpdateEq).toHaveBeenCalledWith("profile_id", "serrano-1");
+    expect(mocks.membersUpdateIn).toHaveBeenCalledWith("estado", ["aprobado", "rechazado"]);
+    expect(mocks.membersUpdateNot).toHaveBeenCalledWith("decidido_en", "is", null);
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/");
   });
 
