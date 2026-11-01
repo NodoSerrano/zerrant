@@ -28,7 +28,8 @@ grant update (
   aviso_visto_en
 ) on public.project_members to authenticated;
 
--- Re-request after reject: owner may move their own rechazado row back to pendiente/aprobado.
+-- Re-request after reject: owner may move their own rechazado row back to
+-- pendiente always, or aprobado only when the project ingreso is abierto.
 drop policy if exists "Members can re-request after reject" on public.project_members;
 
 create policy "Members can re-request after reject"
@@ -43,8 +44,22 @@ create policy "Members can re-request after reject"
     profile_id = auth.uid()
     and is_non_tourist()
     and rol = 'miembro'
-    and estado in ('pendiente', 'aprobado')
     and motivo_rechazo is null
+    and decidido_en is null
+    and decidido_por is null
+    and aviso_visto_en is null
+    and (
+      estado = 'pendiente'
+      or (
+        estado = 'aprobado'
+        and exists (
+          select 1
+          from public.projects p
+          where p.id = project_id
+            and p.ingreso = 'abierto'
+        )
+      )
+    )
   );
 
 -- Requester may mark their own join-outcome notice as seen.
@@ -84,13 +99,28 @@ begin
 
   -- Re-request after reject
   if old.estado = 'rechazado'
-     and new.estado in ('pendiente', 'aprobado')
      and new.rol = 'miembro'
      and new.motivo_rechazo is null
+     and new.decidido_en is null
+     and new.decidido_por is null
+     and new.aviso_visto_en is null
      and new.project_id is not distinct from old.project_id
      and new.profile_id is not distinct from old.profile_id
   then
-    return new;
+    if new.estado = 'pendiente' then
+      return new;
+    end if;
+
+    if new.estado = 'aprobado' then
+      if exists (
+        select 1
+        from public.projects p
+        where p.id = new.project_id
+          and p.ingreso = 'abierto'
+      ) then
+        return new;
+      end if;
+    end if;
   end if;
 
   -- Dismiss notice: only aviso_visto_en may change

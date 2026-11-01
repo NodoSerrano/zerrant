@@ -221,6 +221,26 @@ describe("ZER-202 project join decision migration SQL", () => {
     expect(sql).toMatch(/profile_id\s*=\s*auth\.uid\(\)/);
     expect(sql).toMatch(/create policy/i);
   });
+
+  it("re-request cannot self-set aprobado unless projects.ingreso = abierto", () => {
+    const files = readdirSync(MIGRATIONS_DIR)
+      .filter((f) => f.includes("zer202_project_join_decision") && f.endsWith(".sql"))
+      .sort();
+    const sql = files.map((f) => readFileSync(path.join(MIGRATIONS_DIR, f), "utf8")).join("\n");
+
+    // Must NOT allow bare estado in ('pendiente', 'aprobado') without ingreso gate
+    expect(sql).not.toMatch(
+      /with check\s*\([\s\S]*?estado in \('pendiente',\s*'aprobado'\)\s*and motivo_rechazo is null\s*\)/i,
+    );
+
+    // Policy joins / exists on projects.ingreso = 'abierto' for aprobado path
+    expect(sql).toMatch(/ingreso\s*=\s*'abierto'/i);
+    expect(sql).toMatch(/estado\s*=\s*'pendiente'/i);
+
+    // Trigger path also gates aprobado on abierto
+    expect(sql).toMatch(/project_members_self_update_guard/i);
+    expect(sql).toMatch(/old\.estado\s*=\s*'rechazado'[\s\S]*ingreso\s*=\s*'abierto'/i);
+  });
 });
 
 describe("ZER-151 cerrado ingreso migration SQL", () => {
