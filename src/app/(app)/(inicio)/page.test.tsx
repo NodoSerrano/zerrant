@@ -102,6 +102,17 @@ function mockSupabase(
     maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
   };
 
+  const projectMembersChain: Record<string, unknown> & {
+    then: (cb: (v: unknown) => void) => unknown;
+  } = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    not: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
+    then: (cb: (v: unknown) => void) => cb({ data: [], error: null }),
+  };
+
   return {
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1" } }, error: null }),
@@ -110,11 +121,13 @@ function mockSupabase(
       if (table === "events") return eventsChain;
       if (table === "profiles") return profilesChain;
       if (table === "membership_requests") return membershipChain;
+      if (table === "project_members") return projectMembersChain;
       return eventsChain;
     }),
     eventsChain,
     profilesChain,
     membershipChain,
+    projectMembersChain,
   };
 }
 

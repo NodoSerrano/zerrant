@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Check } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { approveProjectJoin, rejectProjectJoin } from "@/features/projects/actions";
@@ -16,6 +17,7 @@ export function JoinRequestRow({
   projectId: string;
   request: JoinRequestViewModel;
 }) {
+  const [rejectOpen, setRejectOpen] = useState(false);
   const [approveState, approveAction, approvePending] = useGuardedActionState(
     approveProjectJoin,
     null,
@@ -43,35 +45,74 @@ export function JoinRequestRow({
       </div>
 
       <div className="flex flex-col gap-2">
-        <div className="flex gap-2.5">
-          <form action={approveAction} className="flex-1">
-            <input type="hidden" name="projectId" value={projectId} />
-            <input type="hidden" name="profileId" value={request.profileId} />
+        {!rejectOpen ? (
+          <div className="flex gap-2.5">
+            <form action={approveAction} className="flex-1">
+              <input type="hidden" name="projectId" value={projectId} />
+              <input type="hidden" name="profileId" value={request.profileId} />
+              <button
+                type="submit"
+                disabled={busy}
+                className="rounded-pill bg-primary h-[44px] flex items-center justify-center gap-1.5 w-full disabled:opacity-50"
+              >
+                <Check className="size-[17px] text-on-primary" aria-hidden="true" />
+                <span className="font-display text-[15px] font-medium text-on-primary">
+                  {approvePending ? "Aprobando..." : "Aprobar"}
+                </span>
+              </button>
+            </form>
             <button
-              type="submit"
+              type="button"
               disabled={busy}
-              className="rounded-pill bg-primary h-[44px] flex items-center justify-center gap-1.5 w-full disabled:opacity-50"
-            >
-              <Check className="size-[17px] text-on-primary" aria-hidden="true" />
-              <span className="font-display text-[15px] font-medium text-on-primary">
-                {approvePending ? "Aprobando..." : "Aprobar"}
-              </span>
-            </button>
-          </form>
-          <form action={rejectAction} className="flex-1">
-            <input type="hidden" name="projectId" value={projectId} />
-            <input type="hidden" name="profileId" value={request.profileId} />
-            <button
-              type="submit"
-              disabled={busy}
-              className="rounded-pill bg-surface border border-border h-[44px] flex items-center justify-center w-full disabled:opacity-50"
+              onClick={() => setRejectOpen(true)}
+              className="flex-1 rounded-pill bg-surface border border-border h-[44px] flex items-center justify-center w-full disabled:opacity-50"
             >
               <span className="font-display text-[15px] font-medium text-text-secondary">
-                {rejectPending ? "Rechazando..." : "Rechazar"}
+                Rechazar
               </span>
             </button>
+          </div>
+        ) : (
+          <form action={rejectAction} className="flex flex-col gap-2.5">
+            <input type="hidden" name="projectId" value={projectId} />
+            <input type="hidden" name="profileId" value={request.profileId} />
+            <label className="flex flex-col gap-1.5">
+              <span className="font-display text-[13px] font-medium text-text-primary">
+                Motivo del rechazo
+              </span>
+              <textarea
+                name="motivo"
+                required
+                maxLength={500}
+                rows={3}
+                placeholder="Contale por qué no entra ahora"
+                className="w-full rounded-[16px] border border-border bg-surface-inset px-3 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted resize-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"
+                aria-label="Motivo del rechazo"
+              />
+            </label>
+            <div className="flex gap-2.5">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setRejectOpen(false)}
+                className="flex-1 rounded-pill bg-surface border border-border h-[44px] flex items-center justify-center disabled:opacity-50"
+              >
+                <span className="font-display text-[15px] font-medium text-text-secondary">
+                  Cancelar
+                </span>
+              </button>
+              <button
+                type="submit"
+                disabled={busy}
+                className="flex-1 rounded-pill bg-primary h-[44px] flex items-center justify-center disabled:opacity-50"
+              >
+                <span className="font-display text-[15px] font-medium text-on-primary">
+                  {rejectPending ? "Rechazando..." : "Confirmar rechazo"}
+                </span>
+              </button>
+            </div>
           </form>
-        </div>
+        )}
         {(approveError || rejectError) && (
           <p className="font-body text-xs text-coral text-center">{approveError || rejectError}</p>
         )}

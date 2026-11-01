@@ -34,7 +34,7 @@ describe("project enum contracts", () => {
     expect(PROJECT_ESTADOS).toEqual(["idea", "en_curso", "pausado", "terminado"]);
     expect(PROJECT_INGRESOS).toEqual(["abierto", "aprobacion", "cerrado"]);
     expect(PROJECT_MEMBER_ROLES).toEqual(["miembro", "admin"]);
-    expect(PROJECT_MEMBER_ESTADOS).toEqual(["pendiente", "aprobado"]);
+    expect(PROJECT_MEMBER_ESTADOS).toEqual(["pendiente", "aprobado", "rechazado"]);
     expect(isProjectEstado("en_curso")).toBe(true);
     expect(isProjectEstado("en curso")).toBe(false);
     expect(isProjectIngreso("aprobacion")).toBe(true);
@@ -80,8 +80,18 @@ describe("projects / project_members table types", () => {
 
   it("exposes project_members with composite membership shape", () => {
     type MembersRow = Database["public"]["Tables"]["project_members"]["Row"];
-    const keys: (keyof MembersRow)[] = ["project_id", "profile_id", "rol", "estado", "created_at"];
-    expect(keys).toHaveLength(5);
+    const keys: (keyof MembersRow)[] = [
+      "project_id",
+      "profile_id",
+      "rol",
+      "estado",
+      "created_at",
+      "motivo_rechazo",
+      "decidido_en",
+      "decidido_por",
+      "aviso_visto_en",
+    ];
+    expect(keys).toHaveLength(9);
   });
 });
 
@@ -95,11 +105,13 @@ describe("ZER-78 migration SQL", () => {
     expect(sql).toMatch(/create type public\.project_member_rol as enum/i);
     expect(sql).toMatch(/create type public\.project_member_estado as enum/i);
     // 'cerrado' came later, in its own migration (ZER-151).
+    // ZER-78 shipped pendiente|aprobado; rechazado arrives in ZER-202.
     for (const value of [
       ...PROJECT_ESTADOS,
       ...PROJECT_INGRESOS.filter((ingreso) => ingreso !== "cerrado"),
       ...PROJECT_MEMBER_ROLES,
-      ...PROJECT_MEMBER_ESTADOS,
+      "pendiente",
+      "aprobado",
     ]) {
       expect(sql).toContain(`'${value}'`);
     }
@@ -174,7 +186,74 @@ describe("ZER-78 migration SQL", () => {
     ]);
     expect([...PROJECTS_UPDATE_COLUMNS]).toEqual(["nombre", "descripcion", "estado", "ingreso"]);
     expect([...PROJECT_MEMBERS_INSERT_COLUMNS]).toEqual(["project_id", "profile_id", "estado"]);
-    expect([...PROJECT_MEMBERS_UPDATE_COLUMNS]).toEqual(["rol", "estado"]);
+    expect([...PROJECT_MEMBERS_UPDATE_COLUMNS]).toEqual([
+      "rol",
+      "estado",
+      "motivo_rechazo",
+      "decidido_en",
+      "decidido_por",
+      "aviso_visto_en",
+    ]);
+  });
+});
+
+describe("ZER-202 project join decision migration SQL", () => {
+  it("extends enum with rechazado and decision columns + dismiss RLS", () => {
+    const files = readdirSync(MIGRATIONS_DIR)
+      .filter((f) => f.includes("zer202_project_join_decision") && f.endsWith(".sql"))
+      .sort();
+    expect(files.length, "expected ZER-202 join decision migration(s)").toBeGreaterThanOrEqual(1);
+    const sql = files.map((f) => readFileSync(path.join(MIGRATIONS_DIR, f), "utf8")).join("\n");
+
+    expect(sql).toMatch(
+      /alter type public\.project_member_estado add value if not exists 'rechazado'/i,
+    );
+    expect(sql).toMatch(/add column if not exists motivo_rechazo/i);
+    expect(sql).toMatch(/add column if not exists decidido_en/i);
+    expect(sql).toMatch(/add column if not exists decidido_por/i);
+    expect(sql).toMatch(/add column if not exists aviso_visto_en/i);
+    expect(sql).toMatch(/motivo_rechazo is not null/i);
+    expect(sql).toMatch(/length\(motivo_rechazo\)\s*<=\s*500/i);
+    expect(sql).toMatch(/estado = 'rechazado'/i);
+    expect(sql).toMatch(
+      /grant update\s*\(\s*rol\s*,\s*estado\s*,\s*motivo_rechazo\s*,\s*decidido_en\s*,\s*decidido_por\s*,\s*aviso_visto_en\s*\)\s*on public\.project_members/i,
+    );
+    expect(sql).toMatch(/aviso_visto_en/i);
+    expect(sql).toMatch(/profile_id\s*=\s*auth\.uid\(\)/);
+    expect(sql).toMatch(/create policy/i);
+  });
+
+  it("re-request cannot self-set aprobado unless projects.ingreso = abierto", () => {
+    const files = readdirSync(MIGRATIONS_DIR)
+      .filter((f) => f.includes("zer202_project_join_decision") && f.endsWith(".sql"))
+      .sort();
+    const sql = files.map((f) => readFileSync(path.join(MIGRATIONS_DIR, f), "utf8")).join("\n");
+
+    // Must NOT allow bare estado in ('pendiente', 'aprobado') without ingreso gate
+    expect(sql).not.toMatch(
+      /with check\s*\([\s\S]*?estado in \('pendiente',\s*'aprobado'\)\s*and motivo_rechazo is null\s*\)/i,
+    );
+
+    // Policy joins / exists on projects.ingreso = 'abierto' for aprobado path
+    expect(sql).toMatch(/ingreso\s*=\s*'abierto'/i);
+    expect(sql).toMatch(/estado\s*=\s*'pendiente'/i);
+
+    // Trigger path also gates aprobado on abierto
+    expect(sql).toMatch(/project_members_self_update_guard/i);
+    expect(sql).toMatch(/old\.estado\s*=\s*'rechazado'[\s\S]*ingreso\s*=\s*'abierto'/i);
+  });
+
+  it("dismiss guard pins decision columns via trigger OLD/NEW compares", () => {
+    const files = readdirSync(MIGRATIONS_DIR)
+      .filter((f) => f.includes("zer202_project_join_decision") && f.endsWith(".sql"))
+      .sort();
+    const sql = files.map((f) => readFileSync(path.join(MIGRATIONS_DIR, f), "utf8")).join("\n");
+
+    expect(sql).toMatch(/new\.rol is not distinct from old\.rol/i);
+    expect(sql).toMatch(/new\.estado is not distinct from old\.estado/i);
+    expect(sql).toMatch(/new\.motivo_rechazo is not distinct from old\.motivo_rechazo/i);
+    expect(sql).toMatch(/new\.decidido_en is not distinct from old\.decidido_en/i);
+    expect(sql).toMatch(/new\.decidido_por is not distinct from old\.decidido_por/i);
   });
 });
 

@@ -6,6 +6,8 @@ import { MemberConfirmedNotice } from "@/features/membership/MemberConfirmedNoti
 import { EventCard } from "@/features/events/EventCard";
 import type { UpcomingBirthday } from "@/features/home/birthdays";
 import { SerSerranoCta } from "@/features/membership/SerSerranoCta";
+import { ProjectJoinNoticeCard } from "@/features/projects/ProjectJoinNoticeCard";
+import type { ProjectJoinNoticeViewModel } from "@/features/projects/project-join-notices";
 
 export type InicioEventItem = {
   id: string;
@@ -27,6 +29,8 @@ export type InicioHubProps = {
   showSerSerranoCta?: boolean;
   /** Set when this member was converted within the confirmation window (ZER-146). */
   memberConfirmed?: boolean;
+  /** Undismissed project join outcomes for the viewer (ZER-202). */
+  joinNotices?: ProjectJoinNoticeViewModel[];
 };
 
 function birthdaySubtitle(row: UpcomingBirthday): string {
@@ -45,6 +49,7 @@ export function InicioHub({
   showBirthdays = true,
   showSerSerranoCta = false,
   memberConfirmed = false,
+  joinNotices = [],
 }: InicioHubProps) {
   return (
     <div className="flex flex-col gap-6" data-pencil-frame="zTB9C">
@@ -52,6 +57,13 @@ export function InicioHub({
 
       {showSerSerranoCta ? <SerSerranoCta /> : null}
       {memberConfirmed ? <MemberConfirmedNotice /> : null}
+      {joinNotices.length > 0 ? (
+        <div className="flex flex-col gap-3" aria-label="Avisos de proyectos">
+          {joinNotices.map((notice) => (
+            <ProjectJoinNoticeCard key={`${notice.projectId}-${notice.kind}`} notice={notice} />
+          ))}
+        </div>
+      ) : null}
 
       <section className="flex flex-col gap-3" aria-labelledby="inicio-eventos-heading">
         <h2

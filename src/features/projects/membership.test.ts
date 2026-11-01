@@ -74,6 +74,15 @@ describe("resolveJoinAffordance", () => {
     ).toEqual({ kind: "pending", label: "Solicitud pendiente" });
   });
 
+  it("lets a rejected requester ask again (ZER-202)", () => {
+    expect(
+      resolveJoinAffordance({
+        ingreso: "aprobacion",
+        viewerMembership: { estado: "rechazado", rol: "miembro" },
+      }),
+    ).toEqual({ kind: "join", label: "Solicitar unirme" });
+  });
+
   it("treats only aprobado + admin as project admin for the queue entry", () => {
     expect(
       isProjectAdmin({

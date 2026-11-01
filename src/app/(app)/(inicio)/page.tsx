@@ -17,6 +17,10 @@ import { InicioHub } from "@/features/home/InicioHub";
 import { recentMemberConfirmation } from "@/features/membership/member-confirmed";
 import { upcomingBirthdays, type BirthdayProfileInput } from "@/features/home/birthdays";
 import { resolveSerSerranoCtaVisibility } from "@/features/membership/ser-serrano-cta-server";
+import {
+  toProjectJoinNotices,
+  type RawProjectJoinNoticeRow,
+} from "@/features/projects/project-join-notices";
 import { NO_ROWS, resolveOnboardingRedirect } from "@/features/profile/onboarding-gate";
 import { getOnboardingGateProfile } from "@/features/profile/onboarding-gate-server";
 
@@ -55,6 +59,7 @@ export default async function InicioPage() {
     lumaResult,
     { data: approvedRequest },
     showSerSerranoCta,
+    joinNoticeRows,
   ] = await Promise.all([
     supabase
       .from("events")
@@ -71,8 +76,23 @@ export default async function InicioPage() {
       client: supabase,
       tier: profile?.tier ?? null,
     }),
+    viewerIsTourist
+      ? Promise.resolve({ data: null })
+      : supabase
+          .from("project_members")
+          .select(
+            "project_id, profile_id, estado, motivo_rechazo, decidido_en, decidido_por, aviso_visto_en, projects:project_id(id, nombre)",
+          )
+          .eq("profile_id", userId)
+          .in("estado", ["aprobado", "rechazado"])
+          .not("decidido_en", "is", null)
+          .is("aviso_visto_en", null),
   ]);
   const profiles = birthdayProfiles.data;
+  const joinNotices = toProjectJoinNotices(
+    (joinNoticeRows.data ?? []) as unknown as RawProjectJoinNoticeRow[],
+    userId,
+  );
 
   const internal = ((events ?? []) as AgendaEvent[]).map(internalEventToAgendaItem);
   const luma = lumaResult.ok ? lumaResult.events : [];
@@ -102,6 +122,7 @@ export default async function InicioPage() {
       showBirthdays={!viewerIsTourist}
       showSerSerranoCta={showSerSerranoCta}
       memberConfirmed={Boolean(approvedRequest)}
+      joinNotices={joinNotices}
     />
   );
 }
