@@ -38,6 +38,7 @@ export function toProjectJoinNotices(
 ): ProjectJoinNoticeViewModel[] {
   return (rows ?? [])
     .filter((row) => {
+      if (row.profile_id !== viewerProfileId) return false;
       if (row.aviso_visto_en) return false;
       if (!row.decidido_en) return false;
       if (row.estado !== "aprobado" && row.estado !== "rechazado") return false;

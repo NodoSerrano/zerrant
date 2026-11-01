@@ -73,4 +73,8 @@ describe("toProjectJoinNotices", () => {
       toProjectJoinNotices([row({ estado: "rechazado", motivo_rechazo: "  " })], viewer),
     ).toEqual([]);
   });
+
+  it("ignores rows that do not belong to the viewer", () => {
+    expect(toProjectJoinNotices([row({ profile_id: "someone-else" })], viewer)).toEqual([]);
+  });
 });
