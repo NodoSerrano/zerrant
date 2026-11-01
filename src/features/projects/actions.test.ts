@@ -747,6 +747,15 @@ describe("rejectProjectJoin", () => {
     expect(mocks.membersDelete).not.toHaveBeenCalled();
   });
 
+  it("rejects motivo longer than 500 characters", async () => {
+    setupAuth("admin-1");
+    const long = "x".repeat(501);
+    const result = await rejectProjectJoin(null, makeRejectForm("proj-1", "u2", long));
+
+    expect(result).toEqual({ error: "Escribí un motivo más corto (máx. 500)." });
+    expect(mocks.membersUpdate).not.toHaveBeenCalled();
+  });
+
   it("updates the matching pendiente row to rechazado with motivo and decision", async () => {
     setupAuth("admin-1");
     mocks.membersUpdateSelect.mockResolvedValue({

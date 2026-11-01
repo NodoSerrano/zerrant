@@ -14,7 +14,12 @@ alter table public.project_members
 alter table public.project_members
   add constraint project_members_motivo_rechazo_check
   check (
-    (estado = 'rechazado' and motivo_rechazo is not null and length(btrim(motivo_rechazo)) > 0)
+    (
+      estado = 'rechazado'
+      and motivo_rechazo is not null
+      and length(btrim(motivo_rechazo)) > 0
+      and length(motivo_rechazo) <= 500
+    )
     or (estado is distinct from 'rechazado' and motivo_rechazo is null)
   );
 

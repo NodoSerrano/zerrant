@@ -400,6 +400,8 @@ const APPROVE_REJECTED = "No pudimos aprobar esta solicitud.";
 const REJECT_ERROR = "No pudimos rechazar la solicitud. Probá de nuevo.";
 const REJECT_REJECTED = "No pudimos rechazar esta solicitud.";
 const REJECT_MOTIVO_REQUIRED = "Escribí el motivo del rechazo";
+const MOTIVO_RECHAZO_MAX = 500;
+const REJECT_MOTIVO_TOO_LONG = "Escribí un motivo más corto (máx. 500).";
 const QUEUE_UNAUTHORIZED = "No autorizado";
 const QUEUE_INVALID = "Revisá la solicitud e intentá de nuevo.";
 const DISMISS_ERROR = "No pudimos cerrar el aviso.";
@@ -488,6 +490,9 @@ export async function rejectProjectJoin(
   }
   if (!motivo) {
     return { error: REJECT_MOTIVO_REQUIRED };
+  }
+  if (motivo.length > MOTIVO_RECHAZO_MAX) {
+    return { error: REJECT_MOTIVO_TOO_LONG };
   }
 
   const decidedAt = new Date().toISOString();

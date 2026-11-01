@@ -83,6 +83,7 @@ export function JoinRequestRow({
               <textarea
                 name="motivo"
                 required
+                maxLength={500}
                 rows={3}
                 placeholder="Contale por qué no entra ahora"
                 className="w-full rounded-[16px] border border-border bg-surface-inset px-3 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted resize-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40"

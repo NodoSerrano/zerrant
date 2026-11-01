@@ -213,6 +213,7 @@ describe("ZER-202 project join decision migration SQL", () => {
     expect(sql).toMatch(/add column if not exists decidido_por/i);
     expect(sql).toMatch(/add column if not exists aviso_visto_en/i);
     expect(sql).toMatch(/motivo_rechazo is not null/i);
+    expect(sql).toMatch(/length\(motivo_rechazo\)\s*<=\s*500/i);
     expect(sql).toMatch(/estado = 'rechazado'/i);
     expect(sql).toMatch(
       /grant update\s*\(\s*rol\s*,\s*estado\s*,\s*motivo_rechazo\s*,\s*decidido_en\s*,\s*decidido_por\s*,\s*aviso_visto_en\s*\)\s*on public\.project_members/i,
