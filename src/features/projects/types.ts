@@ -73,6 +73,8 @@ export type ProjectDetailViewModel = {
   members: ProjectDetailMember[];
   affordance: JoinAffordance;
   showRequestsQueue: boolean;
+  /** Pending join requests count for admin badge (ZER-202). */
+  pendingRequestCount?: number;
   /** Viewer is project admin — may promote aprobado miembros. */
   canPromoteMembers: boolean;
   /** Viewer is project admin — may edit metadata and archive. */

@@ -12,7 +12,7 @@ export type ProjectIngreso = (typeof PROJECT_INGRESOS)[number];
 export const PROJECT_MEMBER_ROLES = ["miembro", "admin"] as const;
 export type ProjectMemberRol = (typeof PROJECT_MEMBER_ROLES)[number];
 
-export const PROJECT_MEMBER_ESTADOS = ["pendiente", "aprobado"] as const;
+export const PROJECT_MEMBER_ESTADOS = ["pendiente", "aprobado", "rechazado"] as const;
 export type ProjectMemberEstado = (typeof PROJECT_MEMBER_ESTADOS)[number];
 
 /** Columns PostgREST may INSERT on public.projects. */
@@ -35,7 +35,14 @@ export const PROJECTS_UPDATE_COLUMNS = ["nombre", "descripcion", "estado", "ingr
 export const PROJECT_MEMBERS_INSERT_COLUMNS = ["project_id", "profile_id", "estado"] as const;
 
 /** Columns PostgREST may UPDATE on public.project_members. */
-export const PROJECT_MEMBERS_UPDATE_COLUMNS = ["rol", "estado"] as const;
+export const PROJECT_MEMBERS_UPDATE_COLUMNS = [
+  "rol",
+  "estado",
+  "motivo_rechazo",
+  "decidido_en",
+  "decidido_por",
+  "aviso_visto_en",
+] as const;
 
 /** Filename fragment every ZER-78 migration must include. */
 export const PROJECTS_MIGRATION_NAME_FRAGMENT = "zer78_projects_project_members";

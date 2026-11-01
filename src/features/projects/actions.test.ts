@@ -28,6 +28,9 @@ const mocks = vi.hoisted(() => ({
   membersDelete: vi.fn(),
   membersDeleteEq: vi.fn(),
   membersDeleteSelect: vi.fn(),
+  membersMaybeSingle: vi.fn(),
+  membersReadSelect: vi.fn(),
+  membersReadEq: vi.fn(),
   revalidatePath: vi.fn(),
   redirect: vi.fn((url: string) => {
     throw new Error(`NEXT_REDIRECT:${url}`);
@@ -85,6 +88,13 @@ vi.mock("@/lib/supabase/server", () => ({
               select: mocks.membersSelect,
             };
           }),
+          select: mocks.membersReadSelect.mockImplementation(() => {
+            const chain = {
+              eq: mocks.membersReadEq.mockImplementation(() => chain),
+              maybeSingle: mocks.membersMaybeSingle,
+            };
+            return chain;
+          }),
           update: mocks.membersUpdate.mockImplementation((payload: unknown) => {
             mocks.membersUpdatePayload = payload;
             const chain = {
@@ -120,6 +130,7 @@ import {
   archiveProject,
   unarchiveProject,
   demoteProjectMember,
+  dismissProjectJoinNotice,
   leaveProject,
   createProject,
   joinProject,
@@ -472,6 +483,7 @@ describe("joinProject", () => {
       data: { id: "proj-1", ingreso: "abierto" },
       error: null,
     });
+    mocks.membersMaybeSingle.mockResolvedValue({ data: null, error: null });
     mocks.membersSelect.mockResolvedValue({ error: null, data: [{ project_id: "proj-1" }] });
 
     const result = await joinProject(null, makeJoinForm());
@@ -506,6 +518,7 @@ describe("joinProject", () => {
       data: { id: "proj-2", ingreso: "aprobacion" },
       error: null,
     });
+    mocks.membersMaybeSingle.mockResolvedValue({ data: null, error: null });
     mocks.membersSelect.mockResolvedValue({ error: null, data: [{ project_id: "proj-2" }] });
 
     const result = await joinProject(null, makeJoinForm("proj-2"));
@@ -518,6 +531,74 @@ describe("joinProject", () => {
     });
   });
 
+  it("reopens a rechazado row to pendiente instead of inserting", async () => {
+    setupAuth("serrano-1");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.projectsMaybeSingle.mockResolvedValue({
+      data: { id: "proj-2", ingreso: "aprobacion" },
+      error: null,
+    });
+    mocks.membersMaybeSingle.mockResolvedValue({
+      data: { estado: "rechazado", project_id: "proj-2", profile_id: "serrano-1" },
+      error: null,
+    });
+    mocks.membersUpdateSelect.mockResolvedValue({
+      error: null,
+      data: [{ project_id: "proj-2" }],
+    });
+
+    const result = await joinProject(null, makeJoinForm("proj-2"));
+
+    expect(result).toBeNull();
+    expect(mocks.membersInsert).not.toHaveBeenCalled();
+    expect(mocks.membersUpdatePayload).toEqual({
+      estado: "pendiente",
+      motivo_rechazo: null,
+      decidido_en: null,
+      decidido_por: null,
+      aviso_visto_en: null,
+    });
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("project_id", "proj-2");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("profile_id", "serrano-1");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("estado", "rechazado");
+  });
+
+  it("returns already member when existing row is aprobado", async () => {
+    setupAuth("serrano-1");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.projectsMaybeSingle.mockResolvedValue({
+      data: { id: "proj-1", ingreso: "abierto" },
+      error: null,
+    });
+    mocks.membersMaybeSingle.mockResolvedValue({
+      data: { estado: "aprobado", project_id: "proj-1", profile_id: "serrano-1" },
+      error: null,
+    });
+
+    const result = await joinProject(null, makeJoinForm());
+
+    expect(result).toEqual({ error: "Ya sos parte de este proyecto." });
+    expect(mocks.membersInsert).not.toHaveBeenCalled();
+  });
+
+  it("returns already requested when existing row is pendiente", async () => {
+    setupAuth("serrano-1");
+    mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
+    mocks.projectsMaybeSingle.mockResolvedValue({
+      data: { id: "proj-2", ingreso: "aprobacion" },
+      error: null,
+    });
+    mocks.membersMaybeSingle.mockResolvedValue({
+      data: { estado: "pendiente", project_id: "proj-2", profile_id: "serrano-1" },
+      error: null,
+    });
+
+    const result = await joinProject(null, makeJoinForm("proj-2"));
+
+    expect(result).toEqual({ error: "Ya enviaste una solicitud." });
+    expect(mocks.membersInsert).not.toHaveBeenCalled();
+  });
+
   it("maps 23505 on abierto to Ya sos parte de este proyecto", async () => {
     setupAuth("serrano-1");
     mocks.profilesSelectSingle.mockResolvedValue({ data: { tier: "standard" } });
@@ -525,6 +606,7 @@ describe("joinProject", () => {
       data: { id: "proj-1", ingreso: "abierto" },
       error: null,
     });
+    mocks.membersMaybeSingle.mockResolvedValue({ data: null, error: null });
     mocks.membersSelect.mockResolvedValue({
       error: { code: "23505", message: "duplicate" },
       data: null,
@@ -542,6 +624,7 @@ describe("joinProject", () => {
       data: { id: "proj-2", ingreso: "aprobacion" },
       error: null,
     });
+    mocks.membersMaybeSingle.mockResolvedValue({ data: null, error: null });
     mocks.membersSelect.mockResolvedValue({
       error: { code: "23505", message: "duplicate" },
       data: null,
@@ -559,6 +642,7 @@ describe("joinProject", () => {
       data: { id: "proj-1", ingreso: "abierto" },
       error: null,
     });
+    mocks.membersMaybeSingle.mockResolvedValue({ data: null, error: null });
     mocks.membersSelect.mockResolvedValue({ error: null, data: [] });
 
     const result = await joinProject(null, makeJoinForm());
@@ -594,7 +678,7 @@ function makeQueueForm(projectId = "proj-1", profileId = "u2") {
 }
 
 describe("approveProjectJoin", () => {
-  it("updates only estado to aprobado for the matching pendiente row", async () => {
+  it("updates estado to aprobado with decision metadata for the matching pendiente row", async () => {
     setupAuth("admin-1");
     mocks.membersUpdateSelect.mockResolvedValue({
       error: null,
@@ -604,7 +688,15 @@ describe("approveProjectJoin", () => {
     const result = await approveProjectJoin(null, makeQueueForm());
 
     expect(result).toBeNull();
-    expect(mocks.membersUpdatePayload).toEqual({ estado: "aprobado" });
+    expect(mocks.membersUpdatePayload).toMatchObject({
+      estado: "aprobado",
+      motivo_rechazo: null,
+      decidido_por: "admin-1",
+      aviso_visto_en: null,
+    });
+    expect(typeof (mocks.membersUpdatePayload as { decidido_en?: string }).decidido_en).toBe(
+      "string",
+    );
     expect(mocks.membersUpdateEq).toHaveBeenCalledWith("project_id", "proj-1");
     expect(mocks.membersUpdateEq).toHaveBeenCalledWith("profile_id", "u2");
     expect(mocks.membersUpdateEq).toHaveBeenCalledWith("estado", "pendiente");
@@ -639,40 +731,99 @@ describe("approveProjectJoin", () => {
   });
 });
 
+function makeRejectForm(projectId = "proj-1", profileId = "u2", motivo = "El cupo ya está lleno") {
+  const fd = makeQueueForm(projectId, profileId);
+  fd.set("motivo", motivo);
+  return fd;
+}
+
 describe("rejectProjectJoin", () => {
-  it("deletes the matching pendiente row", async () => {
+  it("requires a non-empty rejection reason", async () => {
     setupAuth("admin-1");
-    mocks.membersDeleteSelect.mockResolvedValue({
+    const result = await rejectProjectJoin(null, makeRejectForm("proj-1", "u2", "   "));
+
+    expect(result).toEqual({ error: "Escribí el motivo del rechazo" });
+    expect(mocks.membersUpdate).not.toHaveBeenCalled();
+    expect(mocks.membersDelete).not.toHaveBeenCalled();
+  });
+
+  it("updates the matching pendiente row to rechazado with motivo and decision", async () => {
+    setupAuth("admin-1");
+    mocks.membersUpdateSelect.mockResolvedValue({
       error: null,
       data: [{ profile_id: "u2" }],
     });
 
-    const result = await rejectProjectJoin(null, makeQueueForm());
+    const result = await rejectProjectJoin(null, makeRejectForm());
 
     expect(result).toBeNull();
-    expect(mocks.membersDeleteEq).toHaveBeenCalledWith("project_id", "proj-1");
-    expect(mocks.membersDeleteEq).toHaveBeenCalledWith("profile_id", "u2");
-    expect(mocks.membersDeleteEq).toHaveBeenCalledWith("estado", "pendiente");
+    expect(mocks.membersDelete).not.toHaveBeenCalled();
+    expect(mocks.membersUpdatePayload).toMatchObject({
+      estado: "rechazado",
+      motivo_rechazo: "El cupo ya está lleno",
+      decidido_por: "admin-1",
+      aviso_visto_en: null,
+    });
+    expect(typeof (mocks.membersUpdatePayload as { decidido_en?: string }).decidido_en).toBe(
+      "string",
+    );
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("project_id", "proj-1");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("profile_id", "u2");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("estado", "pendiente");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/nodo/projects/proj-1/requests");
   });
 
-  it("treats a zero-row delete as failure", async () => {
+  it("treats a zero-row update as failure", async () => {
     setupAuth("admin-1");
-    mocks.membersDeleteSelect.mockResolvedValue({ error: null, data: [] });
+    mocks.membersUpdateSelect.mockResolvedValue({ error: null, data: [] });
 
-    const result = await rejectProjectJoin(null, makeQueueForm());
+    const result = await rejectProjectJoin(null, makeRejectForm());
 
     expect(result).toEqual({ error: "No pudimos rechazar esta solicitud." });
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 
-  it("surfaces a Spanish error when the delete fails", async () => {
+  it("surfaces a Spanish error when the update fails", async () => {
     setupAuth("admin-1");
-    mocks.membersDeleteSelect.mockResolvedValue({ error: { message: "rls" }, data: null });
+    mocks.membersUpdateSelect.mockResolvedValue({ error: { message: "rls" }, data: null });
 
-    const result = await rejectProjectJoin(null, makeQueueForm());
+    const result = await rejectProjectJoin(null, makeRejectForm());
 
     expect(result).toEqual({ error: "No pudimos rechazar la solicitud. Probá de nuevo." });
+  });
+});
+
+describe("dismissProjectJoinNotice", () => {
+  it("sets aviso_visto_en on the viewer's own decided row", async () => {
+    setupAuth("serrano-1");
+    mocks.membersUpdateSelect.mockResolvedValue({
+      error: null,
+      data: [{ project_id: "proj-1" }],
+    });
+
+    const fd = new FormData();
+    fd.set("projectId", "proj-1");
+    const result = await dismissProjectJoinNotice(null, fd);
+
+    expect(result).toBeNull();
+    expect(mocks.membersUpdatePayload).toMatchObject({});
+    expect(typeof (mocks.membersUpdatePayload as { aviso_visto_en?: string }).aviso_visto_en).toBe(
+      "string",
+    );
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("project_id", "proj-1");
+    expect(mocks.membersUpdateEq).toHaveBeenCalledWith("profile_id", "serrano-1");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/");
+  });
+
+  it("treats a zero-row dismiss as failure", async () => {
+    setupAuth("serrano-1");
+    mocks.membersUpdateSelect.mockResolvedValue({ error: null, data: [] });
+
+    const fd = new FormData();
+    fd.set("projectId", "proj-1");
+    const result = await dismissProjectJoinNotice(null, fd);
+
+    expect(result).toEqual({ error: "No pudimos cerrar el aviso." });
   });
 });
 

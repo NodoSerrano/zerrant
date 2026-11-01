@@ -688,22 +688,34 @@ export type Database = {
       };
       project_members: {
         Row: {
+          aviso_visto_en: string | null;
           created_at: string;
+          decidido_en: string | null;
+          decidido_por: string | null;
           estado: Database["public"]["Enums"]["project_member_estado"];
+          motivo_rechazo: string | null;
           profile_id: string;
           project_id: string;
           rol: Database["public"]["Enums"]["project_member_rol"];
         };
         Insert: {
+          aviso_visto_en?: string | null;
           created_at?: string;
+          decidido_en?: string | null;
+          decidido_por?: string | null;
           estado?: Database["public"]["Enums"]["project_member_estado"];
+          motivo_rechazo?: string | null;
           profile_id: string;
           project_id: string;
           rol?: Database["public"]["Enums"]["project_member_rol"];
         };
         Update: {
+          aviso_visto_en?: string | null;
           created_at?: string;
+          decidido_en?: string | null;
+          decidido_por?: string | null;
           estado?: Database["public"]["Enums"]["project_member_estado"];
+          motivo_rechazo?: string | null;
           profile_id?: string;
           project_id?: string;
           rol?: Database["public"]["Enums"]["project_member_rol"];
@@ -1113,7 +1125,7 @@ export type Database = {
       nombre_visible: "apodo" | "nombre_apellido" | "apellido_nombre";
       project_estado: "idea" | "en_curso" | "pausado" | "terminado";
       project_ingreso: "abierto" | "aprobacion" | "cerrado";
-      project_member_estado: "pendiente" | "aprobado";
+      project_member_estado: "pendiente" | "aprobado" | "rechazado";
       project_member_rol: "miembro" | "admin";
       skill_estado: "aprobada" | "pendiente";
       task_categoria: "reparacion" | "limpieza" | "compra" | "mantenimiento" | "otro";
@@ -1294,7 +1306,7 @@ export const Constants = {
       nombre_visible: ["apodo", "nombre_apellido", "apellido_nombre"],
       project_estado: ["idea", "en_curso", "pausado", "terminado"],
       project_ingreso: ["abierto", "aprobacion", "cerrado"],
-      project_member_estado: ["pendiente", "aprobado"],
+      project_member_estado: ["pendiente", "aprobado", "rechazado"],
       project_member_rol: ["miembro", "admin"],
       skill_estado: ["aprobada", "pendiente"],
       task_categoria: ["reparacion", "limpieza", "compra", "mantenimiento", "otro"],

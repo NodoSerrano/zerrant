@@ -275,6 +275,7 @@ const UNIQUE_VIOLATION = "23505";
 
 /**
  * Self-join a project. Reads projects.ingreso and inserts the matching estado.
+ * Re-opens a prior rechazado row instead of inserting (ZER-202).
  * The RLS WITH CHECK is the real door; this action is ergonomics on top of it.
  */
 export async function joinProject(
@@ -323,6 +324,49 @@ export async function joinProject(
 
   const estado = project.ingreso === "abierto" ? "aprobado" : "pendiente";
 
+  const { data: existing } = await supabase
+    .from("project_members")
+    .select("estado, project_id, profile_id")
+    .eq("project_id", project.id)
+    .eq("profile_id", user.id)
+    .maybeSingle();
+
+  if (existing?.estado === "aprobado") {
+    return { error: ALREADY_MEMBER };
+  }
+  if (existing?.estado === "pendiente") {
+    return { error: ALREADY_REQUESTED };
+  }
+
+  if (existing?.estado === "rechazado") {
+    const { data, error } = await supabase
+      .from("project_members")
+      .update({
+        estado,
+        motivo_rechazo: null,
+        decidido_en: null,
+        decidido_por: null,
+        aviso_visto_en: null,
+      })
+      .eq("project_id", project.id)
+      .eq("profile_id", user.id)
+      .eq("estado", "rechazado")
+      .select("project_id");
+
+    if (error) {
+      return { error: JOIN_ERROR };
+    }
+    if (!data || data.length === 0) {
+      return { error: JOIN_REJECTED };
+    }
+
+    revalidatePath(`/nodo/projects/${project.id}`);
+    revalidatePath("/nodo/projects");
+    revalidatePath("/nodo", "layout");
+    revalidatePath("/");
+    return null;
+  }
+
   const { data, error } = await supabase
     .from("project_members")
     .insert({
@@ -355,12 +399,16 @@ const APPROVE_ERROR = "No pudimos aprobar la solicitud. Probá de nuevo.";
 const APPROVE_REJECTED = "No pudimos aprobar esta solicitud.";
 const REJECT_ERROR = "No pudimos rechazar la solicitud. Probá de nuevo.";
 const REJECT_REJECTED = "No pudimos rechazar esta solicitud.";
+const REJECT_MOTIVO_REQUIRED = "Escribí el motivo del rechazo";
 const QUEUE_UNAUTHORIZED = "No autorizado";
 const QUEUE_INVALID = "Revisá la solicitud e intentá de nuevo.";
+const DISMISS_ERROR = "No pudimos cerrar el aviso.";
+const DISMISS_UNAUTHORIZED = "No autorizado";
+const DISMISS_INVALID = "Revisá el aviso e intentá de nuevo.";
 
 /**
  * Approve a pending project join request (pendiente → aprobado).
- * Only estado is updated; rol and other projects are never touched.
+ * Records decision metadata so Inicio can notify the requester (ZER-202).
  * 0-row updates are failures — PostgREST does not error on empty matches.
  */
 export async function approveProjectJoin(
@@ -383,9 +431,16 @@ export async function approveProjectJoin(
     return { error: QUEUE_INVALID };
   }
 
+  const decidedAt = new Date().toISOString();
   const { data, error } = await supabase
     .from("project_members")
-    .update({ estado: "aprobado" })
+    .update({
+      estado: "aprobado",
+      motivo_rechazo: null,
+      decidido_en: decidedAt,
+      decidido_por: user.id,
+      aviso_visto_en: null,
+    })
     .eq("project_id", projectId)
     .eq("profile_id", profileId)
     .eq("estado", "pendiente")
@@ -403,12 +458,13 @@ export async function approveProjectJoin(
   revalidatePath(`/nodo/projects/${projectId}`);
   revalidatePath("/nodo/projects");
   revalidatePath("/nodo", "layout");
+  revalidatePath("/");
   return null;
 }
 
 /**
- * Reject a pending project join request by deleting the pendiente row.
- * No third enum value — the person may request again.
+ * Reject a pending project join request (pendiente → rechazado) with a required reason.
+ * Keeps the row so the requester sees the outcome on Inicio (ZER-202).
  */
 export async function rejectProjectJoin(
   _prevState: { error: string } | null,
@@ -426,13 +482,24 @@ export async function rejectProjectJoin(
 
   const projectId = trimmed(formData.get("projectId"));
   const profileId = trimmed(formData.get("profileId"));
+  const motivo = trimmed(formData.get("motivo"));
   if (!projectId || !profileId) {
     return { error: QUEUE_INVALID };
   }
+  if (!motivo) {
+    return { error: REJECT_MOTIVO_REQUIRED };
+  }
 
+  const decidedAt = new Date().toISOString();
   const { data, error } = await supabase
     .from("project_members")
-    .delete()
+    .update({
+      estado: "rechazado",
+      motivo_rechazo: motivo,
+      decidido_en: decidedAt,
+      decidido_por: user.id,
+      aviso_visto_en: null,
+    })
     .eq("project_id", projectId)
     .eq("profile_id", profileId)
     .eq("estado", "pendiente")
@@ -450,6 +517,49 @@ export async function rejectProjectJoin(
   revalidatePath(`/nodo/projects/${projectId}`);
   revalidatePath("/nodo/projects");
   revalidatePath("/nodo", "layout");
+  revalidatePath("/");
+  return null;
+}
+
+/**
+ * Mark a join decision notice as seen on Inicio (sets aviso_visto_en on own row).
+ */
+export async function dismissProjectJoinNotice(
+  _prevState: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: DISMISS_UNAUTHORIZED };
+  }
+
+  const projectId = trimmed(formData.get("projectId"));
+  if (!projectId) {
+    return { error: DISMISS_INVALID };
+  }
+
+  const seenAt = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("project_members")
+    .update({ aviso_visto_en: seenAt })
+    .eq("project_id", projectId)
+    .eq("profile_id", user.id)
+    .select("project_id");
+
+  if (error) {
+    return { error: DISMISS_ERROR };
+  }
+
+  if (!data || data.length === 0) {
+    return { error: DISMISS_ERROR };
+  }
+
+  revalidatePath("/");
   return null;
 }
 

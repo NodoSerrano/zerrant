@@ -73,7 +73,10 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   const viewerIsAdmin = isProjectAdmin({ viewerMembership });
   // Only an approval project has something to review. An open or cerrado one
   // shows the queue only while old requests are still pending (ZER-197, ZER-151).
-  const hasPendingRequests = (row.project_members ?? []).some((m) => m.estado === "pendiente");
+  const pendingRequestCount = (row.project_members ?? []).filter(
+    (m) => m.estado === "pendiente",
+  ).length;
+  const hasPendingRequests = pendingRequestCount > 0;
   const showRequestsQueue = viewerIsAdmin && (row.ingreso === "aprobacion" || hasPendingRequests);
 
   const viewModel: ProjectDetailViewModel = {
@@ -85,6 +88,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     members,
     affordance,
     showRequestsQueue,
+    pendingRequestCount: showRequestsQueue ? pendingRequestCount : undefined,
     canPromoteMembers: viewerIsAdmin,
     canEdit: viewerIsAdmin,
     canLeave: viewerMembership?.estado === "aprobado",
