@@ -294,6 +294,67 @@ begin
     end;
     v_rows := v_rows || ('serrano_b_self_approve=' || v_state);
 
+    -- ZER-202: re-request after reject — no self-aprobado unless ingreso abierto
+    if exists (
+      select 1
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = 'project_members'
+        and column_name = 'motivo_rechazo'
+    ) then
+      perform set_config('role', 'postgres', true);
+      update public.project_members
+      set
+        estado = 'rechazado',
+        motivo_rechazo = 'no encaja',
+        decidido_en = now(),
+        decidido_por = '${SERRANO_A}',
+        aviso_visto_en = null
+      where project_id = v_project and profile_id = '${SERRANO_B}';
+      perform set_config('role', 'authenticated', true);
+      perform set_config('request.jwt.claims', '{"sub":"${SERRANO_B}","role":"authenticated"}', true);
+
+      -- B cannot self-set aprobado on aprobacion project after reject
+      begin
+        update public.project_members
+        set
+          estado = 'aprobado',
+          motivo_rechazo = null,
+          decidido_en = null,
+          decidido_por = null,
+          aviso_visto_en = null
+        where project_id = v_project and profile_id = '${SERRANO_B}';
+        get diagnostics v_count = row_count;
+        if v_count > 0 then
+          v_state := '${SUCCESS}';
+        else
+          v_state := '${RLS_DENIED}';
+        end if;
+      exception when others then v_state := SQLSTATE;
+      end;
+      v_rows := v_rows || ('serrano_b_rerequest_aprobado_on_aprobacion=' || v_state);
+
+      -- B can re-open as pendiente
+      begin
+        update public.project_members
+        set
+          estado = 'pendiente',
+          motivo_rechazo = null,
+          decidido_en = null,
+          decidido_por = null,
+          aviso_visto_en = null
+        where project_id = v_project and profile_id = '${SERRANO_B}';
+        get diagnostics v_count = row_count;
+        if v_count > 0 then
+          v_state := '${SUCCESS}';
+        else
+          v_state := '${RLS_DENIED}';
+        end if;
+      exception when others then v_state := SQLSTATE;
+      end;
+      v_rows := v_rows || ('serrano_b_rerequest_pendiente=' || v_state);
+    end if;
+
     -- platform admin who is NOT project admin cannot approve B
     perform set_config('request.jwt.claims', '{"sub":"${PLATFORM_ADMIN_ID}","role":"authenticated"}', true);
     begin
@@ -516,6 +577,45 @@ begin
       exception when others then v_state := SQLSTATE;
       end;
       v_rows := v_rows || ('serrano_b_self_join_abierto=' || v_state);
+
+      -- ZER-202: after reject on abierto, B may self-set aprobado again
+      if exists (
+        select 1
+        from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'project_members'
+          and column_name = 'motivo_rechazo'
+      ) then
+        perform set_config('role', 'postgres', true);
+        update public.project_members
+        set
+          estado = 'rechazado',
+          motivo_rechazo = 'reintentar abierto',
+          decidido_en = now(),
+          decidido_por = '${SERRANO_A}',
+          aviso_visto_en = null
+        where project_id = v_open_project and profile_id = '${SERRANO_B}';
+        perform set_config('role', 'authenticated', true);
+        perform set_config('request.jwt.claims', '{"sub":"${SERRANO_B}","role":"authenticated"}', true);
+        begin
+          update public.project_members
+          set
+            estado = 'aprobado',
+            motivo_rechazo = null,
+            decidido_en = null,
+            decidido_por = null,
+            aviso_visto_en = null
+          where project_id = v_open_project and profile_id = '${SERRANO_B}';
+          get diagnostics v_count = row_count;
+          if v_count > 0 then
+            v_state := '${SUCCESS}';
+          else
+            v_state := '${RLS_DENIED}';
+          end if;
+        exception when others then v_state := SQLSTATE;
+        end;
+        v_rows := v_rows || ('serrano_b_rerequest_aprobado_on_abierto=' || v_state);
+      end if;
     end if;
 
     -- authenticated SELECT projects ok
@@ -594,12 +694,20 @@ describe("projects RLS (live DB)", () => {
     expect(outcomes.serrano_a_insert_open_project).toBe(SUCCESS);
     expect(outcomes.serrano_b_self_join_abierto).not.toBe(POLICY_RECURSION);
     expect(outcomes.serrano_b_self_join_abierto).toBe(SUCCESS);
+    if (outcomes.serrano_b_rerequest_aprobado_on_abierto !== undefined) {
+      expect(outcomes.serrano_b_rerequest_aprobado_on_abierto).toBe(SUCCESS);
+    }
   });
 
   it("allows self-join scaffold, admin membership update/delete without 42P17", () => {
     expect(outcomes.serrano_b_self_join).not.toBe(POLICY_RECURSION);
     expect(outcomes.serrano_b_self_join).toBe(SUCCESS);
     expect(outcomes.serrano_b_self_approve).toBe(RLS_DENIED);
+    if (outcomes.serrano_b_rerequest_aprobado_on_aprobacion !== undefined) {
+      // Policy WITH CHECK → 42501; self_update_guard → P0001; never SUCCESS
+      expect(outcomes.serrano_b_rerequest_aprobado_on_aprobacion).not.toBe(SUCCESS);
+      expect(outcomes.serrano_b_rerequest_pendiente).toBe(SUCCESS);
+    }
     expect(outcomes.platform_admin_approve_member).toBe(RLS_DENIED);
     expect(outcomes.platform_admin_delete_member).toBe(RLS_DENIED);
     expect(outcomes.non_member_approve_member).toBe(RLS_DENIED);

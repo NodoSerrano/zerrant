@@ -143,7 +143,9 @@ export function ProjectDetail({ project }: { project: ProjectDetailViewModel }) 
               href={`/nodo/projects/${project.id}/requests`}
               className={cn(PROJECT_OPERATION_CLASS, "text-brand-green")}
             >
-              Solicitudes de ingreso
+              {typeof project.pendingRequestCount === "number" && project.pendingRequestCount > 0
+                ? `Solicitudes de ingreso · ${project.pendingRequestCount}`
+                : "Solicitudes de ingreso"}
             </Link>
           ) : null}
 

@@ -108,4 +108,41 @@ describe("toApprovedProjectMembers", () => {
     expect(members[0]?.rol).toBe("admin");
     expect(members[0]?.isCreator).toBe(true);
   });
+
+  it("excludes rechazado rows from the member list", () => {
+    const members = toApprovedProjectMembers(
+      [
+        {
+          profile_id: "u1",
+          estado: "aprobado",
+          rol: "admin",
+          profiles: {
+            id: "u1",
+            nombre: "Nobel",
+            apellido: "Dam",
+            apodo: null,
+            nombre_visible: "nombre_apellido",
+            avatar_url: null,
+          },
+        },
+        {
+          profile_id: "u3",
+          estado: "rechazado",
+          rol: "miembro",
+          profiles: {
+            id: "u3",
+            nombre: "Rejected",
+            apellido: "User",
+            apodo: null,
+            nombre_visible: "nombre_apellido",
+            avatar_url: null,
+          },
+        },
+      ],
+      "u1",
+    );
+
+    expect(members).toHaveLength(1);
+    expect(members[0]?.profileId).toBe("u1");
+  });
 });

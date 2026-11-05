@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { JoinRequestRow } from "./JoinRequestRow";
 
@@ -34,5 +34,27 @@ describe("JoinRequestRow", () => {
     expect(screen.getByRole("button", { name: "Aprobar" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Rechazar" })).toBeInTheDocument();
     expect(screen.getByText("Quiere unirse")).toBeInTheDocument();
+  });
+
+  it("asks for a rejection reason before submitting reject", () => {
+    render(
+      <JoinRequestRow
+        projectId="proj-1"
+        request={{
+          profileId: "u2",
+          name: "Martín Paz",
+          avatarUrl: null,
+          subtitle: null,
+          createdAt: null,
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Rechazar" }));
+
+    expect(screen.getByLabelText("Motivo del rechazo")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Contale por qué no entra ahora")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Confirmar rechazo" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Aprobar" })).not.toBeInTheDocument();
   });
 });

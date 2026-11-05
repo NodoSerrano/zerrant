@@ -189,7 +189,7 @@ describe("ProjectDetailPage", () => {
     const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
     render(ui);
     expect(screen.queryByRole("button", { name: "Solicitar unirme" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Solicitudes de ingreso" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Solicitudes de ingreso/ })).toHaveAttribute(
       "href",
       "/nodo/projects/proj-1/requests",
     );
@@ -266,7 +266,7 @@ describe("ProjectDetailPage", () => {
     });
     const ui = await ProjectDetailPage({ params: Promise.resolve({ id: "proj-1" }) });
     render(ui);
-    expect(screen.getByRole("link", { name: "Solicitudes de ingreso" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Solicitudes de ingreso/ })).toBeInTheDocument();
   });
 
   it("does not offer promote to plain miembros", async () => {

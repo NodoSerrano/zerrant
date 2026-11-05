@@ -204,11 +204,27 @@ describe("ProjectDetail", () => {
     const { rerender } = render(
       <ProjectDetail project={{ ...baseProject, showRequestsQueue: true }} />,
     );
-    const queue = screen.getByRole("link", { name: "Solicitudes de ingreso" });
+    const queue = screen.getByRole("link", { name: /Solicitudes de ingreso/ });
     expect(queue).toHaveAttribute("href", "/nodo/projects/proj-1/requests");
 
     rerender(<ProjectDetail project={{ ...baseProject, showRequestsQueue: false }} />);
-    expect(screen.queryByRole("link", { name: "Solicitudes de ingreso" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Solicitudes de ingreso/ })).not.toBeInTheDocument();
+  });
+
+  it("shows pending request count on the queue link when provided", () => {
+    render(
+      <ProjectDetail
+        project={{ ...baseProject, showRequestsQueue: true, pendingRequestCount: 3 }}
+      />,
+    );
+    expect(screen.getByRole("link", { name: /Solicitudes de ingreso · 3/ })).toBeInTheDocument();
+  });
+
+  it("places the join CTA before the Miembros section", () => {
+    render(<ProjectDetail project={baseProject} />);
+    const join = screen.getByRole("button", { name: "Solicitar unirme" });
+    const members = screen.getByRole("heading", { name: "Miembros" });
+    expect(join.compareDocumentPosition(members) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("offers promote only to project admins, and only on aprobado miembros who are not already admins", () => {

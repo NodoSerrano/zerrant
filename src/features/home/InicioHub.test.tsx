@@ -26,6 +26,14 @@ vi.mock("next/image", () => ({
   ),
 }));
 
+vi.mock("@/lib/use-guarded-action-state", () => ({
+  useGuardedActionState: () => [null, vi.fn(), false],
+}));
+
+vi.mock("@/features/projects/actions", () => ({
+  dismissProjectJoinNotice: vi.fn(),
+}));
+
 const birthday = (overrides: Partial<UpcomingBirthday> = {}): UpcomingBirthday => ({
   profileId: "p1",
   displayName: "Ana García",
@@ -137,5 +145,38 @@ describe("InicioHub", () => {
   it("confirms membership in copy", () => {
     render(<InicioHub events={[]} birthdays={[]} memberConfirmed />);
     expect(screen.getByRole("heading", { name: "Ya sos miembro del Nodo" })).toBeInTheDocument();
+  });
+
+  it("renders dismissible project join notices (ZER-202)", () => {
+    render(
+      <InicioHub
+        events={[]}
+        birthdays={[]}
+        joinNotices={[
+          {
+            projectId: "proj-1",
+            projectName: "Huerta comun",
+            kind: "aprobada",
+            message: "Te sumaron a Huerta comun",
+            href: "/nodo/projects/proj-1",
+          },
+          {
+            projectId: "proj-2",
+            projectName: "Taller",
+            kind: "rechazada",
+            message: "No entraste a Taller: Cupo lleno",
+            href: "/nodo/projects/proj-2",
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Te sumaron a Huerta comun")).toBeInTheDocument();
+    expect(screen.getByText("No entraste a Taller: Cupo lleno")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Huerta comun/i })).toHaveAttribute(
+      "href",
+      "/nodo/projects/proj-1",
+    );
+    expect(screen.getAllByRole("button", { name: "Entendido" })).toHaveLength(2);
   });
 });
