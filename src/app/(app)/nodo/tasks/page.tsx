@@ -12,6 +12,11 @@ import { displayName } from "@/features/profile/displayName";
 import type { NombreVisible } from "@/features/profile/types";
 import { ESTADO_BADGE } from "@/features/tasks/taskDisplay";
 import { formatCategorias } from "@/features/tasks/categorias";
+import {
+  TASK_HUB_ESTADO_FILTERS,
+  resolveTaskHubFilter,
+  taskHubFilterHref,
+} from "@/features/tasks/hub-filter";
 import type { TaskEstado } from "@/features/tasks/types";
 
 // The pill labels come from the same place as the chip labels, so a state
@@ -79,11 +84,8 @@ export default async function TasksPage({
   if (!user) return <p className="text-text-secondary">Iniciá sesión para ver las tareas.</p>;
 
   const { estado } = await searchParams;
-  // Hub pills only. Legacy ?estado=verificada (and any unknown) → todas.
-  const filtros = ["todas", "abierta", "tomada", "hecha", "cancelada"] as const;
-  type HubFilter = (typeof filtros)[number];
-  const filter: HubFilter =
-    estado && (filtros as readonly string[]).includes(estado) ? (estado as HubFilter) : "todas";
+  // Default abierta (ZER-225). Legacy ?estado=verificada / unknown → abierta.
+  const filter = resolveTaskHubFilter(estado);
 
   let query = supabase
     .from("tasks")
@@ -109,6 +111,14 @@ export default async function TasksPage({
   const isEmpty = !tasks || tasks.length === 0;
   const showCreateCta = canCreate && (filter === "todas" || !isEmpty);
 
+  const pillClass = (active: boolean) =>
+    cn(
+      "inline-flex items-center rounded-pill px-3 py-1.5 text-xs font-semibold font-display whitespace-nowrap transition-colors",
+      active
+        ? "bg-primary text-on-primary"
+        : "bg-surface border border-border text-text-secondary hover:text-text-primary",
+    );
+
   return (
     <div className="flex flex-col gap-5 relative">
       {/* TabBar destination (ZER-206): no back link, title only. */}
@@ -116,21 +126,22 @@ export default async function TasksPage({
 
       <NodoTabs active="tareas" />
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {filtros.map((f) => (
-          <Link
-            key={f}
-            href={f === "todas" ? "/nodo/tasks" : `/nodo/tasks?estado=${f}`}
-            className={cn(
-              "inline-flex items-center rounded-pill px-3 py-1.5 text-xs font-semibold font-display whitespace-nowrap transition-colors",
-              filter === f
-                ? "bg-primary text-on-primary"
-                : "bg-surface border border-border text-text-secondary hover:text-text-primary",
-            )}
-          >
-            {f === "todas" ? "Todas" : ESTADO_LABELS[f]}
-          </Link>
-        ))}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <div data-testid="task-hub-filter-estado" className="flex gap-2">
+          {TASK_HUB_ESTADO_FILTERS.map((f) => (
+            <Link key={f} href={taskHubFilterHref(f)} className={pillClass(filter === f)}>
+              {ESTADO_LABELS[f]}
+            </Link>
+          ))}
+        </div>
+        <span className="h-4 w-px shrink-0 bg-border" aria-hidden="true" />
+        <Link
+          data-testid="task-hub-filter-todas"
+          href={taskHubFilterHref("todas")}
+          className={pillClass(filter === "todas")}
+        >
+          Todas
+        </Link>
       </div>
 
       {isEmpty ? (
