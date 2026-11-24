@@ -1,6 +1,6 @@
 # Story 7.6: Dark mode polish pass
 
-Status: review
+Status: done
 
 ## Linear
 

@@ -1,6 +1,6 @@
 # Story 6.8: Event detail and attendee list (`5.1 · Detalle de evento`)
 
-Status: review
+Status: done
 
 ## Linear
 
@@ -59,33 +59,33 @@ so that I can decide whether to go.
 
 ## Tasks / Subtasks
 
-  - [x] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1) — **blocked**
-  - [x] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg` or any filesystem tool. Only `mcp__pencil` tools can read it.
-  - [x] Pencil MCP is **not available** in this workspace. Frame `5.1` node id stays `TBD` in `screen-inventory.md`.
-  - [x] Implemented from AC + prior art (MemberDetail / TaskDetailView / Avatar / Chip / EmptyState / EventCard). Visual parity needs a later Pen pass.
+- [x] **T0 — BLOCKING prerequisite: resolve the Pencil node id** (AC: 1) — **blocked**
+- [x] `design/nodo-serrano.pen` is **encrypted**. Never open it with `Read`, `bat`, `rg` or any filesystem tool. Only `mcp__pencil` tools can read it.
+- [x] Pencil MCP is **not available** in this workspace. Frame `5.1` node id stays `TBD` in `screen-inventory.md`.
+- [x] Implemented from AC + prior art (MemberDetail / TaskDetailView / Avatar / Chip / EmptyState / EventCard). Visual parity needs a later Pen pass.
 
-  - [x] **T1 — Read the framework docs** (AC: 2–8)
-  - [x] Read the dynamic-route / server-component guide in `node_modules/next/dist/docs/` — `params` is a `Promise` in App Router.
+- [x] **T1 — Read the framework docs** (AC: 2–8)
+- [x] Read the dynamic-route / server-component guide in `node_modules/next/dist/docs/` — `params` is a `Promise` in App Router.
 
-  - [x] **T2 — RED: failing tests first** (AC: 2, 3, 5, 7, 9)
-  - [x] Pure grouping helper test: a mixed list of attendance rows groups into `voy` / `quizas` / `no` in a stable order, with empty groups handled.
-  - [x] Page test: the five event fields render.
-  - [x] Page test: attendees appear under their group with accented labels and unaccented stored values.
-  - [x] Page test: an event with zero attendance rows renders the empty attendee state.
-  - [x] Page test: the creator is identifiable.
-  - [x] Verify RED.
+- [x] **T2 — RED: failing tests first** (AC: 2, 3, 5, 7, 9)
+- [x] Pure grouping helper test: a mixed list of attendance rows groups into `voy` / `quizas` / `no` in a stable order, with empty groups handled.
+- [x] Page test: the five event fields render.
+- [x] Page test: attendees appear under their group with accented labels and unaccented stored values.
+- [x] Page test: an event with zero attendance rows renders the empty attendee state.
+- [x] Page test: the creator is identifiable.
+- [x] Verify RED.
 
-  - [x] **T3 — GREEN: data read** (AC: 2, 3, 5, 8)
-  - [x] Server component reads the `events` row and its `event_attendance` rows joined to `profiles` for names/avatars.
-  - [x] Resolve the creator from `creado_por` → `profiles`.
-  - [x] Group in a pure helper (`src/features/events/attendance.ts`) so story 6.9 can reuse it after an RSVP change.
-  - [x] Do not `select *` on `profiles` — ZER-43 revoked base-column SELECT on `tarifa_hora`. Select explicit columns.
+- [x] **T3 — GREEN: data read** (AC: 2, 3, 5, 8)
+- [x] Server component reads the `events` row and its `event_attendance` rows joined to `profiles` for names/avatars.
+- [x] Resolve the creator from `creado_por` → `profiles`.
+- [x] Group in a pure helper (`src/features/events/attendance.ts`) so story 6.9 can reuse it after an RSVP change.
+- [x] Do not `select *` on `profiles` — ZER-43 revoked base-column SELECT on `tarifa_hora`. Select explicit columns.
 
-  - [x] **T4 — GREEN: the screen** (AC: 2, 4, 6, 7)
-  - [x] Compose from `Avatar`, `Chip`, and the detail-screen shape used by `src/features/plantel/MemberDetail.tsx`.
-  - [x] Label map: `voy` → "Voy", `quizas` → "Quizás", `no` → "No". Labels are presentation only.
-  - [x] Empty attendee state per the frame.
-  - [x] Leave a clear seam where story 6.9 mounts the viewer's own RSVP control.
+- [x] **T4 — GREEN: the screen** (AC: 2, 4, 6, 7)
+- [x] Compose from `Avatar`, `Chip`, and the detail-screen shape used by `src/features/plantel/MemberDetail.tsx`.
+- [x] Label map: `voy` → "Voy", `quizas` → "Quizás", `no` → "No". Labels are presentation only.
+- [x] Empty attendee state per the frame.
+- [x] Leave a clear seam where story 6.9 mounts the viewer's own RSVP control.
 
 - [x] **T5 — Verify** (AC: 2, 9)
   - [x] `pnpm test && pnpm typecheck && pnpm lint` green. (typecheck: only stale `.next/dev/types` noise)

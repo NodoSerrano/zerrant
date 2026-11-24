@@ -1,6 +1,6 @@
 # Story 6.4: Aportes in member detail
 
-Status: review
+Status: done
 
 ## Linear
 

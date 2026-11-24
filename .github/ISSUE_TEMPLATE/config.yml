@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Linear — Tracker principal (ZER-*)
+    url: https://linear.app/zerrant
+    about: Usá Linear para features, sprints y seguimiento del equipo. Plantillas en docs/templates/linear-issue-templates.md.
+  - name: Estado operativo del proyecto (STATUS.md)
+    url: https://github.com/NodoSerrano/zerrant/blob/main/docs/roadmap/STATUS.md
+    about: Revisá qué está en main (prod) vs develop (test) antes de abrir un ticket.

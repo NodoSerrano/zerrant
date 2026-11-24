@@ -1,6 +1,6 @@
 # Story 5.4: Project detail (`4.3 · Detalle de proyecto`)
 
-Status: review
+Status: done
 
 ## Linear
 

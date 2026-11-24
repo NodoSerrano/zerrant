@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zerrant — Topología de ramas y releases</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-paper:       #1a1614;
+      --color-paper-2:     #201b19;
+      --color-ink:         #ede5d8;
+      --color-ink-strong:  #120e0c;
+      --color-muted:       #a29889;
+      --color-soft:        #9a9183;
+      --color-rule:        rgba(237,229,216,0.12);
+      --color-rule-solid:  rgba(237,229,216,0.25);
+      --color-accent:      #c98a9b;
+      --color-accent-tint: rgba(201,138,155,0.10);
+      --color-link:        #8c9a86;
+      --font-serif: 'Fraunces', Georgia, serif;
+      --font-sans:  'Instrument Sans', system-ui, sans-serif;
+      --font-mono:  'JetBrains Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      padding: 2.5rem 2rem;
+    }
+
+    .container { max-width: 1280px; margin: 0 auto; }
+
+    .header { margin-bottom: 2rem; }
+
+    .header-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.6rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.75rem, 3vw + 0.75rem, 2.4rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      color: var(--color-ink);
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--color-muted);
+      max-width: 68ch;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.86em;
+      color: var(--color-ink);
+    }
+
+    .diagram-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    svg { width: 100%; min-width: 1280px; display: block; }
+
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr 0.9fr;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 980px) { .cards { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--color-paper-2);
+      border: 1px solid var(--color-rule);
+      border-radius: 6px;
+      padding: 1.25rem;
+    }
+
+    .card .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-soft);
+      margin-bottom: 0.5rem;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--color-rule);
+    }
+
+    .card-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .card-dot.coral { background: var(--color-accent); }
+    .card-dot.ink   { background: var(--color-ink); }
+    .card-dot.muted { background: var(--color-muted); }
+
+    .card h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--color-ink);
+    }
+
+    .card p {
+      color: var(--color-muted);
+      font-size: 0.8125rem;
+      line-height: 1.55;
+    }
+
+    .footer {
+      margin-top: 2rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--color-rule);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      color: var(--color-soft);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <p class="header-eyebrow">Git graph · Branch &amp; Release Topology · 2026-11-24</p>
+      <h1>Zerrant — Flujo main, develop y PRs abiertos</h1>
+      <p class="subtitle"><code>main</code> quedó fijada en el release <code>v0.1.0</code> (2026-10-16), mientras <code>develop</code> avanzó 98 commits (+11 migraciones y 30 tickets <code>Ready for Deploy</code>) y recibe los dos PRs actualmente en revisión.</p>
+    </header>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="zerrant-release-topology-title zerrant-release-topology-desc">
+        <title id="zerrant-release-topology-title">Zerrant — Topología de ramas y releases</title>
+        <desc id="zerrant-release-topology-desc">Grafo Git de las ramas main en producción, develop en test con 30 tickets listos y los dos PRs abiertos #166 y #167 al 2026-11-24.</desc>
+
+        <rect width="100%" height="100%" fill="#1a1614"/>
+
+        <!-- Time cue (moved up to y=160 for 4 lanes per spec) -->
+        <text x="280" y="160" fill="#a29889" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace" letter-spacing="0.12em" font-style="italic">time →</text>
+
+        <!-- Lane rails (y = 216, 312, 408, 504 — 96px pitch) -->
+        <g aria-hidden="true" stroke="#a29889" stroke-width="1.5" fill="none" stroke-linecap="round">
+          <line data-lane="main (prod)"       data-y="216" x1="280"  y1="216" x2="520"  y2="216"/>
+          <line data-lane="develop (test)"    data-y="312" x1="400"  y1="312" x2="880"  y2="312"/>
+          <line data-lane="pr/167 · ZER-225"  data-y="408" x1="1000" y1="408" x2="1120" y2="408"/>
+          <line data-lane="pr/166 · ZER-202"  data-y="504" x1="1000" y1="504" x2="1120" y2="504"/>
+        </g>
+
+        <!-- Connectors painted before dots, orthogonal M/H/V paths, no arrowheads -->
+        <g fill="none" stroke="#a29889" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path data-from="c0" data-to="m1"  d="M 280,216 H 520"/>
+          <path data-from="c0" data-to="d0"  d="M 280,216 V 312 H 400"/>
+          <path data-from="d0" data-to="m1"  d="M 400,312 H 520 V 216"/>
+          <path data-from="d0" data-to="d1"  d="M 400,312 H 640"/>
+          <path data-from="d1" data-to="d2"  d="M 640,312 H 760"/>
+          <path data-from="d2" data-to="d3"  d="M 760,312 H 880"/>
+          <path data-from="d2" data-to="p1"  d="M 760,312 V 504 H 1000"/>
+          <path data-from="p1" data-to="p1b" d="M 1000,504 H 1120"/>
+          <path data-from="d3" data-to="p2"  d="M 880,312 V 408 H 1000"/>
+          <path data-from="p2" data-to="p2b" d="M 1000,408 H 1120"/>
+        </g>
+
+        <!-- Merge ring on m1 -->
+        <g aria-hidden="true" fill="none" stroke="#ede5d8" stroke-width="1.5">
+          <circle cx="520" cy="216" r="12"/>
+        </g>
+
+        <!-- Commits (max 2 focal accent #c98a9b: m1 and d3) -->
+        <g>
+          <circle data-commit="c0"  data-lane="main (prod)"      data-column="0" cx="280"  cy="216" r="8" fill="#ede5d8"/>
+          <circle data-commit="d0"  data-lane="develop (test)"   data-column="1" cx="400"  cy="312" r="8" fill="#ede5d8"/>
+          <circle data-commit="m1"  data-lane="main (prod)"      data-column="2" data-kind="merge" cx="520" cy="216" r="8" fill="#c98a9b"/>
+          <circle data-commit="d1"  data-lane="develop (test)"   data-column="3" cx="640"  cy="312" r="8" fill="#ede5d8"/>
+          <circle data-commit="d2"  data-lane="develop (test)"   data-column="4" cx="760"  cy="312" r="8" fill="#ede5d8"/>
+          <circle data-commit="d3"  data-lane="develop (test)"   data-column="5" cx="880"  cy="312" r="8" fill="#c98a9b"/>
+          <circle data-commit="p2"  data-lane="pr/167 · ZER-225" data-column="6" cx="1000" cy="408" r="8" fill="#ede5d8"/>
+          <circle data-commit="p2b" data-lane="pr/167 · ZER-225" data-column="7" cx="1120" cy="408" r="8" fill="#ede5d8"/>
+          <circle data-commit="p1"  data-lane="pr/166 · ZER-202" data-column="6" cx="1000" cy="504" r="8" fill="#ede5d8"/>
+          <circle data-commit="p1b" data-lane="pr/166 · ZER-202" data-column="7" cx="1120" cy="504" r="8" fill="#ede5d8"/>
+        </g>
+
+        <!-- Lane names at lane_label_x=88 -->
+        <g font-family="'JetBrains Mono', ui-monospace, monospace" font-size="10" font-weight="500" fill="#a29889" text-anchor="start">
+          <text data-lane="main (prod)"      x="88" y="220">main (prod)</text>
+          <text data-lane="develop (test)"   x="88" y="316">develop (test)</text>
+          <text data-lane="pr/167 · ZER-225" x="88" y="412">pr/167 · ZER-225</text>
+          <text data-lane="pr/166 · ZER-202" x="88" y="508">pr/166 · ZER-202</text>
+        </g>
+
+        <!-- Sparse commit labels placed clear of vertical branch/merge paths -->
+        <g font-family="'JetBrains Mono', ui-monospace, monospace" font-size="9">
+          <text x="280" y="192" fill="#a29889" text-anchor="middle">M0–M4</text>
+          <text x="532" y="240" fill="#c98a9b" text-anchor="start">0a01261 · 10-16</text>
+          <text x="892" y="336" fill="#c98a9b" text-anchor="start">ed920a5 · 10-31</text>
+        </g>
+
+        <!-- Tags above commits (text matches data-tag) -->
+        <g>
+          <rect x="468" y="168" width="104" height="24" rx="4" fill="#1a1614" stroke="#c98a9b" stroke-width="1"/>
+          <text data-tag="v0.1.0 · prod" data-commit="m1" x="520" y="184" fill="#ede5d8" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace" font-weight="500" text-anchor="middle">v0.1.0 · prod</text>
+
+          <rect x="824" y="264" width="112" height="24" rx="4" fill="#1a1614" stroke="#c98a9b" stroke-width="1"/>
+          <text data-tag="+98 · 30 ready" data-commit="d3" x="880" y="280" fill="#ede5d8" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace" font-weight="500" text-anchor="middle">+98 · 30 ready</text>
+
+          <rect x="1060" y="360" width="120" height="24" rx="4" fill="#1a1614" stroke="#ede5d8" stroke-width="1"/>
+          <text data-tag="PR #167 · CI ok" data-commit="p2b" x="1120" y="376" fill="#ede5d8" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace" font-weight="500" text-anchor="middle">PR #167 · CI ok</text>
+
+          <rect x="1060" y="456" width="120" height="24" rx="4" fill="#1a1614" stroke="#ede5d8" stroke-width="1"/>
+          <text data-tag="PR #166 · CI ok" data-commit="p1b" x="1120" y="472" fill="#ede5d8" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace" font-weight="500" text-anchor="middle">PR #166 · CI ok</text>
+        </g>
+
+        <!-- Bottom legend strip (rule at y=648 per 4-lane spec) -->
+        <line x1="80" y1="648" x2="1200" y2="648" stroke="rgba(237,229,216,0.12)" stroke-width="0.8"/>
+        <text x="80" y="668" fill="#a29889" font-size="8" font-family="'JetBrains Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+
+        <circle cx="88" cy="688" r="6" fill="#ede5d8"/>
+        <text x="104" y="692" fill="#a29889" font-size="9" font-family="'Instrument Sans', system-ui, sans-serif">Commit</text>
+
+        <circle cx="208" cy="688" r="6" fill="#c98a9b"/>
+        <text x="224" y="692" fill="#a29889" font-size="9" font-family="'Instrument Sans', system-ui, sans-serif">Prod release / test head</text>
+
+        <circle cx="408" cy="688" r="9" fill="none" stroke="#ede5d8" stroke-width="1.2"/>
+        <circle cx="408" cy="688" r="5" fill="#ede5d8"/>
+        <text x="428" y="692" fill="#a29889" font-size="9" font-family="'Instrument Sans', system-ui, sans-serif">Merge commit</text>
+
+        <rect x="548" y="680" width="44" height="16" rx="2" fill="#1a1614" stroke="#ede5d8" stroke-width="1"/>
+        <text x="600" y="692" fill="#a29889" font-size="9" font-family="'Instrument Sans', system-ui, sans-serif">Tag / PR head</text>
+
+        <text x="740" y="692" fill="#9a9183" font-size="9" font-family="'Instrument Sans', system-ui, sans-serif" font-style="italic">Columns encode sequence; deploy.yml maps develop→test and main→prod.</text>
+      </svg>
+    </div>
+
+    <section class="cards">
+      <article class="card">
+        <p class="eyebrow">PROD · MAIN</p>
+        <div class="card-header"><span class="card-dot coral"></span><h3>v0.1.0 (0a01261 · 2026-10-16)</h3></div>
+        <p>Desplegada en VPS (<code>prod</code>) con M0–M7 base: 40 migraciones SQL, 14 dominios en <code>src/features/</code>, 37 páginas y <code>TabBar</code> de 4 tabs.</p>
+      </article>
+      <article class="card">
+        <p class="eyebrow">TEST · DEVELOP</p>
+        <div class="card-header"><span class="card-dot ink"></span><h3>ed920a5 · +98 commits · 30 tickets</h3></div>
+        <p>Desplegada en VPS (<code>test</code>). Suma <code>donaciones/</code> (<code>ZER-166</code>), +11 migraciones (51 total), 42 páginas y la 5ª tab <code>Actividad</code> (<code>ZER-206</code>).</p>
+      </article>
+      <article class="card">
+        <p class="eyebrow">OPEN PRS → DEVELOP</p>
+        <div class="card-header"><span class="card-dot muted"></span><h3>#166 (ZER-202) &amp; #167 (ZER-225)</h3></div>
+        <p>Ambos de <code>martiyaquinta</code> (2026-11-05) con CI verde y <code>review-required</code>. Listos para revisar antes del próximo corte a <code>main</code>.</p>
+      </article>
+    </section>
+
+    <footer class="footer">
+      <span>NodoSerrano/zerrant · release topology (2026-11-24)</span>
+      <span>deploy.yml: develop→test · main→prod</span>
+    </footer>
+  </div>
+</body>
+</html>

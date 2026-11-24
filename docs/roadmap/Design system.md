@@ -14,9 +14,9 @@ Extraído de Figma. Detalle de tokens en [[2026-07-20-nodo-serrano-backoffice-de
 - **Rampa CTA (Figma web / landing `grad-primary`):** mint-raw `#4fe6c3` → blue-raw `#2e9bff` → grad-violet `#c87fe5` vía utilidad `bg-gradient-brand` (ZER-120). Warm: yellow → warm-red `#ff3121` → warm-violet (`bg-gradient-warm`).
 - **Efectos:** neumórficos + sombras suaves de card; CTAs con gradiente de marca compartido.
 
-## Componentes (en el `.pen`)
+## Componentes (en el `.pen` vs código)
 
-Avatar, Chip, **TierBadge**, **RoleChip**, PrimaryButton, SecondaryButton, Input, StatusBar, **TabBar** (4 tabs: Inicio · Plantel · Agenda · Perfil; sin Nodo — ZER-107), MemberCard, EventCard, ProjectCard, TaskCard, AporteItem, RequestCard.
+Avatar, Chip, **TierBadge**, **RoleChip**, PrimaryButton, SecondaryButton, Input, **TabBar** (4 tabs en `main`: Inicio · Plantel · Agenda · Perfil; en `develop` suma la 5ª tab `Actividad` solo para miembros hacia `/nodo/projects` + tareas — `ZER-206`), MemberCard, EventCard, ProjectCard, TaskCard, AporteItem, RequestCard. (`StatusBar` existe solo como chrome de dispositivo en el `.pen` y se removió del shell web en `ZER-66`.)
 
 ## Implementación
 

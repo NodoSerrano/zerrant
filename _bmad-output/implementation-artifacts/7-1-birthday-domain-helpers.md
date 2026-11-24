@@ -1,6 +1,6 @@
 # Story 7.1: Birthday domain helpers (age + upcoming)
 
-Status: review
+Status: done
 
 ## Linear
 

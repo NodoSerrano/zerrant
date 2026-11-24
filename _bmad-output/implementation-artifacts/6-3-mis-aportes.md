@@ -4,7 +4,7 @@ baseline_commit: 8de86ba205e6c2a5943e7e038f51adeacad60410
 
 # Story 6.3: Mis aportes (`3.4 · Mis aportes`)
 
-Status: review
+Status: done
 
 ## Linear
 

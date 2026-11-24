@@ -1,6 +1,6 @@
 # Story 5.3: Create project (`4.4 · Crear proyecto`)
 
-Status: in-progress
+Status: done
 
 ## Linear
 

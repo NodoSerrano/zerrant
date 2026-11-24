@@ -1,6 +1,6 @@
 # Story 5.6: Join-request queue (`4.5 · Solicitudes de ingreso`)
 
-Status: review
+Status: done
 
 ## Linear
 

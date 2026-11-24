@@ -1,0 +1,101 @@
+name: Feature / Mejora
+description: Proponer una feature, mejora, deuda UX/técnica, seguridad u ops en Zerrant
+title: "[ZER-XXX] "
+labels: ["Feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Completá este formulario usando la convención de Zerrant (`ZER-*`). Si el ticket ya existe en Linear, linkealo abajo y revisá antes si la funcionalidad ya está en `develop` (`test`) o `main` (`prod`).
+
+  - type: input
+    id: linear_id
+    attributes:
+      label: ID en Linear (si ya existe)
+      description: Link o clave de Linear (ej. ZER-225). Dejá vacío si todavía no fue creado en Linear.
+      placeholder: "ZER-XXX o https://linear.app/zerrant/issue/ZER-XXX/..."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Tipo / Etiqueta principal
+      description: Alineado con las etiquetas del workspace `ZER` en Linear.
+      options:
+        - Feature
+        - Improvement
+        - ux-debt
+        - tech-debt
+        - security
+        - ops
+    validations:
+      required: true
+
+  - type: input
+    id: origin
+    attributes:
+      label: Origen / Referencia
+      description: Ej. QA del equipo, PRD / Milestone, frame de `design/nodo-serrano.pen`, story BMad.
+      placeholder: "Ej. QA del equipo (DD/MM) · Frame 4.3 · M5"
+    validations:
+      required: false
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Qué pasa hoy / Contexto
+      description: Explicá el problema actual o por qué hace falta este cambio.
+      placeholder: "Hoy..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Alcance
+      description: Qué incluye esta entrega (lista concreta).
+      value: |
+        - 
+        - 
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Fuera de alcance
+      description: Qué queda explícitamente afuera para evitar scope creep.
+      value: |
+        - 
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria (verificables / TDD)
+      description: Criterios concretos que deben pasar en tests y en la app.
+      value: |
+        1. 
+        2. 
+    validations:
+      required: true
+
+  - type: textarea
+    id: data_rls
+    attributes:
+      label: Datos, migraciones y RLS
+      description: ¿Toca tablas, enums, migraciones SQL o policies RLS? Recordar `authenticated` grants (`pnpm db:check-grants`).
+      placeholder: "Ej. Sin cambios de DB / Nueva migración + policy SELECT is_non_tourist()."
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notas / Coordinación
+      description: Tickets relacionados, si depende de cambios en `develop` vs `main`, o decisiones pendientes.
+      placeholder: "Ej. Depende de ZER-XXX / PR apunta a develop."
+    validations:
+      required: false

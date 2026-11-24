@@ -27,7 +27,7 @@ Test-driven development is REQUIRED for all implementation work. Before writing 
 
 # BMad Method — mandatory
 
-The BMad Method skills in `.claude/skills/` are MANDATORY for all workflow decisions. Never skip the process.
+The BMad Method skills in `.claude/skills/` (and `.agents/skills/`) are MANDATORY for all workflow decisions. Never skip the process.
 
 ## Entry points by context
 
@@ -57,14 +57,16 @@ The BMad Method skills in `.claude/skills/` are MANDATORY for all workflow decis
 
 Before implementing any feature, read the relevant milestone spec in `docs/roadmap/`. These define scope, DoD, and data model for each milestone.
 
-- **`docs/roadmap/PROGRESS.md`** — overall milestone completion status (check this first)
+- **`docs/roadmap/STATUS.md`** — live operational status (`main` vs `develop`, open PRs, Linear counts, risks)
+- **`docs/roadmap/PROGRESS.md`** — overall milestone completion status (check alongside `STATUS.md`)
 - **`docs/roadmap/M*.md`** — individual milestone specs (scope, screens, data, DoD)
 - **`docs/roadmap/Modelo de datos.md`** — database schema reference
 - **`docs/roadmap/Seguridad RLS.md`** — Row Level Security rules
 - **`docs/roadmap/Stack técnico.md`** — architecture decisions
 - **`docs/roadmap/Glosario.md`** — domain terminology (serrano, tier, rol, etc.)
 - **`docs/superpowers/specs/`** — full PRD and design specs
-- **`Linear`** — tracking at https://linear.app/zerrant/project/nodo-serrano-ui-fidelity-m0-m2-38ca59210685
+- **`docs/templates/linear-issue-templates.md`** & **`.github/ISSUE_TEMPLATE/`** — issue templates and Linear ↔ GitHub workflow (feature PRs target `develop`, releases merge `develop` → `main`)
+- **`Linear`** — workspace at https://linear.app/zerrant (legacy UI fidelity M0–M2 ref: https://linear.app/zerrant/project/nodo-serrano-ui-fidelity-m0-m2-38ca59210685)
   - Story files in `_bmad-output/implementation-artifacts/` are the SSOT for acceptance criteria
   - `_bmad-output/implementation-artifacts/sprint-status.yaml` maps story keys to Linear ZER-# IDs
-  - Use Linear MCP to update issue status, add comments, link PRs
+  - Use Linear / issue tools to update issue status, add comments, and link PRs

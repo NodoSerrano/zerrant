@@ -1,6 +1,6 @@
 # Story 5.7: Designate project admins
 
-Status: review
+Status: done
 
 ## Linear
 

@@ -1,6 +1,6 @@
 # Story ZER-143: Membership request & interview state machine
 
-Status: review (design approved 2026-10-02; contract for ZER-144, ZER-167, ZER-169)
+Status: done · Reconciled 2026-11-24 (ZER-143 Done in Linear & main; contract for ZER-144, ZER-167, ZER-169)
 
 ## Story
 

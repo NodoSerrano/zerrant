@@ -1,6 +1,6 @@
 # Story 5.5: Join a project — `abierto` immediate vs `aprobacion` pending
 
-Status: review
+Status: done
 
 ## Linear
 

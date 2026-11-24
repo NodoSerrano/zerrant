@@ -1,6 +1,6 @@
 # Story 5.2: Nodo Proyectos sub-tab and empty state (`2.4 · Nodo — Proyectos`, `7.3 · Vacío Proyectos`)
 
-Status: review
+Status: done
 
 ## Linear
 

@@ -1,6 +1,6 @@
 # Story 7.5: System states — 404, offline/error, loading (`7.5`, `7.6`)
 
-Status: review
+Status: done
 
 ## Linear
 
