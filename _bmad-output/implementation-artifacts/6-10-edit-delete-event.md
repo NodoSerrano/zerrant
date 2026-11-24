@@ -1,6 +1,6 @@
 # Story 6.10: Edit and delete event (`5.3 · Editar evento`)
 
-Status: review
+Status: done
 
 ## Linear
 

@@ -1,6 +1,6 @@
 ---
 tags: [roadmap, milestone]
-status: ticketized
+status: in-progress
 depends-on:
   - "[[M2 · Nodo — Tasks]]"
   - "[[M4 · Plantel y directorio]]"
@@ -9,6 +9,8 @@ depends-on:
 ---
 
 # M7 · Cumpleaños, PWA y pulido
+
+> **Estado (2026-11-24):** Features `ZER-98` → `ZER-104` implementadas y en `main` (`v0.1.0-2026-10-16`). Pendiente: pasada QA DoD E2E (`ZER-105` en Backlog).
 
 **Objetivo:** cerrar el MVP: cumpleaños, PWA instalable/offline, modo oscuro pulido y estados de sistema.
 
@@ -24,11 +26,11 @@ Deriva de `profiles.fecha_nacimiento` (edad + próximos cumples). Ver [[Modelo d
 
 ## Alcance
 
-- [ ] Inicio: próximos eventos + próximos cumpleaños (cálculo de edad).
-- [ ] PWA: manifest + íconos + service worker (offline shell). Ver [[Stack técnico]].
-- [ ] Estados: offline/error, 404, loading/skeletons.
-- [ ] Pulido de modo claro/oscuro en todas las pantallas.
-- [ ] Pasada de accesibilidad y performance (Core Web Vitals).
+- [x] Inicio: próximos eventos + próximos cumpleaños (cálculo de edad).
+- [x] PWA: manifest + íconos + service worker (offline shell). Ver [[Stack técnico]].
+- [x] Estados: offline/error, 404, loading/skeletons.
+- [x] Pulido de modo claro/oscuro en todas las pantallas.
+- [x] Pasada de accesibilidad y performance (Core Web Vitals).
 
 ## Done (DoD)
 

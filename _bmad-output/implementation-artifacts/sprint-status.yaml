@@ -1,5 +1,5 @@
 # generated: 2026-07-23T18:20:22-03:00
-# last_updated: 2026-09-20T17:40:00-03:00
+# last_updated: 2026-11-24T13:00:00-03:00
 # project: nodo
 # project_key: NOKEY
 # tracking_system: linear
@@ -21,6 +21,11 @@
 # epics_added_m7: 2026-09-20 — epic-7-cumpleanos-pwa-pulido (ZER-98→ZER-105, 8 stories)
 #   from _bmad-output/planning-artifacts/epics-m7.md + spec-m7-cumpleanos-pwa-pulido.
 #   All 8 story files created; linear_ids 8/8 parity with development_status.
+# reconciled_2026_11_24: Reconciled M5–M7 (ZER-78..ZER-105) against Linear Done +
+#   main (v0.1.0-2026-10-16). epic-5-proyectos & epic-7-cumpleanos-pwa-pulido set
+#   to in-progress (only QA stories 5-9 / ZER-86 and 7-8 / ZER-105 remain backlog);
+#   epic-6-aportes-eventos set to done (ZER-97 Done in Linear). Post-M7 story files
+#   zer-136, zer-138, zer-143 also reconciled to done.
 
 # STATUS DEFINITIONS:
 # ==================
@@ -58,7 +63,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: "2026-07-23T18:20:22-03:00"
-last_updated: "2026-09-20T17:40:00-03:00"
+last_updated: "2026-11-24T13:00:00-03:00"
 project: nodo
 project_key: NOKEY
 tracking_system: linear
@@ -175,39 +180,39 @@ development_status:
   4-x-zer-43-tarifa-hora-visibility: done
   epic-ops-security-retrospective: optional
 
-  epic-5-proyectos: backlog
-  5-1-projects-schema-and-rls: backlog
-  5-2-nodo-proyectos-subtab: backlog
-  5-3-create-project: in-progress
-  5-4-project-detail: review
-  5-5-join-project: review
-  5-6-join-request-queue: review
-  5-7-designate-project-admins: review
-  5-8-projects-on-profile-and-member-detail: review
+  epic-5-proyectos: in-progress
+  5-1-projects-schema-and-rls: done
+  5-2-nodo-proyectos-subtab: done
+  5-3-create-project: done
+  5-4-project-detail: done
+  5-5-join-project: done
+  5-6-join-request-queue: done
+  5-7-designate-project-admins: done
+  5-8-projects-on-profile-and-member-detail: done
   5-9-qa-m5-dod-e2e: backlog
   epic-5-proyectos-retrospective: optional
 
-  epic-6-aportes-eventos: backlog
+  epic-6-aportes-eventos: done
   6-1-aportes-schema-and-rls: done
-  6-2-register-aporte: review
-  6-3-mis-aportes: review
-  6-4-aportes-in-member-detail: review
+  6-2-register-aporte: done
+  6-3-mis-aportes: done
+  6-4-aportes-in-member-detail: done
   6-5-events-schema-and-rls: done
-  6-6-agenda-day-strip: backlog
-  6-7-create-event: review
-  6-8-event-detail-attendees: backlog
+  6-6-agenda-day-strip: done
+  6-7-create-event: done
+  6-8-event-detail-attendees: done
   6-9-rsvp: done
-  6-10-edit-delete-event: review
-  6-11-qa-m6-dod-e2e: backlog
+  6-10-edit-delete-event: done
+  6-11-qa-m6-dod-e2e: done
   epic-6-aportes-eventos-retrospective: optional
 
-  epic-7-cumpleanos-pwa-pulido: backlog
-  7-1-birthday-domain-helpers: review
-  7-2-inicio-hub-and-tabbar: backlog
-  7-3-pwa-manifest-and-icons: review
-  7-4-pwa-offline-shell: review
-  7-5-system-states-404-offline-loading: review
-  7-6-dark-mode-polish: review
-  7-7-a11y-performance-pass: review
+  epic-7-cumpleanos-pwa-pulido: in-progress
+  7-1-birthday-domain-helpers: done
+  7-2-inicio-hub-and-tabbar: done
+  7-3-pwa-manifest-and-icons: done
+  7-4-pwa-offline-shell: done
+  7-5-system-states-404-offline-loading: done
+  7-6-dark-mode-polish: done
+  7-7-a11y-performance-pass: done
   7-8-qa-m7-dod-e2e: backlog
   epic-7-cumpleanos-pwa-pulido-retrospective: optional

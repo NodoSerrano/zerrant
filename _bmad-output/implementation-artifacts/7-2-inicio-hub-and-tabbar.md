@@ -1,6 +1,6 @@
 # Story 7.2: Inicio hub + TabBar Inicio (`2.1`)
 
-Status: in-progress
+Status: done
 
 ## Linear
 

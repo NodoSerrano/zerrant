@@ -1,6 +1,6 @@
 # Story 7.3: PWA manifest + icons
 
-Status: review
+Status: done
 
 ## Linear
 

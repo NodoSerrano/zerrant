@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zerrant — Estado de proyecto (Kanban)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-paper:       #1a1614;
+      --color-paper-2:     #201b19;
+      --color-ink:         #ede5d8;
+      --color-ink-strong:  #120e0c;
+      --color-muted:       #a29889;
+      --color-soft:        #9a9183;
+      --color-rule:        rgba(237,229,216,0.12);
+      --color-rule-solid:  rgba(237,229,216,0.25);
+      --color-accent:      #c98a9b;
+      --color-accent-tint: rgba(201,138,155,0.10);
+      --color-link:        #8c9a86;
+      --font-serif: 'Fraunces', Georgia, serif;
+      --font-sans:  'Instrument Sans', system-ui, sans-serif;
+      --font-mono:  'JetBrains Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      padding: 2.5rem 2rem;
+    }
+
+    .container { max-width: 1280px; margin: 0 auto; }
+
+    .header { margin-bottom: 2rem; }
+
+    .header-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.6rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.75rem, 3vw + 0.75rem, 2.4rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      color: var(--color-ink);
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--color-muted);
+      max-width: 68ch;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.86em;
+      color: var(--color-ink);
+    }
+
+    .diagram-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    svg { width: 100%; min-width: 1280px; display: block; }
+
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr 0.85fr;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 980px) { .cards { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) { .cards { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--color-paper-2);
+      border: 1px solid var(--color-rule);
+      border-radius: 6px;
+      padding: 1.25rem;
+    }
+
+    .card .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-soft);
+      margin-bottom: 0.5rem;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--color-rule);
+    }
+
+    .card-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .card-dot.coral { background: var(--color-accent); }
+    .card-dot.ink   { background: var(--color-ink); }
+    .card-dot.muted { background: var(--color-muted); }
+
+    .card h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--color-ink);
+    }
+
+    .card p {
+      color: var(--color-muted);
+      font-size: 0.8125rem;
+      line-height: 1.55;
+    }
+
+    .footer {
+      margin-top: 2rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--color-rule);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      color: var(--color-soft);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <p class="header-eyebrow">Kanban · Linear ↔ GitHub · 2026-11-24</p>
+      <h1>Zerrant — Estado operativo del proyecto</h1>
+      <p class="subtitle">Censo de los 225 issues de Linear (scope <code>ZER</code>) cruzado con <code>NodoSerrano/zerrant</code>: 133 cerrados en <code>main</code> (v0.1.0), 30 acumulados en <code>Ready for Deploy</code> sobre <code>develop</code>, 2 PRs en revisión y 2 tickets en progreso sin rama remota.</p>
+    </header>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1280 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="zerrant-project-status-title zerrant-project-status-desc">
+        <title id="zerrant-project-status-title">Zerrant — Estado de proyecto (Kanban)</title>
+        <desc id="zerrant-project-status-desc">Tablero Kanban con los 225 tickets de Linear en Nodo Serrano al 2026-11-24, mostrando 30 tickets acumulados en Ready for Deploy sobre develop y 2 PRs en revisión.</desc>
+
+        <rect width="100%" height="100%" fill="#1a1614"/>
+
+        <!-- 5 columns: width 224, gap 20, x = 40, 284, 528, 772, 1016 -->
+        <rect x="40"   y="40" width="224" height="324" rx="8" fill="rgba(237,229,216,0.03)"/>
+        <rect x="284"  y="40" width="224" height="324" rx="8" fill="rgba(237,229,216,0.03)"/>
+        <rect x="528"  y="40" width="224" height="324" rx="8" fill="rgba(237,229,216,0.03)"/>
+        <rect x="772"  y="40" width="224" height="324" rx="8" fill="rgba(237,229,216,0.03)"/>
+        <rect x="1016" y="40" width="224" height="324" rx="8" fill="rgba(237,229,216,0.03)"/>
+
+        <!-- Column headers -->
+        <text x="52"   y="60" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">Backlog</text>
+        <text x="296"  y="60" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">In Progress</text>
+        <text x="540"  y="60" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">In Review</text>
+        <text x="784"  y="60" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">Ready for Deploy</text>
+        <text x="1028" y="60" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">Done (v0.1.0)</text>
+
+        <!-- Rectangular WIP chips (rx=2, never pills) -->
+        <rect x="208" y="48" width="44" height="16" rx="2" fill="transparent" stroke="rgba(237,229,216,0.40)" stroke-width="0.8"/>
+        <text x="230" y="59" fill="#a29889" font-size="8" font-family="'JetBrains Mono', ui-monospace, monospace" text-anchor="middle">38</text>
+
+        <rect x="452" y="48" width="44" height="16" rx="2" fill="transparent" stroke="rgba(237,229,216,0.40)" stroke-width="0.8"/>
+        <text x="474" y="59" fill="#a29889" font-size="8" font-family="'JetBrains Mono', ui-monospace, monospace" text-anchor="middle">2/3</text>
+
+        <rect x="696" y="48" width="44" height="16" rx="2" fill="transparent" stroke="rgba(237,229,216,0.40)" stroke-width="0.8"/>
+        <text x="718" y="59" fill="#a29889" font-size="8" font-family="'JetBrains Mono', ui-monospace, monospace" text-anchor="middle">2/3</text>
+
+        <!-- Accent #1: Over-limit WIP chip on Ready for Deploy -->
+        <rect x="940" y="48" width="44" height="16" rx="2" fill="transparent" stroke="#c98a9b" stroke-width="0.8"/>
+        <text x="962" y="59" fill="#c98a9b" font-size="8" font-family="'JetBrains Mono', ui-monospace, monospace" text-anchor="middle">30/15</text>
+
+        <rect x="1184" y="48" width="44" height="16" rx="2" fill="transparent" stroke="rgba(237,229,216,0.40)" stroke-width="0.8"/>
+        <text x="1206" y="59" fill="#a29889" font-size="8" font-family="'JetBrains Mono', ui-monospace, monospace" text-anchor="middle">133</text>
+
+        <!-- Header hairline rules -->
+        <line x1="40"   y1="76" x2="264"  y2="76" stroke="rgba(237,229,216,0.20)" stroke-width="1"/>
+        <line x1="284"  y1="76" x2="508"  y2="76" stroke="rgba(237,229,216,0.20)" stroke-width="1"/>
+        <line x1="528"  y1="76" x2="752"  y2="76" stroke="rgba(237,229,216,0.20)" stroke-width="1"/>
+        <line x1="772"  y1="76" x2="996"  y2="76" stroke="rgba(237,229,216,0.20)" stroke-width="1"/>
+        <line x1="1016" y1="76" x2="1240" y2="76" stroke="rgba(237,229,216,0.20)" stroke-width="1"/>
+
+        <!-- Backlog: 3 cards -->
+        <rect x="52" y="88" width="200" height="56" rx="6" fill="#201b19" stroke="#ede5d8" stroke-width="1"/>
+        <text x="64" y="110" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">QA DoD M5 &amp; M7</text>
+        <text x="64" y="128" fill="#a29889" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace">ZER-86, ZER-105 · staging</text>
+
+        <rect x="52" y="156" width="200" height="56" rx="6" fill="#201b19" stroke="#ede5d8" stroke-width="1"/>
+        <text x="64" y="178" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">Realtime &amp; Inicio</text>
+        <text x="64" y="196" fill="#a29889" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace">ZER-203, ZER-219 · backlog</text>
+
+        <rect x="52" y="224" width="200" height="56" rx="6" fill="rgba(237,229,216,0.02)" stroke="rgba(237,229,216,0.25)" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="64" y="246" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">+34 more tickets</text>
+        <text x="64" y="264" fill="#9a9183" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace">9 EPICs · 25 backlog items</text>
+
+        <!-- In Progress: 2 cards -->
+        <rect x="296" y="88" width="200" height="56" rx="6" fill="#201b19" stroke="#ede5d8" stroke-width="1"/>
+        <text x="308" y="110" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">Test deploy history</text>
+        <text x="308" y="128" fill="#a29889" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace">ZER-192 · fabrizioleali</text>
+
+        <rect x="296" y="156" width="200" height="56" rx="6" fill="rgba(237,229,216,0.02)" stroke="rgba(237,229,216,0.25)" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="308" y="178" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">Reschedule interview</text>
+        <text x="308" y="196" fill="#9a9183" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace">ZER-144 · agustindxm</text>
+
+        <!-- In Review: 2 cards -->
+        <rect x="540" y="88" width="200" height="56" rx="6" fill="#201b19" stroke="#ede5d8" stroke-width="1"/>
+        <text x="552" y="110" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">Join reject + notices</text>
+        <text x="552" y="128" fill="#a29889" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace">ZER-202 · PR #166 · CI ok</text>
+
+        <rect x="540" y="156" width="200" height="56" rx="6" fill="#201b19" stroke="#ede5d8" stroke-width="1"/>
+        <text x="552" y="178" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">Task abierta filter</text>
+        <text x="552" y="196" fill="#a29889" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace">ZER-225 · PR #167 · CI ok</text>
+
+        <!-- Ready for Deploy: Accent #2 (blocked release gate) + 2 cards -->
+        <rect x="784" y="88" width="200" height="56" rx="6" fill="rgba(201,138,155,0.10)" stroke="#c98a9b" stroke-width="1" stroke-dasharray="4,4"/>
+        <rect x="784" y="90" width="4" height="52" rx="2" fill="#c98a9b"/>
+        <text x="800" y="110" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">Release develop→main</text>
+        <text x="800" y="128" fill="#c98a9b" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace">30 tickets · 98 commits</text>
+
+        <rect x="784" y="156" width="200" height="56" rx="6" fill="#201b19" stroke="#ede5d8" stroke-width="1"/>
+        <text x="796" y="178" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">Actividad + Skills UI</text>
+        <text x="796" y="196" fill="#a29889" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace">ZER-206, 216, 224 · 10-31</text>
+
+        <rect x="784" y="224" width="200" height="56" rx="6" fill="rgba(237,229,216,0.02)" stroke="rgba(237,229,216,0.25)" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="796" y="246" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">Donaciones + 11 SQL</text>
+        <text x="796" y="264" fill="#9a9183" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace">ZER-166, 180 + 25 merged</text>
+
+        <!-- Done (v0.1.0): 2 cards -->
+        <rect x="1028" y="88" width="200" height="56" rx="6" fill="rgba(237,229,216,0.05)" stroke="#a29889" stroke-width="1"/>
+        <text x="1040" y="110" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">M0–M4 &amp; M6 shipped</text>
+        <text x="1040" y="128" fill="#a29889" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace">main v0.1.0 · 2026-10-16</text>
+
+        <rect x="1028" y="156" width="200" height="56" rx="6" fill="rgba(237,229,216,0.05)" stroke="#a29889" stroke-width="1"/>
+        <text x="1040" y="178" fill="#ede5d8" font-size="12" font-weight="600" font-family="'Instrument Sans', system-ui, sans-serif">M5 &amp; M7 live on prod</text>
+        <text x="1040" y="196" fill="#a29889" font-size="9" font-family="'JetBrains Mono', ui-monospace, monospace">133 Done · 20 Canceled</text>
+
+        <!-- Legend strip -->
+        <line x1="40" y1="392" x2="1240" y2="392" stroke="rgba(237,229,216,0.12)" stroke-width="0.8"/>
+        <text x="40" y="408" fill="#a29889" font-size="8" font-family="'JetBrains Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+
+        <rect x="40"  y="420" width="16" height="8" fill="#201b19" stroke="#ede5d8" stroke-width="1"/>
+        <text x="64"  y="428" fill="#a29889" font-size="8.5" font-family="'Instrument Sans', system-ui, sans-serif">Active / queued</text>
+
+        <rect x="240" y="420" width="16" height="8" fill="rgba(201,138,155,0.10)" stroke="#c98a9b" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="264" y="428" fill="#a29889" font-size="8.5" font-family="'Instrument Sans', system-ui, sans-serif">Blocked / release gate</text>
+
+        <rect x="468" y="420" width="16" height="8" fill="rgba(237,229,216,0.02)" stroke="rgba(237,229,216,0.25)" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="492" y="428" fill="#a29889" font-size="8.5" font-family="'Instrument Sans', system-ui, sans-serif">Waiting / aggregated</text>
+
+        <rect x="700" y="420" width="16" height="8" fill="rgba(237,229,216,0.05)" stroke="#a29889" stroke-width="1"/>
+        <text x="724" y="428" fill="#a29889" font-size="8.5" font-family="'Instrument Sans', system-ui, sans-serif">Done on main</text>
+
+        <rect x="888" y="420" width="16" height="8" rx="2" fill="transparent" stroke="#c98a9b" stroke-width="0.8"/>
+        <text x="912" y="428" fill="#a29889" font-size="8.5" font-family="'Instrument Sans', system-ui, sans-serif">Over WIP limit</text>
+      </svg>
+    </div>
+
+    <section class="cards">
+      <article class="card">
+        <p class="eyebrow">BOTTLENECK</p>
+        <div class="card-header"><span class="card-dot coral"></span><h3>Release queue · 30/15</h3></div>
+        <p>30 tickets de Linear (98 commits y 11 migraciones SQL) ya están mergeados en <code>develop</code> y desplegados en <code>test</code>, esperando corte de release hacia <code>main</code> (<code>prod</code>). La divergencia de esquema explica falsos bugs al probar local contra la base de <code>main</code>.</p>
+      </article>
+      <article class="card">
+        <p class="eyebrow">REVIEW &amp; WIP</p>
+        <div class="card-header"><span class="card-dot ink"></span><h3>PRs #166 &amp; #167 listos</h3></div>
+        <p>Los únicos dos PRs abiertos (<code>ZER-202</code> y <code>ZER-225</code>, ambos hacia <code>develop</code>) tienen CI verde desde el 2026-11-05. En paralelo, <code>ZER-192</code> y <code>ZER-144</code> figuran <code>In Progress</code> sin rama remota ni PR abierto.</p>
+      </article>
+      <article class="card">
+        <p class="eyebrow">BASELINE</p>
+        <div class="card-header"><span class="card-dot muted"></span><h3>M0–M7 en producción</h3></div>
+        <p>133 issues cerrados en <code>Done</code> sobre <code>main</code> (<code>v0.1.0</code>, 2026-10-16) y 20 <code>Canceled</code>. Del roadmap MVP original solo quedan en <code>Backlog</code> los tickets QA E2E de M5 (<code>ZER-86</code>) y M7 (<code>ZER-105</code>).</p>
+      </article>
+    </section>
+
+    <footer class="footer">
+      <span>NodoSerrano/zerrant · status kanban (2026-11-24)</span>
+      <span>Linear ZER-* (225 issues) ↔ GitHub main / develop</span>
+    </footer>
+  </div>
+</body>
+</html>

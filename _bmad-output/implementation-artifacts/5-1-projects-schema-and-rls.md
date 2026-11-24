@@ -1,6 +1,6 @@
 # Story 5.1: `projects` and `project_members` migration, enums, and RLS
 
-Status: review
+Status: done
 
 ## Linear
 

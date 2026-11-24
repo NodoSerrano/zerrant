@@ -1,6 +1,6 @@
 # Story ZER-136: Direct "Quiero ser Serrano" entry point
 
-Status: review · Branch: `agumarchetti/zer-136-entry-point-directo-quiero-ser-serrano` (stacked on ZER-143 #107 + ZER-138 #108) · Parent: ZER-125
+Status: done · Reconciled 2026-11-24 (ZER-136 Done in Linear & main) · Parent: ZER-125
 
 ## Story
 
@@ -31,40 +31,43 @@ so that I don't have to go through the tourist experience (Inicio, Agenda, Plant
 ## Design (contract)
 
 ### `/unirme` resolver (route handler, public, `src/app/unirme/route.ts`)
+
 Pure decision in `src/features/membership/pipeline.ts` → `resolveUnirmeTarget(...)`; the route handler only loads data and sets the cookie.
 
-| State | Redirect |
-|---|---|
-| No session | `/auth/signup?next=/unirme` |
-| Profile missing / step1 incomplete | `/onboarding/step1` |
-| Step1 done, onboarding not closed | `/onboarding/step2` |
-| Tourist, no active request | `/solicitar` |
-| Active request, or not tourist (member) | `/solicitar/estado` |
-| Profile/request read infra error | `/` (soft-allow, same as the onboarding gate; logged) |
+| State                                   | Redirect                                              |
+| --------------------------------------- | ----------------------------------------------------- |
+| No session                              | `/auth/signup?next=/unirme`                           |
+| Profile missing / step1 incomplete      | `/onboarding/step1`                                   |
+| Step1 done, onboarding not closed       | `/onboarding/step2`                                   |
+| Tourist, no active request              | `/solicitar`                                          |
+| Active request, or not tourist (member) | `/solicitar/estado`                                   |
+| Profile/request read infra error        | `/` (soft-allow, same as the onboarding gate; logged) |
 
 It sets the cookie `ns_flujo=membresia` (httpOnly, sameSite=lax, secure in prod, path `/`, max-age 7 days) on every response. The cookie is **not** cleared on terminal states: a Server Component cannot set cookies, and a stale `ns_flujo` is harmless (it only steers step2's redirect and the enviado CTA, both unreachable once onboarded with a request); it expires after 7 days.
 
 ### Intent propagation
+
 - **Across auth:** `next=/unirme` threaded through: proxy (already sets `next`) → login/signup pages (hidden input) → `signInWithPassword` / `signUpWithPassword` / `resendSignupEmail` / `signInWithGoogle` (`emailRedirectTo` / `redirectTo` = `${site}/auth/callback?next=<encoded safe next>`) → check-email (carries `next` for resend) → callback. Signup with live session and login success redirect to the safe `next` (default `/`).
 - **Inside the app:** the `ns_flujo` cookie. When present: `saveOnboardingStep2` redirects to `/unirme` (instead of `/profile`), `createMembershipRequest` keeps redirecting to `/solicitar/enviado`, and enviado's CTA goes to `/solicitar/estado` instead of `/`. The stepper renders on step1, step2, `/solicitar`, enviado and estado when in the flow (estado always).
 - `/solicitar` without a session → `/auth/login?next=/solicitar` (add `/solicitar` to `PROTECTED_PREFIXES`; `/unirme` is not added, it handles no-session itself).
 
 ### `safeInternalPath(value: unknown): string` (`src/lib/safe-next.ts`)
+
 It returns the value only if: it is a string, starts with `/`, does not start with `//` or `/\`, has no `\`, no control chars, does not contain `://`, and `new URL(value, "http://x").origin === "http://x"`. Otherwise it returns `/`. It is also used to build the callback URL (`new URL(next, origin)` and checking origin, never string concat).
 
 ### Progress mapping (`membershipPipelineStep`) — read-only over ZER-143 states
 
-| # | Step | Done when |
-|---|---|---|
-| 1 | Registro | session exists |
-| 2 | Verificación | `user.email_confirmed_at` set. **Non-blocking**: if missing, the step shows as pending but the current step advances past it |
-| 3 | Perfil | step1 complete (`isStep1Complete`); step2 optional sub-step (`onboarding_completado_en`) |
-| 4 | Solicitud | a request exists (any state) |
-| 5 | Horario | estado ∈ {`entrevista_solicitada`, `reprogramacion`} is current; done once `entrevista_coordinada`+ |
-| 6 | Entrevista | current at `entrevista_coordinada`; done at `entrevista_realizada`+ |
-| 7 | Resolución | current at `entrevista_realizada`; done at `aprobado` |
-| 8 | Miembro | `aprobado` or tier ≠ `tourist` |
-| — | `cerrada` | pipeline halted: output `{ halted: "cerrada" }`, UI shows "Solicitud cerrada" (label from `estadoLabel`) |
+| #   | Step         | Done when                                                                                                                    |
+| --- | ------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Registro     | session exists                                                                                                               |
+| 2   | Verificación | `user.email_confirmed_at` set. **Non-blocking**: if missing, the step shows as pending but the current step advances past it |
+| 3   | Perfil       | step1 complete (`isStep1Complete`); step2 optional sub-step (`onboarding_completado_en`)                                     |
+| 4   | Solicitud    | a request exists (any state)                                                                                                 |
+| 5   | Horario      | estado ∈ {`entrevista_solicitada`, `reprogramacion`} is current; done once `entrevista_coordinada`+                          |
+| 6   | Entrevista   | current at `entrevista_coordinada`; done at `entrevista_realizada`+                                                          |
+| 7   | Resolución   | current at `entrevista_realizada`; done at `aprobado`                                                                        |
+| 8   | Miembro      | `aprobado` or tier ≠ `tourist`                                                                                               |
+| —   | `cerrada`    | pipeline halted: output `{ halted: "cerrada" }`, UI shows "Solicitud cerrada" (label from `estadoLabel`)                     |
 
 `pendiente_coordinacion` → current step 5 (Horario) with Solicitud done. `reprogramacion` → current step 5 (back from 6). Output: `{ current: 1..8, steps: [{ key, label, status: "done"|"current"|"pending" }], halted?: "cerrada" }`.
 
@@ -87,6 +90,7 @@ The latest request is the source: the active one if present, otherwise the most 
 ## Dev Notes
 
 ### Current state (read in full)
+
 - `src/app/auth/callback/route.ts`: `next = searchParams.get("next") ?? "/"`, redirects with string concat. **Open redirect.**
 - `src/features/auth/actions.ts`: `signInWithPassword` → `redirect("/")`; `signUpWithPassword` → `/` (live session) or `/auth/check-email?email&flow=signup`; `emailRedirectTo`/`redirectTo` = `${site}/auth/callback` with no `next`.
 - `src/proxy.ts`: `PROTECTED_PREFIXES = ["/onboarding","/profile","/nodo"]` + `/`; unauthenticated protected → `/auth/login?next=<pathname>` (dropped by login today); authenticated on auth page → `/`. Must preserve the ZER-61 stale POST 409 behavior.
@@ -98,6 +102,7 @@ The latest request is the source: the active one if present, otherwise the most 
 - `supabase/config.toml:163` `additional_redirect_urls` has exact `/auth/callback` only; `enable_confirmations = true` (line 226).
 
 ### Guardrails
+
 - **Do NOT touch** `src/features/membership/request-state.ts`, migrations or RLS policies. States are a ZER-143 contract: import `estadoLabel`, `MEMBERSHIP_REQUEST_ACTIVE_ESTADOS`, `isTerminalEstado`.
 - Out of scope: booking (ZER-144), states/payment (ZER-167, ZER-169), email verification enforcement (ZER-135), tourist redesign.
 - Authorization stays in DB/RLS. The pipeline is UI-only and reads the user's own request (`profile_id = auth.uid()` via existing RLS).
@@ -107,15 +112,18 @@ The latest request is the source: the active one if present, otherwise the most 
 - Touch targets ≥ 44px, measured.
 
 ### Testing
+
 Vitest + Testing Library. Pure functions are exhaustive. Server actions/route handlers mock Supabase (pattern: `src/features/profile/actions.test.ts`, `src/features/profile/onboarding-gate-server.test.ts`). Gate: `./node_modules/.bin/vitest run --dir src`, DB tests `-c vitest.db.config.ts`, `tsc --noEmit`, `oxlint --quiet`, `oxfmt --check`.
 
 ### References
+
 - Linear ZER-136; mapping: `~/Documents/NodoSerrano-Vault/00-Meta/ZER-136 mapeo.md`
 - `_bmad-output/implementation-artifacts/zer-143-membership-request-states.md` (state contract)
 - `_bmad-output/implementation-artifacts/zer-138-avatar-upload.md` (step1 photo)
 - `docs/roadmap/M3 · Membresía y roles.md`; ZER-108, ZER-109
 
 ### Resolved questions
+
 1. Re-application after `cerrada`: not allowed for now (AC8, T11). Follow-up ticket: **ZER-180** (Backlog).
 
 ## Dev Agent Record

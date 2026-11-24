@@ -1,6 +1,6 @@
 # Story 6.2: Register aporte (`4.6 · Registrar aporte`)
 
-Status: review
+Status: done
 
 ## Linear
 

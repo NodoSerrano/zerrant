@@ -1,6 +1,6 @@
 # Story 6.1: `aportes` migration, nine-value tipo enum, and RLS
 
-Status: backlog
+Status: done
 
 ## Linear
 

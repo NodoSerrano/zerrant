@@ -1,0 +1,91 @@
+name: Bug
+description: Reportar un bug o comportamiento inesperado en prod, test (develop) o local
+title: "BUG: "
+labels: ["Bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Antes de abrir el bug, verificá en qué ambiente ocurre (`prod` = `main`, `test` = `develop`, o `local`) y si las migraciones de `develop` están aplicadas (evitá falsos positivos como `ZER-223` por schema desfasado).
+
+  - type: input
+    id: linear_id
+    attributes:
+      label: ID en Linear (si ya existe)
+      description: Link o clave `ZER-XXX` si ya fue cargado en Linear.
+      placeholder: "ZER-XXX"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Ambiente donde se reproduce
+      options:
+        - test (develop)
+        - prod (main)
+        - local (supabase)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área afectada
+      options:
+        - Auth / Onboarding
+        - Membresía / Admin
+        - Plantel / Perfil / Habilidades
+        - Proyectos
+        - Tareas
+        - Aportes / Donaciones
+        - Agenda / Eventos
+        - PWA / UI / A11y
+        - Infra / DB / RLS
+    validations:
+      required: true
+
+  - type: textarea
+    id: what_happens
+    attributes:
+      label: Qué pasa y pasos para reproducir
+      description: Describí el error observado, ruta, rol del usuario (Tourist / Serrano / Admin) y pasos exactos.
+      value: |
+        **Qué pasa:**
+
+        **Pasos para reproducir:**
+        1. Ir a `...`
+        2. Hacer click en `...`
+        3. Resultado observado:
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamiento esperado / Acceptance criteria
+      description: Qué debería ocurrir cuando esté corregido (y qué test TDD lo va a cubrir).
+      value: |
+        1. 
+        2. 
+    validations:
+      required: true
+
+  - type: textarea
+    id: hints
+    attributes:
+      label: Pista técnica / Ruta / Migraciones / Logs
+      description: Error de Postgres/PostgREST, consola, commit/PR sospechoso o estado de migraciones locales (`develop` vs `main`).
+      placeholder: "Ej. Error 42703 / Ruta /nodo/projects/... / Revisar migración 2026..."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Chequeos previos
+      options:
+        - label: Verifiqué si el problema ya está corregido en `develop` o reportado en Linear (`ZER-*`).
+          required: true
+        - label: Si probé en local, confirmé que `pnpm exec supabase db reset` aplicó las migraciones del branch correspondiente.
+          required: true

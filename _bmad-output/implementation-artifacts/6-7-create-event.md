@@ -1,6 +1,6 @@
 # Story 6.7: Create event (`5.2 · Crear evento`)
 
-Status: review
+Status: done
 
 ## Linear
 

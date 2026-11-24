@@ -1,6 +1,6 @@
 # Story 5.8: Projects on profile and member detail
 
-Status: review
+Status: done
 
 ## Linear
 

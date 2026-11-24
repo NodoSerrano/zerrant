@@ -1,6 +1,6 @@
 # Story ZER-138: Mejorar la carga de foto de perfil
 
-Status: review
+Status: done
 
 Linear: https://linear.app/zerrant/issue/ZER-138 · parent ZER-125 · High · Improvement / ux-debt
 Rama: `agumarchetti/zer-138-mejorar-la-carga-de-foto-de-perfil`

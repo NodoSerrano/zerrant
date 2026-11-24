@@ -6,20 +6,20 @@ PWA mobile-first para gestionar la comunidad Nodo Serrano. Un serrano se define 
 
 > **Reanudación / estado operativo:** [docs/roadmap/STATUS.md](docs/roadmap/STATUS.md) — fuente viva (código real vs docs, PRs, deuda técnica, plan F0–F4). La tabla de abajo está reconciliada con `main`; STATUS tiene el detalle y los residuales abiertos de cada milestone.
 
-| Milestone                                                                                | Estado  |
-| ---------------------------------------------------------------------------------------- | ------- |
-| [M0 · Fundacion](docs/roadmap/M0%20·%20Fundación.md)                                     | ✅ Done |
-| [M1 · Cuenta y perfil](docs/roadmap/M1%20·%20Cuenta%20y%20perfil.md)                     | ✅ Done |
-| [M2 · Nodo — Tasks](docs/roadmap/M2%20·%20Nodo%20—%20Tasks.md)                           | ✅ Done |
-| [M3 · Membresia y roles](docs/roadmap/M3%20·%20Membresía%20y%20roles.md)                 | ✅ Done |
-| [M4 · Plantel y directorio](docs/roadmap/M4%20·%20Plantel%20y%20directorio.md)           | ✅ Done |
-| [M5 · Proyectos](docs/roadmap/M5%20·%20Proyectos.md)                                     | ⬜ Todo |
-| [M6 · Aportes y eventos](docs/roadmap/M6%20·%20Aportes%20y%20eventos.md)                 | ⬜ Todo |
-| [M7 · Cumpleanos, PWA y pulido](docs/roadmap/M7%20·%20Cumpleaños,%20PWA%20y%20pulido.md) | ⬜ Todo |
+| Milestone                                                                                | Estado                                 |
+| ---------------------------------------------------------------------------------------- | -------------------------------------- |
+| [M0 · Fundacion](docs/roadmap/M0%20·%20Fundación.md)                                     | ✅ Done                                |
+| [M1 · Cuenta y perfil](docs/roadmap/M1%20·%20Cuenta%20y%20perfil.md)                     | ✅ Done                                |
+| [M2 · Nodo — Tasks](docs/roadmap/M2%20·%20Nodo%20—%20Tasks.md)                           | ✅ Done                                |
+| [M3 · Membresia y roles](docs/roadmap/M3%20·%20Membresía%20y%20roles.md)                 | ✅ Done                                |
+| [M4 · Plantel y directorio](docs/roadmap/M4%20·%20Plantel%20y%20directorio.md)           | ✅ Done                                |
+| [M5 · Proyectos](docs/roadmap/M5%20·%20Proyectos.md)                                     | 🟡 Implementado (QA ZER-86 pendiente)  |
+| [M6 · Aportes y eventos](docs/roadmap/M6%20·%20Aportes%20y%20eventos.md)                 | ✅ Done                                |
+| [M7 · Cumpleanos, PWA y pulido](docs/roadmap/M7%20·%20Cumpleaños,%20PWA%20y%20pulido.md) | 🟡 Implementado (QA ZER-105 pendiente) |
 
 ## Stack
 
-Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · Supabase · Vercel
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Supabase · VPS (Docker Compose)
 
 ## Arranque
 
@@ -64,7 +64,7 @@ Tras `supabase db reset`, hay un admin serrano listo para login (no usar en prod
 
 ## CI
 
-Cada PR contra `main` corre el workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+Cada PR contra `main` o `develop` corre el workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
 
 **Job `quality`**
 
@@ -81,10 +81,21 @@ Cada PR contra `main` corre el workflow [`.github/workflows/ci.yml`](.github/wor
 
 Si falla cualquiera de esos pasos, el check de CI falla. Marcar el job como **required check** en la branch protection de `main` es opcional y lo decide quien administre el repo.
 
+## Deploy
+
+Cada push a `develop` o `main` corre [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) sobre el VPS self-hosted vía Docker Compose:
+
+- `develop` → ambiente **`test`**
+- `main` → ambiente **`prod`**
+
 ## Documentacion
 
 Toda la documentacion del proyecto esta en `docs/roadmap/`. Se recomienda abrir la carpeta como vault de Obsidian para navegar los links `[[...]]`.
 
+- [Estado operativo (STATUS)](docs/roadmap/STATUS.md) — estado real `main` vs `develop`, PRs, Linear, deuda y plan
+- [Diagrama de estado (Kanban)](docs/roadmap/diagrams/zerrant-project-status.html) — vista visual de los 225 tickets de Linear y cuellos de botella
+- [Diagrama de ramas y releases (Git graph)](docs/roadmap/diagrams/zerrant-release-topology.html) — topología `main` (`prod`) ↔ `develop` (`test`) ↔ PRs `#166`/`#167`
+- [Plantillas de issues (Linear & GitHub)](docs/templates/linear-issue-templates.md) y [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/) — convención `ZER-*`
 - [Roadmap](docs/roadmap/Roadmap.md) — milestones y dependencias
 - [Glosario](docs/roadmap/Glosario.md) — Tier, Rol, Serrano, Tourist, Aporte
 - [Stack tecnico](docs/roadmap/Stack%20técnico.md) — decisiones de arquitectura
@@ -100,8 +111,10 @@ src/
 ├── app/          # App Router (layout, paginas)
 ├── components/   # Componentes compartidos (ui/)
 ├── features/     # Features por dominio
-│   ├── auth/     ├── profile/    ├── tasks/
-│   ├── memberships/              ├── roster/
-│   ├── projects/ ├── contributions/ ├── events/
+│   ├── a11y-perf/  ├── admin/     ├── aportes/     ├── auth/
+│   ├── events/     ├── home/      ├── membership/  ├── plantel/
+│   ├── profile/    ├── projects/  ├── pwa/         ├── roles/
+│   ├── system-states/             └── tasks/
+│   # En develop (ZER-166): + donaciones/
 └── lib/          # Supabase client, tipos compartidos
 ```

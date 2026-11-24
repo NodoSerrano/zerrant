@@ -1,6 +1,6 @@
 # Story 7.4: Service worker offline shell
 
-Status: review
+Status: done
 
 ## Linear
 

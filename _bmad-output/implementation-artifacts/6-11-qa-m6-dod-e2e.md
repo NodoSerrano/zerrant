@@ -1,6 +1,6 @@
 # Story 6.11: QA — M6 DoD end-to-end on staging
 
-Status: backlog
+Status: done
 
 ## Linear
 

@@ -1,6 +1,6 @@
 # Story 7.7: A11y + performance pass
 
-Status: review
+Status: done
 
 ## Linear
 

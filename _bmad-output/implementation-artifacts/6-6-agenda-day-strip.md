@@ -1,6 +1,6 @@
 # Story 6.6: Agenda day strip and empty state (`2.5 · Agenda`, `7.4 · Vacío Agenda`)
 
-Status: backlog
+Status: done
 
 ## Linear
 
